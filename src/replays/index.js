@@ -1,5 +1,6 @@
 import replays from '../replays.js'
 
+import isProd from '../utils/isProd.js'
 import mergeDeep from '../utils/mergeDeep.js'
 import configDefault from './config.default.js'
 import sendTrigger from './sendTrigger.js'
@@ -11,7 +12,6 @@ import defaultRestoreSettings from './helpers/restoreSettings.js'
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
-import isProd from '../utils/isProd.js'
 
 
 export default ({

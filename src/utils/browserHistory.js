@@ -194,8 +194,8 @@ const addTail = async () => {
   hasTail = true
   linkedForward = false
 
-  session.setItem('__respond.hasTail', true)
-  session.removeItem('__respond.linkedForward')
+  sessionStorage.setItem('__respond.hasTail', true)
+  sessionStorage.removeItem('__respond.linkedForward')
 
   push(getUrl(), 2)
   await back()
@@ -220,8 +220,8 @@ const removeTail = async force => {
 
   push(url)
 
-  session.removeItem('__respond.hasTail')
-  session.removeItem('__respond.linkedForward')
+  sessionStorage.removeItem('__respond.hasTail')
+  sessionStorage.removeItem('__respond.linkedForward')
 
   hasTail = false
   linkedForward = false
@@ -236,9 +236,9 @@ const getIndex = () => history.state?.index
 
 
 const hydrateFromSessionStorage = () => {
-  linkedForward = session.getItem('__respond.linkedForward')
-  returning = session.getItem('__respond.returning')
-  hasTail = session.getItem('__respond.hasTail')
+  linkedForward = sessionStorage.getItem('__respond.linkedForward')
+  returning = sessionStorage.getItem('__respond.returning')
+  hasTail = sessionStorage.getItem('__respond.hasTail')
 }
 
 
@@ -260,8 +260,8 @@ typeof document !== 'undefined' && document.addEventListener?.('click', () => hm
 // userland api 
 
 export const exitBack = async () => {
-  session.setItem('sessionState', window.store.stringifyState())
-  session.setItem('__respond.returning', true)
+  sessionStorage.setItem('sessionState', window.store.stringifyState())
+  sessionStorage.setItem('__respond.returning', true)
 
   returning = true // browser window can sometimes be cached, and uses existing variables
   returnedBackCached = true
@@ -276,8 +276,8 @@ export const exitBack = async () => {
 export const exitForward = async () => {
   if (!linkedForward) return false
 
-  session.setItem('sessionState', window.store.stringifyState())
-  session.setItem('__respond.returning', true)
+  sessionStorage.setItem('sessionState', window.store.stringifyState())
+  sessionStorage.setItem('__respond.returning', true)
 
   returning = true
   returnedFrontCached = true
@@ -309,7 +309,7 @@ export const createLinkOut = getStore => async (url, e) => {
   }
 
   if (location.host === new URL(url).host) {
-    window.open(url, '_blank') // a host of problems will occur if you open your site twice in the same tab, as they'll share the same session -- apps should be designed to not need reloads, which is especially easy to resolve given Respond keeps pretty much everything in state, including things such as basenames and cachedPaths; if you really need this -- which is a non-ideal workaround in today's reactive landscape -- feel free to work on this file and submit a PR; basically you will have to differentiate between the below session items between multiple tabs somehow; the juice most likely isn't worth the squeeze
+    window.open(url, '_blank') // a host of problems will occur if you open your site twice in the same tab, as they'll share the same sessionStorage -- apps should be designed to not need reloads, which is especially easy to resolve given Respond keeps pretty much everything in state, including things such as basenames and cachedPaths; if you really need this -- which is a non-ideal workaround in today's reactive landscape -- feel free to work on this file and submit a PR; basically you will have to differentiate between the below sessionStorage items between multiple tabs somehow; the juice most likely isn't worth the squeeze
     return
   }
 
@@ -320,11 +320,11 @@ export const createLinkOut = getStore => async (url, e) => {
 
   const json = getStore().stringifyState()
 
-  session.setItem('sessionState', json)
+  sessionStorage.setItem('sessionState', json)
 
-  session.setItem('__respond.hasTail', true)
-  session.setItem('__respond.linkedForward', true)
-  session.setItem('__respond.returning', true)
+  sessionStorage.setItem('__respond.hasTail', true)
+  sessionStorage.setItem('__respond.linkedForward', true)
+  sessionStorage.setItem('__respond.returning', true)
 
   hasTail = true
   linkedForward = true
