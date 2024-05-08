@@ -1,6 +1,6 @@
 {
   "name": "respond-framework",
-  "version": "0.0.73",
+  "version": "0.0.74",
   "description": "create as fast you think",
   "type": "commonjs",
   "main": "./index.js",
@@ -36,6 +36,7 @@
     "babel-plugin-transform-export-default-name": "^2.1.0"
   },
   "dependencies": {
+    "jsonwebtoken": "^8.5.1",
     "launch-editor": "^2.6.1",
     "path-to-regexp": "^6.2.2",
     "qs": "^6.12.1",

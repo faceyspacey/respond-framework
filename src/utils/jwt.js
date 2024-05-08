@@ -5,7 +5,7 @@ import isProd from './isProd.js'
 const isServer = typeof window === 'undefined'
 
 
-export default isProd  && isServer ? jwt : {
+export default isProd && isServer ? jwt : {
   sign(payload, secret) {
     return secret + '_' + JSON.stringify(payload)
   },
