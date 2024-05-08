@@ -1,0 +1,50 @@
+{
+  "name": "respond-framework",
+  "version": "0.0.62",
+  "description": "create as fast you think",
+  "type": "commonjs",
+  "main": "./index.js",
+  "exports": {
+    "./*": "./src/*.js"
+  },
+  "scripts": {
+    "test": "npm test",
+    "build": "rm -rf dist && babel src -d dist && cp package.json dist/package.json && cp LICENSE dist/LICENSE && cp README.md dist/README.md",
+    "deploy": "git add --all && npm version --force patch && npm run build && cd dist && npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/faceyspacey/respond-framework.git"
+  },
+  "keywords": [
+    "javascript",
+    "react",
+    "respond",
+    "redux",
+    "respond-framework"
+  ],
+  "author": "James Gillmore <james@faceyspacey.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/faceyspacey/respond-framework/issues"
+  },
+  "homepage": "https://github.com/faceyspacey/respond-framework#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.24.5",
+    "@babel/core": "^7.24.5",
+    "@babel/plugin-proposal-export-default-from": "^7.24.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.24.1",
+    "@babel/preset-env": "^7.24.5",
+    "@babel/preset-react": "^7.24.1",
+    "babel-plugin-transform-export-default-name": "^2.1.0"
+  },
+  "dependencies": {
+    "launch-editor": "^2.6.1",
+    "path-to-regexp": "^6.2.2",
+    "qs": "^6.12.1",
+    "recursive-readdir-sync": "^1.0.6",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "universal-cookie": "^4.0.4"
+  }
+}

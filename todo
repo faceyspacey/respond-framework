@@ -1,0 +1,44 @@
+createStore.d.ts
+
+declare module 'respond-framework' {
+  interface Options {
+    useSpread?: boolean
+  }
+
+  type foo = (options: Options) => Options
+
+  function createStore(options: Options): foo
+
+  export {
+    createStore
+  }
+}
+
+
+
+NEW UI WORK:
+- naked component functions
+- widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
+- components: Modal, Drawer, TabBar, ListView, Input, Radio, Pressable, Link
+- Docs website, Login, Recipes (plugins, modules)[multi tab recipe like vs code], Feed, Users
+
+
+
+#ErrorBoundary only works with top level Flash state
+#"babel": "NODE_ENV=development WEB=true babel-core ./foo.js",
+
+"start": "NODE_ENV=development BUNDLER=webpack babel-watch --watch webpack --exclude ./respond --exclude ./controllers --exclude ./models --exclude ./utils --exclude ./config.js --exclude ./config.client.js --exclude ./config.server.js --exclude ./permissions.js --exclude ./testing  --exclude ./seed  --exclude ./device  --exclude ./helpers  --exclude ./constants  --exclude ./apis  --exclude ./monkey  --exclude ./validation  --exclude ./ --exclude ./games ./server/index.dev.js",
+
+
+
+isNamespace
+
+dont hide _namespace, _type in state (only in actions)
+wrapModelProxy automatically to docs in state
+
+set replays defaultProductionValue in production
+
+
+PUT ENTIRE STORE IN VALTIO
+- lazy valtio
+- put all store options into valtio state

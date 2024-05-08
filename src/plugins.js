@@ -1,0 +1,1 @@
+export { default as defaultPlugins } from './store/plugins/index.js'
