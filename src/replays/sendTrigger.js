@@ -3,9 +3,11 @@ import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
 import { session } from '../utils/storage.js'
+import isProd from '../utils/isProd.js'
 
 
 export default function (store, eSlice, fullPathAlready = false) {
+  if (isProd) return
   if (store.ctx.ignoreTrigger) return
   if (eSlice.modulePath === 'replayTools' && !this.options.log) return
 
