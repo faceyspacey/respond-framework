@@ -1,3 +1,6 @@
+import { ObjectId } from 'mongodb'
+
+
 export const fromObjectIds = doc => {
   if (doc instanceof ObjectId) {
     return doc.toString()
