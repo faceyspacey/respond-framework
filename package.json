@@ -1,12 +1,9 @@
 {
   "name": "respond-framework",
-  "version": "0.0.63",
+  "version": "0.0.64",
   "description": "create as fast you think",
   "type": "commonjs",
   "main": "./index.js",
-  "exports": {
-    "./*": "./src/*.js"
-  },
   "scripts": {
     "test": "npm test",
     "build": "rm -rf dist && babel src -d dist && cp package.json dist/package.json && cp LICENSE dist/LICENSE && cp README.md dist/README.md",
