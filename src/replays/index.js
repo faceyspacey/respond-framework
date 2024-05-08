@@ -11,6 +11,7 @@ import defaultRestoreSettings from './helpers/restoreSettings.js'
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
+import isProd from '../utils/isProd.js'
 
 
 export default ({
@@ -38,8 +39,8 @@ export default ({
   const config = mergeDeep({ ...configDefault }, conf)
 
   const settings = createSettings(config, options.settings || restoreSettings())
-  const seed = createSeed(settings, options)
-  const token = createToken(settings, seed, options)
+  const seed = isProd ? {} : createSeed(settings, options)
+  const token = isProd ? '' : createToken(settings, seed, options)
 
   const next = { conf, config, replay, options, settings, seed, token, sendTrigger, replayLastEvent, replayEvents, devtoolsIndexes: {} }
   Object.assign(replays, next)
