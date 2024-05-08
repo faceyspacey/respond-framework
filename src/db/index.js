@@ -21,14 +21,14 @@ export default !isProd ? mock : {
   // collection getters 
 
   get collection() {
-    if (this._collection) return this._collection
+    if (this._mongoCollection) return this._mongoCollection
 
     const client = new MongoClient(this.config.DB_CONNECTION_STRING)
     const db = client.db('skins')
 
     if (!this.collectionName) throw new Error('missing "collectionName" property on Model class')
 
-    return this._collection = db.collection(this.collectionName)
+    return this._mongoCollection = db.collection(this.collectionName)
   },
 
 
