@@ -7,7 +7,11 @@ import isProd from '../utils/isProd.js'
 
 
 export default function (store, eSlice, fullPathAlready = false) {
-  if (isProd) return
+  if (isProd) {
+    store.prevState = store.getSnapshot(true)
+    return
+  }
+  
   if (store.ctx.ignoreTrigger) return
   if (eSlice.modulePath === 'replayTools' && !this.options.log) return
 
