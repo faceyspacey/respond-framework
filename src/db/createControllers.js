@@ -45,8 +45,10 @@ const createHandler = ({
     const instance = { ...c, secret }
     const context = { modulePath, controller, method, args, ...rest, request }
     
+    let argString
+
     if (logRequest !== false) {
-      const argString = createParameterString(instance, method, args)
+      argString = createParameterString(instance, method, args)
       console.log(`Respond (REQUEST): db.${controller}.${method}(${argString})`)
     }
 
@@ -54,6 +56,7 @@ const createHandler = ({
     response = response === undefined ? empty : response
 
     if (logResponse !== false) {
+      argString ??= createParameterString(instance, method, args)
       const resString = createResponseString(response)
       console.log(`Respond (RESPONSE): db.${controller}.${method}(${argString}):\n${resString}`)
     }
