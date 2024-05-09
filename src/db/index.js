@@ -9,9 +9,9 @@ import excludeProjectFields from './utils/excludeProjectFields.js'
 
 export default !isProd ? mock : {  
   create(doc) {
-    const instance = { ...this._fromObjectIds(doc) }      // mongo ObjectId objects converted to strings for ez client consumption
-    instance.id ??= doc._id || new ObjectId().toString()  // _id switched to id for standardized consumption
-    delete instance._id                                   // bye bye _id
+    const instance = { ...this._fromObjectIds(doc) }              // mongo ObjectId objects converted to strings for ez client consumption
+    instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
+    delete instance._id                                           // bye bye _id
     
     const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
     return Object.defineProperties(instance, descriptors)
