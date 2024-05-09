@@ -81,8 +81,8 @@ export default {
     return users.filter(u => u.profileComplete)
   },
 
-  async searchGeo(location, skip) {
-    const proj = excludeProjectFields(undefined, this.privateFields)
-    return this._searchGeo(location, { profileComplete: true }, proj, skip)
+  async searchGeo(location, selector, proj, limit, skip) {
+    const proj = excludeProjectFields(proj, this.privateFields)
+    return this._searchGeo(location, { ...selector, profileComplete: true }, proj, limit, skip)
   },
 }

@@ -173,14 +173,17 @@ export default !isProd ? mock : {
 
 
   async findAll(selector, project, sort) {
-    return this.find(selector, project, sort, 1000000000)
+    return this._find(selector, project, sort, 1000000000)
   },
 
 
   // search geo
 
-  async searchGeo({ lng, lat }, selector, proj, $skip = 0, $limit = this.config.listLimit) {
-    console.log('Model.searchGeo', proj)
+  async searchGeo({ lng, lat }, selector, proj, limit = this.config.listLimit, skip = 0) {
+    if (this.config.useLocalDb) {
+      return this._find(selector, proj, undefined, limit, skip)
+    }
+    
     const models = await this.collection.aggregate([
       {
         $geoNear: {
@@ -191,8 +194,8 @@ export default !isProd ? mock : {
         }
       },
       ...(selector ? [{ $match: selector }] : []),
-      { $skip: $skip * $limit },
-      { $limit },
+      { $skip: skip * limit },
+      { $limit: limit },
       ...(proj ? [{ $project: this._toProject(proj) }] : []),
     ]).toArray()
 
@@ -205,7 +208,7 @@ export default !isProd ? mock : {
 
   async search(query, proj, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
     if (this.config.useLocalDb) {
-      return this.find({ $text: { $search: query } }, this._toProject(proj), undefined, limit, skip)
+      return this._find({ $text: { $search: query } }, this._toProject(proj), undefined, limit, skip)
     }
 
     const models = await this.collection.aggregate([
@@ -239,12 +242,12 @@ export default !isProd ? mock : {
   },
 
   async totalPages(selector, limit = 10) {
-    const count = await this.count(this._toObjectIdsSelector(selector))
+    const count = await this._count(this._toObjectIdsSelector(selector))
     return Math.ceil(count / limit)
   },
 
 
-  async joinOne(id, name, proj, projJoin, $sort = { updatedAt: -1, _id: 1 }, $limit = this.config.listLimit, $skip = 0) {
+  async joinOne(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
     const oneToOne = !name.endsWith('s')
     const method = oneToOne ? 'findOne' : 'find'
 
@@ -260,18 +263,18 @@ export default !isProd ? mock : {
     const projectJoin = collection._toProject(projJoin)
 
     let [parent, children] = await Promise.all([
-      this.findOne(id, project),
-      collection[method](selector, projectJoin, $sort, $limit, $skip),
+      this._findOne(id, project),
+      collection[method](selector, projectJoin, sort, limit, skip),
     ])
 
     return { [parentName]: parent, [name]: children }
   },
 
 
-  async join(selector, inner, fk, selectorJoin, proj, projJoin, $sort, $limit = this.config.listLimit, $skip = 0, $sortJoin, $limitJoin) {
+  async join(selector, inner, fk, selectorJoin, proj, projJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin) {
     const outer = this.collectionNamePlural
 
-    $sort = $sort || { updatedAt: -1, id: -1 }
+    sort = sort || { updatedAt: -1, id: -1 }
     fk = fk || this.collectionName + 'Id'
 
     const localField = this._getIdName() // _id || id for CourseModel
@@ -285,16 +288,16 @@ export default !isProd ? mock : {
     projJoin = collection._toProject(projJoin)
     selectorJoin = collection._toObjectIdsSelector(selectorJoin) // joined collection could be CourseModel, in which case we need to use its _toObjectIdsSelector method
 
-    $sort = this._toObjectIdsSelector($sort) // id: -1 needs to be converted to _id: -1 if a regular model, and remain the same if a CourseModel
-    $sortJoin = collection._toObjectIdsSelector($sortJoin)
+    sort = this._toObjectIdsSelector(sort) // id: -1 needs to be converted to _id: -1 if a regular model, and remain the same if a CourseModel
+    sortJoin = collection._toObjectIdsSelector(sortJoin)
 
-    let stages = createJoin(outer, inner, fk, localField, proj, projJoin, selectorJoin, $sortJoin, $limitJoin)
+    let stages = createJoin(outer, inner, fk, localField, proj, projJoin, selectorJoin, sortJoin, limitJoin)
 
     stages = [
       ...(selector ? [{ $match: selector }] : []),
-      { $sort },
-      { $skip: $skip * $limit },
-      { $limit },
+      { $sort: sort },
+      { $skip: skip * limit },
+      { $limit: limit },
       ...stages
     ]
 
@@ -311,7 +314,7 @@ export default !isProd ? mock : {
   },
 
 
-  async agg(selector, stages, proj, $sort = { updatedAt: -1, _id: 1 }, $limit = this.config.listLimit, $skip = 0) {
+  async agg(selector, stages, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
     selector = this._toObjectIdsSelector(selector)
 
     stages = [
@@ -323,9 +326,9 @@ export default !isProd ? mock : {
     
     const docsPromise = this.collection.aggregate([
         ...stages,
-      { $sort },
-      ...($skip ? [{ $skip: $skip * $limit }] : []),
-      { $limit },
+      { $sort: sort },
+      ...(skip ? [{ $skip: skip * limit }] : []),
+      { $limit: skip },
       ...(proj ? [{ $project: this._toProject(proj) }] : []),
     ]).toArray()
 
@@ -342,7 +345,7 @@ export default !isProd ? mock : {
   },
 
 
-  async aggregateStages(selector, proj, $sort = { updatedAt: -1, _id: 1 }, $limit = this.config.listLimit, $skip = 0, countOnly = false) {
+  async aggregateStages(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0, countOnly = false) {
     selector = this._toObjectIdsSelector(selector)
 
     // main selector + agg $sum stages + selectors on $sum stages
@@ -364,7 +367,10 @@ export default !isProd ? mock : {
     // standard sort || $geoNear sort
 
     if (!selector.location && !selector.lastLocation) {
-      stages.push({ $sort })
+      stages.push({ $sort: sort })
+    }
+    else if (this.config.useLocalDb) {
+      stages.push({ $sort: sort })
     }
     else {
       const { lng, lat } = selector.location || selector.lastLocation
@@ -389,8 +395,8 @@ export default !isProd ? mock : {
 
     const docsPromise = this.collection.aggregate([
         ...stages,
-        { $skip: $skip * $limit },
-        { $limit },
+        { $skip: skip * limit },
+        { $limit: limit },
         ...(proj && { $project: this._toProject(proj) }),
     ]).toArray()
 

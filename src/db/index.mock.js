@@ -203,7 +203,7 @@ export default {
 
   // search geo
 
-  async searchGeo({ lng, lat }, selector, project, skip, limit = this.config.listLimit) {
+  async searchGeo({ lng, lat }, selector, project, limit = this.config.listLimit, skip) {
     return this._find(selector, project, { updatedAt: -1 }, limit, skip)
   },
 

@@ -1,8 +1,9 @@
 export const db = {}
 
 export default (dbRaw, options = {}) => {
-  const { commonProperties = [], commonModelProperties = [], models = [], config = {} } = options
-
+  const { commonProperties = [], commonModelProperties = [], models = [] } = options
+  const config = { listLimit: 10, ...options.config }
+  
   Object.keys(dbRaw).forEach(k => {
     const collection = dbRaw[k]
     const collectionName = k
