@@ -82,7 +82,7 @@ export default {
   },
 
   async searchGeo(location, selector, proj, limit, skip) {
-    const proj = excludeProjectFields(proj, this.privateFields)
+    proj = excludeProjectFields(proj, this.privateFields)
     return this._searchGeo(location, { ...selector, profileComplete: true }, proj, limit, skip)
   },
 }
