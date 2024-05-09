@@ -1,28 +1,5 @@
-
-export default process.env.NODE_ENV == 'production' ? pickProd : (collection, doc, project) => {
-  if (!doc) return undefined
-  if (!project) return collection.create(doc)
-  if (Object.keys(project).length === 0) return collection.create(doc)
-  
-  const { id, ...proj } = project
-
-  const values = Object.values(proj)
-
-  const isExclude = values.every(field => field === 0)
-  const isInclude = values.every(field => field === 1)
-
-  if (!isExclude && !isInclude) {
-    throw Error('respond: invalid mongo project: both exclusions + inclusions are provided, however only one kind is allowed')
-  }
-
-  doc = isExclude ? exclude(doc, project) : include(doc, project)
-
-  return collection.create(doc)
-}
-
-
-
-function pickProd(doc, project) {
+export default function pick(doc, project) {
+  if (!doc) return
   if (!project) return doc
   if (Object.keys(project).length === 0) return doc
   
@@ -60,3 +37,13 @@ const include = (doc, project) =>
     acc[field] = doc[field]
     return acc
   }, {})
+
+
+
+
+// db mock helper
+
+export const pickAndCreate = (collection, doc, project) => {
+  const picked = pick(doc, project)
+  return picked ? collection.create(picked) : undefined
+}

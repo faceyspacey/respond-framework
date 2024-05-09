@@ -1,6 +1,6 @@
 import objectId from '../utils/objectIdDevelopment.js'
 import applySelector from './utils/applySelector.js'
-import pick from './utils/pick.js'
+import { pickAndCreate } from './utils/pick.js'
 
 
 export default {  
@@ -62,7 +62,7 @@ export default {
 
     this.docs[id] = this.create(doc)
     
-    return pick(this, this.docs[id], proj)
+    return pickAndCreate(this, this.docs[id], proj)
   },
 
 
@@ -82,7 +82,7 @@ export default {
       this.docs[model.id] = model
     }
 
-    return pick(this, model, proj)
+    return pickAndCreate(this, model, proj)
   },
 
 
@@ -147,8 +147,8 @@ export default {
   
   async findOne(selector, project, sort = { updatedAt: -1 }) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
-    if (typeof selector === 'string') return pick(this, this.docs[selector], project)
-    if (selector.id) return pick(this, this.docs[selector.id], project)
+    if (typeof selector === 'string') return pickAndCreate(this, this.docs[selector], project)
+    if (selector.id) return pickAndCreate(this, this.docs[selector.id], project)
 
     const models = await this._find(selector, project, sort, 1)
     return models[0]
@@ -176,7 +176,7 @@ export default {
 
     docs = direction === -1 ? docs.sort(desc) : docs.sort(asc)
 
-    return docs.slice(start, end).map(doc => pick(this, doc, project))
+    return docs.slice(start, end).map(doc => pickAndCreate(this, doc, project))
   },
 
   async find(...args) {
