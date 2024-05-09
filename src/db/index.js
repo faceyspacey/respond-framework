@@ -4,6 +4,7 @@ import createJoin from './utils/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds } from './utils/toFromObjectIds.js'
 import pick from './utils/pick.js'
 import isProd from '../utils/isProd.js'
+import excludeProjectFields from './utils/excludeProjectFields.js'
 
 
 export default !isProd ? mock : {  
@@ -149,6 +150,10 @@ export default !isProd ? mock : {
     return model && this.create(model)
   },
 
+  async findOneSafe(selector, proj, sort) {
+    proj = excludeProjectFields(proj, this.privateFields)
+    return this.findOne(selector, proj, sort)
+  },
 
   // find multi
 
