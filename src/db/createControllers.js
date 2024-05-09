@@ -2,7 +2,6 @@ import Developer from '../server/DeveloperController.js'
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
 import secretMock from './secret.mock.js'
 import createModules from './utils/createModules.js'
-import { empty, createParameterString, createResponseString } from './utils/logServerRequests.js'
 
 
 export default opts => {
@@ -37,6 +36,10 @@ const createHandler = ({
   
     const c = modules[modulePath]?.[controller] // DYNAMIC MODULE-SPECIFIC SELECTION, eg: allControllers['admin.foo'].user
     
+    if (logRequest !== false) {
+      console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath, controller, method, args, ...rest })
+    }
+
     if (!c) {
       res.json({ error: 'controller-not-permitted', params: { modulePath, controller, method } })
       return
@@ -44,21 +47,12 @@ const createHandler = ({
 
     const instance = { ...c, secret }
     const context = { modulePath, controller, method, args, ...rest, request }
-    
-    let argString
-
-    if (logRequest !== false) {
-      argString = createParameterString(instance, method, args)
-      console.log(`Respond (REQUEST): db.${controller}.${method}(${argString})`)
-    }
 
     let response = await instance.callFilteredByRole(context)
-    response = response === undefined ? empty : response
+    response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned
 
     if (logResponse !== false) {
-      argString ??= createParameterString(instance, method, args)
-      const resString = createResponseString(response)
-      console.log(`Respond (RESPONSE): db.${controller}.${method}(${argString}):\n${resString}`)
+      console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath, controller, method, args, ...rest, response })
     }
     
     if (response?.error) {
@@ -90,16 +84,12 @@ const createHandlerDev = opts => {
     const context = { controller, method, args, ...rest, request, io }
     const instance = { ...Developer, ...opts.developerControllerMixin, context }
     
-    const argString = createParameterString(instance, method, args)
-  
-    console.log(`Respond (REQUEST): db.${controller}.${method}(${argString})`)
+    console.log(`Respond (REQUEST): db.${controller}.${method}`, { controller, method, args })
   
     let response = await instance.callFilteredByRole(context)
-    response = response === undefined ? empty : response
+    response = response === undefined ? {} : response
   
-    const resString = createResponseString(response)
-  
-    console.log(`Respond (RESPONSE): db.${controller}.${method}(${argString}):\n${resString}`)
+    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { controller, method, args, response })
     
     res.json(response)
   }
