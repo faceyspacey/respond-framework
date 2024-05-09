@@ -29,7 +29,7 @@ export default store => {
     send(e) {
       if (silent(store, e)) return
 
-      const { evsIndex, evs } = store.state.replayTools
+      const { evsIndex, evs = {} } = store.state.replayTools || {} // replayTools not available in production
       const isTrigger = evs[evsIndex]?.event === e.event // works as long as you don't send the same event in a loop, which is very unlikely
 
       triggerIndexes[++this.index] = evsIndex
@@ -44,7 +44,7 @@ export default store => {
       if (silent(store, origin, true)) return
       if (!origin) return this.sendNotification(n)
 
-      triggerIndexes[++this.index] = store.state.replayTools.evsIndex
+      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
 
       const arrow = n.returned === false ? '<- ' : '-> '
 
@@ -64,7 +64,7 @@ export default store => {
     },
 
     forceNotification(n, state = store.state) {
-      triggerIndexes[++this.index] = store.state.replayTools.evsIndex
+      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
 
       const isEvent = typeof n.event === 'function'
 
@@ -82,7 +82,7 @@ export default store => {
     sendPrevented(n, e) {
       if (silent(store, e)) return
 
-      triggerIndexes[++this.index] = store.state.replayTools.evsIndex
+      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
 
       e = fullPath(e)
 
@@ -95,7 +95,7 @@ export default store => {
     sendRedirect(n, e) {
       if (silent(store, e)) return
 
-      triggerIndexes[++this.index] = store.state.replayTools.evsIndex
+      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
 
       e = fullPath(e)
       const redirect = fullPath(n.returned)
