@@ -32,6 +32,7 @@ NEW UI WORK:
 
 
 isNamespace
+duplicating find into _find
 
 dont hide _namespace, _type in state (only in actions)
 wrapModelProxy automatically to docs in state

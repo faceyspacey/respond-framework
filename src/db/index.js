@@ -8,9 +8,9 @@ import isProd from '../utils/isProd.js'
 
 export default !isProd ? mock : {  
   create(doc) {
-    const instance = { ...fromObjectIds(doc) }
-    instance.id ??= this._id || (new ObjectId).toString()
-    delete this._id
+    const instance = { ...this._fromObjectIds(doc) }      // mongo ObjectId objects converted to strings for ez client consumption
+    instance.id ??= doc._id || new ObjectId().toString()  // _id switched to id for standardized consumption
+    delete this._id                                       // bye bye _id
     
     const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
     return Object.defineProperties(instance, descriptors)
@@ -25,8 +25,6 @@ export default !isProd ? mock : {
 
     const client = new MongoClient(this.config.connectionString)
     const db = client.db('skins')
-
-    if (!this.collectionName) throw new Error('missing "collectionName" property on Model class')
 
     return this._mongoCollection = db.collection(this.collectionName)
   },
@@ -50,7 +48,7 @@ export default !isProd ? mock : {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
-    doc = toObjectIds(doc)
+    doc = this._toObjectIds(doc)
     await this.collection.insertOne(doc)
     return this.create(pick(doc, proj))
   },
@@ -67,11 +65,11 @@ export default !isProd ? mock : {
 
     const { id, createdAt: _, updatedAt: __, lastRoundAt: ___, finishedAt: ____, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
 
-    selector = toObjectIdsSelector(id ? { id } : selector)
+    selector = this._toObjectIdsSelector(id ? { id } : selector)
 
 
     const result = await this.collection.findOneAndUpdate(selector, {
-      $set: toObjectIds(doc),
+      $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
     }, { projection: this._toProject(proj), returnDocument: 'after' })
 
@@ -85,7 +83,7 @@ export default !isProd ? mock : {
 
 
   async incrementOne(selector, $inc) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     delete selector.createdAt
     delete selector.updatedAt
@@ -100,7 +98,7 @@ export default !isProd ? mock : {
 
   async updateMany(selector, $set) {
     try {
-      await this.collection.updateMany(toObjectIdsSelector(selector), { $set: toObjectIds($set) })
+      await this.collection.updateMany(this._toObjectIdsSelector(selector), { $set: this._toObjectIds($set) })
     }
     catch(error) {
       console.error(`${this.collectionName}.updateMany Error`, error) // allow calling code to swallow
@@ -111,12 +109,12 @@ export default !isProd ? mock : {
   // delete
 
   async removeOne(selector) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
     await this.collection.deleteOne(selector)
   },
 
   async deleteMany(selector) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
     await this.collection.deleteMany(selector)
   },
 
@@ -124,9 +122,9 @@ export default !isProd ? mock : {
   // upsert
 
   async upsert(selector, doc, insertOnlyDoc, proj) {
-    const result = await this.collection.findOneAndUpdate(toObjectIdsSelector(selector), {
-      $set: toObjectIds(doc),
-      $setOnInsert: toObjectIdsSelector({ ...selector, ...insertOnlyDoc, createdAt: new Date }),
+    const result = await this.collection.findOneAndUpdate(this._toObjectIdsSelector(selector), {
+      $set: this._toObjectIds(doc),
+      $setOnInsert: this._toObjectIdsSelector({ ...selector, ...insertOnlyDoc, createdAt: new Date }),
       $currentDate: { updatedAt: true }
     }, { upsert: true, projection: this._toProject(proj), returnDocument: 'after' })
 
@@ -144,7 +142,7 @@ export default !isProd ? mock : {
   async findOne(selector, proj, sort = { updatedAt: -1 }) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
 
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     const model = await this.collection.findOne(selector, { projection: this._toProject(proj), sort })
 
@@ -155,7 +153,7 @@ export default !isProd ? mock : {
   // find multi
 
   async find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     const models = await this.collection
       .find(selector)
@@ -232,11 +230,11 @@ export default !isProd ? mock : {
   // pagination
 
   async count(selector) {
-    return this.collection.count(toObjectIdsSelector(selector))
+    return this.collection.count(this._toObjectIdsSelector(selector))
   },
 
   async totalPages(selector, limit = 10) {
-    const count = await this.count(toObjectIdsSelector(selector))
+    const count = await this.count(this._toObjectIdsSelector(selector))
     return Math.ceil(count / limit)
   },
 
@@ -277,12 +275,12 @@ export default !isProd ? mock : {
     const collection = db[nameSingular]
 
     proj = this._toProject(proj)
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     projJoin = collection._toProject(projJoin)
     selectorJoin = collection._toObjectIdsSelector(selectorJoin) // joined collection could be CourseModel, in which case we need to use its _toObjectIdsSelector method
 
-    $sort = toObjectIdsSelector($sort) // id: -1 needs to be converted to _id: -1 if a regular model, and remain the same if a CourseModel
+    $sort = this._toObjectIdsSelector($sort) // id: -1 needs to be converted to _id: -1 if a regular model, and remain the same if a CourseModel
     $sortJoin = collection._toObjectIdsSelector($sortJoin)
 
     let stages = createJoin(outer, inner, fk, localField, proj, projJoin, selectorJoin, $sortJoin, $limitJoin)
@@ -309,7 +307,7 @@ export default !isProd ? mock : {
 
 
   async agg(selector, stages, proj, $sort = { updatedAt: -1, _id: 1 }, $limit = this.config.listLimit, $skip = 0) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     stages = [
       ...(selector ? [{ $match: selector }] : []),
@@ -340,7 +338,7 @@ export default !isProd ? mock : {
 
 
   async aggregateStages(selector, proj, $sort = { updatedAt: -1, _id: 1 }, $limit = this.config.listLimit, $skip = 0, countOnly = false) {
-    selector = toObjectIdsSelector(selector)
+    selector = this._toObjectIdsSelector(selector)
 
     // main selector + agg $sum stages + selectors on $sum stages
 
@@ -411,7 +409,23 @@ export default !isProd ? mock : {
   },
 
 
-  // utils
+  // _id <-> id conversion utils (here as methods so they can be overriden in userland if a different approach is desired)
+
+  _getIdName() {
+    return '_id'
+  },
+
+  _toObjectIds(doc) {
+    return toObjectIds(doc)
+  },
+
+  _fromObjectIds(doc) {
+    return fromObjectIds(doc)
+  },
+
+  _toObjectIdsSelector(selector) {
+    return toObjectIdsSelector(selector)
+  },
 
   _toProject(project) {
     if (project?.id !== undefined) {
@@ -420,9 +434,5 @@ export default !isProd ? mock : {
     }
 
     return project
-  },
-
-  _getIdName() {
-    return '_id'
   },
 }
