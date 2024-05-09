@@ -252,7 +252,7 @@ export default !isProd ? mock : {
     const method = oneToOne ? 'findOne' : 'find'
 
     const nameSingular = oneToOne ? name : name.slice(0, -1)
-    const collection = db[nameSingular]
+    const collection = this.getDb()[nameSingular]
 
     const parentName = this.collectionName
     const fk = parentName + 'Id'
@@ -280,7 +280,7 @@ export default !isProd ? mock : {
     const localField = this._getIdName() // _id || id for CourseModel
 
     const nameSingular = inner.slice(0, -1)
-    const collection = db[nameSingular]
+    const collection = this.getDb()[nameSingular]
 
     proj = this._toProject(proj)
     selector = this._toObjectIdsSelector(selector)
