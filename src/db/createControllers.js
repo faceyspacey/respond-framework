@@ -84,12 +84,12 @@ const createHandlerDev = opts => {
     const context = { controller, method, args, ...rest, request, io }
     const instance = { ...Developer, ...opts.developerControllerMixin, context }
     
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, { controller, method, args })
+    console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath: '', controller, method, args, ...rest })
   
     let response = await instance.callFilteredByRole(context)
     response = response === undefined ? {} : response
   
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { controller, method, args, response })
+    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath: '', controller, method, args, ...rest, response })
     
     res.json(response)
   }

@@ -67,13 +67,8 @@ export default  {
 
   // helper method available to all controllers
 
-  async findCurrentUser(safe = true) {
+  async findCurrentUser() {
     if (!this.user) return null
-
-    if (safe) {
-      if (this._currUserSafe) return this._currUserSafe // cache for request
-      return this._currUserSafe = await db.user.findOneSafe(this.user.id)
-    }
 
     if (this._currUser) return this._currUser // cache for request
     return this._currUser = await db.user.findOne(this.user.id)
