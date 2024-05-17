@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import recursiveReadSync from 'recursive-readdir-sync'
+import * as recursiveReadSync from 'recursive-readdir-sync'
 
 
 
