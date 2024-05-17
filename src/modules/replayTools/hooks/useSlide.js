@@ -5,13 +5,13 @@ import { useNativeDriver } from '../../../utils.js'
 
 export default (open, width) => {
   const [state, set] = useState(open)
-  const distance = useRef(new Animated.Value(open ? 10 : -width)).current
+  const distance = useRef(new Animated.Value(open ? width : 0)).current
 
   useEffect(() => {   
     if (open === state) return  
 
     Animated.timing(distance, {
-      toValue: open ? 10 : -width,
+      toValue: open ? width : 0,
       duration: 120,
       easing: Easing.sin,
       useNativeDriver,

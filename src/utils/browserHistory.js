@@ -1,6 +1,9 @@
 import { Linking } from 'react-native'
+import { isDev, isNative, isTest } from './bools.js'
+import sessionStorage from './sessionStorage.js'
 import createChangePath, { push, replace } from './changePath.js'
 import { pollCondition } from './timeout.js'
+import { cleanLocation } from './url.js'
 
 let linkedForward
 let returning
@@ -125,8 +128,7 @@ const changePath = async (e, drain) => {
 
   workaroundTailUrl = false
 
-  const path = store.fromEvent(e).pathname
-  const url = path + location.search // allow for development reload of current page with developer query params still in place
+  const { url } = store.fromEvent(e)
 
   const index = getIndex()
 
@@ -194,8 +196,8 @@ const addTail = async () => {
   hasTail = true
   linkedForward = false
 
-  sessionStorage.setItem('__respond.hasTail', true)
-  sessionStorage.removeItem('__respond.linkedForward')
+  sessionStorage.setItem('hasTail', true)
+  sessionStorage.removeItem('linkedForward')
 
   push(getUrl(), 2)
   await back()
@@ -220,15 +222,15 @@ const removeTail = async force => {
 
   push(url)
 
-  sessionStorage.removeItem('__respond.hasTail')
-  sessionStorage.removeItem('__respond.linkedForward')
+  sessionStorage.removeItem('hasTail')
+  sessionStorage.removeItem('linkedForward')
 
   hasTail = false
   linkedForward = false
 }
 
 
-const getUrl = () => location.pathname + location.search
+const getUrl = () => cleanLocation(location).url
 
 const getIndex = () => history.state?.index
 
@@ -236,15 +238,16 @@ const getIndex = () => history.state?.index
 
 
 const hydrateFromSessionStorage = () => {
-  linkedForward = sessionStorage.getItem('__respond.linkedForward')
-  returning = sessionStorage.getItem('__respond.returning')
-  hasTail = sessionStorage.getItem('__respond.hasTail')
+  linkedForward = sessionStorage.getItem('linkedForward')
+  returning = sessionStorage.getItem('returning')
+  hasTail = sessionStorage.getItem('hasTail')
 }
 
 
 const isDrainsDisabled = store => {
-  if (process.env.NODE_ENV === 'test') return true
-  if (process.env.NODE_ENV === 'development' && !store.options.enableDrainsInDevelopment) return true
+  if (isTest) return true
+  if (isNative) return true
+  if (isDev && !store.options.enableDrainsInDevelopment) return true
 
   const { drainBack, drainForward } = store.events
   const hasDrains = drainBack || drainForward
@@ -261,7 +264,7 @@ typeof document !== 'undefined' && document.addEventListener?.('click', () => hm
 
 export const exitBack = async () => {
   sessionStorage.setItem('sessionState', window.store.stringifyState())
-  sessionStorage.setItem('__respond.returning', true)
+  sessionStorage.setItem('returning', true)
 
   returning = true // browser window can sometimes be cached, and uses existing variables
   returnedBackCached = true
@@ -277,7 +280,7 @@ export const exitForward = async () => {
   if (!linkedForward) return false
 
   sessionStorage.setItem('sessionState', window.store.stringifyState())
-  sessionStorage.setItem('__respond.returning', true)
+  sessionStorage.setItem('returning', true)
 
   returning = true
   returnedFrontCached = true
@@ -322,9 +325,9 @@ export const createLinkOut = getStore => async (url, e) => {
 
   sessionStorage.setItem('sessionState', json)
 
-  sessionStorage.setItem('__respond.hasTail', true)
-  sessionStorage.setItem('__respond.linkedForward', true)
-  sessionStorage.setItem('__respond.returning', true)
+  sessionStorage.setItem('hasTail', true)
+  sessionStorage.setItem('linkedForward', true)
+  sessionStorage.setItem('returning', true)
 
   hasTail = true
   linkedForward = true

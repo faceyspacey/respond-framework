@@ -3,11 +3,13 @@ import Pressable from '../widgets/Pressable.js'
 import Gear from '../icons/Gear.js'
 import Layout from './Layout.js'
 import { colors } from '../styles.js'
+import { isTest } from '../../../utils/bools.js'
 
 
-const ReplayTools = (props, { toggle }, { open }, { replays }) => {
+export default (props, { toggle }, { open }, { replays }) => {
+  if (isTest) return
   const { hide, position } = replays.options
-  if (process.env.NODE_ENV !== 'development' || hide) return
+  if (hide) return
 
   const horizontal = position?.left ? 'left' : 'right'
   const vertical = position?.top ? 'top' : 'bottom'
@@ -27,6 +29,3 @@ const ReplayTools = (props, { toggle }, { open }, { replays }) => {
     </>
   )
 }
-
-
-export default process.env.NODE_ENV !== 'development' ? function() {} : ReplayTools

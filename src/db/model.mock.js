@@ -7,7 +7,7 @@ export default {
       Object.assign(this, moreDoc)
     }
 
-    const { docs } = this.getDb()[this.collectionName]
+    const { docs } = this.getDb()[this._name]
 
     const doc = docs[this.id] || {} // update || create
     docs[this.id] = Object.assign(doc, this) 
@@ -16,7 +16,7 @@ export default {
   },
 
   async remove() {
-    const { docs } = this.getDb()[this.collectionName]
+    const { docs } = this.getDb()[this._name]
     delete docs[this.id]
     return { id: this.id }
   }

@@ -21,7 +21,7 @@ export default getStore => {
       await dispatchPlugins([start, ..._plugins], store, e)
     }
     catch (error) {
-      await store.onError(error, 'dispatch', e)
+      await store.onError({ error, kind: 'dispatch', e })
     }
   }
 }

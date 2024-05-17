@@ -1,15 +1,15 @@
 import traverseModules from '../../utils/traverseModules.js'
 
 
-export default (store, e) => {
-  let promises
-
+export default async (store, e) => {
   if (store.ctx.init && !e.meta.skipped) {
     applyInitProperties(store, e)
-    promises = loadPlugins(store, e)
+
+    const res = await loadPlugins(store, e)
+    if (res.includes(false)) return false
   }
 
-  if (e.event.path && store.cache?.has(e)) {
+  if (e.event.path && store.cache.has(e)) {
     e.cached = true
   }
 
@@ -17,9 +17,8 @@ export default (store, e) => {
   store.replays.sendTrigger(store, e)
 
   if (e.meta.skipped) return false
-
-  return promises // await plugins.load
 }
+
 
 
 const applyInitProperties = (store, e) => {
@@ -30,7 +29,7 @@ const applyInitProperties = (store, e) => {
 
 
 const loadPlugins = async (store, e) => {
-  let promises = []
+  const promises = []
 
   traverseModules(store.getStore(), store => {
     store.topModule._plugins.forEach(p => {
@@ -41,6 +40,5 @@ const loadPlugins = async (store, e) => {
     })
   })
 
-  const res = await Promise.all(promises)
-  if (res.includes(false)) return false
+  return Promise.all(promises)
 }

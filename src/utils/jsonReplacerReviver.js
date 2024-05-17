@@ -16,10 +16,12 @@ export const replacer = (k, v) => {
 }
 
 
+const dateKeyReg = /At$/
+
 
 export const createReviver = events => {
   if (!events) {
-    return (k, v) => (/At$/.test(k) && typeof v !== 'object' && v)
+    return (k, v) => (dateKeyReg.test(k) && typeof v !== 'object' && v)
       ? new Date(v)
       : v
   }
@@ -29,7 +31,7 @@ export const createReviver = events => {
       return sliceByModulePath(events, v.type)
     }
     
-    return (/At$/.test(k) && typeof v !== 'object' && v)
+    return (dateKeyReg.test(k) && typeof v !== 'object' && v)
       ? new Date(v)
       : v
   }
@@ -37,7 +39,24 @@ export const createReviver = events => {
 
 
 
+export const reviveDates = (v, k) => {
+  if (k && /At$/.test(k) && typeof v !== 'object' && v) {
+    return new Date(v)
+  }
+
+  if (!v || typeof v !== 'object') return v
+
+  if (Array.isArray(v)) return v.map(v2 => reviveDates(v2))
   
+  return Object.keys(v).reduce((acc, k) => {
+    acc[k] = reviveDates(v[k], k)
+    return acc
+  }, {})
+}
+
+
+  
+
 export const reviveObject = (events, obj) => {
   if (!obj || typeof obj !== 'object' || obj instanceof Date) return obj
   if (Array.isArray(obj)) return obj.map(v => reviveObject(events, v))

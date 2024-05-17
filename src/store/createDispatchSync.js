@@ -23,7 +23,7 @@ export default getStore => {
       return dispatchPlugins([start, ..._pluginsSync], store, e)
     }
     catch (error) {
-      store.onError(error, 'dispatch', e)
+      store.onError({ error, kind: 'dispatch', e })
     }
   }
 }
@@ -40,7 +40,7 @@ const dispatchPlugins = (plugins, store, e) => {
     if (i === last) {
       return Promise.resolve(plugin(store, e, true))
         .then(res => res !== false && e.event.end?.(store, { ...e, ...res })) // last plugin can be async, since it runs after reduction
-        .catch(error => store.onError(error, 'dispatch', e))
+        .catch(error => store.onError({ error, kind: 'dispatch', e }))
     }
 
     const res = plugin(store, e, true)

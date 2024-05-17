@@ -41,24 +41,17 @@ export const loading = (_, e, { state }) => {
 
 
 export const form = (state, e, store) => {
-  const { events, replays } = store
+  if (!e.form) return state
 
-  if (state === undefined) return replays.settings
-  if (e.event === events.settings) return replays.settings // populate with settings from localStorage
+  if (e.form.module === undefined) return { ...state, ...e.form } // edit settings form
 
-  if (e.form) {
-    if (e.form.module === undefined) return { ...state, ...e.form } // edit settings form
+  const modulePath = e.form.module
+  const slicedEvents = sliceByModulePath(store.getStore().eventsAll, modulePath)
 
-    const modulePath = e.form.module
-    const slicedEvents = sliceByModulePath(store.getStore().eventsAll, modulePath)
+  const options = createPathOptions(slicedEvents, modulePath, store)
+  const path = options[0]?.value || '/' // also set form.path value to first option when changing modules
 
-    const options = createPathOptions(slicedEvents, modulePath, store)
-    const path = options[0]?.value || '/' // also set form.path value to first option when changing modules
-
-    return { ...state, ...e.form, path }
-  }
-
-  return state
+  return { ...state, ...e.form, path }
 }
 
 

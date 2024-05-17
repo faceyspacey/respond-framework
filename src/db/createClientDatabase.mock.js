@@ -2,12 +2,13 @@ import createDeveloperController from './createDeveloperController.js'
 import simulateLatency from '../utils/simulateLatency.js'
 import secretMock from './secret.mock.js'
 import cleanLikeProduction from './utils/cleanLikeProduction.js'
-import createModules from './utils/createModules.js'
+import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
 
 
 export default topModule => {
   const options = {
+    nested: false,
     simulateLatency,
     secret: secretMock,
     getContext() {},
@@ -17,7 +18,7 @@ export default topModule => {
     ...topModule.db
   }
   
-  options.modules = createModules(topModule)
+  options._controllers = createControllers(topModule, options)
 
   const db = createDbProxy({ options })
 
@@ -33,7 +34,9 @@ export const createControllerMethod = (db, controller, method, modulePath = '') 
   const { options } = db
 
   return async function(...argsRaw) {
-    const c = options.modules[modulePath][controller] // DYNAMIC MODULE-SPECIFIC SELECTION, eg: modules['admin.foo'].user
+    const c = options.nested
+      ? options._controllers[modulePath][controller] // DYNAMIC MODULE-SPECIFIC SELECTION, eg: _controllers['admin.foo'].user
+      : options._controllers[controller]
 
     if (!c) {
       throw new Error(`controller "${controller}" does not exist in ${modulePath ? `module "${modulePath}"` : `top module`}`)
@@ -48,7 +51,7 @@ export const createControllerMethod = (db, controller, method, modulePath = '') 
     const context = { ...ctx, modulePath, controller, method, args, first, request: {} }
 
     const instance = { ...c, secret: options.secret }
-    const res = await instance.callFilteredByRole(context)
+    const res = await instance._callFilteredByRole(context)
 
     options.madeFirst = true
 

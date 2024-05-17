@@ -1,4 +1,4 @@
-import isProd from '../../utils/isProd.js'
+import { isProd } from '../../utils/bools.js'
 
 
 export default (config, settings = {}) => {

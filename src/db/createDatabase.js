@@ -3,22 +3,22 @@ export const db = {}
 export default (dbRaw, options = {}) => {
   const { commonProperties = [], commonModelProperties = [], models = [] } = options
   const config = { listLimit: 10, ...options.config }
-  
+
   Object.keys(dbRaw).forEach(k => {
     const collection = dbRaw[k]
-    const collectionName = k
-    const collectionNamePlural = k + 's'
+    const _name = k
+    const _namePlural = k + 's'
 
     const mixins = models.map(m => m[k]).filter(m => m)
     
     const getDb = () => db
-    const baseProps = { getDb, collectionName, collectionNamePlural }
+    const baseProps = { getDb, _name, _namePlural }
     const model = combineMixins(baseProps, ...commonModelProperties.map(c => _(c)), ...commonModelProperties, ...mixins)
 
     const docsBeforeHMR = db[k]?.docs
 
     const getModel = () => model
-    const basePropsDb = { getDb, getModel, collectionName, collectionNamePlural, config }
+    const basePropsDb = { getDb, getModel, _name, _namePlural, config }
     db[k] = combineMixins(basePropsDb, ...commonProperties.map(c => _(c)), ...commonProperties, collection)
     
     if (docsBeforeHMR) {

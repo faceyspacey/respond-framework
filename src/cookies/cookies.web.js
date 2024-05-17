@@ -2,6 +2,8 @@ import UniversalCookie from 'universal-cookie'
 
 
 export default () => {
+  if (_cookies) return _cookies
+  
   class Cookies extends UniversalCookie {
     get(k) {
       return super.get(k)
@@ -24,5 +26,7 @@ export default () => {
     }
   }
   
-  return new Cookies
+  return _cookies = new Cookies
 }
+
+let _cookies

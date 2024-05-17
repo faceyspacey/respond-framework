@@ -1,42 +1,16 @@
 import { ObjectId } from 'mongodb'
 
 
-export const fromObjectIds = doc => {
-  if (doc instanceof ObjectId) {
-    return doc.toString()
-  }
-  else if (doc instanceof Date || doc instanceof RegExp) {
-    return doc
-  }
-  else if (Array.isArray(doc)) {
-    return doc.map(v => fromObjectIds(v))
-  }
-  else if (doc && typeof doc === 'object') {
-    return Object.keys(doc).reduce((acc, k) => {
-      acc[k] = fromObjectIds(doc[k])
-      return acc
-    }, {})
-  }
-
-  return doc // primitive
-}
-
-
-
-
-export const toObjectIds = (doc, key, isFk) => {
+export const toObjectIds = (doc, key) => {
   if (doc instanceof ObjectId || doc instanceof Date || doc instanceof RegExp) {
     return doc
   }
   else if (key && isForeignOrLocalKey(key) && isValidObjectId(doc)) {
     return new ObjectId(doc)
   }
-  else if (isFk && isValidObjectId(doc)) { // elements of an array, eg: $in: ['63e2b73f906c626121ecf696', '63e2b73f906c626121ecf697']
-    return new ObjectId(doc)
-  }
   else if (Array.isArray(doc)) {
-    return isForeignKeyPlural(key)
-      ? doc.map(v => toObjectIds(v, undefined, true)) // require arrays of IDs to be assigned to, eg doc.friendIds, to ensure other 24 character strings aren't treated as ObjectIds
+    return isArrayOfIds(doc[0])
+      ? doc.map(v => new ObjectId(v)) // require arrays of IDs to be assigned to, eg doc.friendIds, to ensure other 24 character strings aren't treated as ObjectIds
       : doc.map(v => toObjectIds(v))
   }
   else if (typeof doc === 'object' && doc !== null) {
@@ -48,8 +22,6 @@ export const toObjectIds = (doc, key, isFk) => {
 
   return doc // primitive
 }
-
-
 
 
 export const toObjectIdsSelector = selector => {
@@ -71,13 +43,50 @@ export const toObjectIdsSelector = selector => {
 }
 
 
+export const resolveId = field => {
+  if (field === 'id') {
+    return '_id'
+  }
+  else if (field === 'forceId') {
+    return 'id' // id can be used on actual mongo docs, such as with collections that have both an _id and id field
+  }
+
+  return field
+}
+
 
 
 const isValidObjectId = str => ObjectId.isValid(str) && str.length === 24
 
-const isForeignOrLocalKey = key => endsWithIdReg.test(key) || key === '_id'
+const isForeignOrLocalKey = key => endsWithIdReg.test(key)
 
-const isForeignKeyPlural = key => endsWithIdsReg.test(key)
+const isForeignKeyPlural = key => endsWithIdsReg.test(key) || '$in'
 
-const endsWithIdReg = /Id$/
+const isArrayOfIds = firstElement => firstElement && isValidObjectId(firstElement)
+
+
+const endsWithIdReg = /id$/i
 const endsWithIdsReg = /Ids$/
+
+
+
+
+export const fromObjectIds = doc => {
+  if (doc instanceof ObjectId) {
+    return doc.toString()
+  }
+  else if (doc instanceof Date || doc instanceof RegExp) {
+    return doc
+  }
+  else if (Array.isArray(doc)) {
+    return doc.map(v => fromObjectIds(v))
+  }
+  else if (doc && typeof doc === 'object') {
+    return Object.keys(doc).reduce((acc, k) => {
+      acc[k] = fromObjectIds(doc[k])
+      return acc
+    }, {})
+  }
+
+  return doc // primitive
+}

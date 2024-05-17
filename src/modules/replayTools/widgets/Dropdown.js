@@ -84,6 +84,7 @@ const Option = ({ name, value, label = value, onPress, event, last, styleOption,
 
 const s = StyleSheet.create({
   c: {
+    position: 'relative',
     height: 35,
     marginTop: 9,
     paddingHorizontal: 12,
@@ -92,11 +93,11 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     borderRadius: 5,
     backgroundColor: colors.navy,
-
   },
 
   menu: {
     position: 'absolute',
+    zIndex: 1,
     top: 35,
     left: 0,
     width: '100%',

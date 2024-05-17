@@ -1,175 +1,177 @@
-import jwt from '../utils/jwt.js'
-import stringToRegex, { isRegexString } from './utils/stringToRegex.js'
+import AuthController from './AuthController.js'
+import AdminController from './AdminController.js'
 import db from '../db.js'
 
 
 export default  {
+  async findOne(...args) {
+    return { 
+      [this._name]: await db[this._name].findOne(...args)
+    }
+  },
+
+  async find(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].find(...args)
+    }
+  },
+
   async insertOne(...args) {
     return { 
-      [this.name]: await db[this.name].insertOne(...args)
+      [this._name]: await db[this._name].insertOne(...args)
     }
   },
 
   async updateOne(...args) {
     return { 
-      [this.name]: await db[this.name].updateOne(...args)
-    }
-  },
-
-  async removeOne(...args) {
-    return { 
-      [this.name]: await db[this.name].removeOne(...args)
+      [this._name]: await db[this._name].updateOne(...args)
     }
   },
 
   async upsert(...args) {
     return { 
-      [this.name]: await db[this.name].upsert(...args)
+      [this._name]: await db[this._name].upsert(...args)
     }
   },
 
-  async findOne(...args) {
-    const { name: name } = this
-    const model = await db[name].findOne(...args)
-
-    if (!model) return { error: `model-not-exist`, params: { name }}
-    return { [name]: model }
-  },
-
-  async find(...args) {
+  async findAll(...args) {
     return { 
-      [this.namePlural]: await db[this.name].find(...args)
+      [this._namePlural]: await db[this._name].findAll(...args)
     }
   },
-  
+
+  async findLike(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].findLike(...args)
+    }
+  },
+
   async search(...args) {
     return { 
-      [this.namePlural]: await db[this.name].search(...args)
+      [this._namePlural]: await db[this._name].search(...args)
     }
   },
 
   async searchGeo(...args) {
     return { 
-      [this.namePlural]: await db[this.name].searchGeo(...args)
+      [this._namePlural]: await db[this._name].searchGeo(...args)
     }
   },
 
-  async findLike(key, term) {
-    term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
-    const value = new RegExp(`^${term}`, 'i')
-
-    return db[this.name].find({ [key]: value })
+  async joinOne(...args) {
+    return db[this._name].joinOne(...args)
   },
 
-  async logout() {
-    // todo: during SSR delete the cookie token right here too (production only)
+  async joinMany(...args) {
+    return db[this._name].joinMany(...args)
   },
 
-  // helper method available to all controllers
-
-  async findCurrentUser(safe = true) {
-    if (!this.user) return null
-
-    if (safe) {
-      if (this._currUserSafe) return this._currUserSafe // cache for request
-      return this._currUserSafe = await db.user.findOneSafe(this.user.id)
-    }
-
-    if (this._currUser) return this._currUser // cache for request
-    return this._currUser = await db.user.findOne(this.user.id)
+  async join(...args) {
+    return db[this._name].join(...args)
   },
 
-
-  // internal methods
-
-  async callFilteredByRole(context) {
-    this.context = context
-    
-    const { method, token, userId } = context
-    const args = context.args.map(a => a === '__undefined__' ? undefined : a) // preserve default parameter values, by undoing JSON.stringify which otherwise would make undefined null
-    const controller = this.name
-
-    if (!this[method]) {
-      const params = { controller, method }
-      return { error: 'missing-controller-method', params }
-    }
-
-    this.user = this._verify(token) 
-
-    const isMasquerading = userId && this.user.id !== userId
-
-    if (isMasquerading) {
-      if (this.user?.roles.includes('admin')) {
-        this.user.id = userId
-      }
-    }
-
-    if (!this._hasPermission(method, this.user?.roles)) {
-      const allowedRoles = this.permissions[method]
-      const roles = this.user?.roles ?? []
-      const params = { controller, method, roles, allowedRoles }
-      return { error: 'not-authenticated', params }
-    }
-
-    return this[method](...args) // call eg: controllers/User.updateOne(id)
+  async aggregate(...args) {
+    return db[this._name].aggregate(...args)
   },
 
+  async count(...args) {
+    return db[this._name].count(...args)
+  },
 
-  _verify(token) {
-    if (!token) return
-    
-    try {
-      return jwt.verify(token, this.secret)
-    }
-    catch (e) {} // throws when invalid, but for us !this.user is our indicator that we aren't dealing with a verified user downstream (i.e. in the actual Controller methods called)
+  async totalPages(...args) {
+    return db[this._name].totalPages(...args)
+  },
+
+  async insertMany(...args) {
+    return db[this._name].insertMany(...args)
+  },
+
+  async updateMany(...args) {
+    return db[this._name].updateMany(...args)
+  },
+
+  async deleteMany(...args) {
+    return db[this._name].deleteMany(...args)
   },
   
-  _hasPermission(method, roles = []) {
-    const { permissions } = this
-    if (!permissions) return true
-
-    const allowedRoles = this.permissions[method]
-    if (!allowedRoles) return false
-    
-    const isPublic = allowedRoles.length === 0
-
-    if (isPublic) return true
-
-    return allowedRoles.find(ar => roles.find(r => r === ar))
+  async deleteOne(...args) {
+    return db[this._name].deleteOne(...args)
   },
 
+  async incrementOne(...args) {
+    return db[this._name].incrementOne(...args)
+  },
 
-  async findByQueryPaginated(query, projection) {
-    const { limit, skip, sortKey = 'updatedAt', sortValue = -1, ...sel } = query
-    const sort = { [sortKey]: sortValue, _id: sortValue }
-
-    const selector = this._preparePaginatedSelector(sel, this.name) // clear unused params, transform regex strings
-    const { models, count } = await db[this.name].aggregateStages(selector, projection, sort, limit, skip)
-
-    return {
-      [this.namePlural]: models,
-      count,
-      query,
+  async findOneSafe(...args) {
+    return { 
+      [this._name]: await db[this._name].findOneSafe(...args)
     }
   },
 
-  _preparePaginatedSelector({ ...selector }, controllerName) {
-    Object.keys(selector).forEach(k => {
-      let v = selector[k]
-      const paramCleared = v === '' || v === undefined
-  
-      if (paramCleared) {
-        delete selector[k]
-        return
-      }
-  
-      if (typeof v === 'string' && !isRegexString(v) && k !== 'id' && !k.endsWith('Id') && !k.endsWith('id')) { // dont convert id selectors to regexes
-        v = '/^' + v + '/i'
-      }
-  
-      selector[k] = stringToRegex(v)
-    })
-  
-    return selector
-  }
+  async findSafe(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].findSafe(...args)
+    }
+  },
+
+  async insertOneSafe(...args) {
+    return { 
+      [this._name]: await db[this._name].insertOneSafe(...args)
+    }
+  },
+
+  async updateOneSafe(...args) {
+    return { 
+      [this._name]: await db[this._name].updateOneSafe(...args)
+    }
+  },
+
+  async upsertSafe(...args) {
+    return { 
+      [this._name]: await db[this._name].upsertSafe(...args)
+    }
+  },
+
+  async findAllSafe(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].findAllSafe(...args)
+    }
+  },
+
+  async findLikeSafe(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].findLikeSafe(...args)
+    }
+  },
+
+  async searchSafe(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].searchSafe(...args)
+    }
+  },
+
+  async searchGeoSafe(...args) {
+    return { 
+      [this._namePlural]: await db[this._name].searchGeoSafe(...args)
+    }
+  },
+
+  async joinOneSafe(...args) {
+    return db[this._name].joinOneSafe(...args)
+  },
+
+  async joinManySafe(...args) {
+    return db[this._name].joinManySafe(...args)
+  },
+
+  async joinSafe(...args) {
+    return db[this._name].joinSafe(...args)
+  },
+
+  async aggregateSafe(...args) {
+    return db[this._name].aggregateSafe(...args)
+  },
+
+  ...AuthController,
+  ...AdminController,
 }

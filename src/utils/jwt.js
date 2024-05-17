@@ -1,8 +1,5 @@
 import * as jwt from 'jsonwebtoken'
-import isProd from './isProd.js'
-
-
-const isServer = typeof window === 'undefined'
+import { isServer, isProd } from './bools.js'
 
 
 export default isProd && isServer ? jwt : {

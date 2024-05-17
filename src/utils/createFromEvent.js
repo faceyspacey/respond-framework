@@ -1,4 +1,5 @@
 import { compile } from 'path-to-regexp'
+import { cleanLocation, urlToLocation } from './url.js'
 
 
 const cache = {}
@@ -12,30 +13,19 @@ export default getStore => e => {
 
   let url
 
-  if (e.event.toUrl) {
-    const pathSearchHash = e.event.toUrl?.(getStore(), e)
-    url = `${basename}${pathSearchHash}`
-  }
-
   try {
-    const pathname = toPath(e.arg, { encode: x => x })
-    url = `${basename}${pathname}`
+    if (e.event.toLocation) {
+      const loc = e.event.toLocation(getStore(), e)     // expected: { pathname: '/foo', query: { bar: 'baz}, hash='bla' } -- you can just return a query obj, and don't need to parse parse/prepare anything
+      url = cleanLocation(loc).url                      // result:   { pathname: '/foo', search: 'bar=baz', hash='bla', url: '/foo?bar=baz#bla, query: { bar: 'baz} }
+    }
+    else {
+      url = toPath(e.arg, { encode: x => x })           // just pathname by default, eg: '/foo'
+    }
+
+    url = `${basename}${url}`
+    return urlToLocation(url, getStore)                 // return: { pathname: '/basename/foo', search: 'bar=baz', hash='bla', url: '/basename/foo?bar=baz#bla, query: { bar: 'baz}
   }
   catch (error) {
-    throw new Error(`event.path "${path}" for event "${e.type}" received incompatible e.arg.`)
-  }
-
-  return urlToLocation(url)
-}
-
-
-const urlToLocation = url => {
-  const { pathname, search, hash } = new URL(url, 'http://site.com')
-
-  return {
-    url,
-    pathname,
-    search: search.substring(1),
-    hash: hash.substring(1)
+    throw new Error(`event.path "${path}" for event "${e.type}" received incompatible e.arg`)
   }
 }

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { View, StyleSheet } from 'react-native'
-import { memo } from 'respond-framework/utils'
+import { memo } from '../../../utils/isEqual.js'
 import Tab from './Tab.js'
 import { colors } from '../styles.js'
 

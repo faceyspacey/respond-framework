@@ -7,7 +7,7 @@ import openFile from './utils/openFile.js'
 
 
 export default {
-  callFilteredByRole(context) {
+  _callFilteredByRole(context) {
     this.context = context
     const args = context.args.map(a => a === '__undefined__' ? undefined : a)
     return this[context.method](...args)

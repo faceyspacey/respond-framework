@@ -26,10 +26,14 @@ import * as replayTools from '../modules/replayTools/index.js'
 import displaySelectorsInDevtools from './utils/displaySelectorsInDevtools.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
+import { isProd } from '../utils/bools.js'
 
 
-export default (topModuleOriginal, settings) => {
-  const modulePath = restoreSettings()?.module || ''
+export default async (topModuleOriginal, settings) => {
+  const replay = !!settings
+  settings ??= await restoreSettings()
+
+  const modulePath = settings?.module || ''
   const topModule = !modulePath ? topModuleOriginal : Object.assign({}, sliceModuleByModulePath(topModuleOriginal, modulePath))
 
   const topReplays = topModule.replays || topModuleOriginal.replays
@@ -37,10 +41,8 @@ export default (topModuleOriginal, settings) => {
 
   topModule.models ??= topModuleOriginal.models // allow child modules to inherit parent models
 
-  const replay = !!settings
-
   const replays = createReplayTools({ ...topReplays, settings, replay })
-
+  
   delete topModule.props // props passed from parent are not available when using replayTools to focus child modules
   
   const options = {
@@ -52,21 +54,21 @@ export default (topModuleOriginal, settings) => {
   }
 
   const { merge } = options
-
+  
   const cookies = topModule.cookies || createCookies()
   const db = createClientDatabase(topModule)
 
-  topModule.modules = process.env.NODE_ENV !== 'production' ? { ...topModule.modules, replayTools } : topModule.modules
+  topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
 
   const getStore = () => store
 
   const prevStore = window.store
-  const isHMR = !!prevStore && !replay
-
+  const isHMR = !!prevStore && !replays.replay
+  console.log({isHMR}, !!prevStore, replays.replay)
   const modulePathsAll = createModulePaths(topModuleOriginal)
 
   const eventsAll = createEvents(topModuleOriginal, getStore)
-
+  
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
   const reducers = createReducers(topModule)
@@ -100,7 +102,7 @@ export default (topModuleOriginal, settings) => {
     })
 
     const promise = Promise.all(sent).catch(error => {
-      store.onError(error, 'subscriptions', e)
+      store.onError({ error, kind: 'subscriptions', e })
     })
 
     if (store.shouldAwait()) return promise
@@ -118,13 +120,15 @@ export default (topModuleOriginal, settings) => {
 
   const replaceState = next => { Object.keys(state).forEach(k => delete state[k]); Object.assign(state, next); }
 
-  const onError = (error, kind, e) => {
-    if (!options.onError) {
-      console.error(kind + ' -', error, e)
-      return
-    }
+  const onError = err => {
+    const { error, kind = 'unknown-kind', e } = err
 
-    return options.onError?.(store, e, error, kind)
+    console.error('respond: ' + kind)
+    console.error(error)
+
+    if (e) console.error(e)
+
+    return options.onError?.({ ...err, store })
   }
   
   const linkOut = createLinkOut(getStore)
@@ -135,10 +139,13 @@ export default (topModuleOriginal, settings) => {
   
   store.changePath = setupHistory(store)
 
-  const baseState = { cachedPaths: {}, token: replays.token }
+  const baseState = { cachedPaths: {}, token: cookies.get('token') || replays.token }
   const top = { ...topModule, initialState: { ...baseState, ...topModule.initialState } }
 
-  const initialState = isHMR ? snapshot(prevStore.state) : getSessionState(events) || createInitialState(top, store)
+  const initialState = isHMR
+    ? snapshot(prevStore.state)
+    : getSessionState(events) || await createInitialState(top, store)
+
   const state  = proxy(initialState, modulePaths, selectors)
 
   store.state = state

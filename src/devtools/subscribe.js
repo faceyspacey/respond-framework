@@ -12,7 +12,7 @@ export default (store, triggerIndexes) => async message => {
     }
   }
   catch (error) {
-    store.onError(error, 'devtools', message)
+    store.onError({ error, kind: 'devtools', message })
   }
 }
 

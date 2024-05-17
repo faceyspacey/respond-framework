@@ -2,14 +2,16 @@ import { reviveEventFunctionReferences } from '../utils/jsonReplacerReviver.js'
 import sliceByModulePath from '../utils/sliceByModulePath.js'
 
 
-export default async function(store) {
+export default async function() {
   try {
+    const { store } = this
+    
     const state = store.state.replayTools
     const { evs, evsIndex: index } = state
 
     const n = { type: 'HMR', __prefix: '@@', __developer: 'State reset to before replayed event.' }
     const prevState = reviveEventFunctionReferences(store.events, store.prevState)
-
+    console.log('replayLastEvent', {index, evs})
     store.devtools.forceNotification(n, prevState)
     store.replaceState(prevState)   // so when latest event is redispatched during HMR (i.e. the dispatch below), it's performed against the same state it was initially peformed against
 

@@ -1,6 +1,6 @@
 import { createControllerMethod as mock } from '../createClientDatabase.mock.js'
 import { createControllerMethod as real } from '../createClientDatabase.js'
-import isProd from '../../utils/isProd.js'
+import { isProd } from '../../utils/bools.js'
 
 
 export default (prev, modulePath = '') => {

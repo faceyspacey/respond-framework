@@ -7,7 +7,7 @@ import createStore from '../store/createStore.js'
 
 export default async ({ top, config, settings, initialState, rendererOptions } = {}) => {
   const topModule = { ...top, initialState: { ...top.initialState, ...initialState } }
-  const store = createStore(topModule, settings)
+  const store = await createStore(topModule, settings)
   const renderer = createRenderer(store, rendererOptions)
   const dispatch = createDispatch(store)
   const snap = createSnap(store, renderer, dispatch, config)

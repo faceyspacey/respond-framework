@@ -2,27 +2,26 @@ import { reviveObject } from '../utils/jsonReplacerReviver.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
-import { session } from '../utils/storage.js'
-import isProd from '../utils/isProd.js'
+import { isProd } from '../utils/bools.js'
+import sessionStorage from '../utils/sessionStorage.js'
 
 
-export default function (store, eSlice, fullPathAlready = false) {
-  if (isProd) {
-    store.prevState = store.getSnapshot(true)
+export default function (store, eSlice, fullModulePathAlready = false) {
+  if (eSlice.modulePath === 'replayTools' && !this.options.log) {
+    store.prevState.replayTools = store.getSnapshot(true).replayTools
     return
   }
-  
-  if (store.ctx.ignoreTrigger) return
-  if (eSlice.modulePath === 'replayTools' && !this.options.log) return
 
   store = store.getStore()
   
-  const e = fullPathAlready ? eSlice : fullPath(eSlice)
+  const e = fullModulePathAlready ? eSlice : fullPath(eSlice)
   const state = store.state.replayTools
 
   if (!e.meta?.skipped) {
     store.prevState = store.getSnapshot(true)
   }
+
+  if (isProd && !store.options.productionReplayTools) return
 
   sendTrigger(e, state, store.events, this.playing)
 
@@ -31,7 +30,8 @@ export default function (store, eSlice, fullPathAlready = false) {
   }
 
   if (state.persist && !this.playing) {
-    session.replayToolsState = store.stringifyState(state)
+    const json = store.stringifyState(state)
+    sessionStorage.setItem('replayToolsState', json)
   }
 }
 

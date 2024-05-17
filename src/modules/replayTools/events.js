@@ -3,9 +3,11 @@ import cloneDeep from '../../utils/cloneDeep.js'
 import { replacer } from '../../utils/jsonReplacerReviver.js'
 import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
-import { session, local } from '../../utils/storage.js'
 import createPermaLink from './helpers/createPermaLink.js'
 import createStore from '../../store/createStore.js'
+import sessionStorage from '../../utils/sessionStorage.js'
+import localStorage from '../../utils/localStorage.js'
+import copyToClipboard from '../../utils/copyToClipboard.js'
 
 
 export default {
@@ -15,17 +17,16 @@ export default {
     }
   },
 
-
   settings: {
     isNamespace: false,
     navigation: true,
-    end: () => session.replayToolsTab = 'settings'
+    end: () => localStorage.setItem('replayToolsTab', 'settings')
   },
 
   events: {
     isNamespace: false,
     navigation: true,
-    end: () => session.replayToolsTab = 'events',
+    end: () => localStorage.setItem('replayToolsTab', 'events')
   },
 
   tests: {
@@ -33,7 +34,7 @@ export default {
     navigation: true,
     cache: false,
     fetch: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter),
-    end: () => session.replayToolsTab = 'tests'
+    end: () => localStorage.setItem('replayToolsTab', 'tests')
   },
   
   sortTests: {
@@ -82,7 +83,7 @@ export default {
       index = index === undefined ? evs.length - 1 : index
       const events = evs.slice(0, index + 1)
 
-      session.replayToolsTab = 'events'
+      await localStorage.setItem('replayToolsTab', 'events')
       await replays.replayEvents(events, delay, settings)
 
       return false
@@ -105,6 +106,7 @@ export default {
 
         const res = await db.developer.writeTestFile({ name, modulePath, settings, events: eventsWithNestedEventFunctionsAsStrings })
         await events.tests.dispatch({ sort: 'recent' })
+
         return res
       }
     }
@@ -121,7 +123,7 @@ export default {
   },
 
   runTestInTerminal: {
-    submit: ({ state, db }, { id }) => {
+    submit: ({ db }, { id }) => {
       return db.developer.runTestInTerminal(id)
     }
   },
@@ -181,10 +183,6 @@ export default {
       const end = state.evsIndex + 1
       const events = state.evs.slice(0, end)
 
-      if (state.persist) {
-        session.replayToolsState = store.stringifyState(state)
-      }
-
       await replays.replayEvents(events)
 
       return false
@@ -199,26 +197,22 @@ export default {
         state.divergentIndex--
       }
 
-      if (state.persist) {
-        session.replayToolsState = store.stringifyState(state)
-      }
-
-      if (i <= state.evsIndex) {
-        const index = state.evsIndex - 1
-        return events.replayEventsToIndex({ index })
-      }
+      const index = state.evsIndex - 1
+      return events.replayEventsToIndex({ index })
     }
   },
 
   togglePersist: {
-    before: ({ state }) => {
+    before: async store => {
+      const { state } = store
       state.persist = !state.persist
       
       if (state.persist) {
-        session.replayToolsState = store.stringifyState(state)
+        const json = store.stringifyState(state)
+        await sessionStorage.setItem('replayToolsState', json)
       }
       else { 
-        delete session.replayToolsState
+        await sessionStorage.removeItem('replayToolsState')
       }
 
       return false
@@ -227,54 +221,38 @@ export default {
 
   reload: {
     before: async ({ state, topModuleOriginal }) => {
-      const settings = state.form
+      const { permalink: _, ...settings } = state.form
 
-      local.replaySettings = JSON.stringify(settings)
+      await localStorage.setItem('replaySettings', JSON.stringify(settings))
       window.history.replaceState(history.state, '', settings.path)
 
-      const store = createStore(topModuleOriginal, settings)
+      const store = await createStore(topModuleOriginal, settings)
 
       const e = store.eventFrom(settings.path)
       await store.dispatch(e)
-
+      
       store.render()
 
-      if (state.persist) {
-        store.state.replayTools.persist = true
-        session.replayToolsState = store.stringifyState(store.state.replayTools)
-      }
+      store.state.replayTools.persist = state.persist
 
       return false
     }
   },
-
-  reloadNewTab: {
-    before: async ({ state, replays }, { arg }) => {
-      let json
-
-      if (state.persist) {
-        json = session.replayToolsState
-        delete session.replayToolsState // turn off pesist, as it will bring events from this tab as the child window shares the same sessionStorage, and the purpose of this functionality is to rebuild new events, but with only a shared models db (which is copied to the new window)
-      }
-
-      const url = createPermaLink(state, replays, arg)
-      window.open(url, '_blank') // only works in browser, and unlike Linking.openURL, the opened window will share the same mocked db thanks to window.opener having a reference to this window
-
-      if (json) {
-        session.replayToolsState = json // put it back so current tab remains properly in persist mode
-      }
-
-      return false
-    },
-  },
-
 
   openPermaLink: {
     before: async ({ state, replays }, { arg }) => {
       const url = createPermaLink(state, replays, arg)
-      Linking.openURL(url) // can work on native
+
+      Linking.openURL(url)
+      copyToClipboard(url)
+
+      console.log('Your permalink is:\n', url)
+      console.log(`It's been copied to your clipboard :)`)
+
+      alert(`Check the console for a permalink you can copy & paste.`)
+
       return false
-    }
+    },
   },
 }
 

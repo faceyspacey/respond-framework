@@ -29,15 +29,28 @@ NEW UI WORK:
 
 "start": "NODE_ENV=development BUNDLER=webpack babel-watch --watch webpack --exclude ./respond --exclude ./controllers --exclude ./models --exclude ./utils --exclude ./config.js --exclude ./config.client.js --exclude ./config.server.js --exclude ./permissions.js --exclude ./testing  --exclude ./seed  --exclude ./device  --exclude ./helpers  --exclude ./constants  --exclude ./apis  --exclude ./monkey  --exclude ./validation  --exclude ./ --exclude ./games ./server/index.dev.js",
 
-
+#from + 's'
+#aggregateCount
+#turn collection getter into method
+#replay tools in production
+#set replays defaultProductionValue in production
 
 isNamespace
 duplicating find into _find
+clearStorage console.log note
+
+make ReplayTools rows have better press events on native
+
+make db/index.mock.js utilize create() method exactly like production version
+import recursiveReadSync from 'recursive-readdir-sync'
+
+
+put skip, limit, sort, and proj in options object
 
 dont hide _namespace, _type in state (only in actions)
 wrapModelProxy automatically to docs in state
 
-set replays defaultProductionValue in production
+
 
 
 PUT ENTIRE STORE IN VALTIO

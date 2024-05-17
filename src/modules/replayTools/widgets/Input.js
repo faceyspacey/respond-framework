@@ -16,9 +16,8 @@ export default memo(forwardRef(({
   placeholderStyle,
   disabled,
   returnKeyType = 'done',
-  ...props
 }, ref) => {
-  const value = formatIn(v) || ''
+  const value = String(formatIn(v) || '')
 
   const onChangeText = v => {
     if (disabled) return
@@ -38,11 +37,8 @@ export default memo(forwardRef(({
     onChangeText: useCallback(onChangeText, [event, name, value, disabled]),
     returnKeyType,
     editable: !disabled,
-    ...props,
   })
 }))
-
-
 
 
 

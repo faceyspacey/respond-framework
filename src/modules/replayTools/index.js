@@ -2,7 +2,8 @@ import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
 import restoreSession from './plugins/restoreSession.js'
 import defaultPlugins from '../../store/plugins/index.js'
-import storage from '../../utils/storage.js'
+import localStorage from '../../utils/localStorage.js'
+import sessionStorage from '../../utils/sessionStorage.js'
 
 
 export { id } from './respond.js'
@@ -15,16 +16,18 @@ export const plugins = [error, loadTests, restoreSession, ...defaultPlugins]
 
 export const ignoreChild = true
 
-export const initialState = store => {
-  const open = !!JSON.parse(storage.local.replaySettings)?.open
-  const tab = storage.session.replayToolsTab || 'settings'
+export const initialState = async store => {
+  const { open, permalink } = store.replays.settings
+  const tab = (await localStorage.getItem('replayToolsTab')) || 'settings'
 
-  if (!window.__sessionRestored) {
-    const json = storage.session.replayToolsState
-    
-    if (json) {
+  if (!window.__sessionRestored && !permalink) {
+    const json = await sessionStorage.getItem('replayToolsState')
+
+    if (json) { 
+      const state = store.parseJsonState(json)
+
       return {
-        ...store.parseJsonState(json),
+        ...state,
         open,
         tab,
       }
@@ -32,6 +35,7 @@ export const initialState = store => {
   }
 
   return {
+    form: store.replays.settings,
     open,
     tab,
     evsIndex: -1,

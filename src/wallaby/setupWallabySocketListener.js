@@ -1,10 +1,11 @@
 import * as io from 'socket.io-client'
-import isNative from '../utils/isNative.js'
+import { isDev, isNative } from '../utils/bools.js'
 
 
 export default () => {
-  if (process.env.NODE_ENV !== 'development' || isNative) return
-
+  if (!isDev || isNative) return
+  if (typeof io !== 'function') return
+  
   const socket = io()
 
   socket.on('wallaby', ({ test, index, delay }) => {

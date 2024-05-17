@@ -1,7 +1,7 @@
 import fetch from './fetch.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mock from './createClientDatabase.mock.js'
-import isProd from '../utils/isProd.js'
+import { isProd } from '../utils/bools.js'
 
 
 export default !isProd ? mock : topModule => {

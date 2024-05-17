@@ -21,7 +21,7 @@ export default async (store, e) => {
       }
     }
     catch(error) {
-      store.onError(error, 'after', e)
+      store.onError({ error, kind: 'after', e })
     }
   })
 }

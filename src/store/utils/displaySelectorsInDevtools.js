@@ -1,4 +1,4 @@
-import isNative from '../../utils/isNative.js'
+import { isNative } from '../../utils/bools.js'
 
 
 export default opts => {

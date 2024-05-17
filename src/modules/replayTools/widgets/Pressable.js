@@ -1,6 +1,7 @@
 import { forwardRef, useState, createElement } from 'react'
 import { View, TouchableOpacity } from 'react-native'
-import { memo } from 'respond-framework/utils'
+import { isNative } from '../../../utils/bools.js'
+import { memo } from '../../../utils/isEqual.js'
 
 
 export default memo(forwardRef(({ event, arg, children, disabled, styleHover, onPress, testKey, ...props }, ref) => {
@@ -13,7 +14,7 @@ export default memo(forwardRef(({ event, arg, children, disabled, styleHover, on
 
   const [hover, set] = useState(false)
 
-  const bright = disabled || native || hover
+  const bright = disabled || isNative || hover
   
   const style = bright
     ? [props.style, styleHover || { opacity: 1 }]
@@ -32,7 +33,3 @@ export default memo(forwardRef(({ event, arg, children, disabled, styleHover, on
     children, 
   })
 }))
-
-
-
-const native = !(typeof window !== 'undefined' && window.document.querySelector)

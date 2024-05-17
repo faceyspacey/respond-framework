@@ -1,21 +1,29 @@
 import { sliceStoreByModulePath } from './sliceByModulePath.js'
 
 
-export default function createInitialState(mod, store, modulePath = '') {
+export default async function createInitialState(mod, store, modulePath = '', reHydratedInitialStateFromParent) {
+  const initialState = typeof mod.initialState === 'function'
+    ? await mod.initialState(sliceStoreByModulePath(store, modulePath))
+    : mod.initialState
+    
   return {
-    ...(typeof mod.initialState === 'function' ? mod.initialState(sliceStoreByModulePath(store, modulePath)) : mod.initialState),
-    ...recurseModules(mod, store, modulePath)
+    ...initialState,
+    ...reHydratedInitialStateFromParent, // re-hydrate initialState specified by parent, such as in server-rendered JSON, eg: `<script>window.initialState = { websiteModule: JSON.parse(${JSON.stringify(json)}, respondReviver) }</script>`
+    ...await recurseModules(mod, store, modulePath, initialState)
   }
 }
 
-const recurseModules = (mod, store, modulePath) => {
+const recurseModules = async (mod, store, modulePath, parentInitialState) => {
   if (!mod.modules) return
 
-  return Object.keys(mod.modules).reduce((state, k) => {
+  const state = {}
+
+  for (const k in mod.modules) {
     const child = mod.modules[k]
     const path = modulePath ? `${modulePath}.${k}` : k
 
-    state[k] = createInitialState(child, store, path)
-    return state
-  }, {})
+    state[k] = await createInitialState(child, store, path, parentInitialState[k])
+  }
+  
+  return state
 }

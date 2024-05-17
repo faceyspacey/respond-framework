@@ -18,7 +18,7 @@ export default wrapInActForTests((storeSlice, eSlice, sync, initialReduction) =>
     }
   }
   catch (error) {
-    store.onError(error, 'reduce', eSlice)
+    store.onError({ error, kind: 'reduce', e: eSlice })
   }
 
   delete store.ctx.modulePathReduced // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)

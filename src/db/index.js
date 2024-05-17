@@ -3,47 +3,35 @@ import mock from './index.mock.js'
 import createJoin from './utils/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds } from './utils/toFromObjectIds.js'
 import pick from './utils/pick.js'
-import isProd from '../utils/isProd.js'
-import excludeProjectFields from './utils/excludeProjectFields.js'
+import { isProd } from '../utils/bools.js'
+import safeMethods from './safeMethods.js'
+import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
 
 
 export default !isProd ? mock : {  
-  create(doc) {
-    const instance = { ...this._fromObjectIds(doc) }              // mongo ObjectId objects converted to strings for ez client consumption
-    instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
-    delete instance._id                                           // bye bye _id
-    
-    const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
-    return Object.defineProperties(instance, descriptors)
+  async findOne(selector, proj, sort = { updatedAt: -1 }) {
+    if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
+
+    selector = this._toObjectIdsSelector(selector)
+
+    const model = await this.collection.findOne(selector, { projection: this._toProject(proj), sort })
+
+    return model && this.create(model)
   },
 
-  
+  async find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+    selector = this._toObjectIdsSelector(selector)
 
-  // collection getters 
+    const models = await this.collection
+      .find(selector)
+      .sort(sort)
+      .skip(skip * limit)
+      .limit(limit)
+      .project(this._toProject(proj))
+      .toArray()
 
-  get collection() {
-    if (this._mongoCollection) return this._mongoCollection
-
-    const client = new MongoClient(this.config.connectionString)
-    const db = client.db('skins')
-
-    return this._mongoCollection = db.collection(this.collectionName)
+    return models.map(m => this.create(m))
   },
-
-
-
-  // seed utilities
-
-  async insertSeed(docs) {
-    // await this.deleteMany({})
-    // await this.insertMany(Object.values(docs))
-  },
-
-  async deleteMany(selector) {
-    await this.collection.deleteMany(selector)
-  },
-  
-  // insert
 
   async insertOne({ id, ...doc }, proj) {
     doc._id = new ObjectId(id)
@@ -53,13 +41,6 @@ export default !isProd ? mock : {
     await this.collection.insertOne(doc)
     return this.create(pick(doc, proj))
   },
-
-  async insertMany(docs) {
-    await this.collection.insertMany(docs)
-  },
-
-
-  // update
 
   async updateOne(selector, newDoc, proj) {
     if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
@@ -82,46 +63,6 @@ export default !isProd ? mock : {
     return this.create(model)
   },
 
-
-  async incrementOne(selector, $inc) {
-    selector = this._toObjectIdsSelector(selector)
-
-    delete selector.createdAt
-    delete selector.updatedAt
-    delete selector.lastRoundAt
-    delete selector.finishedAt
-
-    await this.collection.updateOne(selector, { $inc })
-  },
-
-
-  // update multi
-
-  async updateMany(selector, $set) {
-    try {
-      await this.collection.updateMany(this._toObjectIdsSelector(selector), { $set: this._toObjectIds($set) })
-    }
-    catch(error) {
-      console.error(`${this.collectionName}.updateMany Error`, error) // allow calling code to swallow
-    }
-  },
-
-
-  // delete
-
-  async removeOne(selector) {
-    selector = this._toObjectIdsSelector(selector)
-    await this.collection.deleteOne(selector)
-  },
-
-  async deleteMany(selector) {
-    selector = this._toObjectIdsSelector(selector)
-    await this.collection.deleteMany(selector)
-  },
-
-
-  // upsert
-
   async upsert(selector, doc, insertOnlyDoc, proj) {
     const result = await this.collection.findOneAndUpdate(this._toObjectIdsSelector(selector), {
       $set: this._toObjectIds(doc),
@@ -136,79 +77,22 @@ export default !isProd ? mock : {
     return this.create(model)
   },
 
-  
-
-  // find single
-  
-  async findOne(selector, proj, sort = { updatedAt: -1 }) {
-    if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
-
-    selector = this._toObjectIdsSelector(selector)
-
-    const model = await this.collection.findOne(selector, { projection: this._toProject(proj), sort })
-
-    return model && this.create(model)
-  },
-
-  async findOneSafe(selector, proj, sort) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.findOne(selector, proj, sort)
-  },
-
-  // find multi
-
-  async find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    selector = this._toObjectIdsSelector(selector)
-
-    const models = await this.collection
-      .find(selector)
-      .sort(sort)
-      .skip(skip * limit)
-      .limit(limit)
-      .project(this._toProject(proj))
-      .toArray()
-
-    return models.map(m => this.create(m))
-  },
-
-
   async findAll(selector, project, sort) {
-    return this._find(selector, project, sort, 1000000000)
+    return this._find(selector, project, sort, 0)
   },
 
+  async findLike(key, term, selector, ...args) {
+    term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
+    const value = new RegExp(`^${term}`, 'i')
 
-  // search geo
-
-  async searchGeo({ lng, lat }, selector, proj, limit = this.config.listLimit, skip = 0) {
-    if (this.config.useLocalDb) {
-      return this._find(selector, proj, undefined, limit, skip)
-    }
-    
-    const models = await this.collection.aggregate([
-      {
-        $geoNear: {
-          near: { type: 'Point', coordinates: [lng, lat] },
-          spherical: true,
-          distanceField: 'distance',
-          key: 'location'
-        }
-      },
-      ...(selector ? [{ $match: selector }] : []),
-      { $skip: skip * limit },
-      { $limit: limit },
-      ...(proj ? [{ $project: this._toProject(proj) }] : []),
-    ]).toArray()
-
-    return models.map(m => this.create(m))
+    return this._find({ ...selector, [key]: value }, ...args)
   },
 
+  async search(query, selector, proj, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
+    selector = this._toObjectIdsSelector(selector)
 
-
-  // search text
-
-  async search(query, proj, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
     if (this.config.useLocalDb) {
-      return this._find({ $text: { $search: query } }, this._toProject(proj), undefined, limit, skip)
+      return this._find({ $text: { $search: query }, ...selector }, this._toProject(proj), { updatedAt: 1 }, limit, skip)
     }
 
     const models = await this.collection.aggregate([
@@ -226,6 +110,7 @@ export default !isProd ? mock : {
           }
         }
       },
+      ...(selector ? [{ $match: selector }] : []),
       { $skip: skip * limit },
       { $limit: limit },
       ...(proj ? [{ $project: this._toProject(proj) }] : []),
@@ -234,8 +119,127 @@ export default !isProd ? mock : {
     return models.map(m => this.create(m))
   },
 
+  async searchGeo({ lng, lat }, selector, proj, limit = this.config.listLimit, skip = 0) {
+    selector = this._toObjectIdsSelector(selector)
 
-  // pagination
+    if (this.config.useLocalDb) {
+      return this._find(selector, proj, { updatedAt: 1 }, limit, skip) // updateAt: 1, sorts in opposite of standard direction to indicate something happened
+    }
+    
+    const models = await this.collection.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [lng, lat] },
+          spherical: true,
+          distanceField: 'distance',
+          key: 'location'
+        }
+      },
+      ...(selector ? [{ $match: selector }] : []),
+      { $skip: skip * limit },
+      { $limit: limit },
+      ...(proj ? [{ $project: this._toProject(proj) }] : []),
+    ]).toArray()
+
+    return models.map(m => this.create(m))
+  },
+
+  async joinOne(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+    const collection = this.getDb()[name]
+
+    const parentName = this._name
+    const fk = parentName + 'Id'
+
+    const selector = collection._toObjectIdsSelector({ [fk]: id  }) 
+
+    const project = this._toProject(proj)
+    const projectJoin = collection._toProject(projJoin)
+
+    let [parent, children] = await Promise.all([
+      this._findOne(id, project),
+      collection._findOne(selector, projectJoin, sort, limit, skip),
+    ])
+
+    return { [parentName]: parent, [name]: children }
+  },
+
+  async joinMany(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+    const collection = this.getDb()[name]
+
+    const parentName = this._name
+    const fk = parentName + 'Id'
+
+    const selector = collection._toObjectIdsSelector({ [fk]: id  }) 
+
+    const project = this._toProject(proj)
+    const projectJoin = collection._toProject(projJoin)
+
+    let [parent, children] = await Promise.all([
+      this._findOne(id, project),
+      collection._find(selector, projectJoin, sort, limit, skip),
+    ])
+
+    return { [parentName]: parent, [collection._namePlural]: children }
+  },
+
+  async join(name, selector, fk, selectorJoin, proj, projJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin = this.config.listLimit, innerJoin) {
+    sort ??= { updatedAt: -1, id: -1 }
+    sortJoin ??= { updatedAt: -1, id: -1 }
+
+    fk ??= this._name + 'Id'
+
+    const localField = this._getIdName()
+    const collection = this.getDb()[name]
+
+    proj = this._toProject(proj)
+    selector = this._toObjectIdsSelector(selector)
+    sort = this._toObjectIdsSelector(sort)
+
+    projJoin = collection._toProject(projJoin)
+    selectorJoin = collection._toObjectIdsSelector(selectorJoin)
+    sortJoin = collection._toObjectIdsSelector(sortJoin)
+
+    const stages = [
+      ...(selector ? [{ $match: selector }] : []),
+      { $sort: sort },
+      { $skip: skip * limit },
+      { $limit: limit },
+      ...createJoin(this._namePlural, name, fk, localField, proj, projJoin, selectorJoin, sortJoin, limitJoin, innerJoin)
+    ]
+
+    const results = await this.collection.aggregate(stages).next() // result of createJoin is first element in array
+
+    const outer = this._namePlural
+    const inner = collection._namePlural
+
+    return {
+      [outer]: results[outer].map(m => this.create(m)),
+      [inner]: results[name].map(m => collection.create(m)),
+    }
+  },
+
+  async aggregate(options = {}) {
+    const {
+      selector,
+      stages: specs = [],
+      proj,
+      sort = { updatedAt: -1, _id: 1 },
+      limit = this.config.listLimit,
+      skip = 0,
+    } = options
+
+    const stages = createAggregateStages(this, specs, selector, proj, sort, limit, skip)
+
+    const countPromise = this.collection.aggregate(createStagesCount(stages)).toArray()
+    const docsPromise = this.collection.aggregate(stages).toArray()
+
+    const [counts, docs] = await Promise.all([countPromise, docsPromise])
+
+    const count = counts[0]?.count ?? 0
+    const models = docs.map(m => this.create(m))
+
+    return { count, [this._namePlural]: models }
+  },
 
   async count(selector) {
     return this.collection.count(this._toObjectIdsSelector(selector))
@@ -246,181 +250,54 @@ export default !isProd ? mock : {
     return Math.ceil(count / limit)
   },
 
-
-  async joinOne(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    const oneToOne = !name.endsWith('s')
-    const method = oneToOne ? 'findOne' : 'find'
-
-    const nameSingular = oneToOne ? name : name.slice(0, -1)
-    const collection = this.getDb()[nameSingular]
-
-    const parentName = this.collectionName
-    const fk = parentName + 'Id'
-
-    const selector = collection._toObjectIdsSelector({ [fk]: id  }) 
-
-    const project = this._toProject(proj)
-    const projectJoin = collection._toProject(projJoin)
-
-    let [parent, children] = await Promise.all([
-      this._findOne(id, project),
-      collection[method](selector, projectJoin, sort, limit, skip),
-    ])
-
-    return { [parentName]: parent, [name]: children }
+  async insertMany(docs) {
+    return this.collection.insertMany(docs)
   },
 
+  async updateMany(selector, $set) {
+    return this.collection.updateMany(this._toObjectIdsSelector(selector), { $set: this._toObjectIds($set) })
+  },
 
-  async join(selector, inner, fk, selectorJoin, proj, projJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin) {
-    const outer = this.collectionNamePlural
-
-    sort = sort || { updatedAt: -1, id: -1 }
-    fk = fk || this.collectionName + 'Id'
-
-    const localField = this._getIdName() // _id || id for CourseModel
-
-    const nameSingular = inner.slice(0, -1)
-    const collection = this.getDb()[nameSingular]
-
-    proj = this._toProject(proj)
+  async deleteMany(selector) {
     selector = this._toObjectIdsSelector(selector)
-
-    projJoin = collection._toProject(projJoin)
-    selectorJoin = collection._toObjectIdsSelector(selectorJoin) // joined collection could be CourseModel, in which case we need to use its _toObjectIdsSelector method
-
-    sort = this._toObjectIdsSelector(sort) // id: -1 needs to be converted to _id: -1 if a regular model, and remain the same if a CourseModel
-    sortJoin = collection._toObjectIdsSelector(sortJoin)
-
-    let stages = createJoin(outer, inner, fk, localField, proj, projJoin, selectorJoin, sortJoin, limitJoin)
-
-    stages = [
-      ...(selector ? [{ $match: selector }] : []),
-      { $sort: sort },
-      { $skip: skip * limit },
-      { $limit: limit },
-      ...stages
-    ]
-
-    const countPromise = this.collection.count(selector)
-    const docsPromise = this.collection.aggregate(stages).next() // result of createJoin is first element in array
-
-    let [count, results] = await Promise.all([countPromise, docsPromise])
-
-    return {
-      count,
-      [outer]: results[outer].map(m => this.create(m)),
-      [inner]: results[inner].map(m => collection.create(m)), // must use joined collection's create method
-    }
+    await this.collection.deleteMany(selector)
   },
 
-
-  async agg(selector, stages, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async deleteOne(selector) {
     selector = this._toObjectIdsSelector(selector)
-
-    stages = [
-      ...(selector ? [{ $match: selector }] : []),
-      ...stages
-    ]
-
-    const countPromise = this.collection.count(selector)
-    
-    const docsPromise = this.collection.aggregate([
-        ...stages,
-      { $sort: sort },
-      ...(skip ? [{ $skip: skip * limit }] : []),
-      { $limit: skip },
-      ...(proj ? [{ $project: this._toProject(proj) }] : []),
-    ]).toArray()
-
-    
-    let [count, models] = await Promise.all([countPromise, docsPromise])
-    models = models.map(m => this.create(m))
-
-    return { count, [this.collectionNamePlural]: models }
+    return this.collection.deleteOne(selector)
   },
 
-
-  async aggAll(selector, stages, $project) {
-    return this.agg(selector, stages, $project, undefined, 1000000000)
-  },
-
-
-  async aggregateStages(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0, countOnly = false) {
+  async incrementOne(selector, $inc) {
     selector = this._toObjectIdsSelector(selector)
-
-    // main selector + agg $sum stages + selectors on $sum stages
-
-    const stages = [
-      { $match: selector },
-      ...this.createJoinFilter(selector),
-      ...this.createAggregateStages(selector),
-    ]
-    
-
-    // irregularity: these actually are only intended for createJoinSums in createAggregateStages (called directly above),
-    // not for filtering parent models, but client side it was convenient to pass them along like regular parent filters
-
-    delete selector.startDate
-    delete selector.endDate
-
-
-    // standard sort || $geoNear sort
-
-    if (!selector.location && !selector.lastLocation) {
-      stages.push({ $sort: sort })
-    }
-    else if (this.config.useLocalDb) {
-      stages.push({ $sort: sort })
-    }
-    else {
-      const { lng, lat } = selector.location || selector.lastLocation
-     
-      delete selector.location
-      delete selector.lastLocation
-
-      stages.unshift({ // $geoNear can only be 1st stage
-        $geoNear: {
-          near: { type: 'Point', coordinates: [lng, lat] },
-          spherical: true,
-          distanceField: 'distance',
-          key: 'location'
-        }
-      }) 
-    }
-
-    
-    // execute queries
-
-    const countPromise = this.collection.aggregate([...stages, { $count: 'count' }]).toArray()
-
-    const docsPromise = this.collection.aggregate([
-        ...stages,
-        { $skip: skip * limit },
-        { $limit: limit },
-        ...(proj && { $project: this._toProject(proj) }),
-    ]).toArray()
-
-    
-    if (countOnly) return (await countPromise)[0]?.count ?? 0 // campaigns uses count only for audienceSize, when it calls this method for each row
-
-    let [count, models] = await Promise.all([countPromise, docsPromise])
-
-    count = count[0]?.count ?? 0
-
-    return { count, models: models.map(m => this.create(m)) }
+    return this.collection.updateOne(selector, { $inc })
   },
 
+  create(doc) {
+    const instance = { ...this._fromObjectIds(doc) }              // mongo ObjectId objects converted to strings for ez client consumption
+    instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
+    delete instance._id                                           // bye bye _id
+    
+    const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
+    return Object.defineProperties(instance, descriptors)
+  },
 
-  createAggregateStages(selector) {
-    return [] // template pattern: delegate to child classes
+  get collection() {
+    if (this._mongoCollection) return this._mongoCollection
+
+    const client = new MongoClient(this.config.connectionString)
+    const db = client.db('skins')
+
+    return this._mongoCollection = db.collection(this._name)
   },
   
-  createJoinFilter() {
-    return []
+  insertSeed() {
+    console.warn(`respond: db.${this._name}.insertSeed is intended for development use only`)
   },
 
 
-  // _id <-> id conversion utils (here as methods so they can be overriden in userland if a different approach is desired)
+
+  // OVERRIDEABLE UTILS: _id <-> id conversion utils (here as methods so they can be overriden in userland if a different approach is desired)
 
   _getIdName() {
     return '_id'
@@ -446,4 +323,7 @@ export default !isProd ? mock : {
 
     return project
   },
+
+
+  ...safeMethods
 }

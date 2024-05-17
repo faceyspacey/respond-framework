@@ -1,4 +1,12 @@
-export default store => e => replace(store.fromEvent(e).pathname + location.search)
+import { isNative } from './bools.js'
+
+
+export default isNative
+  ? store => e => undefined
+  : store => e => {
+    if (window.ignoreChangePath) return
+    replace(store.fromEvent(e).url)
+  }
 
 export const replace = (url, index = 1) => history.replaceState({ index }, '', url)
 

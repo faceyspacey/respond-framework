@@ -1,11 +1,11 @@
-export default (collection, from, foreignField, localField = '_id', $project, $projectJoin, $match, $sort = { updatedAt: -1, _id: -1 }, $limit = 20) => {
+export default (collection, from, foreignField, localField = '_id', $project, $projectJoin, $match, $sort = { updatedAt: -1, _id: -1 }, $limit = 20, inner = false) => {
   return [
     {
       $lookup: {
-        from,             // eg users
+        from,             // eg user
         localField,       // eg _id
-        foreignField,     // eg courseId
-        as: from,         // eg users
+        foreignField,     // eg postId
+        as: from,         // eg user
         pipeline: [
           ...($match ? [{ $match }] : []),
           ...($projectJoin ? [{ $project: $projectJoin }] : []),
@@ -16,7 +16,7 @@ export default (collection, from, foreignField, localField = '_id', $project, $p
     },
     ...($project ? [{ $project }] : []),
     {
-      $unwind: { path: '$' + from, preserveNullAndEmptyArrays: true }
+      $unwind: { path: '$' + from, preserveNullAndEmptyArrays: !inner } // inner/outer: when true preserveNullAndEmptyArrays keeps parent rows that have have no joined children (default)
     },
     {
       $group: {

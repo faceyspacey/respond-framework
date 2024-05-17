@@ -10,8 +10,17 @@ import { colors } from '../styles.js'
 import useSlide from '../hooks/useSlide.js'
 
 
-export default ({ open }, events, state, { replays }) => {
-  const { tab, loading } = state
+export default ({ open }, events, { tab, loading }, { replays }) => {
+  const p = replays.options.position
+
+  const x = p?.left ? 'left' : 'right'
+  const y = p?.top ? 'top' : 'bottom'
+  
+  const d = useSlide(open, width + margin)
+  const translateX = p?.left ? d : Animated.multiply(d, -1)
+
+  const backgroundColor = tab === 'events' ? colors.navy : colors.greyDark
+  const style = { backgroundColor, [y]: 45, [x]: -width, transform: [{ translateX }] }
 
   const tabs = [
     { text: 'Settings',  event: events.settings },
@@ -21,17 +30,8 @@ export default ({ open }, events, state, { replays }) => {
 
   const Component = components[tab]
 
-  const x = useSlide(open, width)
-
-  const { position } = replays.options
-  
-  const horizontal = position?.left ? 'left' : 'right'
-  const vertical = position?.top ? 'top' : 'bottom'
-
-  const backgroundColor = tab === 'events' ? colors.navy : undefined
-
   return (
-    <Animated.View style={[s.c, { [horizontal]: x, [vertical]: 45, backgroundColor }]}>
+    <Animated.View style={[s.c, style]}>
       <Tabs tabs={tabs} value={tab} />
       <PersistButton />
 
@@ -46,6 +46,7 @@ export default ({ open }, events, state, { replays }) => {
 
 
 const width = 355
+const margin = 10
 
 const components = {
   settings: Settings,

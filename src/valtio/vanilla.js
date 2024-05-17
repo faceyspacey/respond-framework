@@ -59,6 +59,9 @@ const buildProxyFunction = (
             // This is intentional to avoid copying with proxy-compare.
             // It's still non-writable, so it avoids assigning a value.
             configurable: true,
+
+            // respond-framework specific -- not sure if this will cause any problems based on the above comment, but let's try it
+            writable: true,
         }
 
         if (refSet.has(value)) {

@@ -7,7 +7,7 @@ export default async (store, e) => {
       await e.event.tap.call(e.event, store, e)
     }
     catch (error) {
-      store.onError(error, 'tap', e)
+      store.onError({ error, kind: 'tap', e })
     }
   })
 }

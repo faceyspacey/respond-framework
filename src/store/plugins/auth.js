@@ -1,7 +1,10 @@
 const standard = ({ onLogin, onLogout }) => async (store, e) => {
-  const { state, prevState } = store
-
+  if (e.kind !== 'navigation') return
+  const { state, prevState } = store.getStore() // escape hatch: token always assumed to be in top level store
+  
   if (state.token !== prevState.token) {
+    prevState.token = state.token // prevent being called again in redirects, as prevState is constant for a single trigger
+
     if (state.token) await onLogin(store, e)
     else await onLogout(store, e)
   }
