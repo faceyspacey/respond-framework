@@ -7,6 +7,7 @@ import Radio from '../widgets/Radio.js'
 import Test from '../widgets/Test.js'
 import SearchInputForm from '../components/SearchInputForm.js'
 import createModuleOptions from '../helpers/createModuleOptions.js'
+import { isNative } from '../../../utils/bools.js'
 
 
 export default (props, events, { testsList, sort, includeChildren }) => {
@@ -16,6 +17,7 @@ export default (props, events, { testsList, sort, includeChildren }) => {
   const ref = useRef()
 
   useEffect(() => {
+    if (isNative) return
     ref.current.focus()
   }, [])
 

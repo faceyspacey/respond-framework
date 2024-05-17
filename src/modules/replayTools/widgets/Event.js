@@ -9,9 +9,9 @@ import Remove from '../icons/Remove.js'
 import useDragAndDrop from '../hooks/useDragAndDrop.js'
 
 
-export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type, arg, dispatched, divergent, skipped, setIndex, openSlot }) => {
+export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type, arg, dispatched, divergent, skipped, setIndex, openSlot, toggleScroll }) => {
   const [hover, set] = useState(false)
-  const dndProps = useDragAndDrop(index, height, changeIndex, setIndex, openSlot)
+  const dndProps = useDragAndDrop(index, height, changeIndex, setIndex, openSlot, toggleScroll)
 
   let a = arg && Object.keys(arg).length > 0 && JSON.stringify(arg)
   a = a?.length === 2 ? undefined : a // remove possible undefined keys

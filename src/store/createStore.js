@@ -64,7 +64,7 @@ export default async (topModuleOriginal, settings) => {
 
   const prevStore = window.store
   const isHMR = !!prevStore && !replays.replay
-  console.log({isHMR}, !!prevStore, replays.replay)
+
   const modulePathsAll = createModulePaths(topModuleOriginal)
 
   const eventsAll = createEvents(topModuleOriginal, getStore)

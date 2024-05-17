@@ -1,8 +1,8 @@
-import { isNative as useNativeDriver } from '../../../utils/bools.js'
+import { isProd, isNative as useNativeDriver } from '../../../utils/bools.js'
 
 
 export default Animated => {
-  if (process.env.NODE_ENV === 'production') return
+  if (isProd) return
 
   const timing = Animated.timing
   const spring = Animated.spring

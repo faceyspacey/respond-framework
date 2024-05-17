@@ -60,10 +60,10 @@ const runEvents = async (store, events, delay) => {         // keep in mind stor
 
   if (!delay) store.render()                                // if no delay, only render once events are done and state is fully updated for a clean single re-render
 
-  requestIdleCallback(() => {
+  setTimeout(() => {
     window.isReplay = false
     window.isFastReplay = false
-  })                                                        // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
+  }, 100)                                                        // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
 
   const json = JSON.stringify(store.replays.settings)
   await localStorage.setItem('replaySettings', json)

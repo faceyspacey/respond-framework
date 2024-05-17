@@ -3,7 +3,7 @@ import { useRef, useState, useMemo }  from 'react'
 import { PanResponder, Animated } from 'react-native'
 
 
-export default (index, height, event, setIndex, openSlot) => {
+export default (index, height, event, setIndex, openSlot, toggleScroll) => {
   const y = useRef(new Animated.Value(0))
   const [dragging, set] = useState(false)
 
@@ -11,6 +11,7 @@ export default (index, height, event, setIndex, openSlot) => {
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
     onPanResponderTerminationRequest: () => false,  // allow dragging out of bounds to the bottom
+    onPanResponderGrant: () => toggleScroll(false),
     onPanResponderMove: (e, { dy }) => {
       const delta = Math.round(dy / height)         // index delta
 
@@ -39,6 +40,7 @@ export default (index, height, event, setIndex, openSlot) => {
     onPanResponderRelease: (e, { dy }) => {
       setIndex(null)                                // remove openSlot
       set(false)                                    // remove absolute position / dragging
+      toggleScroll(true)
 
       const delta = Math.round(dy / height)
 

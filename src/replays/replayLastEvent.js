@@ -11,13 +11,16 @@ export default async function() {
 
     const n = { type: 'HMR', __prefix: '@@', __developer: 'State reset to before replayed event.' }
     const prevState = reviveEventFunctionReferences(store.events, store.prevState)
-    console.log('replayLastEvent', {index, evs})
+
     store.devtools.forceNotification(n, prevState)
     store.replaceState(prevState)   // so when latest event is redispatched during HMR (i.e. the dispatch below), it's performed against the same state it was initially peformed against
 
     const events = getEventsWithPreviousIfSkipped(evs, index) 
 
     store.ctx.init = !!events[0]?.init  // tell start plugin the event dispatched should be treated as the init event
+
+    window.ignoreChangePath = window.isReplay = window.isFastReplay = true
+    store.state.replayTools.playing = this.playing = false // ensure SAVE TEST button is green, as prevState may have had it playing
 
     for (let i = 0; i < events.length; i++) {
       const { type, arg, meta } = events[i]
@@ -29,6 +32,10 @@ export default async function() {
     if (events.length > 0) { // if you skipped all events, don't render and possibly cause errors (i.e. preserve the old dom); let them figure out to unskip
       store.render()
     }
+
+    setTimeout(() => {
+      window.ignoreChangePath = window.isReplay = window.isFastReplay = false
+    }, 100)
   }
   catch (error) {
     console.error('[RESPOND] HMR triggered an error replaying the most recent event.', error)
