@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useState, memo } from 'react'
+import { useState, memo, useCallback } from 'react'
 import { Animated, View, Text, StyleSheet } from 'react-native'
 import { colors } from '../styles.js'
 import Chevron from '../icons/Chevron.js'
@@ -11,7 +11,9 @@ import useDragAndDrop from '../hooks/useDragAndDrop.js'
 
 export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type, arg, dispatched, divergent, skipped, setIndex, openSlot, toggleScroll }) => {
   const [hover, set] = useState(false)
-  const dndProps = useDragAndDrop(index, height, changeIndex, setIndex, openSlot, toggleScroll)
+  const [longPressing, setLongPress] = useState(false)
+
+  const dndProps = useDragAndDrop(index, height, changeIndex, setIndex, openSlot, toggleScroll, longPressing)
 
   let a = arg && Object.keys(arg).length > 0 && JSON.stringify(arg)
   a = a?.length === 2 ? undefined : a // remove possible undefined keys
@@ -30,11 +32,14 @@ export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type,
 
   const top = a ? 9 : 7
 
+  const onLongPress = useCallback(() => setLongPress(true))
+  const onPressOut = useCallback(() => setLongPress(false))
+  
   return (
     <Animated.View {...dndProps}>
       <View style={styles} onMouseEnter={() => set(true)} onMouseLeave={() => set(false)}>
-        <Pressable style={s.press} event={event} arg={{ index }}>
-          <View>
+        <Pressable style={s.press} event={event} arg={{ index }} onLongPress={onLongPress} onPressOut={onPressOut}>
+          <View style={s.line1}>
             {hover
               ? <Pressable style={stylesIcon} event={deleteEvent} arg={{ index }}>
                   <Remove style={s.remove} color={color} strokeWidth={2} />
@@ -86,6 +91,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     cursor: 'pointer',
   },
+  line1: {
+    height: '100%',
+    justifyContent: 'center'
+  },
   text: {
     fontSize: 14,
     lineHeight: 14,
@@ -108,7 +117,7 @@ const s = StyleSheet.create({
   iconContainer: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: -1,
     height: '100%',
     justifyContent: 'center',
     zIndex: 2,

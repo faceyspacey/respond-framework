@@ -52,7 +52,7 @@ const s = StyleSheet.create({
     right: 0,
     top: 0,
     justifyContent: 'flex-end',
-    width: 1,
+    width: 65,
     height: '100%',
     marginTop: 0,
   },

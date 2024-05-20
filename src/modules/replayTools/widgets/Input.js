@@ -53,6 +53,9 @@ const s = StyleSheet.create({
     backgroundColor: colors.navy,
     borderRadius: 3,
     marginTop: 9,
+    textAlignVertical: 'center',
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   placeholder: {
     color: colors.greyLight

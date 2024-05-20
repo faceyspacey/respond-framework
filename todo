@@ -34,6 +34,7 @@ NEW UI WORK:
 #turn collection getter into method
 #replay tools in production
 #set replays defaultProductionValue in production
+#import recursiveReadSync from 'recursive-readdir-sync'
 
 isNamespace
 duplicating find into _find
@@ -42,7 +43,7 @@ clearStorage console.log note
 make ReplayTools rows have better press events on native
 
 make db/index.mock.js utilize create() method exactly like production version
-import recursiveReadSync from 'recursive-readdir-sync'
+
 
 
 put skip, limit, sort, and proj in options object

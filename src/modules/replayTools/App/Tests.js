@@ -10,7 +10,9 @@ import createModuleOptions from '../helpers/createModuleOptions.js'
 import { isNative } from '../../../utils/bools.js'
 
 
-export default (props, events, { testsList, sort, includeChildren }) => {
+export default (props, events, state) => {
+  const { testsList, sort, includeChildren } = state
+
   const { replays } = useStore()
   const modulePath = replays.settings.module || ''
 
@@ -53,7 +55,7 @@ export default (props, events, { testsList, sort, includeChildren }) => {
           deleteTest: events.deleteTest,
         }))}
 
-        {testsList.length === 0 && <Text style={s.none}>no tests found</Text>}
+        {testsList.length === 0 && !state.loading && <Text style={s.none}>no tests found</Text>}
       </ScrollView>
     </View>
   )

@@ -3,13 +3,13 @@ import { useRef, useState, useMemo }  from 'react'
 import { PanResponder, Animated } from 'react-native'
 
 
-export default (index, height, event, setIndex, openSlot, toggleScroll) => {
+export default (index, height, event, setIndex, openSlot, toggleScroll, longPressing) => {
   const y = useRef(new Animated.Value(0))
   const [dragging, set] = useState(false)
 
   const pan = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: () => longPressing,
     onPanResponderTerminationRequest: () => false,  // allow dragging out of bounds to the bottom
     onPanResponderGrant: () => toggleScroll(false),
     onPanResponderMove: (e, { dy }) => {
@@ -53,7 +53,7 @@ export default (index, height, event, setIndex, openSlot, toggleScroll) => {
     },
   })
 
-  const props = useMemo(() => pan, [event, set, y]) // important: without `event` as a dep, replays will have stale events assigned, bringing along with it stale state when tapped
+  const props = useMemo(() => pan, [event, set, y, longPressing]) // important: without `event` as a dep, replays will have stale events assigned, bringing along with it stale state when tapped
 
   const transform = [{ translateY: y.current }]
 
