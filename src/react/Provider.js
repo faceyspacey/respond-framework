@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import RespondContext from './context.js'
 import ErrorBoundary from './ErrorBoundary.js'
 import ReplayTools from '../modules/replayTools/App/index.js'
