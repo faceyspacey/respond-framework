@@ -53,7 +53,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.navy,
     borderRadius: 3,
     marginTop: 9,
-    textAlignVertical: 'center',
+    verticalAlign: 'middle',
     paddingTop: 0,
     paddingBottom: 0,
   },
