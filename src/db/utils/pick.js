@@ -37,13 +37,3 @@ const include = (doc, project) =>
     acc[field] = doc[field]
     return acc
   }, {})
-
-
-
-
-// db mock helper
-
-export const pickAndCreate = (collection, doc, project) => {
-  const picked = pick(doc, project)
-  return picked ? collection.create(picked) : undefined
-}

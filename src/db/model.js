@@ -15,14 +15,14 @@ export default !isProd ? mock : {
     const { id, _id: _, ...doc } = this
     const selector = toObjectIdsSelector({ id: this.id })
 
-    await this.getDb()[this._name].collection.updateOne(selector, { $set: toObjectIds(doc) }, { upsert: true })
+    await this.db(this._name).mongo().updateOne(selector, { $set: toObjectIds(doc) }, { upsert: true })
 
     return this
   },
 
   async remove() {
     const selector = toObjectIdsSelector({ id: this.id })
-    await this.getDb()[this._name].collection.deleteOne(selector)
+    await this.db(this._name).mongo().deleteOne(selector)
     return { id: this.id }
   }
 }

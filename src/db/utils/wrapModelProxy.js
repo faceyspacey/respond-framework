@@ -1,20 +1,20 @@
 export default (name, doc, models, state) => {
   if (!doc) return
   
-  const Model = models[name]
+  const model = models[name]
 
-  if (!Model) return doc
+  if (!model) return doc
 
   const proxy = new Proxy(doc, {
     get: (target, k, receiver) => {
-      const descriptor = Object.getOwnPropertyDescriptor(Model, k)
+      const descriptor = model[k]
       const getter = descriptor?.get
 
       if (getter) {
         return getter.call(proxy)
       }
 
-      const method = Model[k]
+      const method = descriptor?.value
 
       if (typeof method === 'function') {
         return (...args) => method.apply(proxy, args)

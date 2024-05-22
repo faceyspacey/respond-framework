@@ -6,7 +6,7 @@ import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
 
 
-export default topModule => {
+export default (topModule, topModuleOriginal) => {
   const options = {
     nested: false,
     simulateLatency,
@@ -18,9 +18,9 @@ export default topModule => {
     ...topModule.db
   }
   
-  options._controllers = createControllers(topModule, options)
+  options._controllers = createControllers(topModule, topModuleOriginal)
 
-  const db = createDbProxy({ options })
+  const db = createDbProxy({ options, createControllerMethod })
 
   db.developer = createDeveloperController(db)
 
@@ -30,7 +30,7 @@ export default topModule => {
 
 
 
-export const createControllerMethod = (db, controller, method, modulePath = '') => {
+const createControllerMethod = (db, controller, method, modulePath = '') => {
   const { options } = db
 
   return async function(...argsRaw) {
@@ -42,8 +42,8 @@ export const createControllerMethod = (db, controller, method, modulePath = '') 
       throw new Error(`controller "${controller}" does not exist in ${modulePath ? `module "${modulePath}"` : `top module`}`)
     }
 
-    const { token, userId } = db.store.state
-    const ctx = { token, userId, ...options.getContext(db, controller, method, argsRaw) }
+    const { token, userId, adminUserId } = db.store.state
+    const ctx = { token, userId, adminUserId, ...options.getContext(db, controller, method, argsRaw) }
 
     const args = cleanLikeProduction(argsRaw.map(a => a === undefined ? '__undefined__' : a)) // undefined becomes null when stringified, but controller functions may depend on undefined args and default parameters, so we convert this back to undefined server side
 

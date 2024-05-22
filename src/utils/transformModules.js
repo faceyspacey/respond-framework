@@ -1,4 +1,4 @@
-import mixinModels from '../db/utils/mixinModels.js'
+import mergeModels from '../db/utils/mergeModels.js'
 import createFindOne from '../selectors/createFindOne.js'
 
 
@@ -51,17 +51,20 @@ export const createModulePaths = (mod, modulePath = '', modulePaths = { ['']: tr
 
 // store.selectors
 
-export const createSelectors = (mod, parent) => {
-  mod.models = mod.models
-    ? Array.isArray(mod.models) ? mixinModels(...mod.models) : mod.models
-    : parent?.models
+export const createSelectors = (mod, topModuleOriginal) => {
+  const topModels = !topModuleOriginal.db?.nested && mergeModels(topModuleOriginal.db?.models)
+  return createModuleSelectors(mod, topModels)
+}
 
-  const findOne = createFindOne(mod.models)
+
+export const createModuleSelectors = (mod, topModels) => {
+  const models = topModels || mergeModels(mod.db?.models)
+  const findOne = createFindOne(models)
 
   const selectors = {
     ...mod.selectors,
     ...mod.defaultProps?.selectors,
-    ...recurseModulesSelectors(mod),
+    ...recurseModulesSelectors(mod, topModels),
     findOne,
   }
 
@@ -73,13 +76,12 @@ export const createSelectors = (mod, parent) => {
 }
 
 
-
-const recurseModulesSelectors = mod => {
+const recurseModulesSelectors = (mod, topModels) => {
   if (!mod.modules) return
 
   return Object.keys(mod.modules).reduce((selectors, k) => {
     const child = mod.modules[k]
-    selectors[k] = createSelectors(child, mod)
+    selectors[k] = createModuleSelectors(child, topModels)
     return selectors
   }, {})
 }

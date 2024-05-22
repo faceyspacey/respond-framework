@@ -1,43 +1,30 @@
 import objectId from '../utils/objectIdDevelopment.js'
-import safeMethods from './safeMethods.js'
 import applySelector from './utils/applySelector.js'
+import sortDocs from './utils/sortDocs.js'
+import pick from './utils/pick.js'
+import safeMethods from './safeMethods.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
-import { pickAndCreate } from './utils/pick.js'
 import { isServer } from '../utils/bools.js'
 
 
 export default {
   async findOne(selector, project, sort = { updatedAt: -1 }) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
-    if (typeof selector === 'string') return pickAndCreate(this, this.docs[selector], project)
-    if (selector.id) return pickAndCreate(this, this.docs[selector.id], project)
+    if (typeof selector === 'string') return this._pick(this.docs[selector], project)
+    if (selector.id) return this._pick(this.docs[selector.id], project)
 
-    const models = await this._find(selector, project, sort, 1)
+    const models = await this.find(selector, project, sort, 1)
     return models[0]
   },
 
-  async find(selector, project, sort = { updatedAt: -1 }, limit = this.config.listLimit, skip = 0, models = Object.values(this.docs || {})) {
+  async find(selector, project, sort = { updatedAt: -1 }, limit = this.config.listLimit, skip = 0, docs = Object.values(this.docs || {})) {
     const start = skip * limit
     const end = start + limit
 
-    let docs = models.filter(applySelector(selector))
-
-    const [key, key2] = Object.keys(sort)
-    const direction = sort[key]
+    docs = sortDocs(docs.filter(applySelector(selector)), sort)
+    docs = limit === 0 ? docs.slice(start) : docs.slice(start, end)
     
-    const asc = (a, b) => 
-      (+(a[key] > b[key] || b[key] === undefined) || +(a[key] === b[key]) - 1) ||
-        (+(a[key2] > b[key2] || b[key2] === undefined) || +(a[key2] === b[key2]) - 1)
-
-    const desc = (a, b) => 
-      (+(b[key] > a[key] || a[key] === undefined) || +(b[key] === a[key]) - 1) ||
-        (+(b[key2] > a[key2] || a[key2] === undefined) || +(b[key2] === a[key2]) - 1)
-
-    docs = direction === -1 ? docs.sort(desc) : docs.sort(asc)
-
-    return limit === 0
-      ? docs.slice(start).map(doc => pickAndCreate(this, doc, project))
-      : docs.slice(start, end).map(doc => pickAndCreate(this, doc, project))
+    return docs.map(doc => this._pick(doc, project))
   },
 
   async insertOne(doc, proj) {
@@ -45,7 +32,7 @@ export default {
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this.create(doc)
-    return pickAndCreate(this, this.docs[doc.id], proj)
+    return this._pick(this.docs[doc.id], proj)
   },
 
   async updateOne(selector, newDoc, proj) {
@@ -54,7 +41,7 @@ export default {
     const id = typeof selector === 'string' ? selector : selector.id
     const { id: _, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
 
-    const model = await this._findOne(id || selector)
+    const model = await this.findOne(id || selector)
 
     if (model) {
       Object.assign(model, doc) // todo: make deep merge (maybe)
@@ -62,11 +49,11 @@ export default {
       this.docs[model.id] = model
     }
 
-    return pickAndCreate(this, model, proj)
+    return this._pick(model, proj)
   },
 
   async upsert(selector, doc, insertOnlyDoc, project) {
-    const existingDoc = await this._findOne(selector)
+    const existingDoc = await this.findOne(selector)
 
     if (existingDoc) {
       doc.updatedAt = new Date
@@ -74,25 +61,25 @@ export default {
       Object.assign(existingDoc, doc)
       this.docs[existingDoc.id] = existingDoc
       
-      return this._findOne(selector, project)
+      return this.findOne(selector, project)
     }
 
-    return this._insertOne({ ...selector, ...doc, ...insertOnlyDoc })
+    return this.insertOne({ ...selector, ...doc, ...insertOnlyDoc })
   },
 
   async findAll(selector, project, sort) {
-    return this._find(selector, project, sort, 0)
+    return this.find(selector, project, sort, 0)
   },
 
   async findLike(key, term, ...args) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ [key]: value }, ...args)
+    return this.find({ [key]: value }, ...args)
   },
 
   async search(query, project, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
-    const allRows = await this._find(undefined, project, { updatedAt: -1 }, limit, skip)
+    const allRows = await this.find(undefined, project, { updatedAt: -1 }, limit, skip)
 
     query = query.replace(/[\W_]+/g, '')    // remove non-alphanumeric characters
 
@@ -103,11 +90,11 @@ export default {
   },
 
   async searchGeo({ lng, lat }, selector, project, limit = this.config.listLimit, skip) {
-    return this._find(selector, project, { updatedAt: -1 }, limit, skip)
+    return this.find(selector, project, { updatedAt: -1 }, limit, skip)
   },
 
   async joinOne(id, name, proj, projectJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -115,15 +102,15 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this._findOne(id, proj),
-      collection.findOne(selector, projectJoin, sort, limit, skip)
+      this.findOne(id, proj),
+      coll.findOne(selector, projectJoin, sort, limit, skip)
     ])
 
     return { [parentName]: parent, [name]: children }
   },
 
   async joinMany(id, name, proj, projectJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -131,11 +118,11 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this._findOne(id, proj),
-      collection._find(selector, projectJoin, sort, limit, skip)
+      this.findOne(id, proj),
+      coll.find(selector, projectJoin, sort, limit, skip)
     ])
 
-    return { [parentName]: parent, [collection._namePlural]: children }
+    return { [parentName]: parent, [coll._namePlural]: children }
   },
 
   async join(name, selector, fk, selectorJoin, proj, projectJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin = this.config.listLimit, innerJoin) {
@@ -144,17 +131,17 @@ export default {
 
     fk ??= this._name + 'Id'
     
-    let parents = await this._find(selector, proj, sort, limit, skip)
+    let parents = await this.find(selector, proj, sort, limit, skip)
     const $in = parents.map(p => p.id)
 
     selectorJoin = { ...selectorJoin, [fk]: { $in } }
 
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
-    const children = await collection._find(selectorJoin, projectJoin, sortJoin, limitJoin) 
+    const children = await coll.find(selectorJoin, projectJoin, sortJoin, limitJoin) 
     
     const outer = this._namePlural
-    const inner = collection._namePlural
+    const inner = coll._namePlural
 
     if (innerJoin) {
       parents = parents.filter(p => children.find(c => c[fk] === p.id))
@@ -176,8 +163,8 @@ export default {
       skip = 0
     } = options
 
-    const docs = await createAggregateStages(this.getDb(), this._name, specs, selector, sort) // mock fully converts stage specs into docs themselves (non-paginated)
-    const page = await this._find(undefined, proj, sort, limit, skip, docs) // apply pagination and sorting on passed in models
+    const docs = await createAggregateStages(this.db(), this._name, specs, selector, sort) // mock fully converts stage specs into docs themselves (non-paginated)
+    const page = await this.find(undefined, proj, sort, limit, skip, docs) // apply pagination and sorting on passed in models
 
     return { count: docs.length, [this._namePlural]: page }
   },
@@ -205,13 +192,13 @@ export default {
   },
 
   async updateMany(selector, doc) {
-    const models = await this._find(selector)
+    const models = await this.find(selector)
     models.forEach(m => m.save(doc))
     return { acknowledged: true }
   },
 
   async deleteMany(selector) {
-    const models = await this._find(selector)
+    const models = await this.find(selector)
     models.forEach(m => delete this.docs[m.id])
     return { acknowledged: true }
   },
@@ -222,7 +209,7 @@ export default {
       : selector.id
     
     if (!id) {
-      const model = await this._findOne(selector)
+      const model = await this.findOne(selector)
       id = model?.id
     }
 
@@ -232,14 +219,16 @@ export default {
   },
 
   async incrementOne(selector, $inc) {
-    const model = await this._findOne(selector)
+    const model = await this.findOne(selector)
+
+    const doc = {}
 
     Object.keys($inc).forEach(k => {
-      model[k] = model[k] || 0 // todo: support nested fields
-      model[k] += $inc[k]
+      const v = model[k] || 0 // todo: support nested fields
+      doc[k] = v + $inc[k]
     })
     
-    await this.getModel()._save.call(model)
+    await this.updateOne(selector, doc)
 
     return { acknowledged: true }
   },
@@ -247,10 +236,7 @@ export default {
   create(doc) {
     const id = doc?.id || objectId()
     const instance = { ...doc, id }
-
-    const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
-
-    return Object.defineProperties(instance, descriptors)
+    return Object.defineProperties(instance, this.model())
   },
 
   insertSeed(docsObject) {
@@ -275,7 +261,15 @@ export default {
   },
 
 
-  // production methods for resolving id -> _id
+  // utils
+
+  _pick(doc, project) {
+    const picked = pick(doc, project)
+    return picked ? this.create(picked) : undefined
+  },
+
+
+  // production methods for resolving id <-> _id
 
   _getIdName() {
     return 'id'
@@ -296,7 +290,6 @@ export default {
   _toProject(project) {
     return project
   },
-
 
   ...safeMethods
 }

@@ -19,17 +19,17 @@ export default !isProd ? mock : topModule => {
     ...topModule.db
   }
 
-  return createDbProxy({ options })
+  return createDbProxy({ options, createControllerMethod })
 }
 
 
 
-export const createControllerMethod = (db, controller, method, modulePath = '') => {
+const createControllerMethod = (db, controller, method, modulePath = '') => {
   const { options } = db
 
   return async function(...argsRaw) {
-    const { token, userId } = db.store.state
-    const ctx = { token, userId, ...options.getContext(db, controller, method, argsRaw) }
+    const { token, userId, adminUserId } = db.store.state
+    const ctx = { token, userId, adminUserId, ...options.getContext(db, controller, method, argsRaw) }
 
     try {
       const first = options.madeFirst ? false : true

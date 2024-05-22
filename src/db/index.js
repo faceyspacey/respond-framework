@@ -14,7 +14,7 @@ export default !isProd ? mock : {
 
     selector = this._toObjectIdsSelector(selector)
 
-    const model = await this.collection.findOne(selector, { projection: this._toProject(proj), sort })
+    const model = await this.mongo().findOne(selector, { projection: this._toProject(proj), sort })
 
     return model && this.create(model)
   },
@@ -22,7 +22,7 @@ export default !isProd ? mock : {
   async find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
     selector = this._toObjectIdsSelector(selector)
 
-    const models = await this.collection
+    const models = await this.mongo()
       .find(selector)
       .sort(sort)
       .skip(skip * limit)
@@ -38,7 +38,7 @@ export default !isProd ? mock : {
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = this._toObjectIds(doc)
-    await this.collection.insertOne(doc)
+    await this.mongo().insertOne(doc)
     return this.create(pick(doc, proj))
   },
 
@@ -50,7 +50,7 @@ export default !isProd ? mock : {
     selector = this._toObjectIdsSelector(id ? { id } : selector)
 
 
-    const result = await this.collection.findOneAndUpdate(selector, {
+    const result = await this.mongo().findOneAndUpdate(selector, {
       $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
     }, { projection: this._toProject(proj), returnDocument: 'after' })
@@ -64,7 +64,7 @@ export default !isProd ? mock : {
   },
 
   async upsert(selector, doc, insertOnlyDoc, proj) {
-    const result = await this.collection.findOneAndUpdate(this._toObjectIdsSelector(selector), {
+    const result = await this.mongo().findOneAndUpdate(this._toObjectIdsSelector(selector), {
       $set: this._toObjectIds(doc),
       $setOnInsert: this._toObjectIdsSelector({ ...selector, ...insertOnlyDoc, createdAt: new Date }),
       $currentDate: { updatedAt: true }
@@ -78,24 +78,24 @@ export default !isProd ? mock : {
   },
 
   async findAll(selector, project, sort) {
-    return this._find(selector, project, sort, 0)
+    return this.find(selector, project, sort, 0)
   },
 
   async findLike(key, term, selector, ...args) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ ...selector, [key]: value }, ...args)
+    return this.find({ ...selector, [key]: value }, ...args)
   },
 
   async search(query, selector, proj, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find({ $text: { $search: query }, ...selector }, this._toProject(proj), { updatedAt: 1 }, limit, skip)
+      return this.find({ $text: { $search: query }, ...selector }, this._toProject(proj), { updatedAt: 1 }, limit, skip)
     }
 
-    const models = await this.collection.aggregate([
+    const models = await this.mongo().aggregate([
       {
         $search: {
           index: 'nameSearch',
@@ -123,10 +123,10 @@ export default !isProd ? mock : {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find(selector, proj, { updatedAt: 1 }, limit, skip) // updateAt: 1, sorts in opposite of standard direction to indicate something happened
+      return this.find(selector, proj, { updatedAt: 1 }, limit, skip) // updateAt: 1, sorts in opposite of standard direction to indicate something happened
     }
     
-    const models = await this.collection.aggregate([
+    const models = await this.mongo().aggregate([
       {
         $geoNear: {
           near: { type: 'Point', coordinates: [lng, lat] },
@@ -145,41 +145,41 @@ export default !isProd ? mock : {
   },
 
   async joinOne(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
     const parentName = this._name
     const fk = parentName + 'Id'
 
-    const selector = collection._toObjectIdsSelector({ [fk]: id  }) 
+    const selector = coll._toObjectIdsSelector({ [fk]: id  }) 
 
     const project = this._toProject(proj)
-    const projectJoin = collection._toProject(projJoin)
+    const projectJoin = coll._toProject(projJoin)
 
     let [parent, children] = await Promise.all([
-      this._findOne(id, project),
-      collection._findOne(selector, projectJoin, sort, limit, skip),
+      this.findOne(id, project),
+      coll.findOne(selector, projectJoin, sort, limit, skip),
     ])
 
     return { [parentName]: parent, [name]: children }
   },
 
   async joinMany(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
     const parentName = this._name
     const fk = parentName + 'Id'
 
-    const selector = collection._toObjectIdsSelector({ [fk]: id  }) 
+    const selector = coll._toObjectIdsSelector({ [fk]: id  }) 
 
     const project = this._toProject(proj)
-    const projectJoin = collection._toProject(projJoin)
+    const projectJoin = coll._toProject(projJoin)
 
     let [parent, children] = await Promise.all([
-      this._findOne(id, project),
-      collection._find(selector, projectJoin, sort, limit, skip),
+      this.findOne(id, project),
+      coll.find(selector, projectJoin, sort, limit, skip),
     ])
 
-    return { [parentName]: parent, [collection._namePlural]: children }
+    return { [parentName]: parent, [coll._namePlural]: children }
   },
 
   async join(name, selector, fk, selectorJoin, proj, projJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin = this.config.listLimit, innerJoin) {
@@ -189,15 +189,15 @@ export default !isProd ? mock : {
     fk ??= this._name + 'Id'
 
     const localField = this._getIdName()
-    const collection = this.getDb()[name]
+    const coll = this.db(name)
 
     proj = this._toProject(proj)
     selector = this._toObjectIdsSelector(selector)
     sort = this._toObjectIdsSelector(sort)
 
-    projJoin = collection._toProject(projJoin)
-    selectorJoin = collection._toObjectIdsSelector(selectorJoin)
-    sortJoin = collection._toObjectIdsSelector(sortJoin)
+    projJoin = coll._toProject(projJoin)
+    selectorJoin = coll._toObjectIdsSelector(selectorJoin)
+    sortJoin = coll._toObjectIdsSelector(sortJoin)
 
     const stages = [
       ...(selector ? [{ $match: selector }] : []),
@@ -207,14 +207,14 @@ export default !isProd ? mock : {
       ...createJoin(this._namePlural, name, fk, localField, proj, projJoin, selectorJoin, sortJoin, limitJoin, innerJoin)
     ]
 
-    const results = await this.collection.aggregate(stages).next() // result of createJoin is first element in array
+    const results = await this.mongo().aggregate(stages).next() // result of createJoin is first element in array
 
     const outer = this._namePlural
-    const inner = collection._namePlural
+    const inner = coll._namePlural
 
     return {
       [outer]: results[outer].map(m => this.create(m)),
-      [inner]: results[name].map(m => collection.create(m)),
+      [inner]: results[name].map(m => coll.create(m)),
     }
   },
 
@@ -230,8 +230,8 @@ export default !isProd ? mock : {
 
     const stages = createAggregateStages(this, specs, selector, proj, sort, limit, skip)
 
-    const countPromise = this.collection.aggregate(createStagesCount(stages)).toArray()
-    const docsPromise = this.collection.aggregate(stages).toArray()
+    const countPromise = this.mongo().aggregate(createStagesCount(stages)).toArray()
+    const docsPromise = this.mongo().aggregate(stages).toArray()
 
     const [counts, docs] = await Promise.all([countPromise, docsPromise])
 
@@ -242,35 +242,35 @@ export default !isProd ? mock : {
   },
 
   async count(selector) {
-    return this.collection.count(this._toObjectIdsSelector(selector))
+    return this.mongo().count(this._toObjectIdsSelector(selector))
   },
 
   async totalPages(selector, limit = 10) {
-    const count = await this._count(this._toObjectIdsSelector(selector))
+    const count = await this.count(this._toObjectIdsSelector(selector))
     return Math.ceil(count / limit)
   },
 
   async insertMany(docs) {
-    return this.collection.insertMany(docs)
+    return this.mongo().insertMany(docs)
   },
 
   async updateMany(selector, $set) {
-    return this.collection.updateMany(this._toObjectIdsSelector(selector), { $set: this._toObjectIds($set) })
+    return this.mongo().updateMany(this._toObjectIdsSelector(selector), { $set: this._toObjectIds($set) })
   },
 
   async deleteMany(selector) {
     selector = this._toObjectIdsSelector(selector)
-    await this.collection.deleteMany(selector)
+    await this.mongo().deleteMany(selector)
   },
 
   async deleteOne(selector) {
     selector = this._toObjectIdsSelector(selector)
-    return this.collection.deleteOne(selector)
+    return this.mongo().deleteOne(selector)
   },
 
   async incrementOne(selector, $inc) {
     selector = this._toObjectIdsSelector(selector)
-    return this.collection.updateOne(selector, { $inc })
+    return this.mongo().updateOne(selector, { $inc })
   },
 
   create(doc) {
@@ -278,11 +278,10 @@ export default !isProd ? mock : {
     instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
     delete instance._id                                           // bye bye _id
     
-    const descriptors = Object.getOwnPropertyDescriptors(this.getModel())
-    return Object.defineProperties(instance, descriptors)
+    return Object.defineProperties(instance, this.model())
   },
 
-  get collection() {
+  mongo() {
     if (this._mongoCollection) return this._mongoCollection
 
     const client = new MongoClient(this.config.connectionString)
@@ -296,8 +295,7 @@ export default !isProd ? mock : {
   },
 
 
-
-  // OVERRIDEABLE UTILS: _id <-> id conversion utils (here as methods so they can be overriden in userland if a different approach is desired)
+  // OVERRIDEABLE UTILS: _id <-> id conversion utils (can be overriden in userland -- eg: external datasource facade that has 'id' keys)
 
   _getIdName() {
     return '_id'
@@ -323,7 +321,6 @@ export default !isProd ? mock : {
 
     return project
   },
-
 
   ...safeMethods
 }

@@ -30,6 +30,8 @@ import { isProd } from '../utils/bools.js'
 
 
 export default async (topModuleOriginal, settings) => {
+  topModuleOriginal = { ...topModuleOriginal }
+  
   const replay = !!settings
   settings ??= await restoreSettings()
 
@@ -56,7 +58,8 @@ export default async (topModuleOriginal, settings) => {
   const { merge } = options
   
   const cookies = topModule.cookies || createCookies()
-  const db = createClientDatabase(topModule)
+
+  const db = createClientDatabase(topModule, topModuleOriginal)
 
   topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
 
@@ -72,7 +75,7 @@ export default async (topModuleOriginal, settings) => {
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
   const reducers = createReducers(topModule)
-  const selectors = createSelectors(topModule)
+  const selectors = createSelectors(topModule, topModuleOriginal)
   const events = !modulePath ? eventsAll : createEvents(topModule, getStore)
 
   const eventFrom = createEventFrom(getStore, events)

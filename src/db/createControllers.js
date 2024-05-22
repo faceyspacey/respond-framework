@@ -2,16 +2,17 @@ import Parent from './Controller.js'
 import createControllerDefault from './utils/createControllerDefault.js'
 
 
-export default (topModule, options = {}) => {
-  if (!options.nested) {
-    const controllers = topModule.db?.controllers || topModule // controllers can be passed in directly server-side in a flat structure, rather than in our nested module structure
-    return createControllersFlat(controllers, options.createController)
+export default (topModule, topModuleOriginal = topModule) => {
+  if (!topModuleOriginal?.db?.nested) {
+    return createControllersFlat(topModuleOriginal)
   }
 
   const modules = {}
   createModule(topModule, modules)
   return modules
 }
+
+
 
 
 export const createModule = (mod, modules, modulePath = '') => {
@@ -48,7 +49,8 @@ const createControllers = (mod, modules, path = '') =>  {
 
 // for passing to createApi.js server-side in production, when you aren't using a tree of controllers by modulePath
 
-const createControllersFlat = (controllers = {}, createController = createControllerDefault) =>  {
+const createControllersFlat = mod =>  {
+  const { controllers = {}, createController = createControllerDefault } = mod.db || {}
   const flat = {}
 
   for (const controller in controllers) {
