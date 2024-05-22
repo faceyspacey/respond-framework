@@ -23,10 +23,10 @@ export default (dbRaw, options = {}) => {
 
 const getDb = name => name ? db[name] : db
 
-const gopd = Object.getOwnPropertyDescriptors
+const g = Object.getOwnPropertyDescriptors
 
 const createModelDescriptors = (base, model, shared = {}, server = {}) => {
-  const model = Object.assign({}, gopd(base), gopd(model), gopd(shared), gopd(server))
-  Object.keys(model).forEach(k => model[k].enumerable = false)
-  return model
+  const m = Object.assign({}, g(base), g(model), g(shared), g(server))
+  Object.keys(m).forEach(k => m[k].enumerable = false)
+  return m
 }
