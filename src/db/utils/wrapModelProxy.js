@@ -2,7 +2,6 @@ export default (name, doc, models, state) => {
   if (!doc) return
   
   const model = models[name] // model is descriptors
-
   if (!model) return doc
 
   const proxy = new Proxy(doc, {
@@ -13,21 +12,18 @@ export default (name, doc, models, state) => {
 }
 
 
-export const callModelMethod = (descriptors, proxy, target = {}, k, state) => {
-  const v = target[k]
+export const callModelMethod = (descriptors, proxy, doc = {}, k, state) => {
+  const v = doc[k]
   if (v !== undefined) return v
 
-  const descriptor = descriptors[k]
-  const getter = descriptor?.get
+  const { get, value: method } = descriptors[k] || {}
 
-  if (getter) {
-    return getter.call(proxy)
+  if (get) {
+    return get.call(proxy)
   }
 
-  const method = descriptor?.value
-
   if (typeof method === 'function') {
-    return (...args) => method.apply(proxy, args)
+    return method.bind(proxy)
   }
 
   if (k === '_state') return state // escape hatch to access module state within class methods
