@@ -5,7 +5,7 @@ export default (dbRaw, options = {}) => {
   const { collection, model, models = {} } = options
   const config = { listLimit: 10, ...options.config }
 
-  Object.keys(dbRaw).forEach(k => {
+  Object.keys(dbRaw).forEach(k => {qdfsdfsdfsdfdsdfgdfgdgfdfgsdfs
     const coll = dbRaw[k]
     const docs = db[k]?.docs // preserve docs through HMR
 

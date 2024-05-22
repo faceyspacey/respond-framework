@@ -246,7 +246,7 @@ export default !isProd ? mock : {
   },
 
   async totalPages(selector, limit = 10) {
-    const count = await this.count(this._toObjectIdsSelector(selector))
+    const count = await this.mongo().count(this._toObjectIdsSelector(selector))
     return Math.ceil(count / limit)
   },
 

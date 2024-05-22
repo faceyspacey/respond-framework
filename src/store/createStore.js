@@ -32,7 +32,7 @@ import { isProd } from '../utils/bools.js'
 export default async (topModuleOriginal, settings) => {
   topModuleOriginal = { ...topModuleOriginal }
   
-  const replay = !!settings
+  const replay = !!settings && !isProd
   settings ??= await restoreSettings()
 
   const modulePath = settings?.module || ''
@@ -43,7 +43,10 @@ export default async (topModuleOriginal, settings) => {
 
   topModule.models ??= topModuleOriginal.models // allow child modules to inherit parent models
 
-  const replays = createReplayTools({ ...topReplays, settings, replay })
+  const cookies = topModule.cookies || createCookies()
+  const token = cookies.token || await cookies.get('token')
+
+  const replays = createReplayTools({ ...topReplays, settings: { ...settings, token }, replay })
   
   delete topModule.props // props passed from parent are not available when using replayTools to focus child modules
   
@@ -56,8 +59,6 @@ export default async (topModuleOriginal, settings) => {
   }
 
   const { merge } = options
-  
-  const cookies = topModule.cookies || createCookies()
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
@@ -142,7 +143,7 @@ export default async (topModuleOriginal, settings) => {
   
   store.changePath = setupHistory(store)
 
-  const baseState = { cachedPaths: {}, token: cookies.get('token') || replays.token }
+  const baseState = { cachedPaths: {}, token: replays.token }
   const top = { ...topModule, initialState: { ...baseState, ...topModule.initialState } }
 
   const initialState = isHMR

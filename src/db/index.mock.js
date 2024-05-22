@@ -170,13 +170,11 @@ export default {
   },
 
   async count(selector) {
-    return Object.values(this.docs)
-      .filter(applySelector(selector))
-      .length
+    return Object.values(this.docs).filter(applySelector(selector)).length
   },
 
   async totalPages(selector, limit = 10) {
-    const count = await this.count(selector)
+    const count = Object.values(this.docs).filter(applySelector(selector)).length
     return Math.ceil(count / limit)
   },
 

@@ -59,36 +59,10 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
+- new db finder method api
+- import db circurlarly from createdatabase
+- buildIn findOne to all models when accessed (i.e. always apply model descriptors)
+- remove wrapPlayerProxy
 
-export const createModule = (mod, modules, modulePath = '', parent) => {
-  createControllers(mod, modules, modulePath, parent)
-
-  if (!mod.modules) return
-
-  Object.keys(mod.modules).forEach(k => {
-    const child = mod.modules[k]
-    const path = modulePath ? `${modulePath}.${k}` : k
-
-    createModule(child, modules, path, mod)
-  })
-}
-
-
-const createControllers = (mod, modules, path = '', parent) =>  {
-  const { controllers = {}, createController = createControllerDefault } = mod.db?.controllers
-    ? mod.db
-    : parent?.db?.inheritControllers !== false ? (parent.db || {}) : {}
-
-  modules[path] = {}
-
-  for (const controller in controllers) {
-    const Child = { 
-      _name: controller,
-      _namePlural: controller + 's',
-      ...controllers[controller],
-    }
-
-    modules[path][controller] = createController(Child, Parent)
-  }
-}
-
+if (state === undefined) return
+return callModelMethod(userDescriptors, proxy, state.users[target.id], k, state)

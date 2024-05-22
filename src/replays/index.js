@@ -37,7 +37,7 @@ export default ({
 
   const settings = createSettings(config, options.settings)
   const seed = isProd ? {} : createSeed(settings, options)
-  const token = isProd ? '' : createToken(settings, seed, options)
+  const token = createToken(settings, seed, options)
 
   const next = { conf, config, replay, options, settings, seed, token, sendTrigger, replayLastEvent, replayEvents, restoreEvents, devtoolsIndexes: {} }
   Object.assign(replays, next)

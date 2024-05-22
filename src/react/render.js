@@ -7,18 +7,19 @@ import ReplayTools from '../modules/replayTools/App/index.js'
 import { isNative, isTest } from '../utils/bools.js'
 
 
-export default function render(appInfo = window.appInfo) {
+export default function render(...args) {
   const app = renderModule(this)
 
   if (isTest) return app
 
   if (isNative) {
-    const { appName, appParameters } = appInfo
-
+    const [appName = window.appName, appParams = window.appParams] = args
+    
     AppRegistry.registerComponent(appName, () => () => app)
-    AppRegistry.runApplication(appName, appParameters)
+    AppRegistry.runApplication(appName, appParams)
 
-    window.appInfo = appInfo // cache for replays
+    window.appName = appName // cache for replays
+    window.appParams = appParams
     return
   }
 
