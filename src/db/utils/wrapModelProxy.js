@@ -15,16 +15,8 @@ export default (name, doc, models, state) => {
 export const callModelMethod = (descriptors, proxy, doc = {}, k, state) => {
   const v = doc[k]
   if (v !== undefined) return v
+  if (k === '_state') return state // escape hatch to access module state within class methods
 
   const { get, value: method } = descriptors[k] || {}
-
-  if (get) {
-    return get.call(proxy)
-  }
-
-  if (typeof method === 'function') {
-    return method.bind(proxy)
-  }
-
-  if (k === '_state') return state // escape hatch to access module state within class methods
+  return get?.call(proxy) ?? method?.bind(proxy)
 }
