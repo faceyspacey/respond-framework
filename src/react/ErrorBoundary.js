@@ -20,12 +20,13 @@ export default class ErrorBoundaryInner extends React.Component {
     const { Error = DefaultError } = this.props
 
     return this.state.error
-      ? <Error {...this.state.error} />
+      ? <Error error={this.state.error} />
       : this.props.children
   }
 }
 
 
 const DefaultError = props => {
-  console.warn(`respond: supply an Error component to Provider`, { props })
+  console.warn(`respond: supply an Error component as a prop to Provider: <Provider store={store} Error={Error} />`)
+  console.error(props.error)
 }
