@@ -1,13 +1,14 @@
 {
   "name": "respond-framework",
-  "version": "0.0.95",
+  "version": "0.0.96",
   "description": "create as fast you think",
   "type": "commonjs",
   "main": "./index.js",
   "scripts": {
     "test": "npm test",
     "build": "rm -rf dist && babel src -d dist && cp package.json dist/package.json && cp LICENSE dist/LICENSE && cp README.md dist/README.md",
-    "deploy": "git add --all && npm version --force patch && npm run build && cd dist && npm publish --access public"
+    "copy": "rm -rf dist && cp -r src dist && cp package.json dist/package.json && cp LICENSE dist/LICENSE && cp README.md dist/README.md",
+    "deploy": "git add --all && npm version --force patch && npm run copy && cd dist && npm publish --access public"
   },
   "repository": {
     "type": "git",
