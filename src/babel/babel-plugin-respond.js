@@ -7,7 +7,6 @@ function respondBabelPlugin(babel) {
 
   const visited = Symbol('visited')
 
-  // const temp = template(`RESPOND(FUNC, 'NAME', SYNC)`)
   const temp = template(`props => {
     const { events, state, store } = USE_RESPOND(SYNC, EVENTS_ONLY)
     return FUNC(props, events, state, store)
