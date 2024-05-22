@@ -5,7 +5,7 @@ export default ({ shared = {}, client = {} } = {}) => {
     const s = g(shared[k] || {})
     const m = g(client[k] || {})
 
-    acc[k] = Object.assign(acc, s, m)
+    acc[k] = Object.assign({}, s, m)
     return acc
   }, {})
 }
