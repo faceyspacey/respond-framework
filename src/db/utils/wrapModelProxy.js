@@ -6,14 +6,14 @@ export default (name, doc, models, state) => {
   if (!model) return doc
 
   const proxy = new Proxy(doc, {
-    get: (target, k) => callModelMethod(model, proxy, target, k),
+    get: (target, k) => callModelMethod(model, proxy, target, k, state),
   })
 
   return proxy
 }
 
 
-export const callModelMethod = (descriptors, proxy, target = {}, k) => {
+export const callModelMethod = (descriptors, proxy, target = {}, k, state) => {
   const v = target[k]
   if (v !== undefined) return v
 
