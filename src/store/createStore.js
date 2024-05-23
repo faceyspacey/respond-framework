@@ -127,8 +127,10 @@ export default async (topModuleOriginal, settings) => {
   const onError = err => {
     const { error, kind = 'unknown-kind', e } = err
 
+   if (kind !== 'render') { // react render errors will already log the error to console
     console.error('respond: ' + kind, e || '')
     console.error(error)
+   }
 
     return options.onError?.({ ...err, store })
   }
