@@ -7,7 +7,6 @@ import { isTest } from '../../../utils/bools.js'
 
 
 export default (props, { toggle }, { open }, { replays }) => {
-  if (isTest) return
   const { hide, position } = replays.options
   if (hide) return
 

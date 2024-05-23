@@ -1,12 +1,13 @@
 import { pathToRegexp } from 'path-to-regexp'
 import { urlToLocation } from './url.js'
+import { respondEventSymbol } from '../index.js'
 
 
 export default (getStore, eventsTree) => {
   const events = createEventsByPathSpec(eventsTree)
 
-  return (pathOrLocation, additionalParams) => {
-    const loc = urlToLocation(pathOrLocation, getStore)
+  return function eventFrom(url, fallback, additionalArg, fallbackArg) {
+    const loc = urlToLocation(url, getStore)                            // if url is already a location object, it will also be resolved
     const { basename = '' } = getStore().state
 
     if (basename) {
@@ -30,16 +31,26 @@ export default (getStore, eventsTree) => {
   
           const event = events[pattern]
 
-          const a = { ...additionalParams, ...arg }
-
-          const argFromLoc = event.fromLocation?.(getStore(), a, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
-          const argFinal = { ...a, ...argFromLoc } 
+          const argFromLoc = event.fromLocation?.(getStore(), arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
+          const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
 
           return event(argFinal)
         }
       }
     }
     catch (error) {}
+
+    if (fallback) {
+      const arg = { notFound: true, changePath: false, ...fallbackArg }
+      
+      if (fallback.event?.symbol === respondEventSymbol) {
+        Object.assign(fallback, arg)
+        Object.assign(fallback.arg, arg)
+        return fallback // fallback could be passed as an actual event
+      } 
+
+      return eventFrom(fallback, undefined, arg)
+    }
 
     throw new Error (`respond: no event matched path "${loc.pathname}".`)
   }

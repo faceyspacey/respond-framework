@@ -1,32 +1,36 @@
 import * as React from 'react'
+import { isProd } from '../utils.js'
 
 
-export default class ErrorBoundaryInner extends React.Component {
+export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
     this.state = { error: null }
   }
 
-  
   static getDerivedStateFromError(error) {
     return { error }
   }
 
   async componentDidCatch(error, errorInfo) {
-    await this.props.store.options.onError?.(error, 'render')
+    await this.props.store.onError({ error, kind: 'render' })
   }
 
   render() {
-    const { Error = DefaultError } = this.props
+    const { error } = this.state
+    const { Error = DefaultError, children } = this.props
+    
+    const clear = () => this.setState({ error: null })
 
-    return this.state.error
-      ? <Error error={this.state.error} />
-      : this.props.children
+    return !error ? children : React.createElement(Error, { children, error, clear })
   }
 }
 
 
-const DefaultError = props => {
-  console.warn(`respond: supply an Error component as a prop to Provider: <Provider store={store} Error={Error} />`)
-  console.error(props.error)
+const DefaultError = ({ children, error, clear }) => {
+  if (isProd) {
+    console.warn('respond: supply an `Error` component, either in your top module or to Provider: <Provider store={store} Error={Error} />')
+  }
+
+  return children
 }

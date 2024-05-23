@@ -114,7 +114,7 @@ const edit = {
 const applyTransform = (store, e, dispatch) => {
   const { modulePathReduced, init } = store.ctx
 
-  let payload = e.arg
+  let payload = { ...e.arg }
   const createDuringReduction = modulePathReduced?.length > 0
 
   if (createDuringReduction) {

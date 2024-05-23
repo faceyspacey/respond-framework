@@ -4,7 +4,7 @@ import { isNative } from './bools.js'
 export default isNative
   ? store => e => undefined
   : store => e => {
-    if (window.ignoreChangePath) return
+    if (window.ignoreChangePath || e.changePath === false) return
     replace(store.fromEvent(e).url)
   }
 
