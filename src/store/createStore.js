@@ -127,10 +127,8 @@ export default async (topModuleOriginal, settings) => {
   const onError = err => {
     const { error, kind = 'unknown-kind', e } = err
 
-    console.error('respond: ' + kind)
+    console.error('respond: ' + kind, e || '')
     console.error(error)
-
-    if (e) console.error(e)
 
     return options.onError?.({ ...err, store })
   }

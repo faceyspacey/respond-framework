@@ -62,7 +62,9 @@ PUT ENTIRE STORE IN VALTIO
 - new db finder method api
 - import db circurlarly from createdatabase
 - buildIn findOne to all models when accessed (i.e. always apply model descriptors)
+
 - remove wrapPlayerProxy
+- make tests stop snapping irrelevant areas (eg Home, Drawer)
 
 if (state === undefined) return
 return callModelMethod(userDescriptors, proxy, state.users[target.id], k, state)
