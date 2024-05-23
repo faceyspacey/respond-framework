@@ -125,9 +125,9 @@ export default async (topModuleOriginal, settings) => {
   const replaceState = next => { Object.keys(state).forEach(k => delete state[k]); Object.assign(state, next); }
 
   const onError = err => {
-    const { error, kind = 'unknown-kind', e } = err
+    const { error, kind = 'unknown', e } = err
 
-   if (kind !== 'render') { // react render errors will already log the error to console
+   if (kind !== 'render') { // react render errors already logged
     console.error('respond: ' + kind, e || '')
     console.error(error)
    }
