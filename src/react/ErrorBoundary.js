@@ -18,16 +18,16 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     const { error } = this.state
-    const { Error = DefaultError, children } = this.props
+    const { Error = DefaultError, children, store } = this.props
     
     const clear = () => this.setState({ error: null })
 
-    return !error ? children : React.createElement(Error, { children, error, clear })
+    return !error ? children : React.createElement(Error, { children, error, clear, store })
   }
 }
 
 
-const DefaultError = ({ children, error, clear }) => {
+const DefaultError = ({ children, error, clear, store }) => {
   if (isProd) {
     console.warn('respond: supply an `Error` component, either in your top module or to Provider: <Provider store={store} Error={Error} />')
   }

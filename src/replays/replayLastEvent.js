@@ -10,7 +10,7 @@ export default async function() {
     const { evs, evsIndex: index } = state
 
     const n = { type: 'HMR', __prefix: '@@', __developer: 'State reset to before replayed event.' }
-    const prevState = reviveEventFunctionReferences(store.events, store.prevState)
+    const prevState = reviveEventFunctionReferences(store.events, store.prevState) // it's HMR, so store is a new store, so events are re-created and need to be revived in the prevState
 
     store.devtools.forceNotification(n, prevState)
     store.replaceState(prevState)   // so when latest event is redispatched during HMR (i.e. the dispatch below), it's performed against the same state it was initially peformed against
