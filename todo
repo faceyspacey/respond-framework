@@ -35,21 +35,11 @@ NEW UI WORK:
 #replay tools in production
 #set replays defaultProductionValue in production
 #import recursiveReadSync from 'recursive-readdir-sync'
+#duplicating find into _find
+#make ReplayTools rows have better press events on native
+#make db/index.mock.js utilize create() method exactly like production version
+#import db circurlarly from createdatabase
 
-isNamespace
-duplicating find into _find
-clearStorage console.log note
-
-make ReplayTools rows have better press events on native
-
-make db/index.mock.js utilize create() method exactly like production version
-
-
-
-put skip, limit, sort, and proj in options object
-
-dont hide _namespace, _type in state (only in actions)
-wrapModelProxy automatically to docs in state
 
 
 
@@ -59,12 +49,15 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
-- new db finder method api
-- import db circurlarly from createdatabase
-- buildIn findOne to all models when accessed (i.e. always apply model descriptors)
 
-- remove wrapPlayerProxy
-- make tests stop snapping irrelevant areas (eg Home, Drawer)
 
-if (state === undefined) return
-return callModelMethod(userDescriptors, proxy, state.users[target.id], k, state)
+
+
+
+put skip, limit, sort, and proj in options object
+wrapModelProxy automatically to docs in state
+use constants like kind.navigation, namespace.website
+
+dont hide _namespace, _type in state (only in actions)
+isNamespace
+clearStorage console.log note

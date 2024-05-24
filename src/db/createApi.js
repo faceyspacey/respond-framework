@@ -31,7 +31,7 @@ const createHandler = ({
   controllers = {},
   nested = false,
   secret = secretMock,
-  logRequest,
+  logRequest = true,
   logResponse = false
 }) => async (request, res) => {
   const { body } = request
