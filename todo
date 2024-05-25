@@ -50,8 +50,10 @@ PUT ENTIRE STORE IN VALTIO
 
 
 
-
-
+remove wrapPlayerProxy
+make tests stop snapping irrelevant areas (eg Home, Drawer)
+refactor main app reducers to have nested models like admin
+final solution to simplify Code widget
 
 
 put skip, limit, sort, and proj in options object

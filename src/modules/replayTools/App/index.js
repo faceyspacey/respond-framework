@@ -3,7 +3,7 @@ import Pressable from '../widgets/Pressable.js'
 import Gear from '../icons/Gear.js'
 import Layout from './Layout.js'
 import { colors } from '../styles.js'
-import { isTest } from '../../../utils/bools.js'
+import ErrorBoundary from '../components/ErrorBoundary.js'
 
 
 export default (props, { toggle }, { open }, { replays }) => {
@@ -19,12 +19,12 @@ export default (props, { toggle }, { open }, { replays }) => {
   const color = open ? colors.navy : colors.greyDark
   
   return (
-    <>
+    <ErrorBoundary>
       <Layout open={open} />
 
       <Pressable style={style} event={toggle}>
         <Gear spin={spin} color={color} />
       </Pressable>
-    </>
+    </ErrorBoundary>
   )
 }
