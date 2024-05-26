@@ -5,18 +5,26 @@ import RespondContext from './context.js'
 
 
 export default (id = createUniqueModuleId()) => {
+  const useStore = () => {
+    const storeTop = useContext(RespondContext)
+    const modulePath = storeTop.modulePathsById[id]
+    return sliceStoreByModulePath(storeTop, modulePath)
+  }
+
+
   const useRespond = (sync, eventsOnly) => {
     if (eventsOnly) return { events: useEvents() }
 
-    const store = useContext(RespondContext)
+    const storeTop = useContext(RespondContext)
   
-    const { selectors, modulePathsById, modulePaths } = store
+    const { selectors, modulePathsById, modulePaths } = storeTop
     const modulePath = modulePathsById[id]
-  
-    const events = sliceByModulePath(store.events, modulePath)
 
-    const snap = useSnapshot(store.state, { sync, selectors, modulePaths })
-    const state = sliceByModulePath(snap, modulePath)
+    const store = sliceStoreByModulePath(storeTop, modulePath)
+    const events = store.events
+
+    const snap = useSnapshot(storeTop.state, { sync, selectors, modulePaths })
+    const state = sliceByModulePath(snap, modulePath) // selector props require slicing storeTop.state to crawl to top of state tree
 
     return { events, state, store }
   }
@@ -53,13 +61,6 @@ export default (id = createUniqueModuleId()) => {
     }
 
     return ComponentWithName
-  }
-
-
-  const useStore = () => {
-    const storeTop = useContext(RespondContext)
-    const modulePath = storeTop.modulePathsById[id]
-    return sliceStoreByModulePath(storeTop, modulePath)
   }
 
 
