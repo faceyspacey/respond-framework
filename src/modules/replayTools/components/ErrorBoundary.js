@@ -12,8 +12,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   async componentDidCatch(error, errorInfo) {
-    console.error(`ReplayTools: there's an error coming from the Respond ReplayTools. Call localStorage.clear() to remove replay settings that may be causing it.`)
-    console.error(error)
+    console.error(`ReplayTools: there's an error in ReplayTools. Call localStorage.clear() to remove replay settings that may be causing it.`)
   }
 
   render() {

@@ -1,6 +1,6 @@
-export default (prev, modulePath = '') => {
-  const db = new Proxy({ ...prev }, {
-    get(target, k) {
+export default (prev, modulePath = '') =>
+  new Proxy({ ...prev }, {
+    get(target, k, db) {
       const v = target[k] // not a controller, eg: options, store, createControllerMethod
       if (v !== undefined) return v
 
@@ -13,6 +13,3 @@ export default (prev, modulePath = '') => {
       })
     }
   })
-
-  return db
-}

@@ -11,8 +11,9 @@ export default ({ store, Error = store.topModule.Error, App = store.topModule.Ap
     <RespondContext.Provider value={store}>
       <ErrorBoundary store={store} Error={Error}>
         <App />
-        {!hide && <ReplayTools />}
       </ErrorBoundary>
+      
+      {!hide && <ReplayTools />}
     </RespondContext.Provider>
   )
 }

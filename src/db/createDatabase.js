@@ -11,10 +11,10 @@ export default (dbRaw, options = {}) => {
 
     const inherit = coll.inherit !== false
 
-    const base = { _name: k, _namePlural: k + 's', db: getDb }
+    const base = { _name: k, _namePlural: k + 's', db: getDb, model: () => descriptors }
     const descriptors = createModelDescriptors(base, inherit ? model : {}, models.shared?.[k],  models.server?.[k])
 
-    db[k] = { ...base, config, model: () => descriptors, ...(inherit ? collection : {}), ...coll, docs }
+    db[k] = { ...base, config, ...(inherit ? collection : {}), ...coll, docs }
   })
 
   return db

@@ -3,9 +3,13 @@ export default ({ shared = {}, client = {} } = {}) => {
 
   return keys.reduce((acc, k) => {
     const s = g(shared[k] || {})
-    const m = g(client[k] || {})
+    const c = g(client[k] || {})
 
-    acc[k] = Object.assign({}, s, m)
+    const base = g({ _name: k, _namePlural: k + 's', model: () => descriptors })
+    const descriptors = Object.assign(base, s, c)
+
+    acc[k] = descriptors
+    
     return acc
   }, {})
 }
