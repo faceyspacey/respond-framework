@@ -14,7 +14,7 @@ import shouldUseDevtools from '../utils/shouldUseDevtools.js'
 import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { proxy, snapshot } from '../valtio/vanilla.js'
-import { setupHistory, exitBack, exitForward, disableForwardButton, createLinkOut } from '../utils/browserHistory.js'
+import { createChangePath, exitBack, exitForward, disableForwardButton, linkOut } from '../history/index.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import { sliceEventByModulePath, sliceModuleByModulePath, sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
 import { createModulePathsById, createModulePaths, createReducers, createSelectors } from '../utils/transformModules.js'
@@ -135,13 +135,11 @@ export default async (topModuleOriginal, settings) => {
     return options.onError?.({ ...err, store })
   }
   
-  const linkOut = createLinkOut(getStore)
-
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
   const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises: [], snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, selectors, getSnapshot, options, addToCache, addToCacheDeep, exitBack, exitForward, disableForwardButton, getStore, onError, stringifyState, parseJsonState, linkOut }
   
-  store.changePath = setupHistory(store)
+  store.changePath = createChangePath(store)
 
   const baseState = { cachedPaths: {}, token: replays.token }
   const top = { ...topModule, initialState: { ...baseState, ...topModule.initialState } }

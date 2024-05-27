@@ -13,7 +13,7 @@ export default (name, doc, models, state) => {
 export const callModelMethod = (descriptors, state, target = {}, k, receiver) => {
   const v = target[k]
   if (v !== undefined) return v
-  if (k === '_state') return state // escape hatch to access module state within class methods
+  if (k === '_state') return state // escape hatch to access module state within model methods
 
   const { get, value: method } = descriptors[k] || {}
 

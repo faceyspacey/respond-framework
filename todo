@@ -49,18 +49,17 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
+examine setters in calcGame dir
+create passthru methods to User model
+replace old style code
 
 final solution to simplify Code widget
-
 make tests stop snapping irrelevant areas (eg Home, Drawer)
-refactor main app reducers to have nested models like admin
 
 put skip, limit, sort, and proj in options object
 use constants like kind.navigation, namespace.website
 
 wrapModelProxy automatically to docs in state
 
-
 dont hide _namespace, _type in state (only in actions)
 isNamespace
-clearStorage console.log note
