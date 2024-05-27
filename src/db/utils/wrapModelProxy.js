@@ -1,8 +1,7 @@
 export default (name, doc, state, traps) => {
   if (!doc) return
   
-  const models = state.models || {}
-  const descriptors = models[name] // model is descriptors
+  const descriptors = state.models[name] // model is descriptors
 
   if (!descriptors) return doc
 
