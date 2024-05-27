@@ -1,7 +1,9 @@
-export default (name, doc, models, state) => {
+export default (name, doc, state) => {
   if (!doc) return
   
+  const models = state.models() || {}
   const descriptors = models[name] // model is descriptors
+  
   if (!descriptors) return doc
 
   const get = callModelMethod.bind(null, descriptors, state)

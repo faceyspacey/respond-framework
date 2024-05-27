@@ -1,9 +1,9 @@
 import wrapModelProxy from '../db/utils/wrapModelProxy.js'
 
 
-export default (models = {}) => (state, name, id) => {
+export default (state, name, id) => {
   const doc = getDoc(state, name, id)
-  return wrapModelProxy(name, doc, models, state) // facilitates class style methods
+  return wrapModelProxy(name, doc, state) // facilitates class style methods
 }
 
 

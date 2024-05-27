@@ -1,5 +1,5 @@
 import mergeModels from '../db/utils/mergeModels.js'
-import createFindOne from '../selectors/createFindOne.js'
+import findOne from '../selectors/findOne.js'
 
 
 export const createModulePathsById = topModule => {
@@ -59,13 +59,13 @@ export const createSelectors = (mod, topModuleOriginal) => {
 
 export const createModuleSelectors = (mod, topModels) => {
   const models = topModels || mergeModels(mod.db?.models)
-  const findOne = createFindOne(models)
 
   const selectors = {
     ...mod.selectors,
     ...mod.defaultProps?.selectors,
     ...recurseModulesSelectors(mod, topModels),
     findOne,
+    models: () => models
   }
 
   if (mod.props?.selectors) {

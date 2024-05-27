@@ -49,8 +49,8 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
+#create passthru methods to User model
 examine setters in calcGame dir
-create passthru methods to User model
 replace old style code
 
 final solution to simplify Code widget
@@ -63,3 +63,7 @@ wrapModelProxy automatically to docs in state
 
 dont hide _namespace, _type in state (only in actions)
 isNamespace
+
+
+
+
