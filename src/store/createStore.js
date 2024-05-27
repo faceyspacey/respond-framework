@@ -41,8 +41,6 @@ export default async (topModuleOriginal, settings) => {
   const topReplays = topModule.replays || topModuleOriginal.replays
   const topOptions = topModule.options || topModuleOriginal.options
 
-  topModule.models ??= topModuleOriginal.models // allow child modules to inherit parent models
-
   const cookies = topModule.cookies || createCookies()
   const token = cookies.token || await cookies.get('token')
 

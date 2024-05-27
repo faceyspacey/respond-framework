@@ -50,8 +50,10 @@ PUT ENTIRE STORE IN VALTIO
 
 
 #create passthru methods to User model
-examine setters in calcGame dir
-replace old style code
+#examine setters in calcGame dir
+#replace old style code
+
+2x/3x needs to be raised in PadButtons
 
 final solution to simplify Code widget
 make tests stop snapping irrelevant areas (eg Home, Drawer)
@@ -63,7 +65,3 @@ wrapModelProxy automatically to docs in state
 
 dont hide _namespace, _type in state (only in actions)
 isNamespace
-
-
-
-

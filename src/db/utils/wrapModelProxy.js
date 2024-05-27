@@ -1,14 +1,14 @@
-export default (name, doc, state) => {
+export default (name, doc, state, traps) => {
   if (!doc) return
   
-  const models = state.models() || {}
+  const models = state.models || {}
   const descriptors = models[name] // model is descriptors
-  
+
   if (!descriptors) return doc
 
   const get = callModelMethod.bind(null, descriptors, state)
   
-  return new Proxy(doc, { get })
+  return new Proxy(doc, { get, ...traps })
 }
 
 
