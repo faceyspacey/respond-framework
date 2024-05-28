@@ -65,7 +65,7 @@ export const createModuleSelectors = (mod, topModels) => {
     ...mod.defaultProps?.selectors,
     ...recurseModulesSelectors(mod, topModels),
     findOne,
-    models: () => models
+    models
   }
 
   if (mod.props?.selectors) {
