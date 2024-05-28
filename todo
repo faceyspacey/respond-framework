@@ -71,3 +71,7 @@ rename singular collections to Old
 rename plural collections to singular
 
 update old solo rounds to scorecard
+
+run server + check web app
+
+deploy codepush

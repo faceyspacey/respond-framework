@@ -40,8 +40,8 @@ export const disableForwardButton = () => removeTail()
 
 
 export const linkOut = async (url, e) => {
-  e = typeof url === 'object' ? url : e
-  url = typeof url === 'string' ? url : e?.target.href // convenience: <a href={url} onClick={store.linkOut}
+  e = typeof url === 'object' ? url : e                       // convenience: <a href={url} onClick={store.history.linkOut}
+  url = typeof url === 'string' ? url : e?.currentTarget.href
   
   e?.preventDefault()
 

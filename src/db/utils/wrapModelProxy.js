@@ -2,29 +2,28 @@ export default (name, doc, state, traps) => {
   if (!doc) return
   
   const descriptors = state.models[name] // model is descriptors
-
   if (!descriptors) return doc
 
   const get = callModelMethod.bind(null, descriptors, state)
-  
   return new Proxy(doc, { get, ...traps })
 }
 
 
 export const callModelMethod = (descriptors, state, target = {}, k, receiver) => {
   const v = target[k]
-  if (v !== undefined) return v
-  if (k === '_state') return state // escape hatch to access module state within model methods
+  if (v !== undefined) return v       // default to value in doc
 
-  const { get, value: method } = descriptors[k] || {}
+  if (k === '_state') return state    // escape hatch to access module state within model
+
+  const { get, value } = descriptors[k] || {}
 
   if (get) {
-    return get.call(receiver)
+    return get.call(receiver)         // getter
   }
 
-  if (typeof method === 'function') {
-    return method.bind(receiver)
+  if (typeof value === 'function') {
+    return value.bind(receiver)       // method
   }
 
-  return method // possible static value
+  return value                        // static value
 }
