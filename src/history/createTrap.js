@@ -2,31 +2,28 @@ import { replace, getUrl, getIndex } from './utils/pushReplace.js'
 import { back, forward, addTail } from './utils/backForward.js'
 import { addPopListener } from './utils/popListener.js'
 import bs from './browserState.js'
-import { timeout } from '../utils.js'
 
 
 export default async () => {
   const index = getIndex()
   const url = getUrl()
 
+  addPopListener(popListener)
+
   if (index === 0) {                  // returning from back
-    history.forward()
-    await timeout(60)
+    await forward()
     replace(url)
   }
   else if (index === 1) {
                                       // refresh (all setup aready)
   }
   else if (index === 2) {             // returning from forward
-    history.back()
-    await timeout(60)
+    await back()
     replace(url)
   }
   else if (index === undefined) {    // new tab/window
     replace(url, 0)                  // note: push will be used by 2nd path, centering the trap then (browsers don't like too many browser changes at once)
   }
-
-  addPopListener(popListener)
 
   bs.ready = true
 }
