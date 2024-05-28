@@ -16,7 +16,7 @@ export const exitBack = async () => {
   bs.returning = true // browser window can sometimes be cached, and uses existing variables
   bs.returnedBackCached = true
 
-  removePopListener(popListener) // so caching browsers won't have pop listener on return, and will need to to add it again as part of the standard flow
+  // removePopListener(popListener) // so caching browsers won't have pop listener on return, and will need to to add it again as part of the standard flow
 
   await back()
   history.back() // dont use await back() because centered will be set to false in caching browsers like Safari when you return via back/forward buttons

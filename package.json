@@ -1,6 +1,6 @@
 {
   "name": "respond-framework",
-  "version": "0.0.133",
+  "version": "0.0.134",
   "description": "create as fast you think",
   "type": "commonjs",
   "main": "./index.js",
