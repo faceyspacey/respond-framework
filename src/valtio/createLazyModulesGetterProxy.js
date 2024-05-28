@@ -77,7 +77,7 @@ const createProxyHandler = (origObj, isTargetCopied, selectors, modulePaths, mod
 
           if (selectorsModule) {
             if (key === 'models') {
-              return selectorsModule[key]
+              return selectorsModule.models
             }
 
             const selectorProp = selectorsModule.__props?.[key]

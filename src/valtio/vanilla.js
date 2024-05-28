@@ -244,6 +244,10 @@ const buildProxyFunction = (
         },
         get(target, key, receiver) {
             if (selectorsModule) {
+                if (key === 'models') {
+                    return selectorsModule.models
+                }
+
                 const selectorProp = selectorsModule.__props?.[key]
 
                 if (typeof selectorProp === 'function') {
