@@ -48,9 +48,9 @@ const popListener = async () => {
     const backEvent = store.events.drainBack?.()
     await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
 
-    if (!bs.hasTail) {
-      await addTail() // needs to trigger front arrow to display by pushing a tail, and then returning back to center
-    }
+    // if (!bs.hasTail) {
+    //   await addTail() // needs to trigger front arrow to display by pushing a tail, and then returning back to center
+    // }
   }
   else if (goingForward && !workaroundDisableForward) {
     await back()  // return to center
