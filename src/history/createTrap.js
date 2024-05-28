@@ -45,7 +45,7 @@ const popListener = async () => {
   if (goingBack) {
     await forward() // return to center
 
-    const backEvent = store.events.drainBack?.(store)
+    const backEvent = store.events.drainBack?.()
     await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
 
     if (!bs.hasTail) {
@@ -55,7 +55,7 @@ const popListener = async () => {
   else if (goingForward && !workaroundDisableForward) {
     await back()  // return to center
 
-    const forwardEvent = store.events.drainForward?.(store)
+    const forwardEvent = store.events.drainForward?.()
     await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
   }
 
@@ -64,13 +64,13 @@ const popListener = async () => {
     if (bs.returnedFrontCached) {
       bs.returnedFrontCached = false
 
-      const backEvent = store.events.drainBack?.(store)
+      const backEvent = store.events.drainBack?.()
       await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
     }
     else if (bs.returnedBackCached) {
       bs.returnedBackCached = false
 
-      const forwardEvent = store.events.drainForward?.(store)
+      const forwardEvent = store.events.drainForward?.()
       await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
     }
   }
