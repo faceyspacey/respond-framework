@@ -26,6 +26,10 @@ export default async () => {
   }
 
   bs.ready = true
+
+  setTimeout(() => {
+    bs.trulyReady = true
+  }, 2500)
 }
 
 
@@ -44,6 +48,8 @@ export const popListener = async () => {
 
   if (goingBack) {
     await forward() // return to center
+
+    if (!bs.ready || !bs.trulyReady) return
 
     const backEvent = store.events.drainBack?.()
     await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
