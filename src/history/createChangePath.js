@@ -19,7 +19,7 @@ let ready = false
 let hmrLoadDone = !returning
 
 
-export const setupHistory = store => {
+export const createChangePath = store => {
   if (isDrainsDisabled(store)) {
     return e => shouldChange(e) && replace(store.fromEvent(e).url) // history does nothing in native / when drains disabled
   }
@@ -66,7 +66,7 @@ const createTrap = async () => {
 
 const popListener = async () => {
   if (!centered) return centered = true // key ingredient: allows for ignoring centering back/forward calls; the goal is for path replacement to have when centered on index 1
-  store = window.store // ensures latest store during HMR (it's just easiest in terms of HMR, and makes sense since we're dealing with a global `history` anyway)
+  const store = window.store // ensures latest store during HMR (it's just easiest in terms of HMR, and makes sense since we're dealing with a global `history` anyway)
 
   const index = getIndex()
 
@@ -79,7 +79,7 @@ const popListener = async () => {
   if (goingBack) {
     await forward() // return to center
 
-    const backEvent = store.events.drainBack?.(store)
+    const backEvent = store.events.drainBack?.()
     await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
 
     if (!hasTail) {
@@ -89,7 +89,7 @@ const popListener = async () => {
   else if (goingForward && !workaroundDisableForward) {
     await back()  // return to center
 
-    const forwardEvent = store.events.drainForward?.(store)
+    const forwardEvent = store.events.drainForward?.()
     await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
   }
 
@@ -99,13 +99,13 @@ const popListener = async () => {
     if (returnedFrontCached) {
       returnedFrontCached = false
 
-      const backEvent = store.events.drainBack?.(store)
+      const backEvent = store.events.drainBack?.()
       await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
     }
     else if (returnedBackCached) {
       returnedBackCached = false
 
-      const forwardEvent = store.events.drainForward?.(store)
+      const forwardEvent = store.events.drainForward?.()
       await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
     }
   }
@@ -184,13 +184,13 @@ const changePath = async (e, drain) => {
 const back = async () => {
   centered = false
   history.back()
-  await pollCondition(() => centered = true, 9)
+  await pollCondition(() => centered, 9)
 }
 
 const forward = async () => {
   centered = false
   history.forward()
-  await pollCondition(() => centered = true, 9)
+  await pollCondition(() => centered, 9)
 }
 
 
@@ -298,7 +298,7 @@ export const disableForwardButton = () => removeTail()
 
 
 
-export const createLinkOut = getStore => async (url, e) => {
+export const linkOut = async (url, e) => {
   e = typeof url === 'object' ? url : e
   url = typeof url === 'string' ? url : e?.target.href // convenience: <a href={url} onClick={store.linkOut}
   
@@ -318,12 +318,14 @@ export const createLinkOut = getStore => async (url, e) => {
     return
   }
 
-  if (isDrainsDisabled(getStore())) {
+  const store = window.store
+
+  if (isDrainsDisabled(store)) {
     window.location = url
     return
   }
 
-  const json = getStore().stringifyState()
+  const json = store.stringifyState()
 
   sessionStorage.setItem('sessionState', json)
 
