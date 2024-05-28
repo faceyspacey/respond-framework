@@ -30,7 +30,7 @@ export default async () => {
 
 
 
-const popListener = async () => {
+export const popListener = async () => {
   if (!bs.centered) return bs.centered = true // key ingredient: allows for ignoring centering back/forward calls; the goal is for path replacement to happen when centered on index 1
   const store = window.store // ensures latest store during HMR (it's just easiest in terms of HMR, and makes sense since we're dealing with a global `history` anyway)
 

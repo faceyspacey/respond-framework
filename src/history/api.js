@@ -4,6 +4,8 @@ import { getUrl, getIndex, push } from './utils/pushReplace.js'
 import { back, forward, removeTail } from './utils/backForward.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import bs from './browserState.js'
+import { removePopListener } from './utils/popListener.js'
+import { popListener } from './createTrap.js'
 
 
 
@@ -13,6 +15,8 @@ export const exitBack = async () => {
 
   bs.returning = true // browser window can sometimes be cached, and uses existing variables
   bs.returnedBackCached = true
+
+  removePopListener(popListener) // so caching browsers won't have pop listener on return, and will need to to add it again as part of the standard flow
 
   await back()
   history.back() // dont use await back() because centered will be set to false in caching browsers like Safari when you return via back/forward buttons
