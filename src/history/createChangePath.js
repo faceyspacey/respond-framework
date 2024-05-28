@@ -35,7 +35,7 @@ const changePath = async (e, drain) => {
   const index = getIndex()
 
   if (bs.isFirstReplace) {  // browsers don't like more history changes on load, except replace
-    replace(url, index)     // index will have to remain the same, even if 0, and will be corrected on next call to changePath -- another option was to ignore the initial replace altogether (just assuming the initial URL was already correct), but that would prevent redirects on init
+    // replace(url, index)     // index will have to remain the same, even if 0, and will be corrected on next call to changePath -- another option was to ignore the initial replace altogether (just assuming the initial URL was already correct), but that would prevent redirects on init
     bs.isFirstReplace = false
     return
   }
