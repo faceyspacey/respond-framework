@@ -1,5 +1,5 @@
-import { getIndex, getUrl, replace } from './utils/pushReplace.js'
-import { back, forward } from './utils/backForward.js'
+import { replace, getUrl, getIndex } from './utils/pushReplace.js'
+import { back, forward, addTail } from './utils/backForward.js'
 import { addPopListener } from './utils/popListener.js'
 import bs from './browserState.js'
 
