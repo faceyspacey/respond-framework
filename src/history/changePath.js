@@ -1,26 +1,10 @@
-import { push, replace, shouldChange, getIndex } from './utils/pushReplace.js'
+import { push, replace, getIndex } from './utils/pushReplace.js'
 import { pollCondition } from '../utils/timeout.js'
-import { back, forward, isDrainsDisabled, hydrateFromSessionStorage, isPastHmrOnLoadPhase, removeTail } from './utils/backForward.js'
+import { back, forward, isPastHmrOnLoadPhase, removeTail } from './utils/backForward.js'
 import bs from './browserState.js'
-import createTrap from './createTrap.js'
 
 
-export default store => {
-  if (isDrainsDisabled(store)) {
-    return e => shouldChange(e) && replace(store.fromEvent(e).url) // history does nothing in native / when drains disabled
-  }
-
-  if (window._changePath) return window._changePath // HMR
-
-  hydrateFromSessionStorage()
-  createTrap() // where the magic happens
-
-  return window._changePath = changePath
-}
-
-
-
-const changePath = async (e, drain) => {
+export default async (e, drain) => {
   const store = window.store
 
   await pollCondition(() => bs.ready, 9) // initial setup has very small of chance of not being ready by the time application code dispatches the first path

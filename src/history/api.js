@@ -6,7 +6,7 @@ import sessionStorage from '../utils/sessionStorage.js'
 import bs from './browserState.js'
 
 
-export const exitBack = async () => {
+export const backOut = async () => {
   sessionStorage.setItem('sessionState', window.store.stringifyState())
   sessionStorage.setItem('returning', true)
 
@@ -20,7 +20,7 @@ export const exitBack = async () => {
 }
 
 
-export const exitForward = async () => {
+export const forwardOut = async () => {
   if (!bs.linkedForward) return false
 
   sessionStorage.setItem('sessionState', window.store.stringifyState())

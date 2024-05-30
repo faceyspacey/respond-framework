@@ -52,7 +52,6 @@ PUT ENTIRE STORE IN VALTIO
 fix history
 put skip, limit, sort, and proj in options object
 
-
 final solution to simplify Code widget
 make tests stop snapping irrelevant areas (eg Home, Drawer)
 
