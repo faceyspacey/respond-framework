@@ -67,8 +67,7 @@ export const hydrateFromSessionStorage = () => {
 
 
 export const isDrainsDisabled = store => {
-  if (isTest) return true
-  if (isNative) return true
+  if (isTest || isNative || window.isReplay) return true
   if (isDev && !store.options.enableDrainsInDevelopment) return true
 
   const { drainBack, drainForward } = store.events

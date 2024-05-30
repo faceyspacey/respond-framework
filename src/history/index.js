@@ -7,13 +7,16 @@ import changePath from './changePath.js'
 
 export default store => {
   if (isDrainsDisabled(store)) {
-    return e => shouldChange(e) && replace(store.fromEvent(e).url) // history does nothing in native / when drains disabled
+    return {
+      ...api,
+      changePath: e => shouldChange(e) && replace(store.fromEvent(e).url) // history does nothing in native / when drains disabled
+    }
   }
 
-  if (window._history) return window._history // HMR
+  if (store.prevStore?.history) return store.prevStore.history // HMR (don't re-create trap if !!store.options.enableDrainsInDevelopment)
 
   hydrateFromSessionStorage()
   createTrap() // where the magic happens
 
-  return window._history = { ...api, changePath }
+  return { ...api, changePath }
 }

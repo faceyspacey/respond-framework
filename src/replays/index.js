@@ -28,9 +28,8 @@ export default ({
   const isCached = isHMR && !replay && !configChanged 
 
   if (isCached) {
-    const next = { ...prev, replay }
-    Object.assign(replays, next)
-    return next
+    replays.replay = false
+    return replays
   }
 
   const config = mergeDeep({ ...configDefault }, conf)
