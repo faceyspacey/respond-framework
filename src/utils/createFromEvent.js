@@ -5,6 +5,8 @@ import { cleanLocation, urlToLocation } from './url.js'
 const cache = {}
 
 export default getStore => e => {
+  if (typeof e === 'string' || e?.pathname) return urlToLocation(e, getStore) // path or location object passed
+
   const { path } = e.event || {}
   if (!path) return null
 
