@@ -13,7 +13,7 @@ export default {
     if (typeof selector === 'string') return this._pick(this.docs[selector], project)
     if (selector.id) return this._pick(this.docs[selector.id], project)
 
-    const models = await this.find(selector, project, sort, 1)
+    const models = await this._find(selector, project, sort, 1)
     return models[0]
   },
 
@@ -31,7 +31,7 @@ export default {
     doc.id ??= objectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
-    this.docs[doc.id] = this.create(doc)
+    this.docs[doc.id] = this._create(doc)
     return this._pick(this.docs[doc.id], proj)
   },
 
@@ -41,7 +41,7 @@ export default {
     const id = typeof selector === 'string' ? selector : selector.id
     const { id: _, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
 
-    const model = await this.findOne(id || selector)
+    const model = await this._findOne(id || selector)
 
     if (model) {
       Object.assign(model, doc) // todo: make deep merge (maybe)
@@ -53,7 +53,7 @@ export default {
   },
 
   async upsert(selector, doc, insertOnlyDoc, project) {
-    const existingDoc = await this.findOne(selector)
+    const existingDoc = await this._findOne(selector)
 
     if (existingDoc) {
       doc.updatedAt = new Date
@@ -61,25 +61,25 @@ export default {
       Object.assign(existingDoc, doc)
       this.docs[existingDoc.id] = existingDoc
       
-      return this.findOne(selector, project)
+      return this._findOne(selector, project)
     }
 
-    return this.insertOne({ ...selector, ...doc, ...insertOnlyDoc })
+    return this._insertOne({ ...selector, ...doc, ...insertOnlyDoc })
   },
 
   async findAll(selector, project, sort) {
-    return this.find(selector, project, sort, 0)
+    return this._find(selector, project, sort, 0)
   },
 
   async findLike(key, term, ...args) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this.find({ [key]: value }, ...args)
+    return this._find({ [key]: value }, ...args)
   },
 
   async search(query, project, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
-    const allRows = await this.find(undefined, project, { updatedAt: -1 }, limit, skip)
+    const allRows = await this._find(undefined, project, { updatedAt: -1 }, limit, skip)
 
     query = query.replace(/[\W_]+/g, '')    // remove non-alphanumeric characters
 
@@ -90,7 +90,7 @@ export default {
   },
 
   async searchGeo({ lng, lat }, selector, project, limit = this.config.listLimit, skip) {
-    return this.find(selector, project, { updatedAt: -1 }, limit, skip)
+    return this._find(selector, project, { updatedAt: -1 }, limit, skip)
   },
 
   async joinOne(id, name, proj, projectJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
@@ -102,7 +102,7 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this.findOne(id, proj),
+      this._findOne(id, proj),
       coll.findOne(selector, projectJoin, sort, limit, skip)
     ])
 
@@ -118,7 +118,7 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this.findOne(id, proj),
+      this._findOne(id, proj),
       coll.find(selector, projectJoin, sort, limit, skip)
     ])
 
@@ -131,7 +131,7 @@ export default {
 
     fk ??= this._name + 'Id'
     
-    let parents = await this.find(selector, proj, sort, limit, skip)
+    let parents = await this._find(selector, proj, sort, limit, skip)
     const $in = parents.map(p => p.id)
 
     selectorJoin = { ...selectorJoin, [fk]: { $in } }
@@ -164,7 +164,7 @@ export default {
     } = options
 
     const docs = await createAggregateStages(this.db(), this._name, specs, selector, sort) // mock fully converts stage specs into docs themselves (non-paginated)
-    const page = await this.find(undefined, proj, sort, limit, skip, docs) // apply pagination and sorting on passed in models
+    const page = await this._find(undefined, proj, sort, limit, skip, docs) // apply pagination and sorting on passed in models
 
     return { count: docs.length, [this._namePlural]: page }
   },
@@ -183,20 +183,20 @@ export default {
       doc.id ??= objectId()
       doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
-      this.docs[doc.id] = this.create(doc)
+      this.docs[doc.id] = this._create(doc)
     }
 
     return { acknowledged: true }
   },
 
   async updateMany(selector, doc) {
-    const models = await this.find(selector)
+    const models = await this._find(selector)
     models.forEach(m => m.save(doc))
     return { acknowledged: true }
   },
 
   async deleteMany(selector) {
-    const models = await this.find(selector)
+    const models = await this._find(selector)
     models.forEach(m => delete this.docs[m.id])
     return { acknowledged: true }
   },
@@ -207,7 +207,7 @@ export default {
       : selector.id
     
     if (!id) {
-      const model = await this.findOne(selector)
+      const model = await this._findOne(selector)
       id = model?.id
     }
 
@@ -217,7 +217,7 @@ export default {
   },
 
   async incrementOne(selector, $inc) {
-    const model = await this.findOne(selector)
+    const model = await this._findOne(selector)
 
     const doc = {}
 
@@ -226,7 +226,7 @@ export default {
       doc[k] = v + $inc[k]
     })
     
-    await this.updateOne(selector, doc)
+    await this._updateOne(selector, doc)
 
     return { acknowledged: true }
   },
@@ -251,7 +251,7 @@ export default {
       doc.createdAt ??= new Date(now - (i * 1000)) // put first docs in seed at top of lists (when sorted by updatedAt: -1)
       doc.updatedAt ??= doc.createdAt
       
-      const model = this.create(doc)
+      const model = this._create(doc)
       this.docs[model.id] = model
     })
 
@@ -259,11 +259,64 @@ export default {
   },
 
 
+  // stable duplicates (allows overriding non-underscored versions in userland without breaking other methods that use them)
+
+  async _findOne(selector, project, sort = { updatedAt: -1 }) {
+    if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
+    if (typeof selector === 'string') return this._pick(this.docs[selector], project)
+    if (selector.id) return this._pick(this.docs[selector.id], project)
+  
+    const models = await this._find(selector, project, sort, 1)
+    return models[0]
+  },
+  
+  async _find(selector, project, sort = { updatedAt: -1 }, limit = this.config.listLimit, skip = 0, docs = Object.values(this.docs || {})) {
+    const start = skip * limit
+    const end = start + limit
+  
+    docs = sortDocs(docs.filter(applySelector(selector)), sort)
+    docs = limit === 0 ? docs.slice(start) : docs.slice(start, end)
+    
+    return docs.map(doc => this._pick(doc, project))
+  },
+  
+  async _insertOne(doc, proj) {
+    doc.id ??= objectId() // if id present, client generated client side optimistically
+    doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
+  
+    this.docs[doc.id] = this._create(doc)
+    return this._pick(this.docs[doc.id], proj)
+  },
+  
+  async _updateOne(selector, newDoc, proj) {
+    if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
+  
+    const id = typeof selector === 'string' ? selector : selector.id
+    const { id: _, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
+  
+    const model = await this._findOne(id || selector)
+  
+    if (model) {
+      Object.assign(model, doc) // todo: make deep merge (maybe)
+      model.updatedAt = new Date
+      this.docs[model.id] = model
+    }
+  
+    return this._pick(model, proj)
+  },
+
+  _create(doc) {
+    const id = doc?.id || objectId()
+    const instance = { ...doc, id }
+    return Object.defineProperties(instance, this.model())
+  },
+
+
   // utils
 
   _pick(doc, project) {
     const picked = pick(doc, project)
-    return picked ? this.create(picked) : undefined
+    return picked ? this._create(picked) : undefined
   },
 
 

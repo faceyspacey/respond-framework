@@ -1,4 +1,4 @@
-export default async (store, e,) => {
+export default async (store, e) => {
   if (!e.event.validate) return
 
   const res = await e.event.validate.call(e.event, store, e)

@@ -49,29 +49,17 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
+fix history
+put skip, limit, sort, and proj in options object
+
 
 final solution to simplify Code widget
 make tests stop snapping irrelevant areas (eg Home, Drawer)
 
-put skip, limit, sort, and proj in options object
-use constants like kind.navigation, namespace.website
+
 
 wrapModelProxy automatically to docs in state
 
-dont hide _namespace, _type in state (only in actions)
 isNamespace
-
-
-2x/3x needs to be raised in PadButtons
-
-rename main branch
-pull in new main branch on servers
-
-rename singular collections to Old
-rename plural collections to singular
-
-update old solo rounds to scorecard
-
-run server + check web app
-
-deploy codepush
+use constants like kind.navigation, namespace.website
+dont hide _namespace, _type in state (only in actions)
