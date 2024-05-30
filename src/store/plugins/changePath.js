@@ -6,7 +6,7 @@ export default async (store, e) => {
     return
   }
 
-  const curr = e.event.changePath?.call(e.event, store, e)
+  const curr = e.event.fromEvent?.call(e.event, store, e)
 
   if (curr) {
     store.history.changePath(curr, true)
