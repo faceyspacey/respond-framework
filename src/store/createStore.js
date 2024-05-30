@@ -14,7 +14,7 @@ import shouldUseDevtools from '../utils/shouldUseDevtools.js'
 import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { proxy, snapshot } from '../valtio/vanilla.js'
-import createHistory from '../history/index.js'
+import createHistoryDefault from '../history/index.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import { sliceEventByModulePath, sliceModuleByModulePath, sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
 import { createModulePathsById, createModulePaths, createReducers, createSelectors } from '../utils/transformModules.js'
@@ -56,7 +56,10 @@ export default async (topModuleOriginal, settings) => {
     displaySelectorsInDevtools: displaySelectorsInDevtools(topOptions),
   }
 
-  const { merge } = options
+  const {
+    merge,
+    createHistory = createHistoryDefault
+  } = options
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
