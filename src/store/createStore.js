@@ -26,7 +26,7 @@ import * as replayTools from '../modules/replayTools/index.js'
 import displaySelectorsInDevtools from './utils/displaySelectorsInDevtools.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
-import { isProd } from '../utils/bools.js'
+import { isProd, isDev, isTest } from '../utils/bools.js'
 
 
 export default async (topModuleOriginal, settings) => {
@@ -63,7 +63,7 @@ export default async (topModuleOriginal, settings) => {
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
-  const rpt = (!isProd && !isTest) || (isProd && options.productionReplayTools) ? replayTools : undefined
+  const rpt = (isDev && !isTest) || (isProd && options.productionReplayTools) ? replayTools : undefined
 
   topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools: rpt } : topModule.modules
 
