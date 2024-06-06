@@ -1,42 +1,44 @@
 import { Linking } from 'react-native'
-import { isDrainsDisabled } from './utils/backForward.js'
-import { getUrl, getIndex, push } from './utils/pushReplace.js'
-import { back, forward, removeTail } from './utils/backForward.js'
-import sessionStorage from '../utils/sessionStorage.js'
+import { isPopDisabled } from './utils/backForward.js'
+import { getIndex } from './utils/state.js'
+import sessionStorage from 'respond-framework/utils/sessionStorage.js'
 import bs from './browserState.js'
+import * as bf from './utils/backForward.js'
+
+export { default as changePath } from './changePath.js'
 
 
 export const backOut = async () => {
   sessionStorage.setItem('sessionState', window.store.stringifyState())
-  sessionStorage.setItem('returning', true)
 
-  bs.returning = true // browser window can sometimes be cached, and uses existing variables
-  bs.returnedBackCached = true
+  bs.prevIndex = -1
 
-  await back()
-  history.back() // dont use await back() because centered will be set to false in caching browsers like Safari when you return via back/forward buttons
+  const { linkedOut, maxIndex } = bs
+  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
+
+  await bf.go(-getIndex())
+  history.back()
 
   return false
 }
 
 
 export const forwardOut = async () => {
-  if (!bs.linkedForward) return false
+  if (!bs.linkedOut) return false // return false, so event can short-circuit
 
   sessionStorage.setItem('sessionState', window.store.stringifyState())
-  sessionStorage.setItem('returning', true)
-
-  bs.returning = true
-  bs.returnedFrontCached = true
   
-  await forward()
-  history.forward() // exit
+  bs.prevIndex = bs.maxIndex + 1
+  bs.out = true
+
+  const { linkedOut, maxIndex } = bs
+  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
+
+  await bf.go(bs.maxIndex - getIndex())
+  history.forward()
 
   return false
 }
-
-
-export const disableForwardButton = () => removeTail()
 
 
 export const linkOut = async (url, e) => {
@@ -59,28 +61,19 @@ export const linkOut = async (url, e) => {
     return
   }
 
-  if (isDrainsDisabled(window.store)) {
+  if (isPopDisabled(window.store)) {
     window.location = url
     return
   }
 
-  const json = window.store.stringifyState()
+  sessionStorage.setItem('sessionState', window.store.stringifyState())
 
-  sessionStorage.setItem('sessionState', json)
+  bs.prevIndex = bs.maxIndex + 1
+  bs.linkedOut = true
+  bs.out = true
 
-  sessionStorage.setItem('hasTail', true)
-  sessionStorage.setItem('linkedForward', true)
-  sessionStorage.setItem('returning', true)
-
-  bs.hasTail = true
-  bs.linkedForward = true
-  bs.returning = true
-
-  bs.returnedFrontCached = true
-
-  if (getIndex() !== 2) { // it's possible that because of our tail disableForward tail workaround that we're already on index 2
-    push(getUrl(), 2) // we want the tail to be index 2, so if you return, we still have our trap around index 1, while still allowing you to "exitForward" to the clicked out site if one is available
-  }
+  const { linkedOut, maxIndex } = bs
+  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
   window.location = url
 }

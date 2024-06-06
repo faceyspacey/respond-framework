@@ -9,6 +9,6 @@ export default async (store, e) => {
   const curr = e.event.fromEvent?.call(e.event, store, e)
 
   if (curr) {
-    store.history.changePath(curr, true)
+    await store.history.changePath(curr)
   }
 }

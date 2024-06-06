@@ -1,12 +1,6 @@
 export default {
-  linkedForward: false,
-  returning: false,
-  hasTail: false,
-  returnedFrontCached: false,
-  returnedBackCached: false,
-  workaroundTailUrl: null,
-  isFirstReplace: true,
-  centered: true,
-  ready: false,
-  hmrLoadDone: true,
+  prevIndex: -1,
+  maxIndex: 0,
+  hasTrap: false,
+  linkedOut: false,
 }

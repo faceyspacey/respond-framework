@@ -63,7 +63,9 @@ export default async (topModuleOriginal, settings) => {
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
-  topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
+  const rpt = (isDev && !isTest) || (isProd && options.productionReplayTools) ? replayTools : undefined
+
+  topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools: rpt } : topModule.modules
 
   const getStore = () => store
 
@@ -113,9 +115,13 @@ export default async (topModuleOriginal, settings) => {
     if (store.shouldAwait()) return promise
   }
 
+  const promises = []
+
   const awaitInReplaysOnly = async func => {
     if (store.shouldAwait()) await func()
-    else func()
+    else {
+      promises.push(func())
+    }
   }
 
   const getSnapshot = withSelectors => withSelectors ? createLazyModulesGetterProxy(snapshot(state), modulePaths, selectors) : snapshot(state)
@@ -138,7 +144,7 @@ export default async (topModuleOriginal, settings) => {
   
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
-  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises: [], snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, selectors, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
+  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, selectors, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
   
   store.history = createHistory(store)
 

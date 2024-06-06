@@ -49,7 +49,7 @@ PUT ENTIRE STORE IN VALTIO
 - put all store options into valtio state
 
 
-fix history
+make sure restorSession isn't called for regular sessions
 put skip, limit, sort, and proj in options object
 
 final solution to simplify Code widget
@@ -62,3 +62,5 @@ wrapModelProxy automatically to docs in state
 isNamespace
 use constants like kind.navigation, namespace.website
 dont hide _namespace, _type in state (only in actions)
+
+document.addEventListener('visibilitychange', () => console.log('vis', document.visibilityState), false)

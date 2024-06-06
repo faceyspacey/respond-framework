@@ -10,7 +10,7 @@ export default async (store, e) => {
 
   if (res?.type) {
     store.devtools.sendRedirect({ type: 'before', returned: res }, e)
-    await store.dispatch(res, { from: e }) // redirect
+    await store.dispatch(res, { from: e, trigger: false }) // redirect
     return false
   }
 

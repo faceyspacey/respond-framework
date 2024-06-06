@@ -1,4 +1,3 @@
-
 const weakMap = new WeakMap
 
 

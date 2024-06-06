@@ -1,89 +1,108 @@
-import { replace, getUrl, getIndex } from './utils/pushReplace.js'
-import { back, forward, addTail } from './utils/backForward.js'
-import { addPopListener } from './utils/popListener.js'
+import { getIndex, getUrl } from './utils/state.js'
+import { addPopListener, removePopListener } from './utils/popListener.js'
 import bs from './browserState.js'
+import * as bf from './utils/backForward.js'
+import changePath from './changePath.js'
 
 
-export default async () => {
-  const index = getIndex()
-  const url = getUrl()
-
+export const createTrap = () => {
+  if (bs.hasTrap) return
   addPopListener(popListener)
-
-  if (index === 0) {                  // returning from back
-    await forward()
-    replace(url)
-  }
-  else if (index === 1) {
-                                      // refresh (all setup aready)
-  }
-  else if (index === 2) {             // returning from forward
-    await back()
-    replace(url)
-  }
-  else if (index === undefined) {    // new tab/window
-    replace(url, 0)                  // note: push will be used by 2nd path, centering the trap then (browsers don't like too many browser changes at once)
-  }
-
-  bs.ready = true
-
-  setTimeout(() => {
-    bs.trulyReady = true
-  }, 2500)
+  bs.hasTrap = true
 }
 
-
+export const removeTrap = () => {
+  if (!bs.hasTrap) return
+  removePopListener(popListener)
+  bs.hasTrap = false
+}
 
 export const popListener = async () => {
-  if (!bs.centered) return bs.centered = true // key ingredient: allows for ignoring centering back/forward calls; the goal is for path replacement to happen when centered on index 1
-  const store = window.store // ensures latest store during HMR (it's just easiest in terms of HMR, and makes sense since we're dealing with a global `history` anyway)
-
   const index = getIndex()
 
-  const goingBack = index === 0
-  const goingForward = index === 2
-
-  const workaroundCaching = index === 1
-  const workaroundDisableForward = goingForward && bs.workaroundTailUrl
-
-  if (goingBack) {
-    await forward() // return to center
-
-    if (!bs.ready || !bs.trulyReady) return
-
-    const backEvent = store.events.drainBack?.()
-    await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
-
-    // if (!bs.hasTail) {
-    //   await addTail() // needs to trigger front arrow to display by pushing a tail, and then returning back to center
-    // }
+  if (bs.prevIndex === -1 && index === 0) {
+    bs.prevIndex = index
+    bs.prevUrl = getUrl()
+    return
   }
-  else if (goingForward && !workaroundDisableForward) {
-    await back()  // return to center
-
-    const forwardEvent = store.events.drainForward?.()
-    await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
+  else if (bs.prevIndex === bs.maxIndex + 1 && index === bs.maxIndex) {
+    bs.prevIndex = index
+    bs.prevUrl = getUrl()
+    return
+  }
+  else if (index === bs.prevIndex) {
+    console.warn(`store.history: pop back/next cannot be determined as the current history index is equal to the previous one`)
+    return
   }
 
-  // WORKAROUNDS for browsers that cache the page and don't reload code when backing/forwarding to other sites (mainly Safari)
-  else if (workaroundCaching) {
-    if (bs.returnedFrontCached) {
-      bs.returnedFrontCached = false
+  const back = index < bs.prevIndex
 
-      const backEvent = store.events.drainBack?.()
-      await backEvent?.dispatch(undefined, { trigger: true, drain: 'back' })
-    }
-    else if (bs.returnedBackCached) {
-      bs.returnedBackCached = false
-
-      const forwardEvent = store.events.drainForward?.()
-      await forwardEvent?.dispatch(undefined, { trigger: true, drain: 'forward' })
-    }
+  // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler
+  // this means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you back out, the pop handler won't kick in.
+  // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't prematurely take you off off the site on your next back/forward tap.
+  if (back) {
+    if (bs.maxIndex - index > 1) await bf.forward()
+  }
+  else {
+    if (index > 1) await bf.back()
   }
 
-  // WORKAROUND for calling disableForwardButton in userland, after having backed/forwarded off the site, which causes removeTail to trigger a future press of the back button to prematurely take u off the site -- instead we just let u tap forward one more time to disable the button
-  else if (workaroundDisableForward) {
-    replace(bs.workaroundTailUrl, 2)
-    bs.workaroundTailUrl = null
-  }
+  bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
+  bs.changed = false
+
+  await window.store.events.pop?.dispatch(undefined, { trigger: true })
+  if (!bs.changed) changePath(bs.prevUrl) // missing or invalid pop handler (or history.forwardOut called with no linkOut) -- URL needs to be set back since pop handler didn't result in changing the UI
+
+  bs.changed = true
+  bs.pop = false  // ...so replace is used instead of push, as browsers don't honor history stack when more than one push is performed per user-triggered event
 }
+
+
+// ADDITIONAL NOTES:
+// Ideally, the trap would kick on index 1. On index 0, there's no need, as there's no question of where to take the user except to the previous site. The same
+// applies to both the front and tail of the history stack, eg take the user forward to the site he previously linked out to.
+
+// Keep in mind the core reason all this is required is because only a single call to history.pushState is
+// allowed per user-triggered event. The whole of the history module is geared towards supporting this browser requirement. If the rule is broken, browsers
+// stop honoring the indexes of our "virtual" entries.
+
+// It would be nice to fix the "hole" on index 1, if anyone can find another way. Many MANY ways have been tried to arrive at this solution.
+// Our overall take is that on index 1, not being able to trap the user isn't a big deal, as he's still very close to where he came from and hasn't performed
+// enough events that might make it logical to do anything other than let the user leave the site in 2 taps. In most cases, exactly what the user expects
+// is what happens. Trapping only becomes more important once the user has drilled thru multiple separate navigators (eg. from a Bottom Tab Bar),
+// where custom app-defined draining can lead to a better experience. However if only 2 events have been performed after the user has entered the
+// site/app, there's very little decisions to make, and the user really shouldn't even be trapped. The back/forward buttons will still trigger your pop
+// handler, with the only difference being that you can't block leaving the app in order to drain/undrain something unexpected.
+
+// For example, say you have a BottomTabBar, and after the user opens the app, he taps the 2nd tab and then the 3rd. The only logical decision is
+// to back to tab 2, and then tab 1 and then off the site when he pops backs. Or if he drills to the 3rd screen (2nd index) of a single navigator,
+// the only logical flow is he backs out via 3 taps to the previous site.
+
+// Another example: say you have a BottomTabBar and a drawer. The user taps tab 2, then opens the drawer. You now have 2 logical options: close
+// the drawer first and then go to tab 1, or go to tab 1 and then close the drawer. Both of which can be handled before the user backs off the
+// site without having to trap him.
+
+// Now imagine: the user drilled to entry 4 on a Navigator attached to tab 1 and then tapped tab 2 and also drilled deeply into its Navigator.
+// Perhaps the user switched back and forth between the 2 tabs/navigators multiple times. Here's now the problem Respond solves: the user
+// has accumulated more traditional history entries than navigator entries he visited. If each Navigator has a max depth of 4 entries, the
+// max amount of screens you want to go back through is 8. However, he could have done it through many more than 8 taps if he went back
+// and forth between the tabs/navigators. Here's where your events.pop handler shines -- you can logically drain each navigator (one at a time)
+// and allow him to exit the site afte 8 taps, rather than, say, 16. Then when he forwards back through the site, you can choose to perhaps
+// only "undrain" a single navigator. The choice is yours, and serious apps have many navigators or "navigator equivalents" in parallel. That's
+// the problem respond's history abstraction solves -- it solves for the reality that "apps" have multiple navigator equivalents in parallel which need
+// to be reconciled with a linear history stack; and there's no "one size, fits all" solution, as every app has different needs and contexts.
+// Customization of draining / undraining via the pop event gives you a path forward to approximate optimal user expectations for back/forward
+// buttons in an advanced app environment. This is as opposed to being forced to drop secondary contexts/navigators that the user might want to return to.
+// Or where going back and forth between far flung locations make for a jarring experience. Or most common: apps that don't support backing/forwarding
+// because the app was designed as a route level reduction, which has become the case with basically every app that doesn't use Respond or redux-first-router.
+// The reason most apps don't support backing/forwarding beyond standard web "page" sites is because as you revisit URLs, that URL doesn't encode the state
+// (eg open/close state, eg navigator index) of parallel navigator equivalents, which may include, eg, a modal with multiple tabs, and many other possibilities.
+// So as you go back to previous URLs, these navigator equivalents won't know what to do, and usually don't display. Conversely, in a Respond-reduced app,
+// these navigator equivalents can *listen* (through reducers) to events which are primarily targeted at another navigator equivalent. So as you pop back and
+// forth you can trigger a new primary navigator equivalent to correctly display, while secondarily, eg, closing a drawer, hiding a modal, resetting a history
+// stack etc. The problem of *parallel* experiences / navigator equivalents is what Respond's reduction focus solves, making parallel experiences *sticky*
+// while users change their focus elswhere, thereby not losing previous context. The pop handler allows you to play conductor and orchestrate focus logically
+// while keeping the original logical stickiness of parallel experiences that made sense as the user performed them. Essentially, as the user pops back or forward,
+// you want to *replay* the most logical reverse flow, given the custom characteristics of your app. And no linear history stack can properly interpret that
+// for you without knowing your app. In sum, the trap discards the linear history stack in favor of a simple signal of back/forward, which you cross-reference
+// with the current state of your app to determine the logical optimal experience.

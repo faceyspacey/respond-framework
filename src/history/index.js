@@ -1,22 +1,15 @@
-import { replace, shouldChange } from './utils/pushReplace.js'
-import { isDrainsDisabled, hydrateFromSessionStorage} from './utils/backForward.js'
-import createTrap from './createTrap.js'
+import { isPopDisabled, hydrateFromSessionStorage} from './utils/backForward.js'
+import changePath from './changePath.mock.js'
 import * as api from './api.js'
-import changePath from './changePath.js'
+import state from './browserState.js'
 
 
 export default store => {
-  if (isDrainsDisabled(store)) {
-    return {
-      ...api,
-      changePath: e => shouldChange(e) && replace(store.fromEvent(e).url) // history does nothing in native / when drains disabled
-    }
+  if (isPopDisabled(store)) {
+    return { ...api, state, changePath }
   }
 
-  if (store.prevStore?.history) return store.prevStore.history // HMR (don't re-create trap if !!store.options.enableDrainsInDevelopment)
-
   hydrateFromSessionStorage()
-  createTrap() // where the magic happens
 
-  return { ...api, changePath }
+  return { ...api, state }
 }

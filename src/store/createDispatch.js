@@ -17,11 +17,22 @@ export default getStore => {
 
     e.meta = { ...e.meta, ...meta }
   
+    if (store.history.state.pop) {
+      e.meta.pop = store.history.state.pop
+    }
+    
     try {
       await dispatchPlugins([start, ..._plugins], store, e)
     }
     catch (error) {
       await store.onError({ error, kind: 'dispatch', e })
+    }
+
+    if (e.meta.trigger) {
+      await Promise.all(store.promises)
+
+      store.promises.length = 0
+      store.ctx.changedPath = false
     }
   }
 }
@@ -36,10 +47,10 @@ const dispatchPlugins = (plugins, store, e) => {
     if (!plugin) return
 
     const res = await plugin(store, e)
-    if (res === false) return
+    if (res === false) return false
 
     e = res ? { ...e, ...res } : e
 
-    await next(i + 1)
+    return await next(i + 1)
   }
 }
