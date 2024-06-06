@@ -63,7 +63,7 @@ export default async (topModuleOriginal, settings) => {
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
-  topModule.modules = (isDev && !isTest) || (isProd && options.productionReplayTools) ? { ...topModule.modules, replayTools } : topModule.modules
+  topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
 
   const getStore = () => store
 
