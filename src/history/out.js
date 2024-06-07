@@ -1,6 +1,6 @@
 import { Linking } from 'react-native'
 import { isPopDisabled } from './utils/backForward.js'
-import { getIndex, getUrl } from './utils/state.js'
+import { getIndex } from './utils/state.js'
 import sessionStorage from 'respond-framework/utils/sessionStorage.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
@@ -17,9 +17,7 @@ const backOut = async () => {
   const { linkedOut, maxIndex } = bs
   sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
-  const index = getIndex()
-  await bf.go(-index)
-  history.replaceState({ index: index + 1 }, '', getUrl())
+  await bf.go(-getIndex())
   history.back()
 
   return false
