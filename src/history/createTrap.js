@@ -59,13 +59,12 @@ export const popListener = async () => {
 
   if (!bs.changedUrl) await out(back)               // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
   else {
-    const tail = forward && !bs.linkedOut &&
-      bs.maxIndex === index &&
-      bs.maxUrl === bs.changedUrl &&                  
-      !window.store.options.disableTail             // heuristics to determine tail, but not if user linked out
+    const tail = forward && !bs.linkedOut &&        // heuristics to determine tail, but not if user linked out
+      bs.maxUrl === bs.changedUrl &&
+      bs.maxIndex === index                         // unfortunately this will fail if you back out of the site and forward back to it, as index will get trapped (note: maxIndex is primarily for knowing how many "real" indexes to "go" to backOut or forwardOut) -- but it's better than not having it and relying on just maxUrl which could have a duplicate one not at the tail; another option is to tag events in userLand, but we've decided against that to keep the API smaller and because it's not the biggest issue if you have to tap forward one more time to disable the forward button            
 
     if (tail) await out()                           // display forward button as not pressable
-    
+
     change(bs.changedUrl, true)                     // replaceState (can't push in response to a pop)
   }
 }
