@@ -4,6 +4,7 @@ import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
 import out from './out.js'
 import change from './utils/change.js'
+import { isDev } from '../utils.js'
 
 
 export const createTrap = () => {
@@ -21,16 +22,16 @@ export const removeTrap = () => {
 export const popListener = async () => {
   const index = getIndex()
 
-  if (bs.prevIndex === -1 && index === 0) {
+  if (bs.prevIndex === -1 && index === 0) {                               // browser cached on return from front
     bs.prevIndex = index
     return
   }
-  else if (bs.prevIndex === bs.maxIndex + 1 && index === bs.maxIndex) {
+  else if (bs.prevIndex === bs.maxIndex + 1 && index === bs.maxIndex) {   // browser cached on return from tail
     bs.prevIndex = index
     return
   }
   else if (index === bs.prevIndex) {
-    console.warn(`store.history: pop back/next cannot be determined as the current history index is equal to the previous one`)
+    console.warn(`store.history: pop back/next cannot be determined as the current history index is equal to the previous one.${isDev ? ' This is likely a development/HMR-only problem' : ' Please test all browsers and submit a repro with a very precise set of instructions.'}`)
     return
   }
 
@@ -39,24 +40,33 @@ export const popListener = async () => {
 
   bs.changedUrl = null
 
-  bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
+  bs.pop = back ? 'back' : 'forward'                // ensure all dispatches in pop handler are considered pops
   await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
-  bs.pop = false  // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
+  bs.pop = false                                    // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
 
-  // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler
-  // this means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you back out, the pop handler won't kick in.
-  // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't prematurely take you off off the site on your next back/forward tap.
+  // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler.
+  // This means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you tap back 2x, the trap won't prevent the user from leaving.
+  // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
+
   if (back) {
-    if (bs.maxIndex - index > 1) await bf.forward()
+    if (bs.maxIndex - index > 1) await bf.forward() // trap user by reversing
   }
   else {
-    if (index > 1) await bf.back()
+    if (index > 1) await bf.back()                  // trap user by reversing
   }
 
-  if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
+  // Replace + Out Handling
+
+  if (!bs.changedUrl) await out(back)               // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
   else {
-    if (forward && bs.changedUrl === bs.maxUrl && !bs.linkedOut) await out()
-    change(bs.changedUrl, true) // replaceState (can't push in response to a pop)
+    const tail = forward && !bs.linkedOut &&
+      bs.maxIndex === index &&
+      bs.maxUrl === bs.changedUrl &&                  
+      !window.store.options.disableTail             // heuristics to determine tail, but not if user linked out
+
+    if (tail) await out()                           // display forward button as not pressable
+    
+    change(bs.changedUrl, true)                     // replaceState (can't push in response to a pop)
   }
 }
 

@@ -13,7 +13,7 @@ export default async e => {
   if (!bs.pop) change(url, ctx.changedPath)
 
   ctx.changedPath = true
-  bs.changedUrl = url
+  bs.changedUrl = url // when bs.pop === true, queue URL for appropriate handling in trap
   
   createTrap()
 }
