@@ -32,6 +32,7 @@ const forwardOut = async () => {
   if (!bs.linkedOut) {
     await bf.go(bs.maxIndex - getIndex())
     bs.prevIndex = bs.maxIndex
+    bs.bs.maxIndexRelative = bs.maxIndex
     return false
   }
 
