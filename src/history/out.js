@@ -15,9 +15,10 @@ const backOut = async () => {
   bs.prevIndex = -1
 
   const index = getIndex()
-  let { linkedOut, maxIndex } = bs
-  maxIndex -= index
   
+  bs.maxIndex -= index
+
+  const { linkedOut, maxIndex } = bs
   sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
   await bf.go(-index)
