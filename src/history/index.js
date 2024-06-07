@@ -1,15 +1,16 @@
 import { isPopDisabled, hydrateFromSessionStorage} from './utils/backForward.js'
-import changePath from './changePath.mock.js'
-import * as api from './api.js'
+import changePath from './changePath.js'
+import changePathMock from './changePath.mock.js'
+import { linkOut } from './out.js'
 import state from './browserState.js'
 
 
 export default store => {
   if (isPopDisabled(store)) {
-    return { ...api, state, changePath }
+    return { state, linkOut, changePath: changePathMock }
   }
 
   hydrateFromSessionStorage()
 
-  return { ...api, state }
+  return { state, linkOut, changePath }
 }

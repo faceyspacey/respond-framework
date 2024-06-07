@@ -8,14 +8,12 @@ export default async e => {
   if (!shouldChange(e)) return
   
   const { fromEvent, ctx } = window.store
-
   const { url } = fromEvent(e)
-  const pop = bs.pop || ctx.changedPath
 
-  change(url, pop)
+  if (!bs.pop) change(url, ctx.changedPath)
 
   ctx.changedPath = true
-  bs.changed = true
+  bs.changedUrl = url
   
   createTrap()
 }

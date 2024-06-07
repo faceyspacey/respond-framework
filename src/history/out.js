@@ -5,10 +5,11 @@ import sessionStorage from 'respond-framework/utils/sessionStorage.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
 
-export { default as changePath } from './changePath.js'
+
+export default back => back ? backOut() : forwardOut()
 
 
-export const backOut = async () => {
+const backOut = async () => {
   sessionStorage.setItem('sessionState', window.store.stringifyState())
 
   bs.prevIndex = -1
@@ -23,8 +24,12 @@ export const backOut = async () => {
 }
 
 
-export const forwardOut = async () => {
-  if (!bs.linkedOut) return false // return false, so event can short-circuit
+const forwardOut = async () => {
+  if (!bs.linkedOut) {
+    await bf.go(bs.maxIndex - getIndex())
+    bs.prevIndex = bs.maxIndex
+    return false
+  }
 
   sessionStorage.setItem('sessionState', window.store.stringifyState())
   

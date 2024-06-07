@@ -3,4 +3,5 @@ export default {
   maxIndex: 0,
   hasTrap: false,
   linkedOut: false,
+  pop: false,
 }

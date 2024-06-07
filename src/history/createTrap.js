@@ -2,7 +2,8 @@ import { getIndex, getUrl } from './utils/state.js'
 import { addPopListener, removePopListener } from './utils/popListener.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
-import changePath from './changePath.js'
+import out from './out.js'
+import change from './utils/change.js'
 
 
 export const createTrap = () => {
@@ -36,6 +37,13 @@ export const popListener = async () => {
   }
 
   const back = index < bs.prevIndex
+  const forward = !back
+
+  bs.changedUrl = null
+
+  bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
+  await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
+  bs.pop = false  // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
 
   // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler
   // this means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you back out, the pop handler won't kick in.
@@ -44,17 +52,11 @@ export const popListener = async () => {
     if (bs.maxIndex - index > 1) await bf.forward()
   }
   else {
-    if (index > 1) await bf.back()
+    if (index > 1 && bs.changedUrl) await bf.back()
   }
 
-  bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
-  bs.changed = false
-
-  await window.store.events.pop?.dispatch(undefined, { trigger: true })
-  if (!bs.changed) changePath(bs.prevUrl) // missing or invalid pop handler (or history.forwardOut called with no linkOut) -- URL needs to be set back since pop handler didn't result in changing the UI
-
-  bs.changed = true
-  bs.pop = false  // ...so replace is used instead of push, as browsers don't honor history stack when more than one push is performed per user-triggered event
+  if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
+  else change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
 }
 
 
