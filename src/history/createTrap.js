@@ -52,11 +52,12 @@ export const popListener = async () => {
     if (bs.maxIndex - index > 1) await bf.forward()
   }
   else {
-    if (index > 1 && (index !== bs.maxIndex || bs.linkedOut)) await bf.back()
+    if (index > 1) await bf.back()
   }
 
-  if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
-  else change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
+  if (!bs.changedUrl || forward && index === 5) await out(back) // missing pop handler or nothing left for pop handler to do
+
+  change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
 }
 
 
