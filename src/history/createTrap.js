@@ -38,7 +38,6 @@ export const popListener = async () => {
   const forward = !back
 
   bs.changedUrl = null
-  bs.tail = false
 
   bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
   await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
@@ -56,7 +55,7 @@ export const popListener = async () => {
 
   if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
   else {
-    if (bs.tail && !bs.linkedOut) await out()
+    if (forward && bs.changeUrl === bs.maxUrl && !bs.linkedOut) await out()
     change(bs.changedUrl, true) // replaceState (can't push in response to a pop)
   }
 }

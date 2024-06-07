@@ -14,6 +14,7 @@ export default (url, redirect) => {
 const push = (url, index = 1) => {
   bs.prevIndex = index
   bs.maxIndex = index
+  bs.maxUrl = url
   bs.linkedOut = false
   history.pushState({ index }, '', url)
 }
