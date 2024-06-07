@@ -15,14 +15,10 @@ const push = (url, index = 1) => {
   bs.prevIndex = index
   bs.maxIndex = index
   bs.linkedOut = false
-  bs.prevUrl = url
-
   history.pushState({ index }, '', url)
 }
 
 const replace = (url, index = 1) => {
   bs.prevIndex = index
-  bs.prevUrl = url
-
   history.replaceState({ index }, '', url)
 }
