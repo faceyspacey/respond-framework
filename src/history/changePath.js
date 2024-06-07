@@ -10,7 +10,7 @@ export default async e => {
   const { fromEvent, ctx } = window.store
   const { url } = fromEvent(e)
 
-  if (!bs.pop) await change(url, ctx.changedPath)
+  if (!bs.pop) change(url, ctx.changedPath)
 
   ctx.changedPath = true
   bs.changedUrl = url // when bs.pop === true, queue URL for appropriate handling in trap
