@@ -20,7 +20,7 @@ export default getStore => {
     if (store.history.state.pop) {
       e.meta.pop = store.history.state.pop
     }
-    
+
     try {
       await dispatchPlugins([start, ..._plugins], store, e)
     }
@@ -30,9 +30,8 @@ export default getStore => {
 
     if (e.meta.trigger) {
       await Promise.all(store.promises)
-
       store.promises.length = 0
-      store.ctx.changedPath = false
+      store.ctx.changedPath = !e.meta.pop ? false : store.ctx.changedPath
     }
   }
 }
