@@ -55,7 +55,7 @@ export const popListener = async () => {
 
   if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
   else {
-    if (forward && bs.changeUrl === bs.maxUrl && !bs.linkedOut) await out()
+    if (forward && bs.changedUrl === bs.maxUrl && !bs.linkedOut) await out()
     change(bs.changedUrl, true) // replaceState (can't push in response to a pop)
   }
 }
