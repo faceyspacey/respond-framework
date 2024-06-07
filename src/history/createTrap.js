@@ -55,9 +55,9 @@ export const popListener = async () => {
     if (index > 1) await bf.back()
   }
 
-  if (!bs.changedUrl || forward && index === 5) await out(back) // missing pop handler or nothing left for pop handler to do
+  if (!bs.changedUrl || (forward && index === 5)) await out(back) // missing pop handler or nothing left for pop handler to do
 
-  change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
+  if (bs.changedUrl) change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
 }
 
 
