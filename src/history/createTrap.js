@@ -38,35 +38,24 @@ export const popListener = async () => {
   const back = index < bs.prevIndex
   const forward = !back
 
-  bs.changedUrl = null
-
-  bs.pop = back ? 'back' : 'forward'                // ensure all dispatches in pop handler are considered pops
-  await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
-  bs.pop = false                                    // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
-
   // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler.
   // This means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you tap back 2x, the trap won't prevent the user from leaving.
   // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
 
   if (back) {
-    if (bs.maxIndex - index > 1) await bf.forward() // trap user by reversing
+    if (bs.maxIndex - index > 1) await bf.forward()   // trap user by reversing
   }
   else {
-    if (index > 1) await bf.back()                  // trap user by reversing
+    if (index > 1) await bf.back()                    // trap user by reversing
   }
+  
+  bs.pop = back ? 'back' : 'forward'                  // ensure all dispatches in pop handler are considered pops
+  await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
+  bs.pop = false                                      // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
 
-  // Replace + Out Handling
-
-  if (!bs.changedUrl) await out(back)               // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
-  else {
-    const tail = forward && !bs.linkedOut &&        // heuristics to determine tail in order to disable forward button
-      bs.maxUrl === bs.changedUrl &&
-      bs.maxIndexRelative === index                 // unfortunately this will fail if you back out of the site and forward back to it, as history.go(delta) is used to backOut, and the user will return on a lower index (note: maxIndex is primarily for knowing how many "real" indexes to "go" to backOut or forwardOut) -- but it's better than not having it and relying on just maxUrl which could have a duplicate one not at the tail; another option is to tag events in userLand, but we've decided against that to keep the API smaller and because it's not the biggest issue if you have to tap forward one more time to disable the forward button            
-
-    if (tail) await out()                           // disable forward button
-
-    change(bs.changedUrl, true)                     // replaceState (can't push in response to a pop)
-  }
+  const changed = window.store.ctx.changedPath
+  window.store.ctx.changedPath = false
+  if (!changed) await out(back)  // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
 }
 
 

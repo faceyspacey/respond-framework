@@ -15,8 +15,6 @@ export default (url, forceReplace) => {
 const push = (url, index = 1) => {
   bs.prevIndex = index
   bs.maxIndex = index
-  bs.maxIndexRelative = index
-  bs.maxUrl = url
   bs.linkedOut = false
   history.pushState({ index }, '', url)
 }

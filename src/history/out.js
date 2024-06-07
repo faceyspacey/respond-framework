@@ -14,14 +14,10 @@ const backOut = async () => {
 
   bs.prevIndex = -1
 
-  const index = getIndex()
+  const { linkedOut, maxIndex } = bs
+  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
-  bs.maxIndexRelative -= index - 1
-
-  const { linkedOut, maxIndex, maxIndexRelative } = bs
-  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex, maxIndexRelative }))
-
-  await bf.go(-index)
+  await bf.go(-getIndex())
   history.back()
 
   return false
@@ -32,7 +28,6 @@ const forwardOut = async () => {
   if (!bs.linkedOut) {
     await bf.go(bs.maxIndex - getIndex())
     bs.prevIndex = bs.maxIndex
-    bs.maxIndexRelative = bs.maxIndex
     return false
   }
 
