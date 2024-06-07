@@ -1,7 +1,6 @@
-import { shouldChange } from './utils/state.js'
+import { shouldChange } from './utils/helpers.js'
 import change from './utils/change.js'
 import { createTrap } from './createTrap.js'
-import bs from './browserState.js'
 
 
 export default async e => {
@@ -10,7 +9,7 @@ export default async e => {
   const { fromEvent, ctx } = window.store
   const { url } = fromEvent(e)
 
-  change(url, bs.pop || ctx.changedPath)
+  change(url, ctx.changedPath)
 
   ctx.changedPath = true
   

@@ -1,9 +1,8 @@
-import { getIndex, getUrl } from './utils/state.js'
+import { getIndex } from './utils/helpers.js'
 import { addPopListener, removePopListener } from './utils/popListener.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
 import out from './out.js'
-import change from './utils/change.js'
 import { isDev } from '../utils.js'
 
 
@@ -21,6 +20,9 @@ export const removeTrap = () => {
 
 export const popListener = async () => {
   const index = getIndex()
+  const back = index < bs.prevIndex
+
+  const { events, ctx } = window.store
 
   if (bs.prevIndex === -1 && index === 0) {                               // browser cached on return from front
     bs.prevIndex = index
@@ -35,9 +37,6 @@ export const popListener = async () => {
     return
   }
 
-  const back = index < bs.prevIndex
-  const forward = !back
-
   // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler.
   // This means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you tap back 2x, the trap won't prevent the user from leaving.
   // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
@@ -50,11 +49,12 @@ export const popListener = async () => {
   }
   
   bs.pop = back ? 'back' : 'forward'                  // ensure all dispatches in pop handler are considered pops
-  await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
+  await events.pop?.dispatch(undefined, { trigger: true })
   bs.pop = false                                      // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
 
-  const changed = window.store.ctx.changedPath
-  window.store.ctx.changedPath = false
+  const changed = ctx.changedPath
+  ctx.changedPath = false
+
   if (!changed) await out(back)  // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
 }
 
