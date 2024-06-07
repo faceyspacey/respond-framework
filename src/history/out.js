@@ -16,10 +16,10 @@ const backOut = async () => {
 
   const index = getIndex()
 
-  bs.maxIndex -= index - 1
+  bs.maxIndexRelative -= index - 1
 
-  const { linkedOut, maxIndex } = bs
-  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
+  const { linkedOut, maxIndex, maxIndexRelative } = bs
+  sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex, maxIndexRelative }))
 
   await bf.go(-index)
   history.back()

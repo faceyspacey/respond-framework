@@ -61,7 +61,7 @@ export const popListener = async () => {
   else {
     const tail = forward && !bs.linkedOut &&        // heuristics to determine tail in order to disable forward button
       bs.maxUrl === bs.changedUrl &&
-      bs.maxIndex === index                         // unfortunately this will fail if you back out of the site and forward back to it, as history.go(delta) is used to backOut, and the user will return on a lower index (note: maxIndex is primarily for knowing how many "real" indexes to "go" to backOut or forwardOut) -- but it's better than not having it and relying on just maxUrl which could have a duplicate one not at the tail; another option is to tag events in userLand, but we've decided against that to keep the API smaller and because it's not the biggest issue if you have to tap forward one more time to disable the forward button            
+      bs.maxIndexRelative === index                 // unfortunately this will fail if you back out of the site and forward back to it, as history.go(delta) is used to backOut, and the user will return on a lower index (note: maxIndex is primarily for knowing how many "real" indexes to "go" to backOut or forwardOut) -- but it's better than not having it and relying on just maxUrl which could have a duplicate one not at the tail; another option is to tag events in userLand, but we've decided against that to keep the API smaller and because it's not the biggest issue if you have to tap forward one more time to disable the forward button            
 
     if (tail) await out()                           // disable forward button
 
