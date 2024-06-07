@@ -55,7 +55,7 @@ export const popListener = async () => {
 
   if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
   else if (bs.changedUrl === '/help') {
-    out()
+    await out()
     change(bs.changedUrl, true)
   }
   else change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
