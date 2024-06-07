@@ -38,7 +38,8 @@ export const popListener = async () => {
   const forward = !back
 
   bs.changedUrl = null
-
+  bs.tail = false
+  
   bs.pop = back ? 'back' : 'forward'   // ensure all dispatches in pop handler are considered pops
   await window.store.events.pop?.dispatch({ back, forward }, { trigger: true })
   bs.pop = false  // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
@@ -54,11 +55,10 @@ export const popListener = async () => {
   }
 
   if (!bs.changedUrl) await out(back) // missing pop handler or nothing left for pop handler to do
-  else if (bs.changedUrl === '/help') {
-    await out()
-    change(bs.changedUrl, true)
+  else {
+    if (bs.tail) await out()
+    change(bs.changedUrl, true) // replaceState (can't push in response to a pop)
   }
-  else change(bs.changedUrl, true)    // replaceState (can't push in response to a pop)
 }
 
 

@@ -14,6 +14,7 @@ export default async e => {
 
   ctx.changedPath = true
   bs.changedUrl = url
+  bs.tail = e.meta?.tail
   
   createTrap()
 }
