@@ -19,7 +19,7 @@ const backOut = async () => {
 
   const index = getIndex()
   await bf.go(-index)
-  history.replaceState({ index }, '', getUrl())
+  history.replaceState({ index: index + 1 }, '', getUrl())
   history.back()
 
   return false
