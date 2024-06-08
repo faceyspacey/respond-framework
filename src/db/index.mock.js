@@ -26,6 +26,8 @@ export default {
     const start = skip * limit
     const end = start + limit
 
+    let docs = Object.values(this.docs || {})
+
     docs = sortDocs(docs.filter(applySelector(selector)), sort)
     docs = limit === 0 ? docs.slice(start) : docs.slice(start, end)
     
@@ -304,7 +306,7 @@ export default {
     sort = { updatedAt: -1 },
     limit = this.config.listLimit,
     skip = 0,
-    docs = Object.values(this.docs || {})
+    docs = Object.values(this.docs || {}) // methods like aggregate pass in their own docs
   } = {}) {
     const start = skip * limit
     const end = start + limit
