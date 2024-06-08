@@ -2,7 +2,7 @@ import applySelector from '../utils/applySelector.js'
 import { joinInner, joinSum } from './join.mock.js'
 
 
-export default async (db, collectionName, specs, selector, sort) => {
+export default async (specs, { db, collectionName, selector, sort }) => {
   const collection = db[collectionName]
 
   const m1 = await collection.findAll()                 // grab all models, as we have to manually join them in this file

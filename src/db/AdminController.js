@@ -6,7 +6,7 @@ import db from '../db.js'
 export default {
   async findByQueryPaginated(query) {
     const {
-      proj,
+      project,
       sortKey = 'updatedAt',
       sortValue = -1,
       limit,
@@ -24,7 +24,7 @@ export default {
     const sort = { [sortKey]: sortValue, _id: sortValue, location }
     const stages = collection.aggregateStages?.map(s => ({ ...s, startDate, endDate })) || []
 
-    const { [this._namePlural]: models, count } = await collection.aggregate({ selector, stages, proj, sort, limit, skip })
+    const { [this._namePlural]: models, count } = await collection.aggregate({ selector, stages, project, sort, limit, skip })
 
     return {
       [this._namePlural]: models,

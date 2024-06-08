@@ -1,7 +1,14 @@
 import joinInnerAndSum from './join.js'
 
 
-export default (collection, specs = [], $match, $proj, $sort, $limit, $skip) => {
+export default (specs = [], {
+  collection,
+  selector: $match,
+  project: $project,
+  sort: $sort,
+  limit: $limit,
+  skip: $skip
+}) => {
   $match = collection._toObjectIdsSelector($match)
 
   const stages = []
@@ -33,7 +40,7 @@ export default (collection, specs = [], $match, $proj, $sort, $limit, $skip) => 
   stages.push({ $skip: $skip * $limit })
   stages.push({ $limit })
 
-  if ($proj) stages.push({ $project: collection._toProject($proj) })
+  if ($project) stages.push({ $project: collection._toProject($project) })
   
   return stages
 }

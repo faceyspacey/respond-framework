@@ -8,16 +8,21 @@ import { isServer } from '../utils/bools.js'
 
 
 export default {
-  async findOne(selector, project, sort = { updatedAt: -1 }) {
+  async findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
     if (typeof selector === 'string') return this._pick(this.docs[selector], project)
     if (selector.id) return this._pick(this.docs[selector.id], project)
 
-    const models = await this._find(selector, project, sort, 1)
+    const models = await this._find(selector, { project, sort, limit: 1 })
     return models[0]
   },
 
-  async find(selector, project, sort = { updatedAt: -1 }, limit = this.config.listLimit, skip = 0, docs = Object.values(this.docs || {})) {
+  async find(selector, {
+    project,
+    sort = { updatedAt: -1 },
+    limit = this.config.listLimit,
+    skip = 0,
+  } = {}) {
     const start = skip * limit
     const end = start + limit
 
@@ -27,15 +32,15 @@ export default {
     return docs.map(doc => this._pick(doc, project))
   },
 
-  async insertOne(doc, proj) {
+  async insertOne(doc, { project } = {}) {
     doc.id ??= objectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this._create(doc)
-    return this._pick(this.docs[doc.id], proj)
+    return this._pick(this.docs[doc.id], project)
   },
 
-  async updateOne(selector, newDoc, proj) {
+  async updateOne(selector, newDoc, { project } = {}) {
     if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
 
     const id = typeof selector === 'string' ? selector : selector.id
@@ -49,10 +54,10 @@ export default {
       this.docs[model.id] = model
     }
 
-    return this._pick(model, proj)
+    return this._pick(model, project)
   },
 
-  async upsert(selector, doc, insertOnlyDoc, project) {
+  async upsert(selector, doc, { insertDoc, project } = {}) {
     const existingDoc = await this._findOne(selector)
 
     if (existingDoc) {
@@ -64,22 +69,26 @@ export default {
       return this._findOne(selector, project)
     }
 
-    return this._insertOne({ ...selector, ...doc, ...insertOnlyDoc })
+    return this._insertOne({ ...selector, ...doc, ...insertDoc })
   },
 
-  async findAll(selector, project, sort) {
-    return this._find(selector, project, sort, 0)
+  async findAll(selector, options) {
+    return this._find(selector, { ...options, limit: 0 })
   },
 
-  async findLike(key, term, ...args) {
+  async findLike(key, term, { selector, ...options } = {}) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ [key]: value }, ...args)
+    return this._find({ ...selector, [key]: value }, options)
   },
 
-  async search(query, project, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
-    const allRows = await this._find(undefined, project, { updatedAt: -1 }, limit, skip)
+  async search(query, {
+    path = ['firstName', 'lastName'],
+    selector,
+    ...options
+  } = {}) {
+    const allRows = await this._find(selector, { ...options, sort: { updatedAt: -1 } })
 
     query = query.replace(/[\W_]+/g, '')    // remove non-alphanumeric characters
 
@@ -89,11 +98,15 @@ export default {
     })
   },
 
-  async searchGeo({ lng, lat }, selector, project, limit = this.config.listLimit, skip) {
-    return this._find(selector, project, { updatedAt: -1 }, limit, skip)
+  async searchGeo({ lng, lat }, { selector, ...options } = {}) {
+    return this._find(selector, options)
   },
 
-  async joinOne(id, name, proj, projectJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async joinOne(id, name, {
+    project,
+    projectJoin,
+    sort = { updatedAt: -1, _id: 1 },
+  } = {}) {
     const coll = this.db(name)
 
     const parentName = this._name
@@ -102,14 +115,20 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this._findOne(id, proj),
-      coll.findOne(selector, projectJoin, sort, limit, skip)
+      this._findOne(id, { project }),
+      coll.findOne(selector, { project: projectJoin, sort })
     ])
 
     return { [parentName]: parent, [name]: children }
   },
 
-  async joinMany(id, name, proj, projectJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async joinMany(id, name, {
+    project,
+    projectJoin,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0
+  } = {}) {
     const coll = this.db(name)
 
     const parentName = this._name
@@ -118,27 +137,39 @@ export default {
     const selector = { [fk]: id  }
 
     const [parent, children] = await Promise.all([
-      this._findOne(id, proj),
-      coll.find(selector, projectJoin, sort, limit, skip)
+      this._findOne(id, project),
+      coll.find(selector, { project: projectJoin, sort, limit, skip })
     ])
 
     return { [parentName]: parent, [coll._namePlural]: children }
   },
 
-  async join(name, selector, fk, selectorJoin, proj, projectJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin = this.config.listLimit, innerJoin) {
+  async join(name, {
+    foreignKey: fk,
+    selector,
+    selectorJoin,
+    project,
+    projectJoin,
+    sort,
+    sortJoin,
+    limit = this.config.listLimit,
+    limitJoin = this.config.listLimit,
+    skip = 0,
+    innerJoin
+  }) {
     sort ??= { updatedAt: -1, id: -1 }
     sortJoin ??= { updatedAt: -1, id: -1 }
 
     fk ??= this._name + 'Id'
     
-    let parents = await this._find(selector, proj, sort, limit, skip)
+    let parents = await this._find(selector, { project, sort, limit, skip })
     const $in = parents.map(p => p.id)
 
     selectorJoin = { ...selectorJoin, [fk]: { $in } }
 
     const coll = this.db(name)
 
-    const children = await coll.find(selectorJoin, projectJoin, sortJoin, limitJoin) 
+    const children = await coll.find(selectorJoin, { project: projectJoin, sort: sortJoin, limit: limitJoin }) 
     
     const outer = this._namePlural
     const inner = coll._namePlural
@@ -153,18 +184,16 @@ export default {
     }
   },
 
-  async aggregate(options = {}) {
-    const {
-      selector,
-      stages: specs = [],
-      proj,
-      sort = { updatedAt: -1, _id: 1 },
-      limit = this.config.listLimit,
-      skip = 0
-    } = options
-
-    const docs = await createAggregateStages(this.db(), this._name, specs, selector, sort) // mock fully converts stage specs into docs themselves (non-paginated)
-    const page = await this._find(undefined, proj, sort, limit, skip, docs) // apply pagination and sorting on passed in models
+  async aggregate({
+    selector,
+    stages: specs = [],
+    project,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0
+  } = {}) {
+    const docs = await createAggregateStages(specs, { db: this.db(), collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
+    const page = await this._find(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
     return { count: docs.length, [this._namePlural]: page }
   },
@@ -261,16 +290,22 @@ export default {
 
   // stable duplicates (allows overriding non-underscored versions in userland without breaking other methods that use them)
 
-  async _findOne(selector, project, sort = { updatedAt: -1 }) {
+  async _findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
     if (typeof selector === 'string') return this._pick(this.docs[selector], project)
     if (selector.id) return this._pick(this.docs[selector.id], project)
   
-    const models = await this._find(selector, project, sort, 1)
+    const models = await this._find(selector, { project, sort, limit: 1 })
     return models[0]
   },
   
-  async _find(selector, project, sort = { updatedAt: -1 }, limit = this.config.listLimit, skip = 0, docs = Object.values(this.docs || {})) {
+  async _find(selector, {
+    project,
+    sort = { updatedAt: -1 },
+    limit = this.config.listLimit,
+    skip = 0,
+    docs = Object.values(this.docs || {})
+  } = {}) {
     const start = skip * limit
     const end = start + limit
   
@@ -280,15 +315,15 @@ export default {
     return docs.map(doc => this._pick(doc, project))
   },
   
-  async _insertOne(doc, proj) {
+  async _insertOne(doc, { project } = {}) {
     doc.id ??= objectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
   
     this.docs[doc.id] = this._create(doc)
-    return this._pick(this.docs[doc.id], proj)
+    return this._pick(this.docs[doc.id], project)
   },
   
-  async _updateOne(selector, newDoc, proj) {
+  async _updateOne(selector, newDoc, { project } = {}) {
     if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
   
     const id = typeof selector === 'string' ? selector : selector.id
@@ -297,12 +332,12 @@ export default {
     const model = await this._findOne(id || selector)
   
     if (model) {
-      Object.assign(model, doc) // todo: make deep merge (maybe)
+      Object.assign(model, doc)
       model.updatedAt = new Date
       this.docs[model.id] = model
     }
   
-    return this._pick(model, proj)
+    return this._pick(model, project)
   },
 
   _create(doc) {

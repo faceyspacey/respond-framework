@@ -9,17 +9,22 @@ import createAggregateStages, { createStagesCount } from './aggregates/createAgg
 
 
 export default !isProd ? mock : {  
-  async findOne(selector, proj, sort = { updatedAt: -1 }) {
+  async findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
 
     selector = this._toObjectIdsSelector(selector)
 
-    const model = await this.mongo().findOne(selector, { projection: this._toProject(proj), sort })
+    const model = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
 
     return model && this._create(model)
   },
 
-  async find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async find(selector, {
+    project,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0,
+  } = {}) {
     selector = this._toObjectIdsSelector(selector)
 
     const models = await this.mongo()
@@ -27,34 +32,32 @@ export default !isProd ? mock : {
       .sort(sort)
       .skip(skip * limit)
       .limit(limit)
-      .project(this._toProject(proj))
+      .project(this._toProject(project))
       .toArray()
 
     return models.map(m => this._create(m))
   },
 
-  async insertOne({ id, ...doc }, proj) {
+  async insertOne(doc, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = this._toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(pick(doc, proj))
+    return this._create(pick(doc, project))
   },
 
-  async updateOne(selector, newDoc, proj) {
+  async updateOne(selector, newDoc, { project } = {}) {
     if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
 
-    const { id, createdAt: _, updatedAt: __, lastRoundAt: ___, finishedAt: ____, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
+    const { id, createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
 
     selector = this._toObjectIdsSelector(id ? { id } : selector)
-
 
     const result = await this.mongo().findOneAndUpdate(selector, {
       $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
-    }, { projection: this._toProject(proj), returnDocument: 'after' })
-
+    }, { projection: this._toProject(project), returnDocument: 'after' })
 
     if (!result.value) return
 
@@ -63,12 +66,12 @@ export default !isProd ? mock : {
     return this._create(model)
   },
 
-  async upsert(selector, doc, insertOnlyDoc, proj) {
+  async upsert(selector, doc, { insertDoc, project } = {}) {
     const result = await this.mongo().findOneAndUpdate(this._toObjectIdsSelector(selector), {
       $set: this._toObjectIds(doc),
-      $setOnInsert: this._toObjectIdsSelector({ ...selector, ...insertOnlyDoc, createdAt: new Date }),
+      $setOnInsert: this._toObjectIdsSelector({ ...selector, ...insertDoc, createdAt: new Date }),
       $currentDate: { updatedAt: true }
-    }, { upsert: true, projection: this._toProject(proj), returnDocument: 'after' })
+    }, { upsert: true, projection: this._toProject(project), returnDocument: 'after' })
 
     if (!result.value) return
 
@@ -77,22 +80,28 @@ export default !isProd ? mock : {
     return this._create(model)
   },
 
-  async findAll(selector, project, sort) {
-    return this._find(selector, project, sort, 0)
+  async findAll(selector, options) {
+    return this._find(selector, { ...options, limit: 0 })
   },
 
-  async findLike(key, term, selector, ...args) {
+  async findLike(key, term, { selector, ...options } = {}) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ ...selector, [key]: value }, ...args)
+    return this._find({ ...selector, [key]: value }, options)
   },
 
-  async search(query, selector, proj, path = ['firstName', 'lastName'], limit = 50, skip = 0) {
+  async search(query, {
+    path = ['firstName', 'lastName'],
+    selector,
+    project,
+    limit = this.config.listLimit,
+    skip = 0,
+  } = {}) {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find({ $text: { $search: query }, ...selector }, this._toProject(proj), { updatedAt: 1 }, limit, skip)
+      return this._find({ $text: { $search: query }, ...selector }, { project, skip, limit, sort: { updatedAt: 1 } })
     }
 
     const models = await this.mongo().aggregate([
@@ -113,17 +122,22 @@ export default !isProd ? mock : {
       ...(selector ? [{ $match: selector }] : []),
       { $skip: skip * limit },
       { $limit: limit },
-      ...(proj ? [{ $project: this._toProject(proj) }] : []),
+      ...(project ? [{ $project: this._toProject(project) }] : []),
     ]).toArray()
 
     return models.map(m => this._create(m))
   },
 
-  async searchGeo({ lng, lat }, selector, proj, limit = this.config.listLimit, skip = 0) {
+  async searchGeo({ lng, lat }, {
+    selector,
+    project,
+    limit = this.config.listLimit,
+    skip = 0
+  }) {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find(selector, proj, { updatedAt: 1 }, limit, skip) // updateAt: 1, sorts in opposite of standard direction to indicate something happened
+      return this._find(selector, { project, limit, skip, sort:  { updatedAt: 1 } }) // updateAt: 1, sorts in opposite of default direction to indicate something happened
     }
     
     const models = await this.mongo().aggregate([
@@ -138,13 +152,17 @@ export default !isProd ? mock : {
       ...(selector ? [{ $match: selector }] : []),
       { $skip: skip * limit },
       { $limit: limit },
-      ...(proj ? [{ $project: this._toProject(proj) }] : []),
+      ...(project ? [{ $project: this._toProject(project) }] : []),
     ]).toArray()
 
     return models.map(m => this._create(m))
   },
 
-  async joinOne(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async joinOne(id, name, {
+    project,
+    projectJoin,
+    sort = { updatedAt: -1, _id: 1 },
+  }) {
     const coll = this.db(name)
 
     const parentName = this._name
@@ -152,18 +170,25 @@ export default !isProd ? mock : {
 
     const selector = coll._toObjectIdsSelector({ [fk]: id  }) 
 
-    const project = this._toProject(proj)
-    const projectJoin = coll._toProject(projJoin)
+    project = this._toProject(project)
+    projectJoin = coll._toProject(projectJoin)
 
     let [parent, children] = await Promise.all([
       this._findOne(id, project),
-      coll.findOne(selector, projectJoin, sort, limit, skip),
+      coll.findOne(selector, { project: projectJoin, sort }),
     ])
 
     return { [parentName]: parent, [name]: children }
   },
 
-  async joinMany(id, name, proj, projJoin, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+
+  async joinMany(id, name, {
+    project,
+    projectJoin,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0
+  } = {}) {
     const coll = this.db(name)
 
     const parentName = this._name
@@ -171,18 +196,30 @@ export default !isProd ? mock : {
 
     const selector = coll._toObjectIdsSelector({ [fk]: id  }) 
 
-    const project = this._toProject(proj)
-    const projectJoin = coll._toProject(projJoin)
+    project = this._toProject(project)
+    projectJoin = coll._toProject(projectJoin)
 
     let [parent, children] = await Promise.all([
       this._findOne(id, project),
-      coll.find(selector, projectJoin, sort, limit, skip),
+      coll.find(selector, { project: projectJoin, sort, limit, skip }),
     ])
 
     return { [parentName]: parent, [coll._namePlural]: children }
   },
 
-  async join(name, selector, fk, selectorJoin, proj, projJoin, sort, limit = this.config.listLimit, skip = 0, sortJoin, limitJoin = this.config.listLimit, innerJoin) {
+  async join(name, {
+    foreignKey: fk,
+    selector,
+    selectorJoin,
+    project,
+    projectJoin,
+    sort,
+    sortJoin,
+    limit = this.config.listLimit,
+    limitJoin = this.config.listLimit,
+    skip = 0,
+    innerJoin
+  }) {
     sort ??= { updatedAt: -1, id: -1 }
     sortJoin ??= { updatedAt: -1, id: -1 }
 
@@ -191,11 +228,11 @@ export default !isProd ? mock : {
     const localField = this._getIdName()
     const coll = this.db(name)
 
-    proj = this._toProject(proj)
+    project = this._toProject(project)
     selector = this._toObjectIdsSelector(selector)
     sort = this._toObjectIdsSelector(sort)
 
-    projJoin = coll._toProject(projJoin)
+    projectJoin = coll._toProject(projectJoin)
     selectorJoin = coll._toObjectIdsSelector(selectorJoin)
     sortJoin = coll._toObjectIdsSelector(sortJoin)
 
@@ -204,7 +241,18 @@ export default !isProd ? mock : {
       { $sort: sort },
       { $skip: skip * limit },
       { $limit: limit },
-      ...createJoin(this._namePlural, name, fk, localField, proj, projJoin, selectorJoin, sortJoin, limitJoin, innerJoin)
+      ...createJoin({
+        collection: this._namePlural,
+        from: name,
+        foreignField: fk,
+        localField,
+        project,
+        projectJoin,
+        selector: selectorJoin,
+        sort: sortJoin,
+        limit: limitJoin,
+        inner: innerJoin
+      })
     ]
 
     const results = await this.mongo().aggregate(stages).next() // result of createJoin is first element in array
@@ -218,17 +266,15 @@ export default !isProd ? mock : {
     }
   },
 
-  async aggregate(options = {}) {
-    const {
-      selector,
-      stages: specs = [],
-      proj,
-      sort = { updatedAt: -1, _id: 1 },
-      limit = this.config.listLimit,
-      skip = 0,
-    } = options
-
-    const stages = createAggregateStages(this, specs, selector, proj, sort, limit, skip)
+  async aggregate({
+    selector,
+    stages: specs = [],
+    project,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0,
+  } = {}) {
+    const stages = createAggregateStages(specs, { collection: this, selector, project, sort, limit, skip })
 
     const countPromise = this.mongo().aggregate(createStagesCount(stages)).toArray()
     const docsPromise = this.mongo().aggregate(stages).toArray()
@@ -297,17 +343,22 @@ export default !isProd ? mock : {
 
   // stable duplicates (allows overriding non-underscored versions in userland without breaking other methods that use them)
 
-  async _findOne(selector, proj, sort = { updatedAt: -1 }) {
+  async _findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
     if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
 
     selector = this._toObjectIdsSelector(selector)
 
-    const model = await this.mongo().findOne(selector, { projection: this._toProject(proj), sort })
+    const model = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
 
     return model && this._create(model)
   },
 
-  async _find(selector, proj, sort = { updatedAt: -1, _id: 1 }, limit = this.config.listLimit, skip = 0) {
+  async _find(selector, {
+    project,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit,
+    skip = 0,
+  } = {}) {
     selector = this._toObjectIdsSelector(selector)
 
     const models = await this.mongo()
@@ -315,25 +366,25 @@ export default !isProd ? mock : {
       .sort(sort)
       .skip(skip * limit)
       .limit(limit)
-      .project(this._toProject(proj))
+      .project(this._toProject(project))
       .toArray()
 
     return models.map(m => this._create(m))
   },
 
-  async _insertOne({ id, ...doc }, proj) {
+  async _insertOne(doc, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = this._toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(pick(doc, proj))
+    return this._create(pick(doc, project))
   },
 
-  async _updateOne(selector, newDoc, proj) {
+  async _updateOne(selector, newDoc, { project } = {}) {
     if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
 
-    const { id, createdAt: _, updatedAt: __, lastRoundAt: ___, finishedAt: ____, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
+    const { id, createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
 
     selector = this._toObjectIdsSelector(id ? { id } : selector)
 
@@ -341,7 +392,7 @@ export default !isProd ? mock : {
     const result = await this.mongo().findOneAndUpdate(selector, {
       $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
-    }, { projection: this._toProject(proj), returnDocument: 'after' })
+    }, { projection: this._toProject(project), returnDocument: 'after' })
 
 
     if (!result.value) return

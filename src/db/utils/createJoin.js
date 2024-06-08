@@ -1,4 +1,15 @@
-export default (collection, from, foreignField, localField = '_id', $project, $projectJoin, $match, $sort = { updatedAt: -1, _id: -1 }, $limit = 20, inner = false) => {
+export default ({
+  collection,
+  from,
+  foreignField,
+  localField = '_id',
+  project: $project,
+  projectJoin: $projectJoin,
+  selector: $match,
+  sort: $sort = { updatedAt: -1, _id: -1 },
+  limit: $limit = 20,
+  inner = false
+}) => {
   return [
     {
       $lookup: {
@@ -57,7 +68,15 @@ static async joinUsersAndRounds() {
 */
 
 
-export const createLookup = (from, foreignField, localField = '_id', $project, $match, $sort = { updatedAt: -1, _id: -1 }, $limit = 20) => {
+export const createLookup = ({
+  from,
+  foreignField,
+  localField = '_id',
+  project: $project,
+  selector: $match,
+  sort: $sort = { updatedAt: -1, _id: -1 },
+  limit: $limit = 20
+}) => {
 
   return {
     $lookup: {
@@ -77,7 +96,6 @@ export const createLookup = (from, foreignField, localField = '_id', $project, $
 
 
 export const unwindLookups = (collection, joins) => {
-
   return [
     ...($project ? [{ $project }] : []),
     ...joins.map(from => ({

@@ -2,69 +2,69 @@ import excludeProjectFields from './utils/excludeProjectFields.js'
 
 
 export default {
-  async findOneSafe(selector, proj, sort) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.findOne(selector, proj, sort)
+  async findOneSafe(selector, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.findOne(selector, { ...opts, project })
   },
 
-  async findSafe(selector, proj, ...args) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.find(selector, proj, ...args)
+  async findSafe(selector, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.find(selector, { ...opts, project })
   },
 
-  async findAllSafe(selector, proj, ...args) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.findAll(selector, proj, ...args)
+  async findAllSafe(selector, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.findAll(selector, { ...opts, project })
   },
 
-  async findLikeSafe(key, term, selector, proj, ...args) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.findLike(key, term, selector, proj, ...args)
+  async findLikeSafe(key, term, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.findLike(key, term, { ...opts, project })
   },
 
-  async searchSafe(query, proj, ...args) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.search(query, proj, ...args)
+  async searchSafe(query, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.search(query, { ...opts, project })
   },
 
-  async searchGeoSafe(location, selector, proj, ...args) {
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.searchGeo(location, selector, proj, ...args)
+  async searchGeoSafe(location, opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.searchGeo(location, { ...opts, project })
   },
 
-  async joinOneSafe(id, name, proj, projJoin, ...args) {
+  async joinOneSafe(id, name, opts) {
     const collection = this.db(name)
 
-    proj = excludeProjectFields(proj, this.privateFields)
-    projJoin = excludeProjectFields(projJoin, collection.privateFields)
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)
 
-    return this.joinOne(id, name, proj, projJoin, ...args)
+    return this.joinOne(id, name, { ...opts, project, projectJoin })
   },
 
-  async joinManySafe(id, name, proj, projJoin, ...args) {
-    const collection = this.db(name)
-    
-    proj = excludeProjectFields(proj, this.privateFields)
-    projJoin = excludeProjectFields(projJoin, collection.privateFields)
-
-    return this.joinMany(id, name, proj, projJoin, ...args)
-  },
-
-  async joinSafe(selector, name, fk, selectorJoin, proj, projJoin, ...args) {
+  async joinManySafe(id, name, opts) {
     const collection = this.db(name)
     
-    proj = excludeProjectFields(proj, this.privateFields)
-    projJoin = excludeProjectFields(projJoin, collection.privateFields)
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)
 
-    return this.join(selector, name, fk, selectorJoin, proj, projJoin, ...args)
+    return this.joinMany(id, name, { ...opts, project, projectJoin })
   },
 
-  async aggregateSafe(options) {
-    const proj = excludeProjectFields(options.proj, this.privateFields)
-    return this.aggregate({ ...options, proj })
+  async joinSafe(name, opts) {
+    const collection = this.db(name)
+    
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)
+
+    return this.join(name, fk, { ...opts, project, projectJoin })
   },
 
-  async updateOneSafe(selector, newDoc, proj) {
+  async aggregateSafe(opts) {
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.aggregate({ ...opts, project })
+  },
+
+  async updateOneSafe(selector, newDoc, opts) {
     if (selector?.roles) {
       delete selector.roles
     }
@@ -73,20 +73,20 @@ export default {
       delete newDoc.roles
     }
 
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.updateOne(selector, newDoc, proj)
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.updateOne(selector, newDoc, { ...opts, project })
   },
 
-  async insertOneSafe(doc, proj) {
+  async insertOneSafe(doc, opts) {
     if (doc?.roles) {
       delete doc.roles
     }
 
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.insertOne(doc, proj)
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.insertOne(doc, { ...opts, project })
   },
 
-  async upsertSafe(selector, doc, insertOnlyDoc, proj) {
+  async upsertSafe(selector, doc, opts) {
     if (selector?.roles) {
       delete selector.roles
     }
@@ -95,12 +95,12 @@ export default {
       delete doc.roles
     }
 
-    if (insertOnlyDoc?.roles) {
-      delete insertOnlyDoc.roles
+    if (opts?.insertDoc?.roles) {
+      delete opts.insertDoc.roles
     }
 
-    proj = excludeProjectFields(proj, this.privateFields)
-    return this.upsert(selector, doc, insertOnlyDoc, proj)
+    const project = excludeProjectFields(opts?.project, this.privateFields)
+    return this.upsert(selector, doc, { ...opts, project })
   },
 
   createSafe({ ...doc }) {
