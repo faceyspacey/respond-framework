@@ -38,7 +38,7 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async insertOne(doc, { project } = {}) {
+  async insertOne({ id, ...doc }, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
@@ -374,7 +374,7 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async _insertOne(doc, { project } = {}) {
+  async _insertOne({ id, ...doc }, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
