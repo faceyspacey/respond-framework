@@ -133,7 +133,7 @@ export default !isProd ? mock : {
     project,
     limit = this.config.listLimit,
     skip = 0
-  }) {
+  } = {}) {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
@@ -162,7 +162,7 @@ export default !isProd ? mock : {
     project,
     projectJoin,
     sort = { updatedAt: -1, _id: 1 },
-  }) {
+  } = {}) {
     const coll = this.db(name)
 
     const parentName = this._name
@@ -219,7 +219,7 @@ export default !isProd ? mock : {
     limitJoin = this.config.listLimit,
     skip = 0,
     innerJoin
-  }) {
+  } = {}) {
     sort ??= { updatedAt: -1, id: -1 }
     sortJoin ??= { updatedAt: -1, id: -1 }
 
@@ -331,7 +331,7 @@ export default !isProd ? mock : {
     if (this._mongoCollection) return this._mongoCollection
 
     const connectionString = typeof this.config.connectionString === 'function' ? this.config.connectionString() : this.config.connectionString
-    
+
     const client = new MongoClient(connectionString)
     const db = client.db('skins')
 

@@ -158,7 +158,7 @@ export default {
     limitJoin = this.config.listLimit,
     skip = 0,
     innerJoin
-  }) {
+  } = {}) {
     sort ??= { updatedAt: -1, id: -1 }
     sortJoin ??= { updatedAt: -1, id: -1 }
 
