@@ -27,8 +27,8 @@ const objectsToTrack = new WeakMap()
 
 // check if obj is a plain object or an array
 const isObjectToTrack = (obj) => (obj && (objectsToTrack.has(obj)
-    ? objectsToTrack.get(obj)
-    : (getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)))
+  ? objectsToTrack.get(obj)
+  : (getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)))
 
 // check if it is object
 const isObject = (x) => (typeof x === 'object' && x !== null)
@@ -42,42 +42,42 @@ const needsToCopyTargetObject = (obj) => (Object.values(Object.getOwnPropertyDes
 
 // Make a copy with all descriptors marked as configurable.
 const copyTargetObject = (obj) => {
-    if (Array.isArray(obj)) {
-        // Arrays need a special way to copy
-        return Array.from(obj)
-    }
-    // For non-array objects, we create a new object keeping the prototype
-    // with changing all configurable options (otherwise, proxies will complain)
-    const descriptors = Object.getOwnPropertyDescriptors(obj)
-    Object.values(descriptors).forEach((desc) => { desc.configurable = true })
-    return Object.create(getProto(obj), descriptors)
+  if (Array.isArray(obj)) {
+    // Arrays need a special way to copy
+    return Array.from(obj)
+  }
+  // For non-array objects, we create a new object keeping the prototype
+  // with changing all configurable options (otherwise, proxies will complain)
+  const descriptors = Object.getOwnPropertyDescriptors(obj)
+  Object.values(descriptors).forEach((desc) => { desc.configurable = true })
+  return Object.create(getProto(obj), descriptors)
 }
 
 
 const getOriginalObject = (obj) => (
-    // unwrap proxy
-    obj[GET_ORIGINAL_SYMBOL]
-        // otherwise
-        || obj
+  // unwrap proxy
+  obj[GET_ORIGINAL_SYMBOL]
+  // otherwise
+  || obj
 )
 
 
 const isAllOwnKeysChanged = (prevObj, nextObj) => {
-    const prevKeys = Reflect.ownKeys(prevObj)
-    const nextKeys = Reflect.ownKeys(nextObj)
+  const prevKeys = Reflect.ownKeys(prevObj)
+  const nextKeys = Reflect.ownKeys(nextObj)
 
-    return prevKeys.length !== nextKeys.length
-        || prevKeys.some((k, i) => k !== nextKeys[i])
+  return prevKeys.length !== nextKeys.length
+    || prevKeys.some((k, i) => k !== nextKeys[i])
 }
 
 
 
 // explicitly track object with memo
 export const trackMemo = (obj) => {
-    if (isObjectToTrack(obj)) {
-        return TRACK_MEMO_SYMBOL in obj
-    }
-    return false
+  if (isObjectToTrack(obj)) {
+    return TRACK_MEMO_SYMBOL in obj
+  }
+  return false
 }
 
 
@@ -105,10 +105,10 @@ export const trackMemo = (obj) => {
  * isChanged(original, originalFromProxy, affected) // false
  */
 export const getUntracked = (obj) => {
-    if (isObjectToTrack(obj)) {
-        return obj[GET_ORIGINAL_SYMBOL] || null
-    }
-    return null
+  if (isObjectToTrack(obj)) {
+    return obj[GET_ORIGINAL_SYMBOL] || null
+  }
+  return null
 }
 
 /**
@@ -140,7 +140,7 @@ export const getUntracked = (obj) => {
  * isChanged(original, { d: { e: "3" } }, affected) // true
  */
 export const markToTrack = (obj, mark = true) => {
-    objectsToTrack.set(obj, mark)
+  objectsToTrack.set(obj, mark)
 }
 
 
@@ -155,7 +155,7 @@ export const markToTrack = (obj, mark = true) => {
  * Use it at your own risk.
  */
 export const replaceNewProxy = (fn) => {
-    newProxy = fn
+  newProxy = fn
 }
 
 
@@ -164,106 +164,106 @@ export const replaceNewProxy = (fn) => {
 
 const createProxyHandler = (origObj, isTargetCopied, selectors, modulePaths, modulePath, parentReceiver) => {
   const state = {
-      [IS_TARGET_COPIED_PROPERTY]: isTargetCopied,
+    [IS_TARGET_COPIED_PROPERTY]: isTargetCopied,
   }
 
   let trackObject = false // for trackMemo
 
   const recordUsage = (type, key) => {
-      if (!trackObject) {
-          let used = state[AFFECTED_PROPERTY].get(origObj)
+    if (!trackObject) {
+      let used = state[AFFECTED_PROPERTY].get(origObj)
 
-          if (!used) {
-              used = {}
-              state[AFFECTED_PROPERTY].set(origObj, used)
-          }
-
-          if (type === ALL_OWN_KEYS_PROPERTY) {
-              used[ALL_OWN_KEYS_PROPERTY] = true
-          }
-          else {
-              let set = used[type]
-
-              if (!set) {
-                  set = new Set()
-                  used[type] = set
-              }
-
-              set.add(key)
-          }
+      if (!used) {
+        used = {}
+        state[AFFECTED_PROPERTY].set(origObj, used)
       }
+
+      if (type === ALL_OWN_KEYS_PROPERTY) {
+        used[ALL_OWN_KEYS_PROPERTY] = true
+      }
+      else {
+        let set = used[type]
+
+        if (!set) {
+          set = new Set()
+          used[type] = set
+        }
+
+        set.add(key)
+      }
+    }
   }
 
   const recordObjectAsUsed = () => {
-      trackObject = true
-      state[AFFECTED_PROPERTY].delete(origObj)
+    trackObject = true
+    state[AFFECTED_PROPERTY].delete(origObj)
   }
 
   const isValidModule = !!modulePaths[modulePath]
   const selectorsModule = isValidModule && sliceByModulePath(selectors, modulePath)
 
   const handler = {
-      get(target, key, receiver) {
-          if (key === GET_ORIGINAL_SYMBOL) {
-              return origObj
-          }
-          
-          if (selectorsModule) {
-            if (key === 'models') {
-                return selectorsModule.models
-            }
+    get(target, key, receiver) {
+      if (key === GET_ORIGINAL_SYMBOL) {
+        return origObj
+      }
 
-            const selectorProp = selectorsModule.__props?.[key]
+      if (selectorsModule) {
+        if (key === 'models') {
+          return selectorsModule.models
+        }
 
-            if (typeof selectorProp === 'function') {
-              const hasOnlyStateArg = selectorProp.length <= 1            // selectors that don't receive arguments can be used as getter, eg: state.selector
-        
-              return hasOnlyStateArg
-                ? selectorProp(parentReceiver)                            // pass the prox itself so selectors can access other selectors
-                : (...args) => selectorProp(parentReceiver, ...args)      // selectors that receive additional arguments are called as a function and CANNOT have default parameters, or the above selector.length check will fail, and no other solution is much better  
-            }
+        const selectorProp = selectorsModule.__props?.[key]
 
-            
-            const selector = selectorsModule[key]
+        if (typeof selectorProp === 'function') {
+          const hasOnlyStateArg = selectorProp.length <= 1            // selectors that don't receive arguments can be used as getter, eg: state.selector
 
-            if (typeof selector === 'function') {
-              const hasOnlyStateArg = selector.length <= 1    // selectors that don't receive arguments can be used as getter, eg: state.selector
-        
-              return hasOnlyStateArg
-                ? selector(receiver)                          // pass the prox itself so selectors can access other selectors
-                : (...args) => selector(receiver, ...args)    // selectors that receive additional arguments are called as a function and CANNOT have default parameters, or the above selector.length check will fail, and no other solution is much better  
-            }
-          }
+          return hasOnlyStateArg
+            ? selectorProp(parentReceiver)                            // pass the prox itself so selectors can access other selectors
+            : (...args) => selectorProp(parentReceiver, ...args)      // selectors that receive additional arguments are called as a function and CANNOT have default parameters, or the above selector.length check will fail, and no other solution is much better  
+        }
 
-          recordUsage(KEYS_PROPERTY, key)
-          
-          const path = typeof key === 'string'
-            ? modulePath ? `${modulePath}.${key}` : key
-            : modulePath
-            
-          return createProxy(Reflect.get(target, key), state[AFFECTED_PROPERTY], state[PROXY_CACHE_PROPERTY], state[TARGET_CACHE_PROPERTY], selectors, modulePaths, path, receiver)
-      },
-      has(target, key) {
-          if (key === TRACK_MEMO_SYMBOL) {
-              recordObjectAsUsed()
-              return true
-          }
 
-          recordUsage(HAS_KEY_PROPERTY, key)
-          return Reflect.has(target, key)
-      },
-      getOwnPropertyDescriptor(target, key) {
-          recordUsage(HAS_OWN_KEY_PROPERTY, key)
-          return Reflect.getOwnPropertyDescriptor(target, key)
-      },
-      ownKeys(target) {
-          recordUsage(ALL_OWN_KEYS_PROPERTY)
-          return Reflect.ownKeys(target)
-      },
+        const selector = selectorsModule[key]
+
+        if (typeof selector === 'function') {
+          const hasOnlyStateArg = selector.length <= 1    // selectors that don't receive arguments can be used as getter, eg: state.selector
+
+          return hasOnlyStateArg
+            ? selector(receiver)                          // pass the prox itself so selectors can access other selectors
+            : (...args) => selector(receiver, ...args)    // selectors that receive additional arguments are called as a function and CANNOT have default parameters, or the above selector.length check will fail, and no other solution is much better  
+        }
+      }
+
+      recordUsage(KEYS_PROPERTY, key)
+
+      const path = typeof key === 'string'
+        ? modulePath ? `${modulePath}.${key}` : key
+        : modulePath
+
+      return createProxy(Reflect.get(target, key), state[AFFECTED_PROPERTY], state[PROXY_CACHE_PROPERTY], state[TARGET_CACHE_PROPERTY], selectors, modulePaths, path, receiver)
+    },
+    has(target, key) {
+      if (key === TRACK_MEMO_SYMBOL) {
+        recordObjectAsUsed()
+        return true
+      }
+
+      recordUsage(HAS_KEY_PROPERTY, key)
+      return Reflect.has(target, key)
+    },
+    getOwnPropertyDescriptor(target, key) {
+      recordUsage(HAS_OWN_KEY_PROPERTY, key)
+      return Reflect.getOwnPropertyDescriptor(target, key)
+    },
+    ownKeys(target) {
+      recordUsage(ALL_OWN_KEYS_PROPERTY)
+      return Reflect.ownKeys(target)
+    },
   }
 
   if (isTargetCopied) {
-      handler.set = handler.deleteProperty = () => false
+    handler.set = handler.deleteProperty = () => false
   }
 
   return [handler, state]
@@ -306,32 +306,32 @@ const createProxyHandler = (origObj, isTargetCopied, selectors, modulePaths, mod
  */
 export const createProxy = (obj, affected, proxyCache, targetCache, selectors, modulePaths, modulePath = '', parentReceiver) => {
   if (!isObjectToTrack(obj)) return obj
-  
+
   let targetAndCopied = (targetCache && targetCache.get(obj))
 
   if (!targetAndCopied) {
-      const target = getOriginalObject(obj)
+    const target = getOriginalObject(obj)
 
-      if (needsToCopyTargetObject(target)) {
-          targetAndCopied = [target, copyTargetObject(target)]
-      }
-      else {
-          targetAndCopied = [target]
-      }
+    if (needsToCopyTargetObject(target)) {
+      targetAndCopied = [target, copyTargetObject(target)]
+    }
+    else {
+      targetAndCopied = [target]
+    }
 
-      targetCache.set(obj, targetAndCopied)
+    targetCache.set(obj, targetAndCopied)
   }
 
   const [target, copiedTarget] = targetAndCopied
   let handlerAndState = proxyCache?.get(target)
 
   if (!handlerAndState || handlerAndState[1][IS_TARGET_COPIED_PROPERTY] !== !!copiedTarget) {
-      handlerAndState = createProxyHandler(target, !!copiedTarget, selectors, modulePaths, modulePath, parentReceiver)
-      handlerAndState[1][PROXY_PROPERTY] = newProxy(copiedTarget || target, handlerAndState[0])
+    handlerAndState = createProxyHandler(target, !!copiedTarget, selectors, modulePaths, modulePath, parentReceiver)
+    handlerAndState[1][PROXY_PROPERTY] = newProxy(copiedTarget || target, handlerAndState[0])
 
-      if (proxyCache) {
-          proxyCache.set(target, handlerAndState)
-      }
+    if (proxyCache) {
+      proxyCache.set(target, handlerAndState)
+    }
   }
 
   handlerAndState[1][AFFECTED_PROPERTY] = affected
@@ -388,56 +388,56 @@ export const isChanged = (prevObj, nextObj, affected, cache) => {
   if (!used) return true
 
   if (cache) {
-      const hit = cache.get(prevObj)
+    const hit = cache.get(prevObj)
 
-      if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
-          return hit[CHANGED_PROPERTY]
-      }
+    if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
+      return hit[CHANGED_PROPERTY]
+    }
 
-      // for object with cycles
-      cache.set(prevObj, {
-          [NEXT_OBJECT_PROPERTY]: nextObj,
-          [CHANGED_PROPERTY]: false,
-      })
+    // for object with cycles
+    cache.set(prevObj, {
+      [NEXT_OBJECT_PROPERTY]: nextObj,
+      [CHANGED_PROPERTY]: false,
+    })
   }
 
   let changed = null
 
   try {
-      for (const key of used[HAS_KEY_PROPERTY] || []) {
-          changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key)
-          if (changed) return changed
-      }
+    for (const key of used[HAS_KEY_PROPERTY] || []) {
+      changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key)
+      if (changed) return changed
+    }
 
-      if (used[ALL_OWN_KEYS_PROPERTY] === true) {
-          changed = isAllOwnKeysChanged(prevObj, nextObj)
-          if (changed) return changed
-      }
-      else {
-          for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
-              const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevObj, key)
-              const hasNext = !!Reflect.getOwnPropertyDescriptor(nextObj, key)
+    if (used[ALL_OWN_KEYS_PROPERTY] === true) {
+      changed = isAllOwnKeysChanged(prevObj, nextObj)
+      if (changed) return changed
+    }
+    else {
+      for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
+        const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevObj, key)
+        const hasNext = !!Reflect.getOwnPropertyDescriptor(nextObj, key)
 
-              changed = hasPrev !== hasNext
-              if (changed) return changed
-          }
+        changed = hasPrev !== hasNext
+        if (changed) return changed
       }
+    }
 
-      for (const key of used[KEYS_PROPERTY] || []) {
-          changed = isChanged(prevObj[key], nextObj[key], affected, cache)
-          if (changed) return changed
-      }
+    for (const key of used[KEYS_PROPERTY] || []) {
+      changed = isChanged(prevObj[key], nextObj[key], affected, cache)
+      if (changed) return changed
+    }
 
-      if (changed === null) changed = true
-      return changed
+    if (changed === null) changed = true
+    return changed
   }
   finally {
-      if (cache) {
-          cache.set(prevObj, {
-              [NEXT_OBJECT_PROPERTY]: nextObj,
-              [CHANGED_PROPERTY]: changed,
-          })
-      }
+    if (cache) {
+      cache.set(prevObj, {
+        [NEXT_OBJECT_PROPERTY]: nextObj,
+        [CHANGED_PROPERTY]: changed,
+      })
+    }
   }
 }
 
@@ -466,7 +466,7 @@ export const isChanged = (prevObj, nextObj, affected, cache) => {
 export const affectedToPathList = (obj, affected, onlyWithValues) => {
   const list = []
   const seen = new WeakSet()
-  
+
   const walk = (x, path) => {
     if (seen.has(x)) {
       // for object with cycles

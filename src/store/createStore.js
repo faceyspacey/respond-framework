@@ -2,7 +2,6 @@ import createReplayTools from '../replays/index.js'
 import createDevTools from '../devtools/index.js'
 import createDevtoolsMock from '../devtools/index.mock.js'
 import createClientDatabase from '../db/createClientDatabase.js'
-import createLazyModulesGetterProxy from '../valtio/createLazyModulesGetterProxy.js'
 import createDispatch from './createDispatch.js'
 import createDispatchSync from './createDispatchSync.js'
 import createEvents from './createEvents.js'
@@ -10,11 +9,15 @@ import createFromEvent from '../utils/createFromEvent.js'
 import createEventFrom from '../utils/createEventFrom.js'
 import createCache from '../utils/createCache.js'
 import createCookies from '../cookies/index.js'
+import createHistoryDefault from '../history/index.js'
+// import createLazyModulesGetterProxy from '../valtio/createLazyModulesGetterProxy.js'
+// import { proxy as createProxy, snapshot } from '../valtio/vanilla.js'
+import createSelectorsProxy from '../proxy/createSelectorsProxy.js'
+import snapshot from '../proxy/snapshot.js'
+import createProxy from '../proxy/createProxy.js'
 import shouldUseDevtools from '../utils/shouldUseDevtools.js'
 import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
-import { proxy, snapshot } from '../valtio/vanilla.js'
-import createHistoryDefault from '../history/index.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import { sliceEventByModulePath, sliceModuleByModulePath, sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
 import { createModulePathsById, createModulePaths, createReducers, createSelectors } from '../utils/transformModules.js'
@@ -124,7 +127,7 @@ export default async (topModuleOriginal, settings) => {
     }
   }
 
-  const getSnapshot = withSelectors => withSelectors ? createLazyModulesGetterProxy(snapshot(state), modulePaths, selectors) : snapshot(state)
+  const getSnapshot = withSelectors => withSelectors ? createSelectorsProxy(snapshot(state), store) : snapshot(state)
 
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createReviver(store.events))
@@ -155,7 +158,7 @@ export default async (topModuleOriginal, settings) => {
     ? snapshot(prevStore.state)
     : getSessionState(events) || await createInitialState(top, store)
 
-  const state  = proxy(initialState, modulePaths, selectors)
+  const state  = createProxy(initialState, { modulePaths, selectors })
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
