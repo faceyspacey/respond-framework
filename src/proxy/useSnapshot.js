@@ -1,8 +1,8 @@
 import { useSyncExternalStore, useRef, useCallback, useEffect, useMemo } from 'react'
 import createSnapProxy from './createSnapProxy.js'
-import createSnapshot from './utils/snapshot.js'
+import createSnapshot from './snapshot.js'
 import isChanged from './utils/isChanged.js'
-import sub from './utils/subscribe.js'
+import sub from './subscribe.js'
 
 
 export default (proxy, sync, store) => {
