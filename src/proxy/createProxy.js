@@ -1,12 +1,21 @@
 import { proxyStates } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 
-const cache = new WeakMap
 let highestVersion = 0
 
 
-export default (target, store, path = '', parent) => {
-  const found = cache.get(target)
+export default (target, store) => {
+  const proxy = new WeakMap
+  const snap = new WeakMap
+
+  const cache = { proxy, snap }
+
+  return createProxy(target, store, cache)
+}
+
+
+export function createProxy(target, store, cache, path = '', parent) {
+  const found = cache.proxy.get(target)
   if (found) return found
 
   const listeners = new Set()
@@ -23,16 +32,18 @@ export default (target, store, path = '', parent) => {
     listeners.forEach(listener => listener(version))
   }
 
-  const init = () => listeners.size === 0
-  const getVersion = () => version
-
-  const handler = createHandler(cache, notify, init, parent, store, path)
+  const handler = createHandler(notify, listeners, store, cache, path, parent)
   const proxy = new Proxy(target, handler)
 
-  cache.set(target, proxy)
-  proxyStates.set(proxy, { target, notify, addListener, createSnapshot, getVersion })
+  cache.proxy.set(target, proxy)
+  proxyStates.set(proxy, { target, notify, addListener, cache, getVersion: () => version })
 
-  Reflect.ownKeys(target).forEach(k => proxy[k] = target[k])
+  const descriptors = Object.getOwnPropertyDescriptors(target)
+
+  Reflect.ownKeys(target).forEach(k => {
+    if (!descriptors[k].writable) return
+    proxy[k] = target[k]
+  })
 
   const notifyParent = proxyStates.get(parent)?.notify ?? function() {}
   addListener(notifyParent)

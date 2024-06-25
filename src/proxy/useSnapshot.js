@@ -26,9 +26,9 @@ export default (proxy, sync, store) => {
   const affected = new WeakMap
   const cache = useMemo(() => new WeakMap, []) // per-hook proxy cache
 
-  const state = { affected, cache }
+  useEffect(() => {
+    last.current = { snapshot, affected }
+  })
 
-  useEffect(() => last.current = { snapshot, affected })
-
-  return createSnapProxy(snapshot, state, store)
+  return createSnapProxy(snapshot, store, { affected, cache })
 }

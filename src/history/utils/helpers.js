@@ -1,4 +1,4 @@
-import { isNative } from 'respond-framework/utils'
+import { isNative } from '../../utils.js'
 
 export const getIndex = () => history.state?.index
 

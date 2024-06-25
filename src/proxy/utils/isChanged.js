@@ -35,7 +35,7 @@ export default function isChanged(prev, next, affected, cache = new WeakMap) {
       }
     }
 
-    for (const k of used.keys || []) {
+    for (const k of used.get || []) {
       changed = isChanged(prev[k], next[k], affected, cache)
       if (changed) return changed
     }

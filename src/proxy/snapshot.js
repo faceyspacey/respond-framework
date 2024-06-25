@@ -1,6 +1,7 @@
+import createSnapshot from './utils/createSnapshot.js'
 import { proxyStates } from './utils/helpers.js'
 
 export default proxy => {
-  const { createSnapshot, target, getVersion } = proxyStates.get(proxy)
-  return createSnapshot(target, getVersion())
+  const { target, getVersion, cache } = proxyStates.get(proxy)
+  return createSnapshot(target, getVersion(), cache.snap)
 }

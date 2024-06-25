@@ -1,7 +1,7 @@
 import { proxyStates } from './helpers.js'
 
 
-export default function createSnapshot(target, version) {
+export default function createSnapshot(target, version, cache) {
   const { version: v, snap: s } = cache.get(target) ?? {}
   if (v === version) return s
 
@@ -14,7 +14,7 @@ export default function createSnapshot(target, version) {
     const { target: child, getVersion } = proxyStates.get(value) ?? {}
 
     Object.defineProperty(snap, k, {
-      value: child ? createSnapshot(child, getVersion()) : undefined,
+      value: child ? createSnapshot(child, getVersion(), cache) : value,
       enumerable: true,
       configurable: true,
       writable: true // need to find why we needed this, and remove it

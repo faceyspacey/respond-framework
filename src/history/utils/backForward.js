@@ -1,4 +1,4 @@
-import { isNative, isTest, isDev } from 'respond-framework/utils'
+import { isNative, isTest, isDev } from '../../utils.js'
 import sessionStorage from 'respond-framework/utils/sessionStorage.js'
 import bs from '../browserState.js'
 import { createTrap, removeTrap } from '../createTrap.js'

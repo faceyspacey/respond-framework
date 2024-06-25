@@ -1,11 +1,13 @@
+import { createProxy } from '../createProxy.js'
 import { proxyStates, canProxy } from './helpers.js'
 import trySelector, { NO_SELECTOR } from './trySelector.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
 
 
-export default (cache, notify, init, parent, store, path) => {
+export default (notify, listeners, store, cache, path, parent) => {
   const isModule = !!store.modulePaths[path]
   const selectors = isModule && sliceByModulePath(store.selectors, path)
+  const pc = cache.proxy
 
   return {
     deleteProperty(target, k) {
@@ -16,15 +18,17 @@ export default (cache, notify, init, parent, store, path) => {
 
 
     set(target, k, v, receiver) {
-      const has = !init() && Reflect.has(target, k)
+      const isInit = listeners.size === 0
+
+      const has = !isInit && Reflect.has(target, k)
       const prev = Reflect.get(target, k, receiver)
 
-      const equal = has && (Object.is(prev, v) || cache.has(v) && Object.is(prev, cache.get(v)))
+      const equal = has && (Object.is(prev, v) || pc.has(v) && Object.is(prev, pc.get(v)))
       if (equal) return true
 
       if (!proxyStates.has(v) && canProxy(v)) {
         const p = path ? `${path}.${k}` : k
-        v = createProxy(v, store, p, receiver)
+        v = createProxy(v, store, cache, p, receiver)
       }
 
       Reflect.set(target, k, v, receiver)

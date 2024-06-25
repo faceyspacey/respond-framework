@@ -42,25 +42,38 @@ NEW UI WORK:
 
 
 
+#PUT ENTIRE STORE IN VALTIO
+#- lazy valtio
+#- put all store options into valtio state
+#-wrapModelProxy automatically to docs in state
+
+#make sure restorSession isn't called for regular sessions
+#put skip, limit, sort, and proj in options object
+
+#final solution to simplify Code widget
+
+#make tests stop snapping irrelevant areas (eg Home, Drawer)
 
 
-PUT ENTIRE STORE IN VALTIO
-- lazy valtio
-- put all store options into valtio state
 
 
-make sure restorSession isn't called for regular sessions
-put skip, limit, sort, and proj in options object
-
-final solution to simplify Code widget
-make tests stop snapping irrelevant areas (eg Home, Drawer)
-
-
-
-wrapModelProxy automatically to docs in state
 
 isNamespace
 use constants like kind.navigation, namespace.website
 dont hide _namespace, _type in state (only in actions)
 
-document.addEventListener('visibilitychange', () => console.log('vis', document.visibilityState), false)
+
+- replays / hmr -> new WeakMaps
+- make proxy application lazy based on snaps
+- make models more native
+
+/**
+ * make valtio replacement work
+ * make proxy application lazy based on snaps
+ * see if findOne selector can be done via built-in support for getters -- or find other way to pre-apply models
+ * put all of store + events in proxy state
+ * replace 3 args with 2 args
+ * refactor createStore
+ * make respond support modular replacement of all key pillars within createStore
+ * splitting + ssr
+ */

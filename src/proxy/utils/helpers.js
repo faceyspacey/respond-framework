@@ -2,7 +2,7 @@ export const proxyStates = new WeakMap // shared state
 
 export const GET_ORIGINAL_SYMBOL = Symbol()
 
-export const getOriginalObject = obj[GET_ORIGINAL_SYMBOL] || obj
+export const getOriginalObject = obj => obj[GET_ORIGINAL_SYMBOL] || obj
 
 export const isObject = x => typeof x === 'object' && x
 
