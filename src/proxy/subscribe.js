@@ -5,10 +5,12 @@ import { isTest } from '../utils/bools.js'
 export default (proxy, callback, sync) => {
   sync ||= isTest || window.isFastReplay
   
-  const { addListener } = proxyStates.get(proxy)
+  const { listeners } = proxyStates.get(proxy)
   const batched = sync ? callback : batch(callback)
 
-  return addListener(batched)
+  listeners.add(batched)
+  
+  return () => listeners.delete(batched)
 }
 
 

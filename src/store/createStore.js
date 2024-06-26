@@ -156,13 +156,16 @@ export default async (topModuleOriginal, settings) => {
 
   const initialState = isHMR
     ? snapshot(prevStore.state)
-    : getSessionState(events) || await createInitialState(top, store)
+    : isProd || options.enablePopsInDevelopment
+      ? getSessionState(events) || await createInitialState(top, store)
+      : await createInitialState(top, store)
 
   const state  = createProxy(initialState, { modulePaths, selectors })
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
-
+  store.inspect = initialState
+  
   if (!isHMR) {
     reduce(store, events.init(), true, true)
   }

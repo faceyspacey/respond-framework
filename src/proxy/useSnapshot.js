@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useSyncExternalStore, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import createSnapProxy from './createSnapProxy.js'
 import createSnapshot from './snapshot.js'
 import isChanged from './utils/isChanged.js'
@@ -26,7 +26,7 @@ export default (proxy, sync, store) => {
   const affected = new WeakMap
   const cache = useMemo(() => new WeakMap, []) // per-hook proxy cache
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     last.current = { snapshot, affected }
   })
 
