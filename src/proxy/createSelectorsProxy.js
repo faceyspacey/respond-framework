@@ -1,17 +1,14 @@
 import createSelectorsHandler from './utils/createSelectorsHandler.js'
-import { getOriginalObject } from './utils/helpers.js'
 
 
 export default (snapshot, store, parent, path = '') => {
-  const target = getOriginalObject(snapshot)
-
-  const hit = cache.get(target)
+  const hit = cache.get(snapshot)
   if (hit) return hit
 
   const handler = createSelectorsHandler(store, parent, path)
-  const proxy = new Proxy(target, handler)
+  const proxy = new Proxy(snapshot, handler)
   
-  cache.set(target, proxy)
+  cache.set(snapshot, proxy)
 
   return proxy
 }

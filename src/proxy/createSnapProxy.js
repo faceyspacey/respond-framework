@@ -1,18 +1,16 @@
 import createSnapHandler from './utils/createSnapHandler.js'
-import { getOriginalObject } from './utils/helpers.js'
 
 
-export default (snapshot, store, parentState, path = '') => {
+export default (snap, store, parentState, path = '') => {
   const { affected, cache, proxy: parent } = parentState
 
-  const target = getOriginalObject(snapshot)
-  let state = cache.get(target)
+  let state = cache.get(snap)
 
   if (!state) {
     state = {}
     const handler = createSnapHandler(state, store, parent, path)
-    state.proxy = new Proxy(target, handler)
-    cache.set(target, state)
+    state.proxy = new Proxy(snap, handler)
+    cache.set(snap, state)
   }
 
   state.affected = affected

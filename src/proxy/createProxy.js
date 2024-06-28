@@ -4,8 +4,8 @@ import createHandler from './utils/createHandler.js'
 let highestVersion = 0
 
 
-export default (target, store, parent, path = '', cache = { proxy: new WeakMap, snap: new WeakMap }) => {
-  const found = cache.proxy.get(target)
+export default (orig, store, parent, notifyParent, path = '', cache = { proxy: new WeakMap, snap: new WeakMap }) => {
+  const found = cache.proxy.get(orig)
   if (found) return found
 
   const listeners = new Set()
@@ -17,18 +17,13 @@ export default (target, store, parent, path = '', cache = { proxy: new WeakMap, 
     listeners.forEach(listener => listener(version))
   }
 
-  const handler = createHandler(notify, listeners, store, parent, path, cache)
-  const proxy = new Proxy(target, handler)
+  const handler = createHandler(notify, store, parent, path, cache)
+  const proxy = new Proxy(orig, handler)
 
-  cache.proxy.set(target, proxy)
-  proxyStates.set(proxy, { target, notify, listeners, cache, getVersion: () => version })
+  cache.proxy.set(orig, proxy)
+  proxyStates.set(proxy, { orig, notify, listeners, cache, getVersion: () => version })
 
-  const descriptors = Object.getOwnPropertyDescriptors(target)
-
-  Reflect.ownKeys(target).forEach(k => {
-    if (!descriptors[k].writable) return
-    proxy[k] = target[k]
-  })
+  if (notifyParent) listeners.add(notifyParent)
 
   return proxy
 }

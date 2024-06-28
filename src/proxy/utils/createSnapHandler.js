@@ -1,5 +1,5 @@
 import createSnapProxy from '../createSnapProxy.js'
-import { GET_ORIGINAL_SYMBOL, canProxy } from './helpers.js'
+import { canProxy } from './helpers.js'
 import trySelector, { NO_SELECTOR } from './trySelector.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
 
@@ -9,36 +9,28 @@ export default (state, store, parent, path) => {
   const selectors = isModule && sliceByModulePath(store.selectors, path)
 
   return {
-    ownKeys(target) {
-      recordUsage(state.affected, 'ownKeys', target)
-      return Reflect.ownKeys(target)
+    ownKeys(snap) {
+      recordUsage(state.affected, 'ownKeys', snap)
+      return Reflect.ownKeys(snap)
     },
-    has(target, k) {
-      recordUsage(state.affected, 'has', target, k)
-      return Reflect.has(target, k)
+    has(snap, k) {
+      recordUsage(state.affected, 'has', snap, k)
+      return Reflect.has(snap, k)
     },
-    getOwnPropertyDescriptor(target, k) {
-      recordUsage(state.affected, 'getOwnPropertyDescriptor', target, k)
-      return Reflect.getOwnPropertyDescriptor(target, k)
+    getOwnPropertyDescriptor(snap, k) {
+      recordUsage(state.affected, 'getOwnPropertyDescriptor', snap, k)
+      return Reflect.getOwnPropertyDescriptor(snap, k)
     },
-    get(target, k, receiver) {
-      if (k === GET_ORIGINAL_SYMBOL) return target
-      
-      const selected = trySelector(k, receiver, selectors, parent)
+    get(snap, k, proxy) {
+      const selected = trySelector(k, proxy, selectors, parent)
       if (selected !== NO_SELECTOR) return selected
 
-      recordUsage(state.affected, 'get', target, k)
+      recordUsage(state.affected, 'get', snap, k)
       
-      const v = Reflect.get(target, k)
+      const v = Reflect.get(snap, k)
       if (!canProxy(v)) return v
 
       const p = typeof k === 'string' ? (path ? `${path}.${k}` : k) : path
-        
-      // if (!proxyCache.has(v)) {
-      //   const parent = proxyCache.get(target)
-      //   parent[k] // trigger creation of proxy
-      // }
-
       return createSnapProxy(v, store, state, p)
     }
   }
@@ -46,12 +38,12 @@ export default (state, store, parent, path) => {
 
 
 
-const recordUsage = (affected, trap, target, k) => {
-  let used = affected.get(target)
+const recordUsage = (affected, trap, snap, k) => {
+  let used = affected.get(snap)
 
   if (!used) {
     used = {}
-    affected.set(target, used)
+    affected.set(snap, used)
   }
 
   let set = used[trap]

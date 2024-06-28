@@ -9,16 +9,16 @@ export default (store, parent, path) => {
   const selectors = isModule && sliceByModulePath(store.selectors, path)
 
   return {
-    get(target, k, receiver) {
-      const selected = trySelector(k, receiver, selectors, parent)
+    get(orig, k, proxy) {
+      const selected = trySelector(k, proxy, selectors, parent)
       if (selected !== NO_SELECTOR) return selected
 
-      const v = Reflect.get(target, k)
+      const v = orig[k]
       if (!canProxy(v)) return v
 
       const p = typeof k === 'string' ? (path ? `${path}.${k}` : k) : path
         
-      return createSelectorsProxy(v, store, receiver, p)
+      return createSelectorsProxy(v, store, proxy, p)
     }
   }
 }

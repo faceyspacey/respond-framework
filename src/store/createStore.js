@@ -164,8 +164,7 @@ export default async (topModuleOriginal, settings) => {
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
-  store.inspect = initialState
-  
+
   if (!isHMR) {
     reduce(store, events.init(), true, true)
   }

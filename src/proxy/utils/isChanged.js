@@ -1,11 +1,11 @@
-import { isObject, getOriginalObject, isOwnKeysChanged } from './helpers.js'
+import { isObject, isOwnKeysChanged } from './helpers.js'
 
 
 export default function isChanged(prev, next, affected, cache = new WeakMap) {
   if (Object.is(prev, next)) return false
   if (!isObject(prev) || !isObject(next)) return true
 
-  const used = affected.get(getOriginalObject(prev))
+  const used = affected.get(prev)
   if (!used) return true
 
   const hit = cache.get(prev)
