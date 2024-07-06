@@ -57,8 +57,8 @@ export const createSelectors = (mod, topModuleOriginal) => {
 }
 
 
-export const createModuleSelectors = (mod, topModels) => {
-  const models = topModels || mergeModels(mod.db?.models) || {}
+const createModuleSelectors = (mod, topModels) => {
+  const models = topModels || mergeModels(mod.db?.models)
 
   const selectors = {
     ...mod.selectors,

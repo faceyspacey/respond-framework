@@ -8,7 +8,14 @@ export default ({ shared = {}, client = {} } = {}) => {
     const base = g({ _name: k, _namePlural: k + 's', model: () => descriptors })
     const descriptors = Object.assign(base, s, c)
 
-    acc[k] = descriptors
+    const Class = function(doc) {
+      Object.assign(this, doc)
+    }
+
+    Object.defineProperty(Class, 'name', { value: k })
+    Object.defineProperties(Class.prototype, descriptors)
+
+    acc[k] = Class
     
     return acc
   }, {})

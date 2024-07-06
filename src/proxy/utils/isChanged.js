@@ -1,7 +1,7 @@
 import { isObject, isOwnKeysChanged } from './helpers.js'
 
 
-export default function isChanged(prev, next, affected, cache = new WeakMap) {
+export default function isChanged(prev, next, affected, cache = new WeakMap, path) {
   if (Object.is(prev, next)) return false
   if (!isObject(prev) || !isObject(next)) return true
 
@@ -36,7 +36,7 @@ export default function isChanged(prev, next, affected, cache = new WeakMap) {
     }
 
     for (const k of used.get || []) {
-      changed = isChanged(prev[k], next[k], affected, cache)
+      changed = isChanged(prev[k], next[k], affected, cache, path ? `${path}.${k}` : k)
       if (changed) return changed
     }
 

@@ -1,8 +1,8 @@
-import { createReviver } from '../utils/jsonReplacerReviver.js'
+import { createReviverWithModels } from '../utils/jsonReplacerReviver.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (context, apiUrl = 'http://localhost:3000/api') => {
+export default async (context, apiUrl = 'http://localhost:3000/api', models) => {
   const url = `${apiUrl}/${context.controller}/${context.method}`
 
   const res = await fetchWithTimeout(url, {
@@ -15,5 +15,5 @@ export default async (context, apiUrl = 'http://localhost:3000/api') => {
   })
 
   const text = await res.text()
-  return JSON.parse(text, createReviver())
+  return JSON.parse(text, createReviverWithModels(models))
 }

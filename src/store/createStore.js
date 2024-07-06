@@ -127,7 +127,7 @@ export default async (topModuleOriginal, settings) => {
     }
   }
 
-  const getSnapshot = withSelectors => withSelectors ? createSelectorsProxy(snapshot(state), store) : snapshot(state)
+  const getSnapshot = withSelectors => withSelectors ? createSelectorsProxy(snapshot(state, store), store) : snapshot(state, store)
 
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createReviver(store.events))
@@ -147,7 +147,7 @@ export default async (topModuleOriginal, settings) => {
   
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
-  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, selectors, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
+  const store = { ...merge, cookies, db, selectorsD: topModuleOriginal.selectorsD, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, selectors, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
   
   store.history = createHistory(store)
 

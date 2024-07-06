@@ -17,18 +17,18 @@ export const addToCache = (cache, docs, doc, useSlug) => {
 export const addOneToCache = (cache, doc) => {
   if (!doc) return cache
   
-  const prev = cache[doc.id] || {}
-  const next = Object.assign(prev, doc)
+  const prev = cache[doc.id]
 
-  cache[doc.id] = next
+  cache[doc.id] = prev ? Object.assign(prev, doc) : doc
+
   return cache
 }
 
 export const addToCacheDeep = (cache, doc) => {
-  const prev = cache[doc.id] || {}
-  const next = mergeDeep(prev, doc)
+  const prev = cache[doc.id]
 
-  cache[doc.id] = next
+  cache[doc.id] = prev ? mergeDeep(prev, doc) : doc
+
   return cache
 }
 
@@ -39,9 +39,9 @@ export const addToCacheDeep = (cache, doc) => {
 export const addToCacheSlug = (cache, doc) => {
   if (!doc) return cache
   
-  const prev = cache[doc.slug] || {}
-  const next = Object.assign(prev, doc)
+  const prev = cache[doc.slug]
 
-  cache[doc.slug] = next
+  cache[doc.slug] = prev ? Object.assign(prev, doc) : doc
+  
   return cache
 }

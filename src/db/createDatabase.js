@@ -27,6 +27,6 @@ const g = Object.getOwnPropertyDescriptors
 
 const createModelDescriptors = (base, model, shared = {}, server = {}) => {
   const m = Object.assign({}, g(base), g(model), g(shared), g(server))
-  Object.keys(m).forEach(k => m[k].enumerable = false)
+  Object.values(m).forEach(v => v.enumerable = false)
   return m
 }

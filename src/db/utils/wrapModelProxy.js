@@ -1,4 +1,5 @@
 export default (name, doc, state, traps) => {
+  return doc
   if (!doc) return
   
   const descriptors = state.models[name] // model is descriptors
@@ -11,7 +12,7 @@ export default (name, doc, state, traps) => {
 
 export const callModelMethod = (descriptors, state, target = {}, k, receiver) => {
   const v = target[k]
-  if (v !== undefined) return v       // default to value in doc
+  if (k in target) return v           // default to value in doc
 
   if (k === '_state') return state    // escape hatch to access module state within model
 

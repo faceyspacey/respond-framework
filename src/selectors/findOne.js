@@ -3,6 +3,7 @@ import wrapModelProxy from '../db/utils/wrapModelProxy.js'
 
 export default (state, name, id) => {
   const doc = getDoc(state, name, id)
+  return doc
   return wrapModelProxy(name, doc, state) // facilitates class style methods
 }
 

@@ -9,9 +9,9 @@ export default (proxy, sync, store) => {
   const last = useRef()
 
   const subscribe = useCallback(cb => sub(proxy, cb, sync), [proxy, sync])
-  const getServerSnapshot = () => createSnapshot(proxy)
+  const getServerSnapshot = () => createSnapshot(proxy, store)
   const getSnapshot = () => {
-    const next = createSnapshot(proxy)
+    const next = createSnapshot(proxy, store)
     const { snapshot, affected } = last.current ?? {}
 
     return inRender || !last.current || isChanged(snapshot, next, affected)

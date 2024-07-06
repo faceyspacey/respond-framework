@@ -264,7 +264,7 @@ export default {
 
   create(doc) {
     const id = doc?.id || objectId()
-    const instance = { ...doc, id }
+    const instance = { ...doc, id, __type: this._name }
     return Object.defineProperties(instance, this.model())
   },
 
@@ -344,7 +344,7 @@ export default {
 
   _create(doc) {
     const id = doc?.id || objectId()
-    const instance = { ...doc, id }
+    const instance = { ...doc, id, __type: this._name }
     return Object.defineProperties(instance, this.model())
   },
 

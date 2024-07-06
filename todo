@@ -63,17 +63,56 @@ use constants like kind.navigation, namespace.website
 dont hide _namespace, _type in state (only in actions)
 
 
-- replays / hmr -> new WeakMaps
-- make proxy application lazy based on snaps
-- make models more native
-
+- decrease tournmanet payout requests
+- tournament Textarea issue
+- popup to alert about deleting players in layered games
+- decimal point for custom amount
+- make fanMode support tournamentHost
+- toPar should be based on last completed hole
+- codePush needs to remember deepLink/pushUrl
+- player.firstName
+- first digit of 
 /**
- * make valtio replacement work
- * make proxy application lazy based on snaps
- * see if findOne selector can be done via built-in support for getters -- or find other way to pre-apply models
  * put all of store + events in proxy state
  * replace 3 args with 2 args
  * refactor createStore
  * make respond support modular replacement of all key pillars within createStore
  * splitting + ssr
  */
+
+- prototypes or static methods
+- parents for selector props
+- automatically apply models
+
+- reactive functions/getters anywhere in state
+
+
+- create new models client side
+- reviver transforms models using __type
+- __type is deleted before saving
+- fetch is passed modulePath + models and applies them in reviver
+
+- selectors are attached to initial state
+- _state is set in proxy getter
+- selector props' parent is bound to this in createInitialState 
+
+- make findOne etc just return doc
+- Autocomplete can just deal with return, as fetch wraps model already
+
+
+- snaps are making _state proxy, and is therefore not recursively applying snapProxy along with recursive selectors
+- really we need a better mechanism for accessing _state in models, or to get rid of it
+
+- newly created models need an api to automatically apply __type
+
+#- overridable getters
+
+- selectors can be set in initialState, prop selectors can be passed via ininitialState rehydration mechanism
+- need to make sure prop selectors are tracked
+
+
+- put events in state
+- change useSnapshot to target just the module's proxy - make sure parent is tracked for props
+- make useSnapshot find events in state
+- put the rest of things in state
+- refactor transform/recursion to make use of new structure

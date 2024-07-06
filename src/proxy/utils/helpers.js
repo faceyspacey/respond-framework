@@ -2,8 +2,11 @@ export const proxyStates = new WeakMap // shared state
 
 export const isObject = x => typeof x === 'object' && x
 
-export const canProxy = x => x &&
-  (getProto(x) === objProto || getProto(x) === arrayProto)
+// export const canProxy = x => typeof x === 'object' && x &&
+//   (getProto(x) === objProto || getProto(x) === arrayProto)
+export const canProxy = x => typeof x === 'object' && x &&
+  !(x instanceof Date) &&
+  !(x instanceof RegExp)
 
 export const isOwnKeysChanged = (prev, next) => {
   const p = Reflect.ownKeys(prev)
