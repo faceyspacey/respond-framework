@@ -28,9 +28,7 @@ export default function createSnapshot(orig, version, cache, store, path = '', m
 
   Object.keys(orig).forEach(k => {
     const { get } = Reflect.getOwnPropertyDescriptor(orig, k)
-
-    if (get) console.log('get', get)
-      
+ 
     if (get) {
       Object.defineProperty(snap, k, {
         get,

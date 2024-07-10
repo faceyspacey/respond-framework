@@ -29,8 +29,6 @@ export default async function createInitialState(mod, prevStore, path, parentSta
       const descriptor = descriptors[k]
       const { get, value } = descriptor
 
-      descriptor.configurable = true
-
       if (get) {
         descriptor.get = function() {
           return get.call(this._parent)

@@ -45,7 +45,6 @@ export default (orig, notify, store, parent, path, cache, moduleProxy, parentPro
 
       let { get, value: v } = Reflect.getOwnPropertyDescriptor(orig, k) ?? {}
 
-      if (k === 'push') console.log('push', get, v)
       if (typeof v === 'function') {
         return isModule ? v.bind(moduleProxy) : v.bind(proxy)
       }

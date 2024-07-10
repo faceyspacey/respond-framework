@@ -100,16 +100,16 @@ dont hide _namespace, _type in state (only in actions)
 - Autocomplete can just deal with return, as fetch wraps model already
 
 
-- snaps are making _state proxy, and is therefore not recursively applying snapProxy along with recursive selectors
-- really we need a better mechanism for accessing _state in models, or to get rid of it
-
-- newly created models need an api to automatically apply __type
+#- snaps are making _state proxy, and is therefore not recursively applying snapProxy along with recursive selectors
+#- really we need a better mechanism for accessing _state in models, or to get rid of it
 
 #- overridable getters
 
-- selectors can be set in initialState, prop selectors can be passed via ininitialState rehydration mechanism
-- need to make sure prop selectors are tracked
+#- selectors can be set in initialState, prop selectors can be passed via ininitialState rehydration mechanism
+#- need to make sure prop selectors are tracked
 
+
+- newly created models need an api to automatically apply __type
 
 - put events in state
 - change useSnapshot to target just the module's proxy - make sure parent is tracked for props

@@ -4,8 +4,7 @@ import trySelector, { NO_SELECTOR } from './trySelector.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
 
 
-export default (snap, state, store, parent, path, moduleProxy, parentProxy) => {
-  const isModule = !!store.modulePaths[path]
+export default (snap, state, store, isModule, path) => {
   const selectors = isModule && sliceByModulePath(store.selectors, path)
 
   const proxy = new Proxy(snap, {
@@ -22,33 +21,27 @@ export default (snap, state, store, parent, path, moduleProxy, parentProxy) => {
       return Reflect.getOwnPropertyDescriptor(snap, k)
     },
     get(snap, k, proxy) {
-      if (k === '_state') return moduleProxy
-      if (k === '_parent') return parentProxy
-      if (k === 'crazy') {
-        console.log('crazy', moduleProxy, parentProxy)
-        return { moduleProxy, parentProxy, state }
-      }
+      if (k === '_state') return state.moduleProxy
+      if (k === '_parent') return state.parentProxy
 
-      const selected = trySelector(k, proxy, selectors, parent)
+      const selected = trySelector(k, proxy, selectors, state.parentProxy)
       if (selected !== NO_SELECTOR) return selected
-
-      recordUsage(state.affected, 'get', snap, k)
       
       // let v = Reflect.get(snap, k)
 
       let { get, value: v } = Reflect.getOwnPropertyDescriptor(snap, k) ?? {}
 
-      if (typeof v === 'function') {
-        return isModule ? v.bind(moduleProxy) : v.bind(proxy)
+      if (get) {
+        return isModule ? get.call(state.moduleProxy) : get.call(proxy)
       }
-      else if (get) {
-        return isModule ? get.call(moduleProxy) : get.call(proxy)
+      else if (typeof v === 'function') {
+        return isModule ? v.bind(state.moduleProxy) : v.bind(proxy)
       }
 
-      v = Reflect.get(snap, k)
+      recordUsage(state.affected, 'get', snap, k)
 
-      // const p2 = path ? `${path}.${k}` : k
-      // if (!/replayTools/.test(p2)) console.log('record', p2, v, canProxy(v))
+      v ??= Reflect.get(snap, k)
+
       if (!canProxy(v)) return v
 
       // const orig = window.proxyStates.get(v)?.orig
@@ -64,12 +57,9 @@ export default (snap, state, store, parent, path, moduleProxy, parentProxy) => {
 
       const p = typeof k === 'string' ? (path ? `${path}.${k}` : k) : path
 
-      return createSnapProxy(v, store, state, p, moduleProxy, parentProxy)
+      return createSnapProxy(v, store, state, p)
     }
   })
-
-  parentProxy = isModule ? moduleProxy : parentProxy
-  moduleProxy = isModule ? proxy : moduleProxy
 
   return proxy
 }
@@ -94,7 +84,7 @@ const recordUsage = (affected, trap, snap, k) => {
 
   set.add(k)
 
-  if (k === 'user2') {
+  if (k === '2') {
     console.log('set', k, set, snap, affected)
     window.affected = affected
     window.snap = snap
