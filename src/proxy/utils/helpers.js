@@ -1,5 +1,7 @@
 export const proxyStates = new WeakMap // shared state
 
+export const snapsToProxyCache = new WeakMap
+
 export const isObject = x => typeof x === 'object' && x
 
 // export const canProxy = x => typeof x === 'object' && x &&

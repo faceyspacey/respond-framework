@@ -2,6 +2,7 @@ import { isObject, isOwnKeysChanged } from './helpers.js'
 
 
 export default function isChanged(prev, next, affected, cache = new WeakMap, path) {
+  console.log('isChanged', path, Object.is(prev, next), (!isObject(prev) || !isObject(next)), !affected.get(prev), cache.get(prev)?.next === next && cache.get(prev)?.changed, prev, next)
   if (Object.is(prev, next)) return false
   if (!isObject(prev) || !isObject(next)) return true
 
@@ -40,6 +41,7 @@ export default function isChanged(prev, next, affected, cache = new WeakMap, pat
       if (changed) return changed
     }
 
+    if (changed === null) console.log('Changed', path, true)
     if (changed === null) changed = true
     return changed
   }

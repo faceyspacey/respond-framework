@@ -80,24 +80,24 @@ dont hide _namespace, _type in state (only in actions)
  * splitting + ssr
  */
 
-- prototypes or static methods
-- parents for selector props
-- automatically apply models
+#- prototypes or static methods
+#- parents for selector props
+#- automatically apply models
 
-- reactive functions/getters anywhere in state
+#- reactive functions/getters anywhere in state
 
 
-- create new models client side
-- reviver transforms models using __type
-- __type is deleted before saving
-- fetch is passed modulePath + models and applies them in reviver
+#- create new models client side
+#- reviver transforms models using __type
+#- __type is deleted before saving!
+#- fetch is passed modulePath + models and applies them in reviver
 
-- selectors are attached to initial state
-- _state is set in proxy getter
-- selector props' parent is bound to this in createInitialState 
+#- selectors are attached to initial state
+#- _state is set in proxy getter
+#- selector props' parent is bound to this in createInitialState 
 
-- make findOne etc just return doc
-- Autocomplete can just deal with return, as fetch wraps model already
+#- make findOne etc just return doc
+#- Autocomplete can just deal with return, as fetch wraps model already
 
 
 #- snaps are making _state proxy, and is therefore not recursively applying snapProxy along with recursive selectors
@@ -109,10 +109,12 @@ dont hide _namespace, _type in state (only in actions)
 #- need to make sure prop selectors are tracked
 
 
-- newly created models need an api to automatically apply __type
 
-- put events in state
-- change useSnapshot to target just the module's proxy - make sure parent is tracked for props
-- make useSnapshot find events in state
+
+#- put events in state
+#- change useSnapshot to target just the module's proxy - make sure parent is tracked for props
+#- make useSnapshot find events in state
 - put the rest of things in state
 - refactor transform/recursion to make use of new structure
+
+- newly created models need an api to automatically apply __type (eg: db.round.create())

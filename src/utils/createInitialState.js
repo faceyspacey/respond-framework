@@ -3,24 +3,18 @@ import { sliceStoreByModulePath } from './sliceByModulePath.js'
 
 export default async function createInitialState(mod, prevStore, path, parentState = {}) {
   const store = sliceStoreByModulePath(prevStore, path)
+  const { topModule } = store
 
-  const initialState = typeof mod.initialState === 'function'
-    ? await mod.initialState(store)
-    : mod.initialState
+  const initial = mod.initialState
+  const initialState = typeof initial === 'function' ? await initial(store) : initial
     
-  const state = {}
+  const proto = topModule.selectorsD || {}
+  const state = Object.create(proto)
 
   Object.assign(state, {
     ...initialState,
     ...parentState[path], // re-hydrate initialState specified by parent, such as in server-rendered JSON, eg: `<script>window.initialState = { websiteModule: JSON.parse(${JSON.stringify(json)}, respondReviver) }</script>`
   })
-
-  const { topModule } = store
-
-  if (topModule.selectorsD) {
-    const descriptors = Object.getOwnPropertyDescriptors(topModule.selectorsD)
-    Object.defineProperties(state, descriptors)
-  }
 
   if (topModule.props?.selectorsD) {
     const descriptors = Object.getOwnPropertyDescriptors(topModule.props.selectorsD)
@@ -28,7 +22,7 @@ export default async function createInitialState(mod, prevStore, path, parentSta
     Object.keys(descriptors).forEach(k => {
       const descriptor = descriptors[k]
       const { get, value } = descriptor
-
+      console.log('descriptor', k, descriptor)
       if (get) {
         descriptor.get = function() {
           return get.call(this._parent)
@@ -41,8 +35,11 @@ export default async function createInitialState(mod, prevStore, path, parentSta
       }
     })
 
-    Object.defineProperties(state, descriptors)
+    Object.defineProperties(proto, descriptors)
   }
+
+  // Object.defineProperty(proto, '_parent', { get() { return parentState } })
+
 
   const children = await recurseModules(mod, store, state)
   Object.assign(state, children)

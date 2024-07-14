@@ -4,9 +4,12 @@ import trySelector, { NO_SELECTOR } from './trySelector.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
 
 
-export default (orig, notify, store, parent, path, cache, moduleProxy, parentProxy) => {
+export default (orig, notify, store, parent, path, cache) => {
   const isModule = !!store.modulePaths[path]
   const selectors = isModule && sliceByModulePath(store.selectors, path)
+
+  const proto = Object.getPrototypeOf(orig)
+  const protoDescriptors = Object.getOwnPropertyDescriptors(proto)
 
   const pc = cache.proxy
 
@@ -35,57 +38,32 @@ export default (orig, notify, store, parent, path, cache, moduleProxy, parentPro
     },
 
     get(orig, k, proxy) {
-      if (k === '_state') return moduleProxy
-      if (k === '_parent') return parentProxy
+      if (k === '_state') return window.store.state
+      if (k === '_parent') return parent
 
       const s = trySelector(k, proxy, selectors, parent)
       if (s !== NO_SELECTOR) return s
-      
-      // let v = orig[k]
 
-      let { get, value: v } = Reflect.getOwnPropertyDescriptor(orig, k) ?? {}
-
-      if (typeof v === 'function') {
-        return isModule ? v.bind(moduleProxy) : v.bind(proxy)
-      }
-      else if (get) {
-        window.proxy = moduleProxy
-        return isModule ? get.call(moduleProxy) : get.call(proxy)
-      }
-      else {
-        v = orig[k]
+      if (!orig.hasOwnProperty(k)) {
+        const get = protoDescriptors[k]?.get
+        return get ? get.call(proxy) : orig[k]
       }
 
-      if (!proxyStates.has(v) && canProxy(v)) {
-        const p = path ? `${path}.${k}` : k
+      let v = orig[k]
 
-      //  if (!v._state) {
-      //   Object.defineProperty(v, '_state', { get() { return moduleProxy }, enumerable: false, configurable: true })
-      //   Object.defineProperty(v, '_parent', { get() { return parentProxy }, enumerable: false, configurable: true })
-      //  }
+      // if (!proxyStates.has(v) && canProxy(v)) {
+      //   const p = path ? `${path}.${k}` : k
+      //   v = orig[k] = createProxy(v, store, proxy, notify, p, cache, moduleProxy, parentProxy)
+      // }
 
-        v = orig[k] = createProxy(v, store, proxy, notify, p, cache, moduleProxy, parentProxy)
-      }
-
-      proxyStates.get(v)?.listeners.add(notify)
+      // proxyStates.get(v)?.listeners.add(notify)
 
       return v
     }
-    
-    // get(orig, k, proxy) {
-    //   const s = trySelector(k, proxy, selectors, parent)
-    //   if (s !== NO_SELECTOR) return s
-      
-    //   const v = orig[k]
-    //   if (proxyStates.has(v) || !canProxy(v)) return v
-
-    //   const p = path ? `${path}.${k}` : k
-    //   return orig[k] = createProxy(v, store, proxy, notify, p, cache)
-    // }
   })
 
-  parentProxy = isModule ? moduleProxy : parentProxy
-  moduleProxy = isModule ? proxy : moduleProxy
+  // parentProxy = isModule ? moduleProxy : parentProxy
+  // moduleProxy = isModule ? proxy : moduleProxy
 
   return proxy
 }
