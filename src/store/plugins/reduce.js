@@ -57,7 +57,7 @@ const reduceAllBranches = (st, e, store, mod, path = []) => {
         reducers: reduce,
         state: childMod ? state[k] : state,
         events: childMod ? events[k] : events,
-        selectors: childMod ? selectors[k] : selectors,
+        // selectors: childMod ? selectors[k] : selectors,
       }
   
       const childPath = childMod ? [...path, k] : path
@@ -104,7 +104,7 @@ const reduceBranch = (st, e, store, mod, remainingPaths, path = []) => {
     state: state[k],
     events: events[k],
     reducers: reducers[k],
-    selectors: selectors[k]
+    // selectors: selectors[k]
   }
 
   remainingPaths = remainingPaths.slice(1)

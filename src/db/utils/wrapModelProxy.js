@@ -2,7 +2,7 @@ export default (name, doc, state, traps) => {
   return doc
   if (!doc) return
   
-  const descriptors = state.models[name] // model is descriptors
+  const descriptors = Object.getOwnPropertyDescriptors(state.models[name].prototype) // state.models[name] // model is descriptors
   if (!descriptors) return doc
 
   const get = callModelMethod.bind(null, descriptors, state)

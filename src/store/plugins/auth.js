@@ -1,5 +1,4 @@
 const standard = ({ onLogin, onLogout }) => async (store, e) => {
-  if (e.kind !== 'navigation') return
   const { state, prevState } = store.getStore() // escape hatch: token always assumed to be in top level store
   
   if (state.token !== prevState.token) {
@@ -16,6 +15,8 @@ const custom = ({ getToken, onLogin, onLogout }) => async (store, e) => {
   const prevToken = getToken(store.prevState)
 
   if (token !== prevToken) {
+    prevState.token = state.token
+
     if (token) await onLogin(store, e)
     else await onLogout(store, e)
   }

@@ -268,7 +268,12 @@ export default {
     return Object.defineProperties(instance, this.model())
   },
 
-  insertSeed(docsObject) {
+  make(doc) {
+    const instance = { ...doc, __type: this._name }
+    return Object.defineProperties(instance, this.model())
+  },
+
+  insertSeed(docsObject = {}) {
     if (!isServer && window.opener) {
       return this.docs = window.opener.store.replays.seed[this._name] // child window shares db/seed with parent
     }

@@ -80,7 +80,7 @@ export default async (topModuleOriginal, settings) => {
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
   const reducers = createReducers(topModule)
-  const selectors = createSelectors(topModule, topModuleOriginal)
+  // const selectors = createSelectors(topModule, topModuleOriginal)
   const events = !modulePath ? eventsAll : createEvents(topModule, getStore)
 
   const eventFrom = createEventFrom(getStore, events)
@@ -147,20 +147,24 @@ export default async (topModuleOriginal, settings) => {
   
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
-  const store = { ...merge, cookies, db, selectorsD: topModuleOriginal.selectorsD, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, selectors, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
+  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
   
   store.history = createHistory(store)
 
   const baseState = { cachedPaths: {}, token: replays.token }
-  const top = { ...topModule, initialState: { ...baseState, ...topModule.initialState } }
+  const top = { ...topModule }
+
+  Object.assign(top.initialState, baseState)
+  
+  // Object.defineProperties(top.initialState, Object.getOwnPropertyDescriptors(topModule.initialState ?? {}))
 
   const initialState = isHMR
     ? snapshot(prevStore.state)
     : isProd || options.enablePopsInDevelopment
-      ? getSessionState(events) || await createInitialState(top, store)
-      : await createInitialState(top, store)
+      ? getSessionState(events) || await createInitialState(top, store, topModuleOriginal)
+      : await createInitialState(top, store, topModuleOriginal)
 
-  const state  = createProxy(initialState, { modulePaths, selectors })
+  const state  = createProxy(initialState)
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
@@ -169,7 +173,8 @@ export default async (topModuleOriginal, settings) => {
     reduce(store, events.init(), true, true)
   }
 
-  store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
+  // store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
+  store.devtools = createDevtoolsMock(store)
 
   store.dispatch = createDispatch(getStore)
   store.dispatchSync = createDispatchSync(getStore)

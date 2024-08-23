@@ -1,69 +1,27 @@
-import createProxy from '../createProxy.js'
-import { proxyStates, canProxy } from './helpers.js'
-import trySelector, { NO_SELECTOR } from './trySelector.js'
-import sliceByModulePath from '../../utils/sliceByModulePath.js'
+import { proxyStates } from './helpers.js'
 
 
-export default (orig, notify, store, parent, path, cache) => {
-  const isModule = !!store.modulePaths[path]
-  const selectors = isModule && sliceByModulePath(store.selectors, path)
+export default (notify, cache) => ({
+  deleteProperty(orig, k) {
+    const prev = orig[k]
 
-  const proto = Object.getPrototypeOf(orig)
-  const protoDescriptors = Object.getOwnPropertyDescriptors(proto)
+    proxyStates.get(prev)?.remove(notify)
+    delete orig[k]
 
-  const pc = cache.proxy
+    return true
+  },
 
-  const proxy = new Proxy(orig, {
-    deleteProperty(orig, k) {
-      const prev = orig[k]
+  set(orig, k, v) {
+    const prev = orig[k]
 
-      proxyStates.get(prev)?.remove(notify)
-      delete orig[k]
+    const equal = prev === v || cache.has(v) && Object.is(prev, cache.get(v))
+    if (equal) return true
 
-      return true
-    },
+    proxyStates.get(prev)?.remove(notify)
 
-    set(orig, k, v) {
-      const prev = orig[k]
+    orig[k] = v
+    notify()
 
-      const equal = prev === v || pc.has(v) && Object.is(prev, pc.get(v))
-      if (equal) return true
-
-      proxyStates.get(prev)?.remove(notify)
-
-      orig[k] = v
-      notify()
-
-      return true
-    },
-
-    get(orig, k, proxy) {
-      if (k === '_state') return window.store.state
-      if (k === '_parent') return parent
-
-      const s = trySelector(k, proxy, selectors, parent)
-      if (s !== NO_SELECTOR) return s
-
-      if (!orig.hasOwnProperty(k)) {
-        const get = protoDescriptors[k]?.get
-        return get ? get.call(proxy) : orig[k]
-      }
-
-      let v = orig[k]
-
-      // if (!proxyStates.has(v) && canProxy(v)) {
-      //   const p = path ? `${path}.${k}` : k
-      //   v = orig[k] = createProxy(v, store, proxy, notify, p, cache, moduleProxy, parentProxy)
-      // }
-
-      // proxyStates.get(v)?.listeners.add(notify)
-
-      return v
-    }
-  })
-
-  // parentProxy = isModule ? moduleProxy : parentProxy
-  // moduleProxy = isModule ? proxy : moduleProxy
-
-  return proxy
-}
+    return true
+  }
+})

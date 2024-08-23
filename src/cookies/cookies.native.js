@@ -27,7 +27,7 @@ export default () => {
   
   
     async remove(k) {
-      delete this.cookies[k]
+      delete cookies[k]
   
       try {
         await AsyncStorage.removeItem(k)

@@ -32,6 +32,16 @@ const createControllerMethod = (db, controller, method, modulePath = '') => {
   const { apiUrl, nested } = options
   const url = typeof apiUrl === 'function' ? apiUrl(db) : apiUrl
 
+  if (method === 'make') {
+    return doc => {
+      const Class = options.nested
+        ? sliceByModulePath(modulePath, db.store.state).models[controller]
+        : db.store.state.models[controller]
+
+      return new Class({ ...doc, __type: controller })
+    }
+  }
+
   return async function(...argsRaw) {
     const { token, userId, adminUserId } = db.store.state
     const ctx = { token, userId, adminUserId, ...options.getContext(db, controller, method, argsRaw) }

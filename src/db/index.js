@@ -327,6 +327,11 @@ export default !isProd ? mock : {
     return Object.defineProperties(instance, this.model())
   },
 
+  make(doc) {
+    const instance = { ...doc, __type: this._name }
+    return Object.defineProperties(instance, this.model())
+  },
+
   mongo() {
     if (this._mongoCollection) return this._mongoCollection
 

@@ -37,6 +37,6 @@ export default getStore => e => {
     }
   }
   catch (error) {
-    throw new Error(`event.path "${path}" for event "${e.type}" received incompatible e.arg`)
+    throw new Error(`event.path "${path}" for event "${e.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)
   }
 }

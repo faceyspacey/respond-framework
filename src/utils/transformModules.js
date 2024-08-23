@@ -3,7 +3,7 @@ import findOne from '../selectors/findOne.js'
 
 
 export const createModulePathsById = topModule => {
-  const id = topModule.id || '0'
+  const id = topModule.id || '1'
   const mp = ''
 
   topModule.id = id

@@ -4,6 +4,7 @@ import secretMock from './secret.mock.js'
 import cleanLikeProduction from './utils/cleanLikeProduction.js'
 import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
+import { sliceByModulePath } from '../utils.js'
 
 
 export default (topModule, topModuleOriginal) => {
@@ -32,6 +33,16 @@ export default (topModule, topModuleOriginal) => {
 
 const createControllerMethod = (db, controller, method, modulePath = '') => {
   const { options } = db
+
+  if (method === 'make') {
+    return doc => {
+      const Class = options.nested
+        ? sliceByModulePath(modulePath, db.store.state).models[controller]
+        : db.store.state.models[controller]
+
+      return new Class({ ...doc, __type: controller })
+    }
+  }
 
   return async function(...argsRaw) {
     const c = options.nested

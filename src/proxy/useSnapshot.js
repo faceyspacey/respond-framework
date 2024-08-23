@@ -5,13 +5,13 @@ import isChanged from './utils/isChanged.js'
 import sub from './subscribe.js'
 
 
-export default (proxy, sync, store) => {
+export default (proxy, sync) => {
   const last = useRef()
 
   const subscribe = useCallback(cb => sub(proxy, cb, sync), [proxy, sync])
-  const getServerSnapshot = () => createSnapshot(proxy, store)
+  const getServerSnapshot = () => createSnapshot(proxy)
   const getSnapshot = () => {
-    const next = createSnapshot(proxy, store)
+    const next = createSnapshot(proxy)
     const { snapshot, affected } = last.current ?? {}
 
     return inRender || !last.current || isChanged(snapshot, next, affected)
@@ -30,5 +30,5 @@ export default (proxy, sync, store) => {
     last.current = { snapshot, affected }
   })
 
-  return createSnapProxy(snapshot, store, { affected, cache })
+  return createSnapProxy(snapshot, { affected, cache })
 }

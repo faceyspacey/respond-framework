@@ -63,15 +63,9 @@ use constants like kind.navigation, namespace.website
 dont hide _namespace, _type in state (only in actions)
 
 
-- decrease tournmanet payout requests
-- tournament Textarea issue
-- popup to alert about deleting players in layered games
-- decimal point for custom amount
-- make fanMode support tournamentHost
-- toPar should be based on last completed hole
-- codePush needs to remember deepLink/pushUrl
-- player.firstName
-- first digit of 
+
+
+
 /**
  * put all of store + events in proxy state
  * replace 3 args with 2 args
@@ -114,7 +108,24 @@ dont hide _namespace, _type in state (only in actions)
 #- put events in state
 #- change useSnapshot to target just the module's proxy - make sure parent is tracked for props
 #- make useSnapshot find events in state
-- put the rest of things in state
-- refactor transform/recursion to make use of new structure
 
-- newly created models need an api to automatically apply __type (eg: db.round.create())
+#- transfer selectors to initialState
+#- resolve models which cant have duplicate keys in both proto + this
+#- remove _state from model methods
+
+#- newly created models need an api to automatically apply __type (eg: db.round.create())
+
+#- change selectors to use `this`
+#- selectorsD -> selectors
+#- make all objects created with __type
+
+
+- pass tests
+
+- put events in state
+- make useRespond get events from state
+
+- make snaps save in state as prevState
+- put the rest of things in state
+
+- refactor transform/recursion to make use of new structure

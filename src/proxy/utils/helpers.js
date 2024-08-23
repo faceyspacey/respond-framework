@@ -18,6 +18,26 @@ export const isOwnKeysChanged = (prev, next) => {
 }
 
 
+export const recordUsage = (affected, trap, snap, k) => {
+  let used = affected.get(snap)
+  
+  if (!used) {
+    used = {}
+    affected.set(snap, used)
+  }
+
+  let set = used[trap]
+
+  if (!set) {
+    set = new Set()
+    used[trap] = set
+  }
+
+  set.add(k)
+}
+
+
+
 const getProto = Object.getPrototypeOf
 const objProto = Object.prototype
 const arrayProto = Array.prototype

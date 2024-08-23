@@ -4,7 +4,7 @@ import createHandler from './utils/createHandler.js'
 let highestVersion = 0
 
 window.proxyStates = proxyStates
-export default (orig, store, parent, notifyParent, path = '', cache = (window.weakMaps ??= { proxy: new WeakMap, snap: new WeakMap })) => {
+export default (orig, notifyParent, cache = (window.weakMaps ??= { proxy: new WeakMap, snap: new WeakMap })) => {
   const found = cache.proxy.get(orig)
   if (found) return found
 
@@ -23,7 +23,7 @@ export default (orig, store, parent, notifyParent, path = '', cache = (window.we
     Object.values(orig).forEach(v => proxyStates.get(v)?.remove(notify))
   }
 
-  const proxy = createHandler(orig, notify, store, parent, path, cache)
+  const proxy = new Proxy(orig, createHandler(notify, cache.proxy))
 
   cache.proxy.set(orig, proxy)
   proxyStates.set(proxy, { orig, notify, listeners, remove, cache, get version() { return version } })
