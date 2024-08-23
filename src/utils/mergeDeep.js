@@ -2,7 +2,7 @@
 // if arrays are involved, only model arrays containing ids can currently be deep merged properly
 
 export default function mergeDeep(target, source = {}) {
-  for (const k in source) {
+  Object.keys(source).forEach(k => {
     const v = source[k]
 
     if (Array.isArray(v)) {
@@ -13,7 +13,7 @@ export default function mergeDeep(target, source = {}) {
       mergeDeep(target[k], v)
     }
     else target[k] = v
-  }
+  })
 
   return target
 }

@@ -129,3 +129,5 @@ dont hide _namespace, _type in state (only in actions)
 - put the rest of things in state
 
 - refactor transform/recursion to make use of new structure
+
+- remove findOne, findOnePlayer, etc -- problem is they also handle the case where u pass a pojo

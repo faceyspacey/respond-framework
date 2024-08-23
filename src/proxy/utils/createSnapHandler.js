@@ -4,7 +4,7 @@ import createProxy from '../createProxy.js'
 import snapshot from '../snapshot.js'
 
 
-export default (snap, state, parentState) => {
+export default (snap, state) => {
   const proto = Object.getPrototypeOf(snap)
   const protoDescriptors = Object.getOwnPropertyDescriptors(proto)
 
@@ -22,7 +22,7 @@ export default (snap, state, parentState) => {
       return Reflect.getOwnPropertyDescriptor(snap, k)
     },
     get(snap, k, proxy) {
-      if (k === '_parent') return parentState.proxy
+      if (k === '_parent') return state.parentProxy
 
       if (!snap.hasOwnProperty(k)) {
         const descriptor = protoDescriptors[k]
@@ -45,7 +45,10 @@ export default (snap, state, parentState) => {
         const proxy = createProxy(v, parent.notify)
       
         parent.orig[k] = proxy
-        Object.defineProperty(v, '_parent', { enumerable: false, configurable: false, writable: false, value: parent.proxy })
+        
+        if (v.__module) {
+          Object.defineProperty(v, '_parent', { enumerable: false, configurable: false, writable: false, value: parent.proxy })
+        }
 
         v = snapshot(proxy)
         Object.defineProperty(snap, k, { enumerable: true, configurable: true, writable: true, value: v })

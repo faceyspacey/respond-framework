@@ -26,6 +26,14 @@ const createInitialState = async (mod, prevStore, topModels, path, parentState =
     Object.defineProperty(proto, k, descriptor)
   })
 
+  Object.defineProperty(proto, 'findOne', { value: findOne })
+
+  Object.defineProperties(proto, {
+    findOne: { value: findOne },
+    models: { value: topModels || mergeModels(mod.db?.models) },
+    __module: { value: true }
+  })
+
   const state = Object.create(proto)
 
   // Object.assign(state, {
@@ -35,34 +43,31 @@ const createInitialState = async (mod, prevStore, topModels, path, parentState =
 
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(initialState ?? {}))
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(parentState[path] ?? {}))
-
-  state.models = topModels || mergeModels(mod.db?.models)
-  state.findOne = findOne
   
   if (topModule.props?.selectors) {
-    const descriptors = Object.getOwnPropertyDescriptors(topModule.props.selectors)
+    const { selectors } = topModule.props
 
-    Object.keys(descriptors).forEach(k => {
-      const descriptor = descriptors[k]
-      const { get, value } = descriptor
+    Object.keys(selectors).forEach(k => {
+      const v = selectors[k]
 
-      if (get) {
-        descriptor.get = function() {
-          return get.call(this._parent)
+      if (v.length === 0) { // getter
+        const get = function() {
+          return v.call(this._parent)
         }
+
+        Object.defineProperty(proto, k, { get })
       }
-      else if (typeof value === 'function') {
-        descriptor.value = function(...args) {
-          return value.call(this._parent, ...args)
+      else {
+        const value = function(...args) {
+          return v.apply(this._parent, args)
         }
+
+        Object.defineProperty(proto, k, { value })
       }
     })
-
-    Object.defineProperties(proto, descriptors)
   }
 
-  // Object.defineProperty(proto, '_parent', { get() { return parentState } })
-
+  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState })
 
   const children = await recurseModules(mod, store, topModels, state)
   Object.assign(state, children)

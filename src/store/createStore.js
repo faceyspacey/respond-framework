@@ -173,8 +173,7 @@ export default async (topModuleOriginal, settings) => {
     reduce(store, events.init(), true, true)
   }
 
-  // store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
-  store.devtools = createDevtoolsMock(store)
+  store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
 
   store.dispatch = createDispatch(getStore)
   store.dispatchSync = createDispatchSync(getStore)
