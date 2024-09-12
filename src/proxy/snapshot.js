@@ -14,7 +14,7 @@ function createSnapshot(proxy, { orig, version, cache, listeners, notify }) {
   const snap = Array.isArray(orig) ? [] : Object.create(Object.getPrototypeOf(orig)) // computed methods/selectors on prototype
 
   cache.snap.set(orig, { snap, version })
-  snapsToProxyCache.set(snap, { orig, proxy, listeners, notify })
+  snapsToProxyCache.set(snap, { orig, proxy, listeners, notify, cache })
 
   Object.keys(orig).forEach(k => {
     const value = snapshot(orig[k])

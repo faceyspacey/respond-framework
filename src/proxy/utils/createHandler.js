@@ -8,6 +8,8 @@ export default (notify, cache) => ({
     proxyStates.get(prev)?.remove(notify)
     delete orig[k]
 
+    notify()
+    
     return true
   },
 

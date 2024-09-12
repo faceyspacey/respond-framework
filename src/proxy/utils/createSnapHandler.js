@@ -29,7 +29,12 @@ export default (snap, state) => {
 
         if (descriptor) {
           const { get, value } = descriptor
-          return get ? get.call(proxy) : value
+          
+          if (get) return get.call(proxy)
+          if (typeof value === 'function') return value
+
+          recordUsage(state.affected, 'get', snap, k)
+          return value
         }
       }
 
@@ -42,7 +47,7 @@ export default (snap, state) => {
       const parent = snapsToProxyCache.get(snap)
 
       if (!child) {
-        const proxy = createProxy(v, parent.notify)
+        const proxy = createProxy(v, parent.notify, parent.cache)
       
         parent.orig[k] = proxy
         

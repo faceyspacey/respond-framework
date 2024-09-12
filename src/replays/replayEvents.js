@@ -3,6 +3,7 @@ import { reviveEventFunctionReferences as revive } from '../utils/jsonReplacerRe
 import createStore from '../store/createStore.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import localStorage from '../utils/localStorage.js'
+import { proxyStates } from '../proxy/utils/helpers.js'
 
 
 export default async function(events, delay = 0, settings = this.settings) {
@@ -13,8 +14,12 @@ export default async function(events, delay = 0, settings = this.settings) {
   const store = await createStore(this.store.topModuleOriginal, nextSettings)
   const eventsRevived = revive(store.events, events)
 
-  store.state.replayTools = this.store.snapshot(this.store.state.replayTools)
-  store.state.replayTools.evs = revive(store.events, store.state.replayTools.evs)
+  const { replayTools } = this.store.state
+  
+  store.state.replayTools = replayTools
+  store.state.replayTools.evs = revive(store.events, replayTools.evs)
+
+  proxyStates.get(replayTools).remove(proxyStates.get(this.store.state).notify)
 
   return runEvents(store, eventsRevived, delay)
 }
@@ -38,7 +43,7 @@ const runEvents = async (store, events, delay) => {         // keep in mind stor
   const last = events.length - 1
 
   window.__idCounter = 10000
-
+  
   for (let i = 0; i < events.length; i++) {
     if (delay && !state.playing) break
 

@@ -12,7 +12,6 @@ import createCookies from '../cookies/index.js'
 import createHistoryDefault from '../history/index.js'
 // import createLazyModulesGetterProxy from '../valtio/createLazyModulesGetterProxy.js'
 // import { proxy as createProxy, snapshot } from '../valtio/vanilla.js'
-import createSelectorsProxy from '../proxy/createSelectorsProxy.js'
 import snapshot from '../proxy/snapshot.js'
 import createProxy from '../proxy/createProxy.js'
 import shouldUseDevtools from '../utils/shouldUseDevtools.js'
@@ -127,7 +126,7 @@ export default async (topModuleOriginal, settings) => {
     }
   }
 
-  const getSnapshot = withSelectors => withSelectors ? createSelectorsProxy(snapshot(state, store), store) : snapshot(state, store)
+  const getSnapshot = withSelectors => snapshot(state)
 
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createReviver(store.events))
@@ -165,6 +164,9 @@ export default async (topModuleOriginal, settings) => {
       : await createInitialState(top, store, topModuleOriginal)
 
   const state  = createProxy(initialState)
+
+  // state.events = events
+  // store.events = state.events
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)

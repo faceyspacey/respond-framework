@@ -120,7 +120,11 @@ dont hide _namespace, _type in state (only in actions)
 #- make all objects created with __type
 
 
-- pass tests
+#- pass tests
+
+#- make test events work correctly
+#- refresh weakMaps cache correctly
+#- pass handicaps test
 
 - put events in state
 - make useRespond get events from state

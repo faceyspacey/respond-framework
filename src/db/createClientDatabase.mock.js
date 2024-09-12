@@ -68,7 +68,7 @@ const createControllerMethod = (db, controller, method, modulePath = '') => {
 
     await options.simulateLatency(db)
 
-    const models = options.nested.nested ? sliceByModulePath(db.store, modulePath).state.models : store.state.models
+    const models = options.nested ? sliceByModulePath(db.store, modulePath).state.models : db.store.state.models
     const response = cleanLikeProduction(res, models)
 
     Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which is unreliable due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)

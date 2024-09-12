@@ -41,7 +41,6 @@ export default function isChanged(prev, next, affected, cache = new WeakMap, pat
       if (changed) return changed
     }
 
-    if (changed === null) console.log('Changed', path, true)
     if (changed === null) changed = true
     return changed
   }
