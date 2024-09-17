@@ -126,12 +126,21 @@ dont hide _namespace, _type in state (only in actions)
 #- refresh weakMaps cache correctly
 #- pass handicaps test
 
-- put events in state
-- make useRespond get events from state
+#- put events in state
+#- make useRespond get events from state
 
 - make snaps save in state as prevState
-- put the rest of things in state
+#- put the rest of things in state
 
-- refactor transform/recursion to make use of new structure
+#- refactor transform/recursion to make use of new structure
 
 - remove findOne, findOnePlayer, etc -- problem is they also handle the case where u pass a pojo
+
+
+make entire module be initial state
+extract reducers as any 2-3 arg functions in state
+extract 0-1 arg functions into selectors
+move other things into options
+
+
+- children can specify their own props, and hi-jack access to parent state??

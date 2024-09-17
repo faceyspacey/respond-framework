@@ -7,6 +7,8 @@ export default (topModule, getStore) => {
 
   events.init = createInit(getStore)
 
+  map.clear()
+  
   return events
 }
 
@@ -27,11 +29,13 @@ const createInit = () => {
 
 
 const createEvents = (mod, getStore, modulePath = '', parentEvents) => {
-  const events = createEventsForModule({ edit, ...mod.events, ...mod.defaultProps?.events }, getStore, modulePath)
+  const events = createEventsForModule({ edit, ...mod.events }, getStore, modulePath)
+
+  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, parentEvents)
 
   return {
     ...events,
-    ...mod.props?.events?.(parentEvents),
+    ...propEvents,
     ...recurseModules(mod, getStore, modulePath, events)
   }
 }
@@ -54,6 +58,8 @@ const recurseModules = (mod, getStore, modulePath = '', parentEvents) => {
 
 
 const _symbol = Symbol.for('respondEvent')
+const map = new Map
+
 
 const createEventsForModule = (events, getStore, modulePath, _namespace = '', parentType) => {
   if (!events) return
@@ -64,7 +70,11 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
 
     if (!parentType && isNamespace(config)) {
       const ns = _namespace ? `${_namespace}.${_type}` : _type
-      acc[_type] = createEventsForModule({ edit, ...config }, getStore, modulePath, ns)
+      const namespaceObject = createEventsForModule({ edit, ...config }, getStore, modulePath, ns)
+
+      acc[_type] = namespaceObject
+      map.set(config, namespaceObject)
+
       return acc
     }
 
@@ -98,6 +108,8 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
     Object.assign(event, config, info, { dispatch, _symbol }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
 
     acc[_type] = event
+    map.set(config, event)
+
     return acc
   }, {})
 }
@@ -134,4 +146,27 @@ const applyTransform = (store, e, dispatch) => {
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal
+}
+
+
+
+const preparePropEvents = (events, parentEvents) => {
+  return Object.keys(events).reduce((acc, k) => {
+    const config = events[k]
+
+    if (map.has(config)) {
+      acc[k] = map.get(config)
+    }
+    else if (typeof config === 'function') {
+      acc[k] = config(parentEvents)
+    }
+    else if (isNamespace(config)) {
+      acc[k] = preparePropEvents(config)
+    }
+    else {
+      throw new Error(`respond: event props must exist in parent`, k, config, events)
+    }
+    
+    return acc
+  }, {})
 }

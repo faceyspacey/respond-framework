@@ -10,8 +10,6 @@ import createEventFrom from '../utils/createEventFrom.js'
 import createCache from '../utils/createCache.js'
 import createCookies from '../cookies/index.js'
 import createHistoryDefault from '../history/index.js'
-// import createLazyModulesGetterProxy from '../valtio/createLazyModulesGetterProxy.js'
-// import { proxy as createProxy, snapshot } from '../valtio/vanilla.js'
 import snapshot from '../proxy/snapshot.js'
 import createProxy from '../proxy/createProxy.js'
 import shouldUseDevtools from '../utils/shouldUseDevtools.js'
@@ -19,7 +17,7 @@ import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import { sliceEventByModulePath, sliceModuleByModulePath, sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
-import { createModulePathsById, createModulePaths, createReducers, createSelectors } from '../utils/transformModules.js'
+import { createModulePathsById, createModulePaths, createReducers } from '../utils/transformModules.js'
 import defaultPlugins from './plugins/index.js'
 import defaultPluginsSync from './pluginsSync/index.js'
 import getSessionState from '../utils/getSessionState.js'
@@ -40,6 +38,7 @@ export default async (topModuleOriginal, settings) => {
   const modulePath = settings?.module || ''
   const topModule = !modulePath ? topModuleOriginal : Object.assign({}, sliceModuleByModulePath(topModuleOriginal, modulePath))
 
+  // inherit from topModuleOriginal if not available on selected topModule
   const topReplays = topModule.replays || topModuleOriginal.replays
   const topOptions = topModule.options || topModuleOriginal.options
 
@@ -79,7 +78,6 @@ export default async (topModuleOriginal, settings) => {
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
   const reducers = createReducers(topModule)
-  // const selectors = createSelectors(topModule, topModuleOriginal)
   const events = !modulePath ? eventsAll : createEvents(topModule, getStore)
 
   const eventFrom = createEventFrom(getStore, events)
@@ -153,10 +151,9 @@ export default async (topModuleOriginal, settings) => {
   const baseState = { cachedPaths: {}, token: replays.token }
   const top = { ...topModule }
 
+  top.initialState ??= {}
   Object.assign(top.initialState, baseState)
   
-  // Object.defineProperties(top.initialState, Object.getOwnPropertyDescriptors(topModule.initialState ?? {}))
-
   const initialState = isHMR
     ? snapshot(prevStore.state)
     : isProd || options.enablePopsInDevelopment
@@ -165,7 +162,8 @@ export default async (topModuleOriginal, settings) => {
 
   const state  = createProxy(initialState)
 
-  // state.events = events
+  state.events = events
+  recurseModules(top, state, events)
   // store.events = state.events
 
   store.state = state
@@ -184,4 +182,20 @@ export default async (topModuleOriginal, settings) => {
   replays.store = store
   
   return window.store = store
+}
+
+
+const recurseModules = (mod, state, events) => {
+  if (!mod.modules) return
+
+  
+  Object.keys(mod.modules).forEach(k => {
+    const child = mod.modules[k]
+    const nextState = state[k]
+    const nextEvents = events[k]
+
+    nextState.events = nextEvents
+
+    recurseModules(child, nextState, nextEvents)
+  })
 }

@@ -14,18 +14,20 @@ export default (id = createUniqueModuleId()) => {
 
 
   const useRespond = (sync, eventsOnly) => {
-    if (eventsOnly) return { events: useEvents() }
+    // if (eventsOnly) return { events: useEvents() }
 
     const storeTop = useContext(RespondContext)
     const modulePath = storeTop.modulePathsById[id]
 
     const store = sliceStoreByModulePath(storeTop, modulePath)
-    const events = store.events
+    // const events = store.events
 
     const snap = useSnapshot(storeTop.state, sync)
     const state = sliceByModulePath(snap, modulePath) // selector props require slicing storeTop.state to crawl to top of state tree
 
-    return { events, state, store }
+    // const events = sliceByModulePath(snap.events, modulePath)
+
+    return { events: state.events, state, store }
   }
 
 

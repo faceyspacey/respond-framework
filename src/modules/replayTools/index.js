@@ -6,6 +6,8 @@ import localStorage from '../../utils/localStorage.js'
 import sessionStorage from '../../utils/sessionStorage.js'
 
 
+export const module = true
+
 export { id } from './respond.js'
 
 export { default as events } from './events.js'

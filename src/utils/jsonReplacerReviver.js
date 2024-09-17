@@ -91,6 +91,8 @@ export const reviveEventFunctionReferences = (events, obj) => {
   if (!obj || typeof obj !== 'object' || obj instanceof Date) return obj
   if (Array.isArray(obj)) return obj.map(v => reviveEventFunctionReferences(events, v))
 
+  const next = Object.create(Object.getPrototypeOf(obj))
+
   return Object.keys(obj).reduce((acc, k) => {
     const v = obj[k]
 
@@ -102,5 +104,5 @@ export const reviveEventFunctionReferences = (events, obj) => {
     }
 
     return acc
-  }, {})
+  }, next)
 }

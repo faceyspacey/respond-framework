@@ -13,7 +13,7 @@ const createInitialState = async (mod, prevStore, topModels, path, parentState =
   const { topModule } = store
 
   const initial = mod.initialState
-  const initialState = typeof initial === 'function' ? await initial(store) : initial
+  const initialState = typeof initial === 'function' ? await initial(store) : initial || {}
     
   // topModule.selectors || {}
   const proto = {}
@@ -22,7 +22,7 @@ const createInitialState = async (mod, prevStore, topModels, path, parentState =
 
   Object.keys(selectors ?? {}).forEach(k => {
     const v = selectors[k]
-    const descriptor = v.length === 0 ? { get: v } : { value: v }
+    const descriptor = v.length === 0 ? { get: v, configurable: true } : { value: v, configurable: true }
     Object.defineProperty(proto, k, descriptor)
   })
 

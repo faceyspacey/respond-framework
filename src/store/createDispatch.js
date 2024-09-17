@@ -13,6 +13,8 @@ export default getStore => {
     const e = sliceEventByModulePath(ev)
     const store = sliceStoreByModulePath(getStore(), e.modulePath, true)
     
+    store.events = store.state.events
+    
     const { _plugins } = store.topModule
 
     e.meta = { ...e.meta, ...meta }
