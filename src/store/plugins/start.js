@@ -1,4 +1,4 @@
-import traverseModules from '../../utils/traverseModules.js'
+import { traverseModules } from '../../utils/sliceByModulePath.js'
 
 
 export default async (store, e) => {
@@ -30,9 +30,10 @@ const applyInitProperties = (store, e) => {
 
 const loadPlugins = async (store, e) => {
   const promises = []
-
-  traverseModules(store.getStore(), store => {
-    store.topModule._plugins.forEach(p => {
+  const top = store.getStore()
+  
+  traverseModules(top, store => {
+    store._plugins.forEach(p => {
       if (!p.load) return
 
       const promise = p.load(store, e)

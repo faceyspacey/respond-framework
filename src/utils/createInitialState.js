@@ -1,32 +1,24 @@
 import mergeModels from '../db/utils/mergeModels.js'
 import findOne from '../selectors/findOne.js'
-import { sliceStoreByModulePath } from './sliceByModulePath.js'
 
 
-export default (mod, prevStore, topModuleOriginal) => {
-  const topModels = !topModuleOriginal.db?.nested && mergeModels(topModuleOriginal.db?.models)
-  return createInitialState(mod, prevStore, topModels)
+export default (mod, store, db) => {
+  const topModels = !db?.nested && mergeModels(db?.models)
+  return createInitialState(mod, store, topModels)
 }
 
-const createInitialState = async (mod, prevStore, topModels, path, parentState = {}) => {
-  const store = sliceStoreByModulePath(prevStore, path)
-  const { topModule } = store
-
-  const initial = mod.initialState
-  const initialState = typeof initial === 'function' ? await initial(store) : initial || {}
-    
-  // topModule.selectors || {}
+const createInitialState = async (mod, store, topModels, path, parentState = {}) => {
   const proto = {}
+  const state = Object.create(proto)
 
-  const { selectors } = topModule 
+  const { initialState, selectors = {} } = mod
+  const initial = typeof initialState === 'function' ? await initialState(store) : initialState
 
-  Object.keys(selectors ?? {}).forEach(k => {
-    const v = selectors[k]
-    const descriptor = v.length === 0 ? { get: v, configurable: true } : { value: v, configurable: true }
-    Object.defineProperty(proto, k, descriptor)
-  })
-
-  Object.defineProperty(proto, 'findOne', { value: findOne })
+  Object.defineProperties(state, Object.getOwnPropertyDescriptors(initial ?? {}))
+  Object.defineProperties(state, Object.getOwnPropertyDescriptors(parentState[path] ?? {}))
+  
+  // Object.defineProperty(state, 'state', { get: () => state, enumerable: false })
+  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState })
 
   Object.defineProperties(proto, {
     findOne: { value: findOne },
@@ -34,60 +26,31 @@ const createInitialState = async (mod, prevStore, topModels, path, parentState =
     __module: { value: true }
   })
 
-  const state = Object.create(proto)
+  Object.keys(selectors).forEach(k => {
+    const v = selectors[k]
+    const kind = v.length === 0 ? 'get' : 'value'
 
-  // Object.assign(state, {
-  //   ...initialState,
-  //   ...parentState[path], // re-hydrate initialState specified by parent, such as in server-rendered JSON, eg: `<script>window.initialState = { websiteModule: JSON.parse(${JSON.stringify(json)}, respondReviver) }</script>`
-  // })
+    Object.defineProperty(proto, k, { [kind]: v, configurable: true })
+  })
 
-  Object.defineProperties(state, Object.getOwnPropertyDescriptors(initialState ?? {}))
-  Object.defineProperties(state, Object.getOwnPropertyDescriptors(parentState[path] ?? {}))
-  
-  if (topModule.props?.selectors) {
-    const { selectors } = topModule.props
+  if (mod.props?.selectors) {
+    const { selectors } = mod.props
 
     Object.keys(selectors).forEach(k => {
       const v = selectors[k]
+      const kind = v.length === 0 ? 'get' : 'value'
 
-      if (v.length === 0) { // getter
-        const get = function() {
-          return v.call(this._parent)
-        }
+      const v2 = v.length === 0
+        ? function() { return v.call(this._parent) }
+        : function(...args) { return v.apply(this._parent, args) }
 
-        Object.defineProperty(proto, k, { get })
-      }
-      else {
-        const value = function(...args) {
-          return v.apply(this._parent, args)
-        }
-
-        Object.defineProperty(proto, k, { value })
-      }
+      Object.defineProperty(proto, k, { [kind]: v2 })
     })
   }
 
-  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState })
-
-  const children = await recurseModules(mod, store, topModels, state)
-  Object.assign(state, children)
-
-  return state
-}
-
-
-
-
-const recurseModules = async (mod, store, topModels, parentState) => {
-  if (!mod.modules) return
-
-  const state = {}
-
-  for (const k in mod.modules) {
-    const child = mod.modules[k]
-
-    state[k] = await createInitialState(child, store, topModels, k, parentState)
+  for (const k of mod.moduleKeys) {
+    state[k] = await createInitialState(mod[k], store, topModels, k, state)
   }
-  
+
   return state
 }

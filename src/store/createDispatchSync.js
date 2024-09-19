@@ -1,21 +1,22 @@
 
-import { sliceStoreByModulePath, sliceEventByModulePath } from '../utils/sliceByModulePath.js'
-import traverseModules from '../utils/traverseModules.js'
+import sliceByModulePath, { sliceEventByModulePath, traverseModules } from '../utils/sliceByModulePath.js'
 import createPlugins from './createPlugins.js'
 
 
 export default getStore => {
-  const { defaultPluginsSync } = getStore().options
-
-  traverseModules(getStore(), store => {
-    store.topModule._pluginsSync = createPlugins(store, store.topModule.pluginsSync || defaultPluginsSync)
-  })
-
   return (ev, meta) => {
+    if (!getStore()._plugins) {
+      const top = getStore()
+
+      traverseModules(top, store => {
+        store._pluginsSync = createPlugins(store, top.options.defaultPluginsSync, store.pluginsSync)
+      })
+    }
+
     const e = sliceEventByModulePath(ev)
-    const store = sliceStoreByModulePath(getStore(), e.modulePath, true)
+    const store = sliceByModulePath(getStore(), e.modulePath)
     
-    const { _pluginsSync } = store.topModule
+    const { _pluginsSync } = store
 
     e.meta = { ...e.meta, ...meta }
   

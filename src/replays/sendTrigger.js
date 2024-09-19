@@ -18,7 +18,8 @@ export default function (store, eSlice, fullModulePathAlready = false) {
   const state = store.state.replayTools
 
   if (!e.meta?.skipped) {
-    store.prevState = store.getSnapshot(true)
+    const snap = Object.create(Object.getPrototypeOf(store))
+    store.prevState = Object.assign(snap, store.getSnapshot(true))
   }
 
   if (isProd && !store.options.productionReplayTools) return

@@ -1,6 +1,6 @@
-export default (store, plugins = store.options.defaultPlugins) => {
+export default (store, defaultPlugins, plugins = defaultPlugins) => {
   if (typeof plugins === 'function') {
-    plugins = plugins(store.options.defaultPlugins, store)
+    plugins = plugins(defaultPlugins, store)
   }
 
   return plugins.filter(p => p).map(p => {

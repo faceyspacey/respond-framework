@@ -18,10 +18,8 @@ export default (topModule, topModuleOriginal = topModule) => {
 export const createModule = (mod, modules, modulePath = '') => {
   createControllers(mod, modules, modulePath)
 
-  if (!mod.modules) return
-
-  Object.keys(mod.modules).forEach(k => {
-    const child = mod.modules[k]
+  mod.moduleKeys.forEach(k => {
+    const child = mod[k]
     const path = modulePath ? `${modulePath}.${k}` : k
 
     createModule(child, modules, path)

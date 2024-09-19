@@ -2,7 +2,7 @@ import fetch from './fetch.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
-import { sliceByModulePath } from '../utils.js'
+import sliceByModulePath from '../utils/sliceByModulePath.js'
 
 
 export default !isProd ? mock : topModule => {
@@ -35,7 +35,7 @@ const createControllerMethod = (db, controller, method, modulePath = '') => {
   if (method === 'make') {
     return doc => {
       const Class = options.nested
-        ? sliceByModulePath(modulePath, db.store.state).models[controller]
+        ? sliceByModulePath(db.store.state, modulePath).models[controller]
         : db.store.state.models[controller]
 
       return new Class({ ...doc, __type: controller })

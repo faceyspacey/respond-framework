@@ -129,18 +129,33 @@ dont hide _namespace, _type in state (only in actions)
 #- put events in state
 #- make useRespond get events from state
 
-- make snaps save in state as prevState
+#- make snaps save in state as prevState
 #- put the rest of things in state
 
 #- refactor transform/recursion to make use of new structure
+#- make entire module be initial state
+
 
 - remove findOne, findOnePlayer, etc -- problem is they also handle the case where u pass a pojo
 
+- children can specify their own props, and hi-jack access to parent state??
 
-make entire module be initial state
+
+
+
+combine things into options etc
+reducers
+
+hmr/replay createStore(topModuleOriginal)
+createController/clientDatabase
+
+access raw non-reactive state in component state
+remove initialState
+devtools
+
+hydrated parentState
+getSessionState needs protos hydrated
+
+
 extract reducers as any 2-3 arg functions in state
 extract 0-1 arg functions into selectors
-move other things into options
-
-
-- children can specify their own props, and hi-jack access to parent state??

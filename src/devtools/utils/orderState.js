@@ -15,7 +15,7 @@ const orderState = (state, store, mod, isSelectors) => {
   Object.keys(state).forEach(k => {
     const v = state[k]
 
-    const childMod = mod?.modules?.[k]
+    const childMod = mod?.moduleKeys?.includes(k) && mod[k]
     
     if (k === 'replayTools' && !store.replays.options.log) return
     

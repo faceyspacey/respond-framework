@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { AppRegistry } from 'react-native'
 import { createRoot } from 'react-dom/client'
-import { sliceModuleByModulePath } from '../utils/sliceByModulePath.js'
+import sliceByModulePath from '../utils/sliceByModulePath.js'
 import { isNative, isTest } from '../utils/bools.js'
 import RespondProvider from './Provider.js'
 
@@ -16,7 +16,7 @@ export default function render(props = {}) {
 
 
 const createApp = (store, props) => {
-  const mod = sliceModuleByModulePath(store.topModuleOriginal, store.replays.settings.module)
+  const mod = sliceByModulePath(store, store.replays.settings.module)
 
   const Provider = props.Provider || mod.components?.Provider || RespondProvider
   const { App, Error } = mod.components ?? {}

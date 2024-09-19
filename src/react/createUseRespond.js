@@ -1,6 +1,5 @@
 import { useContext, memo, forwardRef, useEffect } from 'react'
-import sliceByModulePath, { sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
-// import { useSnapshot } from '../valtio/index.js'
+import sliceByModulePath from '../utils/sliceByModulePath.js'
 import useSnapshot from '../proxy/useSnapshot.js'
 import RespondContext from './context.js'
 
@@ -9,32 +8,18 @@ export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const storeTop = useContext(RespondContext)
     const modulePath = storeTop.modulePathsById[id]
-    return sliceStoreByModulePath(storeTop, modulePath)
+    return sliceByModulePath(storeTop, modulePath)
   }
 
 
-  const useRespond = (sync, eventsOnly) => {
-    // if (eventsOnly) return { events: useEvents() }
-
+  const useRespond = sync => {
     const storeTop = useContext(RespondContext)
     const modulePath = storeTop.modulePathsById[id]
 
-    const store = sliceStoreByModulePath(storeTop, modulePath)
-    // const events = store.events
-
-    const snap = useSnapshot(storeTop.state, sync)
+    const snap = useSnapshot(storeTop, sync)
     const state = sliceByModulePath(snap, modulePath) // selector props require slicing storeTop.state to crawl to top of state tree
 
-    // const events = sliceByModulePath(snap.events, modulePath)
-
-    return { events: state.events, state, store }
-  }
-
-
-  const useEvents = () => {
-    const { events, modulePathsById } = useContext(RespondContext)
-    const modulePath = modulePathsById[id]
-    return sliceByModulePath(events, modulePath)
+    return { events: state.events, state, store: state }
   }
 
 

@@ -1,14 +1,14 @@
 import isNamespace from '../utils/isNamespace.js'
-import { stripModulePath, sliceModule } from '../utils/sliceByModulePath.js'
+import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export default (topModule, getStore) => {
-  const events = createEvents(topModule, getStore)
+export default (mod, getStore) => {
+  const events = createEvents(mod, getStore)
 
   events.init = createInit(getStore)
 
   map.clear()
-  
+
   return events
 }
 
@@ -44,10 +44,8 @@ const createEvents = (mod, getStore, modulePath = '', parentEvents) => {
 
 
 const recurseModules = (mod, getStore, modulePath = '', parentEvents) => {
-  if (!mod.modules) return
-
-  return Object.keys(mod.modules).reduce((events, k) => {
-    const child = mod.modules[k]
+  return mod.moduleKeys.reduce((events, k) => {
+    const child = mod[k]
     const path = modulePath ? `${modulePath}.${k}` : k
     
     events[k] = createEvents(child, getStore, path, parentEvents)
@@ -138,7 +136,7 @@ const applyTransform = (store, e, dispatch) => {
   }
 
   if (e.event.transform) {
-    const storeModule = sliceModule(store, e.modulePath)
+    const storeModule = sliceByModulePath(store, e.modulePath)
     payload = e.event.transform(storeModule, e.arg, e.meta) || {}
   }
 

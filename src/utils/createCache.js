@@ -1,4 +1,4 @@
-import { sliceStoreByModulePath } from './sliceByModulePath.js'
+import sliceByModulePath from './sliceByModulePath.js'
 
 
 const _symbol = Symbol.for('respondEvent')
@@ -63,7 +63,7 @@ export default (getStore, options = {}) => {
 
 function isCached (store, e, cache) {
   if (typeof cache === 'function') {
-    const storeSlice = sliceStoreByModulePath(store, e.modulePath)
+    const storeSlice = sliceByModulePath(store, e.modulePath)
     const cached = store.cache.get(e)
 
     return cache.call(e.event, storeSlice, e, cached)

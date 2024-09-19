@@ -16,7 +16,7 @@ import shouldUseDevtools from '../utils/shouldUseDevtools.js'
 import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
-import { sliceEventByModulePath, sliceModuleByModulePath, sliceStoreByModulePath } from '../utils/sliceByModulePath.js'
+import sliceByModulePath, { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
 import { createModulePathsById, createModulePaths, createReducers } from '../utils/transformModules.js'
 import defaultPlugins from './plugins/index.js'
 import defaultPluginsSync from './pluginsSync/index.js'
@@ -27,16 +27,28 @@ import displaySelectorsInDevtools from './utils/displaySelectorsInDevtools.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
 import { isProd, isDev, isTest } from '../utils/bools.js'
+import createDbProxy from '../db/utils/createDbProxy.js'
+
+
+
 
 
 export default async (topModuleOriginal, settings) => {
-  topModuleOriginal = { ...topModuleOriginal }
-  
+  // topModuleOriginal = { ...topModuleOriginal }
+
   const replay = !!settings && !isProd
   settings ??= await restoreSettings()
 
   const modulePath = settings?.module || ''
-  const topModule = !modulePath ? topModuleOriginal : Object.assign({}, sliceModuleByModulePath(topModuleOriginal, modulePath))
+  // const topModule = !modulePath ? topModuleOriginal : Object.assign({}, sliceByModulePath(topModuleOriginal, modulePath))
+  const topModule = !modulePath ? topModuleOriginal : sliceByModulePath(topModuleOriginal, modulePath)
+
+  // topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
+  if (!isProd || options.productionReplayTools) {
+    topModule.replayTools = replayTools
+  }
+
+  saveModuleKeys(topModuleOriginal)
 
   // inherit from topModuleOriginal if not available on selected topModule
   const topReplays = topModule.replays || topModuleOriginal.replays
@@ -64,9 +76,7 @@ export default async (topModuleOriginal, settings) => {
 
   const db = createClientDatabase(topModule, topModuleOriginal)
 
-  topModule.modules = !isProd || options.productionReplayTools ? { ...topModule.modules, replayTools } : topModule.modules
-
-  const getStore = () => store
+  const getStore = () => state
 
   const prevStore = window.store
   const isHMR = !!prevStore && !replays.replay
@@ -74,6 +84,8 @@ export default async (topModuleOriginal, settings) => {
   const modulePathsAll = createModulePaths(topModuleOriginal)
 
   const eventsAll = createEvents(topModuleOriginal, getStore)
+  
+  topModule.id ??= '1'
   
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
@@ -102,7 +114,7 @@ export default async (topModuleOriginal, settings) => {
       const isSelfOrAncestor = e.modulePath.indexOf(send.modulePath) === 0
       if (!isSelfOrAncestor) return
       
-      const storeSlice = sliceStoreByModulePath(store, send.modulePath)
+      const storeSlice = sliceByModulePath(store, send.modulePath)
       const eSlice = sliceEventByModulePath(e, send.modulePath)
 
       return send(storeSlice, eSlice)
@@ -157,14 +169,29 @@ export default async (topModuleOriginal, settings) => {
   const initialState = isHMR
     ? snapshot(prevStore.state)
     : isProd || options.enablePopsInDevelopment
-      ? getSessionState(events) || await createInitialState(top, store, topModuleOriginal)
-      : await createInitialState(top, store, topModuleOriginal)
+      ? getSessionState(events) || await createInitialState(top, store, db)
+      : await createInitialState(top, store, db)
+
+  Object.assign(initialState, store)
+
+  const s = { ...store }
+  delete s.events
+  delete s.prevStore
+  delete s.topModule
+  delete s.topModuleOriginal
+  delete s.modulePath
+  delete s.reducers
+  delete s.options
+
+
+  recurseModules(top, initialState, events, reducers, topModuleOriginal.db.nested, db, () => store.devtools, s)
+
+  Object.defineProperty(initialState, 'state', { get: () => state, enumerable: false })
+  Object.defineProperty(initialState.replayTools, 'state', { get: () => state.replayTools, enumerable: false })
+  Object.defineProperty(initialState.admin, 'state', { get: () => state.admin, enumerable: false })
+  Object.defineProperty(initialState.website, 'state', { get: () => state.website, enumerable: false })
 
   const state  = createProxy(initialState)
-
-  state.events = events
-  recurseModules(top, state, events)
-  // store.events = state.events
 
   store.state = state
   store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
@@ -173,7 +200,8 @@ export default async (topModuleOriginal, settings) => {
     reduce(store, events.init(), true, true)
   }
 
-  store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
+  // store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
+  store.devtools = createDevtoolsMock(store)
 
   store.dispatch = createDispatch(getStore)
   store.dispatchSync = createDispatchSync(getStore)
@@ -181,21 +209,51 @@ export default async (topModuleOriginal, settings) => {
   db.store = store
   replays.store = store
   
+
+  // state.devtools = store.devtools
+  state.dispatch = store.dispatch
+  state.dispatchSync = store.dispatchSync
+  state.prevState = store.prevState
+
+  db.store = state
+  replays.store = state
+
+  
+  return window.store = state
+
   return window.store = store
 }
 
 
-const recurseModules = (mod, state, events) => {
-  if (!mod.modules) return
-
+const recurseModules = (mod, state, events, reducers, nested, db, getDevtools, store) => {
+  state.events = events
+  state.reducers = reducers
+  Object.assign(state, store)
   
-  Object.keys(mod.modules).forEach(k => {
-    const child = mod.modules[k]
-    const nextState = state[k]
-    const nextEvents = events[k]
+  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components } = mod
+  Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components })
 
-    nextState.events = nextEvents
+  mod.db = !nested ? db : createDbProxy(db, modulePath)
+  state.db = mod.db
 
-    recurseModules(child, nextState, nextEvents)
+  Object.defineProperty(state, 'devtools', { get: getDevtools })
+
+  mod.moduleKeys.forEach(k => {
+    recurseModules(mod[k], state[k], events[k], reducers[k], nested, db, getDevtools, store)
   })
+}
+
+
+
+const saveModuleKeys = mod => {
+  mod.moduleKeys = Object.keys(mod).reduce((acc, k) => {
+    child = mod[k]
+
+    if (child?.module) {
+      acc.push(k)
+      saveModuleKeys(child)
+    }
+
+    return acc
+  }, [])
 }

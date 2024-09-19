@@ -46,13 +46,13 @@ const reduceAllBranches = (st, e, store, mod, path = []) => {
     const reduce = reducers[k]
     
     if (typeof reduce === 'object') {
-      const childMod = mod?.modules?.[k] // could be child module or reducer "group" within current module
+      const childMod = mod?.moduleKeys?.includes(k) && mod[k] // could be child module or reducer "group" within current module
 
       if (st[k] === undefined) {
         st[k] = {} // create empty object for module/group to be reduced in next call
       }
 
-      const childStoreMaybe =  {
+      const childStoreMaybe = {
         ...store,
         reducers: reduce,
         state: childMod ? state[k] : state,
@@ -89,7 +89,7 @@ const reduceAllBranches = (st, e, store, mod, path = []) => {
 const reduceBranch = (st, e, store, mod, remainingPaths, path = []) => {
   const k = remainingPaths[0]
 
-  const childMod = mod?.modules?.[k]
+  const childMod = mod?.moduleKeys?.includes(k) && mod[k]
 
   if (!childMod?.ignoreChild) { // used to ignore replayTools
     reduceLimb(st, e, store, mod, path)
@@ -132,7 +132,7 @@ const reduceLimb = (st, e, store, mod, path) => {
     const reduce = reducers[k]
 
     if (typeof reduce === 'object') {
-      const childMod = mod?.modules?.[k]
+      const childMod = mod?.moduleKeys?.includes(k) && mod[k]
 
       if (!childMod) { // reducer namespace object within current module
         const nestedStore = { ...store, reducers: reduce }
