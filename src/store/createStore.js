@@ -17,7 +17,7 @@ import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import sliceByModulePath, { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
-import { createModulePathsById, createModulePaths, createReducers } from '../utils/transformModules.js'
+import { createModulePaths, createModulePathsById } from '../utils/createModulePaths.js'
 import defaultPlugins from './plugins/index.js'
 import defaultPluginsSync from './pluginsSync/index.js'
 import getSessionState from '../utils/getSessionState.js'
@@ -89,11 +89,13 @@ export default async (topModuleOriginal, settings) => {
   
   const modulePathsById = createModulePathsById(topModule)
   const modulePaths = createModulePaths(topModule)
-  const reducers = createReducers(topModule)
   const events = !modulePath ? eventsAll : createEvents(topModule, getStore)
 
   const eventFrom = createEventFrom(getStore, events)
   const fromEvent = createFromEvent(getStore)
+
+  const dispatch = createDispatch(getStore)
+  const dispatchSync = createDispatchSync(getStore)
 
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
 
@@ -110,11 +112,11 @@ export default async (topModuleOriginal, settings) => {
   }
 
   const notify = e => {
-    const sent = store.listeners.map(send => {
+    const sent = state.listeners.map(send => {
       const isSelfOrAncestor = e.modulePath.indexOf(send.modulePath) === 0
       if (!isSelfOrAncestor) return
       
-      const storeSlice = sliceByModulePath(store, send.modulePath)
+      const storeSlice = sliceByModulePath(state, send.modulePath)
       const eSlice = sliceEventByModulePath(e, send.modulePath)
 
       return send(storeSlice, eSlice)
@@ -156,7 +158,7 @@ export default async (topModuleOriginal, settings) => {
   
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
-  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, reducers, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, getSnapshot, options, addToCache, addToCacheDeep, history, getStore, onError, stringifyState, parseJsonState }
+  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, getSnapshot, options, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
   store.history = createHistory(store)
 
@@ -180,21 +182,26 @@ export default async (topModuleOriginal, settings) => {
   delete s.topModule
   delete s.topModuleOriginal
   delete s.modulePath
-  delete s.reducers
   delete s.options
 
 
-  recurseModules(top, initialState, events, reducers, topModuleOriginal.db.nested, db, () => store.devtools, s)
+  recurseModules(top, initialState, events, topModuleOriginal.db.nested, db, () => store.devtools, s)
 
-  Object.defineProperty(initialState, 'state', { get: () => state, enumerable: false })
+  // Object.defineProperty(initialState, 'state', { get: () => state, enumerable: false })
   Object.defineProperty(initialState.replayTools, 'state', { get: () => state.replayTools, enumerable: false })
   Object.defineProperty(initialState.admin, 'state', { get: () => state.admin, enumerable: false })
   Object.defineProperty(initialState.website, 'state', { get: () => state.website, enumerable: false })
 
+  const proto = Object.getPrototypeOf(initialState)
+
+  Object.defineProperties(proto, {
+    state: { get: () => state, enumerable: false },
+  })
+
   const state  = createProxy(initialState)
 
   store.state = state
-  store.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
+  state.prevState = isHMR ? prevStore.prevState : getSnapshot(true)
 
   if (!isHMR) {
     reduce(store, events.init(), true, true)
@@ -203,35 +210,28 @@ export default async (topModuleOriginal, settings) => {
   // store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
   store.devtools = createDevtoolsMock(store)
 
-  store.dispatch = createDispatch(getStore)
-  store.dispatchSync = createDispatchSync(getStore)
-  
-  db.store = store
-  replays.store = store
-  
-
-  // state.devtools = store.devtools
-  state.dispatch = store.dispatch
-  state.dispatchSync = store.dispatchSync
-  state.prevState = store.prevState
-
   db.store = state
   replays.store = state
 
-  
   return window.store = state
-
-  return window.store = store
 }
 
 
-const recurseModules = (mod, state, events, reducers, nested, db, getDevtools, store) => {
+const recurseModules = (mod, state, events, nested, db, getDevtools, store, parent = {}, moduleName) => {
   state.events = events
-  state.reducers = reducers
   Object.assign(state, store)
   
-  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components } = mod
-  Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components })
+  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers, props } = mod
+  Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers })
+
+  if (props?.reducers) {
+    parent.childModuleReducers ??= {}
+    parent.childModuleReducers[moduleName] = props.reducers
+
+    Object.keys(props.reducers).forEach(k => {
+      delete state.reducers[k]
+    })
+  }
 
   mod.db = !nested ? db : createDbProxy(db, modulePath)
   state.db = mod.db
@@ -239,7 +239,7 @@ const recurseModules = (mod, state, events, reducers, nested, db, getDevtools, s
   Object.defineProperty(state, 'devtools', { get: getDevtools })
 
   mod.moduleKeys.forEach(k => {
-    recurseModules(mod[k], state[k], events[k], reducers[k], nested, db, getDevtools, store)
+    recurseModules(mod[k], state[k], events[k], nested, db, getDevtools, store, state, k)
   })
 }
 

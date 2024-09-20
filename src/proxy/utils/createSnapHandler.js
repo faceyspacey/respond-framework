@@ -21,6 +21,9 @@ export default (snap, state) => {
       recordUsage(state.affected, 'getOwnPropertyDescriptor', snap, k)
       return Reflect.getOwnPropertyDescriptor(snap, k)
     },
+    set(snap, k, v, proxy) {
+      snap.state[k] = v
+    },
     get(snap, k, proxy) {
       if (k === '_parent') return state.parentProxy
 

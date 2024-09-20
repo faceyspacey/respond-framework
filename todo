@@ -143,19 +143,24 @@ dont hide _namespace, _type in state (only in actions)
 
 
 
+#revisit moduleKeys
+#hydrated parentState
+#props with new format (eg reducers in state)
+#reducers
+
+#hmr/replay createStore(topModuleOriginal)
+#createController/clientDatabase
+
+
 combine things into options etc
-reducers
-
-hmr/replay createStore(topModuleOriginal)
-createController/clientDatabase
-
 access raw non-reactive state in component state
 remove initialState
+
+reducer props from parent, using Map, and then use selector in its place
+for both events + reducer props support new definitions, which are placed on the parent
+
 devtools
-
-hydrated parentState
 getSessionState needs protos hydrated
-
 
 extract reducers as any 2-3 arg functions in state
 extract 0-1 arg functions into selectors
