@@ -18,7 +18,7 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(parentState[path] ?? {}))
   
   // Object.defineProperty(state, 'state', { get: () => state, enumerable: false })
-  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState })
+  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState }) // NOTE: parentState needs to be made proxy instead
 
   Object.defineProperties(proto, {
     findOne: { value: findOne },
@@ -35,6 +35,7 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
 
   if (mod.props?.selectors) {
     const { selectors } = mod.props
+    const { reducers = {} } = mod
 
     Object.keys(selectors).forEach(k => {
       const v = selectors[k]
@@ -44,7 +45,10 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
         ? function() { return v.call(this._parent) }
         : function(...args) { return v.apply(this._parent, args) }
 
-      Object.defineProperty(proto, k, { [kind]: v2 })
+      Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
+
+      if (reducers[k]) reducers[k].__overridenByProp = true   // delete potential child reducer mock, so selector takes precedence
+      delete state[k]                                         // delete potential initialState too
     })
   }
 

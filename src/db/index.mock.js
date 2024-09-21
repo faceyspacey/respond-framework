@@ -51,7 +51,7 @@ export default {
     const model = await this._findOne(id || selector)
 
     if (model) {
-      Object.assign(model, doc) // todo: make deep merge (maybe)
+      Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
       model.updatedAt = new Date
       this.docs[model.id] = model
     }
@@ -264,13 +264,11 @@ export default {
 
   create(doc) {
     const id = doc?.id || objectId()
-    const instance = { ...doc, id, __type: this._name }
-    return Object.defineProperties(instance, this.model())
+    return new this.Class({ ...doc, id, __type: this._name })
   },
 
   make(doc) {
-    const instance = { ...doc, __type: this._name }
-    return Object.defineProperties(instance, this.model())
+    return new this.Class({ ...doc, __type: this._name })
   },
 
   insertSeed(docsObject = {}) {
@@ -339,7 +337,7 @@ export default {
     const model = await this._findOne(id || selector)
   
     if (model) {
-      Object.assign(model, doc)
+      Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
       model.updatedAt = new Date
       this.docs[model.id] = model
     }
@@ -350,7 +348,7 @@ export default {
   _create(doc) {
     const id = doc?.id || objectId()
     const instance = { ...doc, id, __type: this._name }
-    return Object.defineProperties(instance, this.model())
+    return new this.Class({ ...doc, id, __type: this._name })
   },
 
 

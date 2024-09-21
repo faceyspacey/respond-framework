@@ -14,9 +14,9 @@ export default !isProd ? mock : {
 
     selector = this._toObjectIdsSelector(selector)
 
-    const model = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
+    const doc = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
 
-    return model && this._create(model)
+    return doc && this._create(doc)
   },
 
   async find(selector, {
@@ -59,11 +59,7 @@ export default !isProd ? mock : {
       $currentDate: { updatedAt: true }
     }, { projection: this._toProject(project), returnDocument: 'after' })
 
-    if (!result.value) return
-
-    const model = result.value
-
-    return this._create(model)
+    return result.value && this._create(result.value)
   },
 
   async upsert(selector, doc, { insertDoc, project } = {}) {
@@ -73,11 +69,7 @@ export default !isProd ? mock : {
       $currentDate: { updatedAt: true }
     }, { upsert: true, projection: this._toProject(project), returnDocument: 'after' })
 
-    if (!result.value) return
-
-    const model = result.value
-
-    return this._create(model)
+    return result.value && this._create(result.value)
   },
 
   async findAll(selector, options) {
@@ -320,16 +312,14 @@ export default !isProd ? mock : {
   },
 
   create(doc) {
-    const instance = { ...this._fromObjectIds(doc) }              // mongo ObjectId objects converted to strings for ez client consumption
-    instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
-    delete instance._id                                           // bye bye _id
-    
-    return Object.defineProperties(instance, this.model())
+    doc = { ...this._fromObjectIds(doc) }               // mongo ObjectId objects converted to strings for ez client consumption
+    doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
+    delete doc._id                                      // bye bye _id
+    return new this.Class(doc)
   },
 
   make(doc) {
-    const instance = { ...doc, __type: this._name }
-    return Object.defineProperties(instance, this.model())
+    return new this.Class({ ...doc, __type: this._name })
   },
 
   mongo() {
@@ -355,9 +345,9 @@ export default !isProd ? mock : {
 
     selector = this._toObjectIdsSelector(selector)
 
-    const model = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
+    const doc = await this.mongo().findOne(selector, { projection: this._toProject(project), sort })
 
-    return model && this._create(model)
+    return doc && this._create(doc)
   },
 
   async _find(selector, {
@@ -395,26 +385,20 @@ export default !isProd ? mock : {
 
     selector = this._toObjectIdsSelector(id ? { id } : selector)
 
-
     const result = await this.mongo().findOneAndUpdate(selector, {
       $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
     }, { projection: this._toProject(project), returnDocument: 'after' })
 
 
-    if (!result.value) return
-
-    const model = result.value
-
-    return this._create(model)
+    return result.value && this._create(result.value)
   },
 
   _create(doc) {
-    const instance = { ...this._fromObjectIds(doc) }              // mongo ObjectId objects converted to strings for ez client consumption
-    instance.id ??= instance._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
-    delete instance._id                                           // bye bye _id
-    
-    return Object.defineProperties(instance, this.model())
+    doc = { ...this._fromObjectIds(doc) }         // mongo ObjectId objects converted to strings for ez client consumption
+    doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
+    delete doc._id                                      // bye bye _id
+    return new this.Class(doc)
   },
 
 

@@ -11,8 +11,16 @@ export default (dbRaw, options = {}) => {
 
     const inherit = coll.inherit !== false
 
-    const base = { _name: k, _namePlural: k + 's', db: getDb, model: () => descriptors }
+    const Class = function(doc) {
+      if (!doc) return
+      Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instant properties of the same name as prototype getters without error
+    }
+
+    const base = { _name: k, _namePlural: k + 's', db: getDb, Class }
     const descriptors = createModelDescriptors(base, inherit ? model : {}, models.shared?.[k],  models.server?.[k])
+
+    Object.defineProperty(Class, 'name', { value: k })
+    Object.defineProperties(Class.prototype, descriptors)
 
     db[k] = { ...base, config, ...(inherit ? collection : {}), ...coll, docs }
   })
@@ -25,8 +33,5 @@ const getDb = name => name ? db[name] : db
 
 const g = Object.getOwnPropertyDescriptors
 
-const createModelDescriptors = (base, model, shared = {}, server = {}) => {
-  const m = Object.assign({}, g(base), g(model), g(shared), g(server))
-  Object.values(m).forEach(v => v.enumerable = false)
-  return m
-}
+const createModelDescriptors = (base, model, shared = {}, server = {}) =>
+  Object.assign({}, g(base), g(model), g(shared), g(server))

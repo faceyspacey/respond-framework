@@ -2,7 +2,6 @@ import { isObject, isOwnKeysChanged } from './helpers.js'
 
 
 export default function isChanged(prev, next, affected, cache = new WeakMap, path) {
-  // console.log('isChanged', path, Object.is(prev, next), (!isObject(prev) || !isObject(next)), !affected.get(prev), cache.get(prev)?.next === next && cache.get(prev)?.changed, prev, next)
   if (Object.is(prev, next)) return false
   if (!isObject(prev) || !isObject(next)) return true
 

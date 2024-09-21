@@ -29,9 +29,10 @@ const createInit = () => {
 
 
 const createEvents = (mod, getStore, modulePath = '', parentEvents) => {
-  const events = createEventsForModule({ edit, ...mod.events }, getStore, modulePath)
+  const configs = { edit, ...mod.events }
+  const events = createEventsForModule(configs, getStore, modulePath)
 
-  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, parentEvents)
+  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, configs, parentEvents)
 
   return {
     ...events,
@@ -148,23 +149,25 @@ const applyTransform = (store, e, dispatch) => {
 
 
 
-const preparePropEvents = (events, parentEvents) => {
-  return Object.keys(events).reduce((acc, k) => {
-    const config = events[k]
+const preparePropEvents = (propEvents, events = {}, parentEvents) => {
+  return Object.keys(propEvents).reduce((acc, k) => {
+    const config = propEvents[k]
+    const eventOrNamespace = map.get(config)
 
-    if (map.has(config)) {
-      acc[k] = map.get(config)
-    }
-    else if (typeof config === 'function') {
-      acc[k] = config(parentEvents)
+    if (eventOrNamespace) {
+      acc[k] = eventOrNamespace
     }
     else if (isNamespace(config)) {
-      acc[k] = preparePropEvents(config)
+      acc[k] = preparePropEvents(config, events[k], parentEvents)
     }
     else {
-      throw new Error(`respond: event props must exist in parent`, k, config, events)
+      throw new Error(`respond: event props must exist in parent`, k, config)
     }
     
+    if (events[k]) {
+      map.set(events[k], acc[k]) // if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in map.get(config)
+    }
+
     return acc
   }, {})
 }

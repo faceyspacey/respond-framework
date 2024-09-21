@@ -37,7 +37,6 @@ export default wrapInActForTests((storeSlice, eSlice, sync, initialReduction) =>
 
 
 const reduceAllModules = (e, store) => {
-  reduceModule(store, e, store._parent, store.props?.reducers)
   reduceModule(store, e, store, store.reducers)
   store.moduleKeys.forEach(k => reduceAllModules(e, store[k]))
 }
@@ -49,10 +48,6 @@ const reduceBranch = (e, store, remainingPaths) => {
 
   reduceModule(store, e, store, store.reducers, store[k]?.ignoreChild)
 
-  store.moduleKeys.forEach(k => {
-    reduceModule(store[k], e, store, store.childModuleReducers?.[k])
-  })
-  
   if (!k) return
 
   const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
@@ -64,17 +59,21 @@ const reduceBranch = (e, store, remainingPaths) => {
 
 
 const reduceModule = (state, e, store, reducers, ignore) => {
-  if (!reducers || ignore) return
+  if (ignore) return
 
+  store.ctx.modulePathReduced = store.modulePath
+  
   for (const k in reducers) {
     const reduce = reducers[k]
-    
-    if (typeof reduce === 'object') {
+
+    if (reduce.__overridenByProp) {
+      continue
+    }
+    else if (typeof reduce === 'object') {
       if (!state[k]) state[k] = {}
       reduceModule(state[k], e, store, reduce)
     }
     else {
-      store.ctx.modulePathReduced = store.modulePath
       state[k] = reduce(state[k], e, store, state)
     }
   }

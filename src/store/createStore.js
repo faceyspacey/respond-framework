@@ -34,6 +34,8 @@ import createDbProxy from '../db/utils/createDbProxy.js'
 
 
 export default async (topModuleOriginal, settings) => {
+  window.topModuleOriginal = topModuleOriginal
+  window.admin = topModuleOriginal.admin
   // topModuleOriginal = { ...topModuleOriginal }
 
   const replay = !!settings && !isProd
@@ -158,7 +160,11 @@ export default async (topModuleOriginal, settings) => {
   
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
 
-  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, topModuleOriginal, topModule, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, getSnapshot, options, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const store = { ...merge, cookies, db, replays, render, refs: {}, ctx: { init: true }, listeners: [], promises, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, prevStore, events, modulePath: '', eventsAll, modulePathsAll, modulePaths, modulePathsById, cache, subscribe, reduce, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, getSnapshot, options, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  Object.defineProperties(store, {
+    topModule: { value: topModule, enumerable: false, configurable: true },
+    topModuleOriginal: { value: topModule, enumerable: false, configurable: true },
+  })
   
   store.history = createHistory(store)
 
@@ -174,7 +180,8 @@ export default async (topModuleOriginal, settings) => {
       ? getSessionState(events) || await createInitialState(top, store, db)
       : await createInitialState(top, store, db)
 
-  Object.assign(initialState, store)
+  // Object.assign(initialState, store)
+  Object.defineProperties(initialState, Object.getOwnPropertyDescriptors(store))
 
   const s = { ...store }
   delete s.events
@@ -188,14 +195,14 @@ export default async (topModuleOriginal, settings) => {
   recurseModules(top, initialState, events, topModuleOriginal.db.nested, db, () => store.devtools, s)
 
   // Object.defineProperty(initialState, 'state', { get: () => state, enumerable: false })
-  Object.defineProperty(initialState.replayTools, 'state', { get: () => state.replayTools, enumerable: false })
-  Object.defineProperty(initialState.admin, 'state', { get: () => state.admin, enumerable: false })
-  Object.defineProperty(initialState.website, 'state', { get: () => state.website, enumerable: false })
+  Object.defineProperty(initialState.replayTools, 'state', { get: () => state.replayTools, enumerable: false, configurable: true })
+  Object.defineProperty(initialState.admin, 'state', { get: () => state.admin, enumerable: false, configurable: true })
+  Object.defineProperty(initialState.website, 'state', { get: () => state.website, enumerable: false, configurable: true })
 
   const proto = Object.getPrototypeOf(initialState)
 
   Object.defineProperties(proto, {
-    state: { get: () => state, enumerable: false },
+    state: { get: () => state, enumerable: false, configurable: true },
   })
 
   const state  = createProxy(initialState)
@@ -207,11 +214,10 @@ export default async (topModuleOriginal, settings) => {
     reduce(store, events.init(), true, true)
   }
 
-  // store.devtools = shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
-  store.devtools = createDevtoolsMock(store)
+  store.devtools = !shouldUseDevtools(options) ? createDevTools(store) : createDevtoolsMock(store)
 
-  db.store = state
-  replays.store = state
+  Object.defineProperty(db, 'store', { enumerable: false, configurable: true, value: state })
+  Object.defineProperty(replays, 'store', { enumerable: false, configurable: true, value: state })
 
   return window.store = state
 }
@@ -221,22 +227,35 @@ const recurseModules = (mod, state, events, nested, db, getDevtools, store, pare
   state.events = events
   Object.assign(state, store)
   
-  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers, props } = mod
+  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props } = mod
   Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers })
 
   if (props?.reducers) {
-    parent.childModuleReducers ??= {}
-    parent.childModuleReducers[moduleName] = props.reducers
+    const propsReducers = props.reducers
+    const parentReducers = parent.reducers
 
-    Object.keys(props.reducers).forEach(k => {
-      delete state.reducers[k]
+    const proto = Object.getPrototypeOf(state)
+    const parentKeys = Object.keys(parentReducers)
+
+    Object.keys(propsReducers).forEach(k => {
+      const reducer = propsReducers[k]
+      const parentK = parentKeys.find(k => parentReducers[k] === reducer)
+
+      const k2 = parentK ?? moduleName + '_' + k
+
+      parentReducers[k2] = reducer
+
+      const get = function() { return this._parent[k2] }
+      Object.defineProperty(proto, k, { get, configurable: true })
+
+      if (reducers[k]) reducers[k].__overridenByProp = true   // delete potential child reducer mock, so selector takes precedence
+      delete state[k]                                         // delete potential initialState too
     })
   }
 
-  mod.db = !nested ? db : createDbProxy(db, modulePath)
-  state.db = mod.db
+  Object.defineProperty(state, 'db', { enumerable: false, configurable: true, value: !nested ? db : createDbProxy(db, modulePath) })
 
-  Object.defineProperty(state, 'devtools', { get: getDevtools })
+  Object.defineProperty(state, 'devtools', { get: getDevtools, configurable: true })
 
   mod.moduleKeys.forEach(k => {
     recurseModules(mod[k], state[k], events[k], nested, db, getDevtools, store, state, k)
@@ -249,7 +268,7 @@ const saveModuleKeys = mod => {
   mod.moduleKeys = Object.keys(mod).reduce((acc, k) => {
     child = mod[k]
 
-    if (child?.module) {
+    if (child?.module === true) {
       acc.push(k)
       saveModuleKeys(child)
     }
