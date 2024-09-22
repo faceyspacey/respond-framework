@@ -7,19 +7,19 @@ import sessionStorage from '../utils/sessionStorage.js'
 
 
 export default function (store, eSlice, fullModulePathAlready = false) {
+  store = store.getStore()
+
   if (eSlice.modulePath === 'replayTools' && !this.options.log) {
-    store.prevState.replayTools = store.getSnapshot(true).replayTools
+    store.prevState.replayTools = store.snapshot(store.replayTools)
     return
   }
-
-  store = store.getStore()
   
   const e = fullModulePathAlready ? eSlice : fullPath(eSlice)
   const state = store.state.replayTools
 
   if (!e.meta?.skipped) {
     const snap = Object.create(Object.getPrototypeOf(store))
-    store.prevState = Object.assign(snap, store.getSnapshot(true))
+    store.prevState = Object.assign(snap, store.snapshot(store))
   }
 
   if (isProd && !store.options.productionReplayTools) return

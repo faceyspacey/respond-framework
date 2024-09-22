@@ -5,7 +5,7 @@ import { isProd } from '../utils/bools.js'
 import sliceByModulePath from '../utils/sliceByModulePath.js'
 
 
-export default !isProd ? mock : topModule => {
+export default !isProd ? mock : mod => {
   const options = {
     nested: false,
     getContext() {},
@@ -18,7 +18,7 @@ export default !isProd ? mock : topModule => {
     sendNotification(db, ...args) {
       return db.store.devtools.sendNotification(...args)
     },
-    ...topModule.db
+    ...mod.db
   }
 
   return createDbProxy({ options, createControllerMethod })

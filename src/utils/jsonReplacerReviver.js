@@ -42,10 +42,10 @@ export const createReviverWithModels = models => {
   if (!models) return createReviver()
     
   return (k, v) => (dateKeyReg.test(k) && typeof v !== 'object' && v)
-      ? new Date(v)
-      : v?.__type
-        ? new models[v.__type](v)
-        : v
+    ? new Date(v)
+    : v?.__type
+      ? new models[v.__type](v)
+      : v
 }
 
 

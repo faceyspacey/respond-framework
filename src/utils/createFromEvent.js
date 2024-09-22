@@ -22,8 +22,6 @@ export default getStore => e => {
 
   const toPath = cache[path] = cache[path] || compile(path)
 
-  let url
-
   try {
     if (e.event.toLocation) {
       const loc = e.event.toLocation(getStore(), e)     // expected: { pathname: '/foo', query: { bar: 'baz}, hash='bla' } -- you can just return a query obj, and don't need to parse parse/prepare anything

@@ -17,7 +17,7 @@ export default (store, renderer) => (e, o) => {
   
   if (o.snapState || o.logState) {
     const prev = store.prevState
-    const next = store.getSnapshot()
+    const next = store.snapshot(store)
 
     const label = 'state' + suffix
 

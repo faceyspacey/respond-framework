@@ -1,4 +1,4 @@
-export default store => {
+export default () => {
   return {  
     send() {},
     sendPluginNotification() {},

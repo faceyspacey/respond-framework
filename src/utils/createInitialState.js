@@ -1,13 +1,27 @@
+import createDbProxy from '../db/utils/createDbProxy.js'
 import mergeModels from '../db/utils/mergeModels.js'
 import findOne from '../selectors/findOne.js'
+import { isProd } from './bools.js'
+import getSessionState from './getSessionState.js'
 
 
-export default (mod, store, db) => {
-  const topModels = !db?.nested && mergeModels(db?.models)
-  return createInitialState(mod, store, topModels)
+export default ({ ...mod }, store, events, db, token) => {
+  if (isProd || mod.options.enablePopsInDevelopment) {
+    const state = getSessionState(mod.events) // events won't exist yet in new format
+    if (state) return Object.assign(state, store)
+  }
+
+  mod.initialState ??= {}
+  Object.assign(mod.initialState, { token, cachedPaths: {} })
+
+  const topModels = !store.topModuleOriginal.db?.nested && mergeModels(store.topModuleOriginal.db?.models)
+  const state = createInitialState(mod, store, events, topModels, db, undefined, {})
+
+  return Object.assign(state, store)
 }
 
-const createInitialState = async (mod, store, topModels, path, parentState = {}) => {
+
+const createInitialState = async (mod, store, events, topModels, db, moduleName, parent = {}) => {
   const proto = {}
   const state = Object.create(proto)
 
@@ -15,15 +29,21 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
   const initial = typeof initialState === 'function' ? await initialState(store) : initialState
 
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(initial ?? {}))
-  Object.defineProperties(state, Object.getOwnPropertyDescriptors(parentState[path] ?? {}))
+  Object.defineProperties(state, Object.getOwnPropertyDescriptors(parent[moduleName] ?? {}))
+
+  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, } = mod
+  Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers, events })
   
-  // Object.defineProperty(state, 'state', { get: () => state, enumerable: false })
-  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parentState }) // NOTE: parentState needs to be made proxy instead
+  Object.defineProperty(state, 'state', { enumerable: false, configurable: true, get: () => store.getProxy(state) })
+  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parent })
 
   Object.defineProperties(proto, {
+    ...Object.getOwnPropertyDescriptors(store),
     findOne: { value: findOne },
     models: { value: topModels || mergeModels(mod.db?.models) },
-    __module: { value: true }
+    db: { value: !store.topModuleOriginal.db?.nested ? db : createDbProxy(db, modulePath) },
+    replays: { value: store.replays },
+    __module: { value: true },
   })
 
   Object.keys(selectors).forEach(k => {
@@ -33,12 +53,11 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
     Object.defineProperty(proto, k, { [kind]: v, configurable: true })
   })
 
-  if (mod.props?.selectors) {
-    const { selectors } = mod.props
-    const { reducers = {} } = mod
+  if (props.selectors) {
+    const propSelectors = props.selectors
 
-    Object.keys(selectors).forEach(k => {
-      const v = selectors[k]
+    Object.keys(propSelectors).forEach(k => {
+      const v = propSelectors[k]
       const kind = v.length === 0 ? 'get' : 'value'
 
       const v2 = v.length === 0
@@ -52,8 +71,30 @@ const createInitialState = async (mod, store, topModels, path, parentState = {})
     })
   }
 
+  if (props.reducers) {
+    const propReducers = props.reducers
+    const parentReducers = parent.reducers
+
+    const parentKeys = Object.keys(parentReducers)
+
+    Object.keys(propReducers).forEach(k => {
+      const reducer = propReducers[k]
+      const parentK = parentKeys.find(k => parentReducers[k] === reducer)
+
+      const k2 = parentK ?? moduleName + '_' + k
+
+      parentReducers[k2] = reducer
+
+      const get = function() { return this._parent[k2] }
+      Object.defineProperty(proto, k, { get, configurable: true })
+
+      if (reducers[k]) reducers[k].__overridenByProp = true   // delete potential child reducer mock, so selector takes precedence
+      delete state[k]                                         // delete potential initialState too
+    })
+  }
+
   for (const k of mod.moduleKeys) {
-    state[k] = await createInitialState(mod[k], store, topModels, k, state)
+    state[k] = await createInitialState(mod[k], store, events[k], topModels, db, k, state)
   }
 
   return state

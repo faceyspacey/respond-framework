@@ -2,7 +2,7 @@ import wrapInActForTests from '../../utils/wrapInActForTests.js'
 import { prependModulePathToE } from '../../utils/sliceByModulePath.js'
 
 
-export default wrapInActForTests((storeSlice, eSlice, sync, initialReduction) => {
+export default wrapInActForTests((storeSlice, eSlice, sync) => {
   if (eSlice.event.reduce === false) return
   
   const store = storeSlice.getStore()
@@ -26,13 +26,9 @@ export default wrapInActForTests((storeSlice, eSlice, sync, initialReduction) =>
     delete store.ctx.init // while false or true, tag the first navigation event with .init, even if after redirects, see createEvents.js
   }
 
-  if (!initialReduction) { // ignored on initial reduction in createStore.js
-    store.devtools.send(eSlice)
-  }
+  store.devtools?.send(eSlice) // devtools not available on initial reduction in createStore.js
 
-  if (!sync) {
-    return store.notify(e) // await in tests/replays
-  }
+  if (!sync) return store.notify(e) // await in tests/replays
 })
 
 
