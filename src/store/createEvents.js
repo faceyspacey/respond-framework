@@ -2,65 +2,56 @@ import isNamespace from '../utils/isNamespace.js'
 import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export default (mod, getStore) => {
-  const events = createEvents(mod, getStore)
+const _symbol = Symbol.for('respondEvent')
 
-  events.init = createInit(getStore)
+const start = {}
 
-  map.clear()
-
-  return events
-}
-
-
-const createInit = () => {
-  const type = '@@INIT'
-  const namespace = ''
-  const modulePath = ''
-  const kind = 'init'
-
-  const info = { type, namespace, _type: type, _namespace: namespace, modulePath, kind }
-  const init = () => ({ ...info, event: init, meta: { trigger: true } })
-  
-  const dispatch = () => getStore().dispatch(init())
-
-  return Object.assign(init, info, { dispatch })
-}
-
-
-const createEvents = (mod, getStore, modulePath = '', parentEvents) => {
-  const configs = { edit, ...mod.events }
-  const events = createEventsForModule(configs, getStore, modulePath)
-
-  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, configs, parentEvents)
-
-  return {
-    ...events,
-    ...propEvents,
-    ...recurseModules(mod, getStore, modulePath, events)
-  }
+const edit = {
+  transform: ({}, form) => ({ form }),
+  sync: true,
 }
 
 
 
+export default function createEvents(mod, getStore, p = '', cache = new Map) {
+  const configs = { start, edit, ...mod.events }
 
-const recurseModules = (mod, getStore, modulePath = '', parentEvents) => {
-  return mod.moduleKeys.reduce((events, k) => {
-    const child = mod[k]
-    const path = modulePath ? `${modulePath}.${k}` : k
+  const events = createEventsForModule(configs, getStore, p, cache)
+  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, configs, cache)
+
+ return mod.moduleKeys.reduce((acc, k) => {
+    acc[k] = createEvents(mod[k], getStore, p ? `${p}.${k}` : k, cache)
+    return acc
+  }, { ...events, ...propEvents })
+}
+
+
+
+const preparePropEvents = (propEvents, events = {}, cache) => {
+  return Object.keys(propEvents).reduce((acc, k) => {
+    const config = propEvents[k]
+    const eventOrNamespace = cache.get(config)
+
+    if (eventOrNamespace) {
+      acc[k] = eventOrNamespace
+    }
+    else if (isNamespace(config)) {
+      acc[k] = preparePropEvents(config, events[k], cache)
+    }
+    else {
+      throw new Error(`respond: event props must exist in parent`, k, config)
+    }
     
-    events[k] = createEvents(child, getStore, path, parentEvents)
+    if (events[k]) {
+      cache.set(events[k], acc[k]) // if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
+    }
 
-    return events
+    return acc
   }, {})
 }
 
 
-const _symbol = Symbol.for('respondEvent')
-const map = new Map
-
-
-const createEventsForModule = (events, getStore, modulePath, _namespace = '', parentType) => {
+const createEventsForModule = (events, getStore, modulePath, cache, _namespace = '', parentType) => {
   if (!events) return
 
   return Object.keys(events).reduce((acc, _type) => {
@@ -69,10 +60,10 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
 
     if (!parentType && isNamespace(config)) {
       const ns = _namespace ? `${_namespace}.${_type}` : _type
-      const namespaceObject = createEventsForModule({ edit, ...config }, getStore, modulePath, ns)
+      const namespaceObject = createEventsForModule({ start, edit, ...config }, getStore, modulePath, cache, ns)
 
       acc[_type] = namespaceObject
-      map.set(config, namespaceObject)
+      cache.set(config, namespaceObject)
 
       return acc
     }
@@ -96,7 +87,7 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
       )
 
     const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-    const children = parentType ? {} : createEventsForModule(builtIns, getStore, modulePath, _namespace, _type)
+    const children = parentType ? {} : createEventsForModule(builtIns, getStore, modulePath, cache, _namespace, _type)
 
     const dispatch = (arg, meta) => {
       const store = getStore()
@@ -107,7 +98,7 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
     Object.assign(event, config, info, { dispatch, _symbol }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
 
     acc[_type] = event
-    map.set(config, event)
+    cache.set(config, event)
 
     return acc
   }, {})
@@ -116,24 +107,16 @@ const createEventsForModule = (events, getStore, modulePath, _namespace = '', pa
 
 
 
-const edit = {
-  transform: ({}, form) => ({ form }),
-  sync: true,
-}
 
 
 const applyTransform = (store, e, dispatch) => {
   const { modulePathReduced, init } = store.ctx
 
   let payload = { ...e.arg }
-  const createDuringReduction = modulePathReduced?.length > 0
 
-  if (createDuringReduction) {
-    const pathPrefix = modulePathReduced.join('.') // eg: ['grand', 'parent'].join('.') == 'grand.parent'
-
-    // remove path prefix so e objects created in reducers are unaware of parent modules
-    e.type = stripModulePath(e.type, pathPrefix) // eg 'grand.parent.child' => 'child'
-    e.namespace = stripModulePath(e.namespace, pathPrefix)
+  if (modulePathReduced) {
+    e.type = stripModulePath(e.type, modulePathReduced)             // remove path prefix so e objects created in reducers are unaware of parent modules
+    e.namespace = stripModulePath(e.namespace, modulePathReduced)   // eg 'grand.parent.child' => 'child'
   }
 
   if (e.event.transform) {
@@ -145,29 +128,4 @@ const applyTransform = (store, e, dispatch) => {
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal
-}
-
-
-
-const preparePropEvents = (propEvents, events = {}, parentEvents) => {
-  return Object.keys(propEvents).reduce((acc, k) => {
-    const config = propEvents[k]
-    const eventOrNamespace = map.get(config)
-
-    if (eventOrNamespace) {
-      acc[k] = eventOrNamespace
-    }
-    else if (isNamespace(config)) {
-      acc[k] = preparePropEvents(config, events[k], parentEvents)
-    }
-    else {
-      throw new Error(`respond: event props must exist in parent`, k, config)
-    }
-    
-    if (events[k]) {
-      map.set(events[k], acc[k]) // if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in map.get(config)
-    }
-
-    return acc
-  }, {})
 }

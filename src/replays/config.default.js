@@ -10,14 +10,18 @@ export default {
     builtIn: true,
   },
   module: {
-    options: (settings, store) => Object.keys(store.modulePathsAll).filter(p => p !== 'replayTools').map(v => ({ value: v, label: v || 'top' })),
+    options: (settings, store) => Object.keys(store.modulePathsAll).filter(p => p.indexOf('replayTools') === -1).map(v => ({ value: v, label: v || 'top' })),
     defaultValueDevelopment: '',
     createLabel: o => 'module: ' + (o?.value || 'top'),
     builtIn: true,
   },
+  // path: {
+  //   options: [],
+  //   createLabel: o => 'path: ' + (o?.value || 'none'),
+  //   builtIn: true,
+  // },
   path: {
-    options: [],
-    createLabel: o => 'path: ' + (o?.value || 'none'),
+    placeholder: 'path: eg /',
     builtIn: true,
   },
   latency: {

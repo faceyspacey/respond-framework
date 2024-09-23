@@ -2,35 +2,29 @@ import Parent from './Controller.js'
 import createControllerDefault from './utils/createControllerDefault.js'
 
 
-export default (topModule, topModuleOriginal = topModule) => {
-  if (!topModuleOriginal?.db?.nested) {
-    return createControllersFlat(topModuleOriginal)
-  }
-
-  const modules = {}
-  createModule(topModule, modules)
-  return modules
-}
+export default (topModule, topModuleOriginal = topModule) =>
+  topModuleOriginal?.db?.nested
+    ? createModule(topModule, controllersByModulePath)
+    : createControllersFlat(topModuleOriginal)
 
 
 
 
-export const createModule = (mod, modules, modulePath = '') => {
-  createControllers(mod, modules, modulePath)
+export const createModule = (mod, controllersByModulePath = {}, p = '') => {
+  createControllers(mod, controllersByModulePath, p)
 
   mod.moduleKeys.forEach(k => {
-    const child = mod[k]
-    const path = modulePath ? `${modulePath}.${k}` : k
-
-    createModule(child, modules, path)
+    createModule(mod[k], controllersByModulePath, p ? `${p}.${k}` : k)
   })
+
+  return controllersByModulePath
 }
 
 
-const createControllers = (mod, modules, path = '') =>  {
+const createControllers = (mod, controllersByModulePath, path = '') =>  {
   const { controllers = {}, createController = createControllerDefault } = mod.db || {}
 
-  modules[path] = {}
+  controllersByModulePath[path] = {}
 
   for (const controller in controllers) {
     const Child = { 
@@ -39,7 +33,7 @@ const createControllers = (mod, modules, path = '') =>  {
       ...controllers[controller],
     }
 
-    modules[path][controller] = createController(Child, Parent)
+    controllersByModulePath[path][controller] = createController(Child, Parent)
   }
 }
 

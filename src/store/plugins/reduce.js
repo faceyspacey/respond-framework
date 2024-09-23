@@ -9,7 +9,7 @@ export default wrapInActForTests((storeSlice, eSlice, sync) => {
   const e = prependModulePathToE(eSlice)
 
   try {
-    if (e.event === store.events.init) {
+    if (e.event === store.events.start) {
       reduceAllModules(e, store)
     }
     else {

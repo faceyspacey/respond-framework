@@ -16,10 +16,8 @@ export default function render(props = {}) {
 
 
 const createApp = (store, props) => {
-  const mod = sliceByModulePath(store, store.replays.settings.module)
-
-  const Provider = props.Provider || mod.components?.Provider || RespondProvider
-  const { App, Error } = mod.components ?? {}
+  const Provider = props.Provider || store.components?.Provider || RespondProvider
+  const { App, Error } = store.components ?? {}
 
   return React.createElement(Provider, { store, App, Error, ...props })
 }

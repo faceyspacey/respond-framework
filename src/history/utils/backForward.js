@@ -61,6 +61,6 @@ export const hydrateFromSessionStorage = () => {
 
 export const isPopDisabled = store => {
   if (isTest || isNative || window.isReplay) return true
-  if (isDev && !store.options.enablePopsInDevelopment) return true
-  return !store.events.pop
+  if (isDev && !store.options?.enablePopsInDevelopment) return true
+  return !store.events?.pop
 }

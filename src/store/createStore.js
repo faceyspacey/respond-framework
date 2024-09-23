@@ -112,7 +112,7 @@ export default async (topModuleOriginal, settings) => {
   const state  = createProxy(initialState, undefined, proxyCache)
   state.prevState = isHMR ? prevStore.prevState : snapshot(state)
 
-  if (!isHMR) reduce(state, state.events.init(), true)
+  if (!isHMR) reduce(state, state.events.start(undefined, { trigger: true }), true)
 
   db.store = state
   replays.store = state

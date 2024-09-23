@@ -6,7 +6,7 @@ import getSessionState from './getSessionState.js'
 
 
 export default ({ ...mod }, store, events, db, token) => {
-  if (isProd || mod.options.enablePopsInDevelopment) {
+  if (isProd || mod.options?.enablePopsInDevelopment) {
     const state = getSessionState(mod.events) // events won't exist yet in new format
     if (state) return Object.assign(state, store)
   }
@@ -31,8 +31,8 @@ const createInitialState = async (mod, store, events, topModels, db, moduleName,
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(initial ?? {}))
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(parent[moduleName] ?? {}))
 
-  const { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, } = mod
-  Object.assign(state, { options, moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers, events })
+  const { moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, } = mod
+  Object.assign(state, { moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers, events })
   
   Object.defineProperty(state, 'state', { enumerable: false, configurable: true, get: () => store.getProxy(state) })
   Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parent })

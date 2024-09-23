@@ -5,7 +5,7 @@ import createPlugins from './createPlugins.js'
 
 export default getStore => {
   return (ev, meta) => {
-    if (!getStore()._plugins) {
+    if (!getStore()._pluginsSync) {
       const top = getStore()
 
       traverseModules(top, store => {
