@@ -7,7 +7,6 @@ import Radio from '../widgets/Radio.js'
 import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
 import configDefault from '../../../replays/config.default.js'
-import createOptions from '../helpers/createOptions.js'
 
 
 export default (props, events) => {
@@ -43,15 +42,19 @@ const createSettings = (event, config) => {
 }
 
 
-const FormComponent = (props, events, { form }, store) => {
-  if (props.available && !props.available(form)) return
-  
-  const value = form[props.name]
-  const options = createOptions(props.name, props.options, form, store)
-  
-  return React.createElement(props.Component, { ...props, value, options })
+const FormComponent = ({ Component, name, available, options }, events, { form }, store) => {
+  if (available && !available(form)) return
+
+  return React.createElement(Component, {
+    ...props,
+    value: form[name],
+    options: typeof options === 'function' ? options(form, store) : options || bools
+  })
 }
 
+
+
+const bools = [{ value: true, text: 'True' }, { value: false, text: 'False' }]
 
 
 const s = StyleSheet.create({

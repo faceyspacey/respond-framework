@@ -1,27 +1,32 @@
 import createDbProxy from '../db/utils/createDbProxy.js'
 import mergeModels from '../db/utils/mergeModels.js'
 import findOne from '../selectors/findOne.js'
+import createEvents from '../store/createEvents.js'
 import { isProd } from './bools.js'
 import getSessionState from './getSessionState.js'
 
 
-export default ({ ...mod }, store, events, db, token) => {
-  if (isProd || mod.options?.enablePopsInDevelopment) {
-    const state = getSessionState(mod.events) // events won't exist yet in new format
-    if (state) return Object.assign(state, store)
-  }
+export default async ({ ...mod }, store, db, token) => {
+  // if (isProd || mod.options?.enablePopsInDevelopment) {
+  //   const state = getSessionState(mod.events) // events won't exist yet in new format
+  //   if (state) return Object.assign(state, store)
+  // }
 
   mod.initialState ??= {}
   Object.assign(mod.initialState, { token, cachedPaths: {} })
 
   const topModels = !store.topModuleOriginal.db?.nested && mergeModels(store.topModuleOriginal.db?.models)
-  const state = createInitialState(mod, store, events, topModels, db, undefined, {})
+  const eventsCache = new Map
 
-  return Object.assign(state, store)
+  const state = await createInitialState(mod, store, topModels, db, eventsCache, undefined, {})
+
+  eventsCache.clear()
+
+  return state
 }
 
 
-const createInitialState = async (mod, store, events, topModels, db, moduleName, parent = {}) => {
+const createInitialState = async (mod, store, topModels, db, eventsCache, moduleName, parent = {}) => {
   const proto = {}
   const state = Object.create(proto)
 
@@ -32,7 +37,7 @@ const createInitialState = async (mod, store, events, topModels, db, moduleName,
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(parent[moduleName] ?? {}))
 
   const { moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, } = mod
-  Object.assign(state, { moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers, events })
+  Object.assign(state, { moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers })
   
   Object.defineProperty(state, 'state', { enumerable: false, configurable: true, get: () => store.getProxy(state) })
   Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parent })
@@ -93,8 +98,10 @@ const createInitialState = async (mod, store, events, topModels, db, moduleName,
     })
   }
 
+  state.events = createEvents(mod, store.getStore, eventsCache, modulePath)
+
   for (const k of mod.moduleKeys) {
-    state[k] = await createInitialState(mod[k], store, events[k], topModels, db, k, state)
+    state[k] = await createInitialState(mod[k], store, topModels, db, eventsCache, k, state)
   }
 
   return state

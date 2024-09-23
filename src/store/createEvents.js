@@ -13,22 +13,15 @@ const edit = {
 
 
 
-export default function createEvents(mod, getStore, p = '', cache = new Map) {
-  const configs = { start, edit, ...mod.events }
-
-  const events = createEventsForModule(configs, getStore, p, cache)
-  const propEvents = mod.props?.events && preparePropEvents(mod.props.events, configs, cache)
-
- return mod.moduleKeys.reduce((acc, k) => {
-    acc[k] = createEvents(mod[k], getStore, p ? `${p}.${k}` : k, cache)
-    return acc
-  }, { ...events, ...propEvents })
-}
+export default (mod, getStore, cache, p = '') => ({
+  ...createEventsForModule({ start, edit, ...mod.events }, getStore, cache, p),
+  ...preparePropEvents(mod.props?.events, mod.events, cache)
+})
 
 
 
-const preparePropEvents = (propEvents, events = {}, cache) => {
-  return Object.keys(propEvents).reduce((acc, k) => {
+const preparePropEvents = (propEvents = {}, events = {}, cache) =>
+  Object.keys(propEvents).reduce((acc, k) => {
     const config = propEvents[k]
     const eventOrNamespace = cache.get(config)
 
@@ -48,10 +41,10 @@ const preparePropEvents = (propEvents, events = {}, cache) => {
 
     return acc
   }, {})
-}
 
 
-const createEventsForModule = (events, getStore, modulePath, cache, _namespace = '', parentType) => {
+
+const createEventsForModule = (events, getStore, cache, modulePath, _namespace = '', parentType) => {
   if (!events) return
 
   return Object.keys(events).reduce((acc, _type) => {
@@ -60,7 +53,7 @@ const createEventsForModule = (events, getStore, modulePath, cache, _namespace =
 
     if (!parentType && isNamespace(config)) {
       const ns = _namespace ? `${_namespace}.${_type}` : _type
-      const namespaceObject = createEventsForModule({ start, edit, ...config }, getStore, modulePath, cache, ns)
+      const namespaceObject = createEventsForModule({ start, edit, ...config }, getStore, cache, modulePath, ns)
 
       acc[_type] = namespaceObject
       cache.set(config, namespaceObject)
@@ -87,7 +80,7 @@ const createEventsForModule = (events, getStore, modulePath, cache, _namespace =
       )
 
     const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-    const children = parentType ? {} : createEventsForModule(builtIns, getStore, modulePath, cache, _namespace, _type)
+    const children = parentType ? {} : createEventsForModule(builtIns, getStore, cache, modulePath, _namespace, _type)
 
     const dispatch = (arg, meta) => {
       const store = getStore()

@@ -3,12 +3,18 @@ import { urlToLocation } from './url.js'
 import { respondEventSymbol } from '../index.js'
 
 
-export default (getStore, eventsTree) => {
-  const events = createEventsByPathSpec(eventsTree)
+export default (getStore) => {
+  let events // lazily applied after createState is complete
 
   return function eventFrom(url, fallback, additionalArg, fallbackArg) {
+    const store = getStore()
+
+    if (!events) {
+      events = createEventsByPathSpec(store)
+    }
+
     const loc = urlToLocation(url, getStore)                            // if url is already a location object, it will also be resolved
-    const { basename = '' } = getStore().state
+    const { basename = '' } = store
 
     if (basename) {
       loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
@@ -83,20 +89,23 @@ const cache = {}
 
 
 
-const createEventsByPathSpec = events =>
-  Object.keys(events).reduce((acc, _type) => {
-    const event = events[_type]
+const createEventsByPathSpec = (mod, hash = {}) => {
+  createEvents(mod.events, hash)
+  mod.moduleKeys.forEach(k => createEventsByPathSpec(mod[k], hash))
+  return hash
+}
 
+
+const createEvents = (events = {}, hash) => {
+  Object.keys(events).forEach(k => {
+    const event = events[k]
     const isNamespace = !event.kind
 
     if (isNamespace) {
-      const children = createEventsByPathSpec(event)
-      return { ...acc, ...children }
+      createEvents(event, hash)
     }
-
-    const { path } = event
-
-    if (path) acc[path] = event
-
-    return acc
-  }, {})
+    else if (event.path) {
+      hash[event.path] = event
+    }
+  })
+}

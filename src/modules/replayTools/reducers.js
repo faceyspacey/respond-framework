@@ -1,6 +1,4 @@
 import { addToCache } from '../../utils/addToCache.js'
-import sliceByModulePath from '../../utils/sliceByModulePath.js'
-import { createPathOptions } from './helpers/createOptions.js'
 import resolveModulePath from './helpers/resolveModulePath.js'
 
 
@@ -40,19 +38,7 @@ export const loading = (_, e, { state }) => {
 }
 
 
-export const form = (state, e, store) => {
-  if (!e.form) return state
-
-  if (e.form.module === undefined) return { ...state, ...e.form } // edit settings form
-
-  const modulePath = e.form.module
-  const slicedEvents = sliceByModulePath(store.getStore().eventsAll, modulePath)
-
-  const options = createPathOptions(slicedEvents, modulePath, store)
-  const path = options[0]?.value || '/' // also set form.path value to first option when changing modules
-
-  return { ...state, ...e.form, path }
-}
+export const form = (state, e, store) => e.form ? { ...state, ...e.form } : state
 
 
 export const tests = (state = {}, e, { events, replays }) => {

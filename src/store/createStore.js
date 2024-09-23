@@ -4,7 +4,6 @@ import createDevtoolsMock from '../devtools/index.mock.js'
 import createClientDatabase from '../db/createClientDatabase.js'
 import createDispatch from './createDispatch.js'
 import createDispatchSync from './createDispatchSync.js'
-import createEvents from './createEvents.js'
 import createFromEvent from '../utils/createFromEvent.js'
 import createEventFrom from '../utils/createEventFrom.js'
 import createCache from '../utils/createCache.js'
@@ -78,10 +77,7 @@ export default async (topModuleOriginal, settings) => {
   const modulePaths = createModulePaths(topModule)
   const modulePathsById = createModulePathsById(topModule)
   
-  const eventsAll = createEvents(topModuleOriginal, getStore)
-  const events = !modulePath ? eventsAll : createEvents(topModule, getStore)
-
-  const eventFrom = createEventFrom(getStore, events)
+  const eventFrom = createEventFrom(getStore)
   const fromEvent = createFromEvent(getStore)
 
   const dispatch = createDispatch(getStore)
@@ -103,9 +99,9 @@ export default async (topModuleOriginal, settings) => {
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
   const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
 
-  const api = { ...options.merge, ctx: { init: true }, listeners: [], promises: [], refs: {}, modulePath: '', getProxy, topModule, topModuleOriginal, modulePathsAll, modulePaths, modulePathsById, options, events, eventsAll, cookies, replays, devtools, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const api = { ...options.merge, ctx: { init: true }, listeners: [], promises: [], refs: {}, modulePath: '', getProxy, topModule, topModuleOriginal, modulePathsAll, modulePaths, modulePathsById, options, cookies, replays, devtools, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(topModule, api, events, db, replays.token)
+  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(topModule, api, db, replays.token)
 
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
 
