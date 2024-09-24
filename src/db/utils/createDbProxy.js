@@ -1,15 +1,9 @@
-export default (prev, modulePath = '') =>
-  new Proxy({ ...prev }, {
-    get(target, k, db) {
-      const v = target[k] // not a controller, eg: options, store, createControllerMethod
-      if (v !== undefined) return v
+export default db =>
+  new Proxy(db, {
+    get(_, controller) {
+      if (db[controller]) return db[controller] // not a controller
 
-      const controller = k
-      
-      return new Proxy({}, {
-        get(_, method) {
-          return prev.createControllerMethod(db, controller, method, modulePath)
-        }
-      })
+      const get = (_, method) => db._call(controller, method)
+      return new Proxy({}, { get })
     }
   })

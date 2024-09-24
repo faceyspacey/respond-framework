@@ -1,5 +1,5 @@
 import jwt from '../../utils/jwt.js'
-import secretMock from '../../db/secret.mock.js'
+import secret from '../../db/secret.mock.js'
 import { isProd } from '../../utils/bools.js'
 
 
@@ -11,8 +11,6 @@ export default (settings, seed, options) => {
 
   const { roles } = seed.user[id]
   const payload = { id, roles }
-  
-  const secret = options.secret || secretMock
 
   return jwt.sign(payload, secret, { noTimestamp: true })
 }

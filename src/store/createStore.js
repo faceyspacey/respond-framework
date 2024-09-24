@@ -1,7 +1,6 @@
 import createReplayTools from '../replays/index.js'
 import createDevTools from '../devtools/index.js'
 import createDevtoolsMock from '../devtools/index.mock.js'
-import createClientDatabase from '../db/createClientDatabase.js'
 import createDispatch from './createDispatch.js'
 import createDispatchSync from './createDispatchSync.js'
 import createFromEvent from '../utils/createFromEvent.js'
@@ -26,10 +25,8 @@ import displaySelectorsInDevtools from './utils/displaySelectorsInDevtools.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
 import { isProd, isDev, isTest } from '../utils/bools.js'
-import createDbProxy from '../db/utils/createDbProxy.js'
 import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
-
 
 
 export default async (topModuleOriginal, settings) => {
@@ -68,8 +65,6 @@ export default async (topModuleOriginal, settings) => {
 
   const getStore = () => state
 
-  const db = createClientDatabase(topModule, topModuleOriginal)
-
   const prevStore = window.store
   const isHMR = !!prevStore && !replays.replay
 
@@ -101,7 +96,7 @@ export default async (topModuleOriginal, settings) => {
 
   const api = { ...options.merge, ctx: { init: true }, listeners: [], promises: [], refs: {}, modulePath: '', getProxy, topModule, topModuleOriginal, modulePathsAll, modulePaths, modulePathsById, options, cookies, replays, devtools, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(topModule, api, db, replays.token)
+  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(topModule, api, replays.token)
 
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
 
@@ -110,7 +105,6 @@ export default async (topModuleOriginal, settings) => {
 
   if (!isHMR) reduce(state, state.events.start(undefined, { trigger: true }), true)
 
-  db.store = state
   replays.store = state
 
   return window.store = state

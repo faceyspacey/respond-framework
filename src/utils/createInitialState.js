@@ -1,3 +1,5 @@
+import createClientDatabase from '../db/createClientDatabase.js'
+import createControllers from '../db/createControllers.js'
 import createDbProxy from '../db/utils/createDbProxy.js'
 import mergeModels from '../db/utils/mergeModels.js'
 import findOne from '../selectors/findOne.js'
@@ -6,7 +8,7 @@ import { isProd } from './bools.js'
 import getSessionState from './getSessionState.js'
 
 
-export default async ({ ...mod }, store, db, token) => {
+export default async ({ ...mod }, store, token) => {
   // if (isProd || mod.options?.enablePopsInDevelopment) {
   //   const state = getSessionState(mod.events) // events won't exist yet in new format
   //   if (state) return Object.assign(state, store)
@@ -15,10 +17,9 @@ export default async ({ ...mod }, store, db, token) => {
   mod.initialState ??= {}
   Object.assign(mod.initialState, { token, cachedPaths: {} })
 
-  const topModels = !store.topModuleOriginal.db?.nested && mergeModels(store.topModuleOriginal.db?.models)
   const eventsCache = new Map
 
-  const state = await createInitialState(mod, store, topModels, db, eventsCache, undefined, {})
+  const state = await createInitialState(mod, store, eventsCache, undefined, {})
 
   eventsCache.clear()
 
@@ -26,7 +27,7 @@ export default async ({ ...mod }, store, db, token) => {
 }
 
 
-const createInitialState = async (mod, store, topModels, db, eventsCache, moduleName, parent = {}) => {
+const createInitialState = async (mod, store, eventsCache, moduleName, parent = {}) => {
   const proto = {}
   const state = Object.create(proto)
 
@@ -36,18 +37,19 @@ const createInitialState = async (mod, store, topModels, db, eventsCache, module
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(initial ?? {}))
   Object.defineProperties(state, Object.getOwnPropertyDescriptors(parent[moduleName] ?? {}))
 
-  const { moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, } = mod
+  const { moduleKeys, modulePath, plugins, pluginsSync, id, components, reducers = {}, props = {}, models } = mod
   Object.assign(state, { moduleKeys, modulePath, plugins, pluginsSync, id, components, props, reducers })
   
   Object.defineProperty(state, 'state', { enumerable: false, configurable: true, get: () => store.getProxy(state) })
   Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parent })
 
+  const db = createClientDatabase(mod.db, parent.db, state)
+
   Object.defineProperties(proto, {
     ...Object.getOwnPropertyDescriptors(store),
     findOne: { value: findOne },
-    models: { value: topModels || mergeModels(mod.db?.models) },
-    db: { value: !store.topModuleOriginal.db?.nested ? db : createDbProxy(db, modulePath) },
-    replays: { value: store.replays },
+    models: { value: models ? mergeModels(models) : parent.models },
+    db: { value: db },
     __module: { value: true },
   })
 
@@ -101,7 +103,7 @@ const createInitialState = async (mod, store, topModels, db, eventsCache, module
   state.events = createEvents(mod, store.getStore, eventsCache, modulePath)
 
   for (const k of mod.moduleKeys) {
-    state[k] = await createInitialState(mod[k], store, topModels, db, eventsCache, k, state)
+    state[k] = await createInitialState(mod[k], store, eventsCache, k, state)
   }
 
   return state

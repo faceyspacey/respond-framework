@@ -171,10 +171,15 @@ dont hide _namespace, _type in state (only in actions)
 
 remove initialState
 
-combine recursive createStore code into a single function
+#combine recursive createStore code into a single function
 extract reducers as any 2-3 arg functions in state, extract 0-1 arg functions into selectors
 combine things into options etc
 
 
 devtools
 getSessionState needs protos hydrated
+
+
+new approach to accessing modulePath in dbProxy
+controllers shouldn't be duplicated if same config as parent (like events)
+createControllerTree needs finishing

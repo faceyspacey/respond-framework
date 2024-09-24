@@ -41,7 +41,7 @@ export default {
     try {
       return jwt.verify(token, this.secret)
     }
-    catch (e) {} // throws when invalid, but for us !this.user is our indicator that we aren't dealing with a verified user downstream (i.e. in the actual Controller methods called)
+    catch {} // throws when invalid, but for us !this.user is our indicator that we aren't dealing with a verified user downstream (i.e. in the actual Controller methods called)
   },
   
   _hasPermission(method, roles = []) {

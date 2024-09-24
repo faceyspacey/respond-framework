@@ -27,9 +27,9 @@ export default opts => {
 
 
 
+
 const createHandler = ({
-  controllers = {},
-  nested = false,
+  controllers: controllersByModulePath = {},
   secret = secretMock,
   logRequest = true,
   logResponse = false
@@ -37,10 +37,9 @@ const createHandler = ({
   const { body } = request
   const { modulePath, controller, method, args, ...rest } = body
 
-  const c = nested
-    ? controllers[modulePath]?.[controller] // DYNAMIC MODULE-SPECIFIC SELECTION, eg: controllers['admin.foo'].user
-    : controllers[controller]
-  
+  const controllers = controllersByModulePath[modulePath] // eg: controllers['admin.foo']
+  const c = controllers[controller]
+
   if (logRequest !== false) {
     console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath, controller, method, args, context: rest })
   }
