@@ -2,11 +2,14 @@ import fetch from './fetch.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
+import mergeProps from './utils/mergeProps.js'
 
 
-export default !isProd ? mock : (db, parentDb, store) => {
+export default !isProd ? mock : (db, parentDb, props, store) => {
   if (!db) return createDbProxy({ ...parentDb, store })
     
+  if (props?.db) mergeProps(db, props.db)
+
   return createDbProxy({
     options: {
       getContext() {},
@@ -28,16 +31,14 @@ export default !isProd ? mock : (db, parentDb, store) => {
         return doc => new models[controller]({ ...doc, __type: controller })
       }
     
-      return async function(...argsRaw) {
+      return async function(...args) {
         const { token, userId, adminUserId } = store
-        const ctx = { token, userId, adminUserId, ...options.getContext(store, controller, method, argsRaw) }
+        const ctx = { token, userId, adminUserId, ...options.getContext(store, controller, method, args) }
     
         try {
           const first = store.ctx.madeFirst ? false : true
     
-          const args = argsRaw.map(a => a === undefined ? '__undefined__' : a) // undefined becomes null when stringified, but controller functions may depend on undefined args and default parameters, so we convert this back to undefined server side
           const context = { ...ctx, modulePath, controller, method, args, first }
-    
           const response = await fetch(context, url, models)
     
           store.ctx.madeFirst = true
@@ -55,7 +56,7 @@ export default !isProd ? mock : (db, parentDb, store) => {
           _serverDown = true
           console.warn('db timeout: retrying every 12 seconds...', error)     // fetch made with 12 second timeout, then throw -- see fetchWithTimeout.js
           options.onServerDown(store)
-          return options.retryRequest(controller, method, argsRaw)            // timeouts are the only way to trigger this error, so we know it its in need of a retry
+          return options.retryRequest(controller, method, args)            // timeouts are the only way to trigger this error, so we know it its in need of a retry
         }
       }
     }

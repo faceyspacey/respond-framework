@@ -1,13 +1,13 @@
 import jwt from '../utils/jwt.js'
 import db from '../db.js'
+import { argsOut } from './fetch.js'
 
 
 export default {
   async _callFilteredByRole(context) {
     this.context = context
     
-    const { method, token, adminUserId } = context
-    const args = context.args.map(a => a === '__undefined__' ? undefined : a) // preserve default parameter values, by undoing JSON.stringify which otherwise would make undefined null
+    const { method, token, adminUserId, args } = context
     const controller = this._name
 
     if (!this[method]) {
@@ -32,7 +32,7 @@ export default {
       return { error: 'not-authenticated', params }
     }
 
-    return this[method](...args) // call eg: controllers/User.updateOne(id)
+    return this[method](...argsOut(args)) // call eg: controllers/User.updateOne(id)
   },
 
   _verify(token) {

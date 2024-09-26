@@ -4,13 +4,13 @@ import { execSync } from 'child_process'
 import findTests, { findTest } from './utils/findTests.js'
 import writeTestFile from './utils/writeTestFile.js'
 import openFile from './utils/openFile.js'
+import { argsOut } from '../db/fetch.js'
 
 
 export default {
   _callFilteredByRole(context) {
     this.context = context
-    const args = context.args.map(a => a === '__undefined__' ? undefined : a)
-    return this[context.method](...args)
+    return this[context.method](...argsOut(context.args))
   },
 
   findTests(modulePath, includeChildren, searched, filter) {

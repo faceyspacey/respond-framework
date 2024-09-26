@@ -169,17 +169,45 @@ dont hide _namespace, _type in state (only in actions)
 #hmr/replay createStore(topModuleOriginal)
 #createController/clientDatabase
 
-remove initialState
-
 #combine recursive createStore code into a single function
+
+
+#new approach to accessing modulePath in dbProxy
+#controllers shouldn't be duplicated if same config as parent (like events)
+#createControllerTree needs finishing
+
+#combine things into options etc
+
+#db props
+
+#move misc things into recursion: pathSpecs, plugins, modulePaths, moduleKeys
+#getSessionState needs protos hydrated
+
+#devtools
+#finalize cleaning topModule stuff at top of createStore, address topReplays etc stuff
+
+#remove initialState
+#ad hoc event props simply created in module
+#nested reducer props
+
+
+#selecting module from replayTools when module doesn't have its own controllers (previous nested setting)
+ #crawl back up to non-existent parents to look for db/replays/options/cookies
+
+#module selector in replayTools: Top option
+
+
+
+
 extract reducers as any 2-3 arg functions in state, extract 0-1 arg functions into selectors
-combine things into options etc
+immutable so replayEvents/reload works correctly
 
 
-devtools
-getSessionState needs protos hydrated
 
+getSessionState handling of recording nested selectors
+getSessionState handling of knowing which module model prototypes came from
 
-new approach to accessing modulePath in dbProxy
-controllers shouldn't be duplicated if same config as parent (like events)
-createControllerTree needs finishing
+wind both propEvents + events through createEventsForModule, cache non prop
+
+recurse createSeed, merge, configReplays
+

@@ -22,7 +22,7 @@ export const initialState = async store => {
   const { open, permalink } = store.replays.settings
   const tab = (await localStorage.getItem('replayToolsTab')) || 'settings'
 
-  if (!window.__sessionRestored && !permalink) {
+  if (!window.__sessionRestored && !permalink && !sessionStorage.getItem('sessionState')) { // call only on initial browser refresh (not replays) | nor for permalinks | and don't apply replayToolsState if returning after linking out (await not required as it only occurs in the browser)
     const json = await sessionStorage.getItem('replayToolsState')
 
     if (json) { 

@@ -1,13 +1,17 @@
-import fetch from './fetch.js'
+import fetch, { argsIn } from './fetch.js'
 import simulateLatency from '../utils/simulateLatency.js'
 import secret from './secret.mock.js'
-import cleanLikeProduction from './utils/cleanLikeProduction.js'
+import clean from './utils/cleanLikeProduction.js'
 import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
+import mergeProps from './utils/mergeProps.js'
 
 
-export default (db, parentDb, store) => {
-  if (!db) return createDbProxy({ ...parentDb })
+export default (db, parentDb, props, store) => {
+  if (!db && !parentDb) db = store.findInClosestParent('db') ?? {}
+  else if (!db) return createDbProxy({ ...parentDb })
+
+  if (props?.db) mergeProps(db, props.db)
 
   const controllers = createControllers(db)
 
@@ -16,60 +20,49 @@ export default (db, parentDb, store) => {
     developer: new Proxy({}, {
       get(_, method) {
         return async (...args) => {
-          args = args.map(a => a === undefined ? '__undefined__' : a)
-          
           const context = { controller: 'developer', method, args }
           const response = await fetch(context, db.options?.apiUrl)
-    
-          sendNotification(store, { type: `=> db.developer.${method}`, ...context, response })
-    
-          return response
+          return sendNotification(store, { ...context, response })
         }
       }
     }),
     _call(controller, method) {
       const { options } = this
-      const { models, modulePath } = store
+      const { models, modulePath, ctx } = store
     
       if (method === 'make') {
         return doc => new models[controller]({ ...doc, __type: controller })
       }
     
-      return async function(...argsRaw) {
+      return async (...args) => {
         const c = controllers[controller]
-    
-        if (!c) {
-          throw new Error(`controller "${controller}" does not exist in ${modulePath ? `module "${modulePath}"` : `top module`}`)
-        }
+        if (!c) throw new Error(`controller "${controller}" does not exist in ${modulePath ?? 'top'} module`)
     
         const { token, userId, adminUserId } = store.getStore()
-        const ctx = { token, userId, adminUserId, ...options.getContext(store, controller, method, argsRaw) }
-    
-        const args = cleanLikeProduction(argsRaw.map(a => a === undefined ? '__undefined__' : a)) // undefined becomes null when stringified, but controller functions may depend on undefined args and default parameters, so we convert this back to undefined server side
-    
-        const first = store.ctx.madeFirst ? false : true
-        const context = { ...ctx, modulePath, controller, method, args, first, request: {} }
+        const info = { token, userId, adminUserId, ...options.getContext(store, controller, method, args) }
+        const context = { ...info, modulePath, controller, method, args: clean(argsIn(args)), first: !ctx.madeFirst, request: {} }
     
         const instance = { ...c, secret }
         const res = await instance._callFilteredByRole(context)
     
-        store.ctx.madeFirst = true
-    
         await simulateLatency(store)
     
-        const response = cleanLikeProduction(res, models)
-    
-        sendNotification(store, { type: `=> db.${controller}.${method}`, controller, method, args, response, __modulePath: modulePath })
-    
-        return response
+        return sendNotification(store, { modulePath, controller, method, args, response: clean(res, models) })
       }
     }
   })
 }
 
 
-const sendNotification = (store, notification) => {
+const sendNotification = (store, n) => {
+  store.ctx.madeFirst = true
+
   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
-    store.devtools.sendNotification(notification)
+    const type = `=> db.${n.controller}.${n.method}`
+    store.devtools.sendNotification({ type, ...n })
   })
+
+  return n.response
 }
+
+

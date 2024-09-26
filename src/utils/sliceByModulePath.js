@@ -1,6 +1,6 @@
 export default function sliceByModulePath(obj, modulePath) {
-  if (!obj) return
   if (!modulePath) return obj
+  if (!obj) return
   
   const modules = modulePath.split('.')
   return modules.reduce((slice, k) => slice[k], obj)

@@ -30,15 +30,17 @@ export default opts => {
 
 const createHandler = ({
   controllers: controllersByModulePath = {},
+  findController,
   secret = secretMock,
   logRequest = true,
   logResponse = false
-}) => async (request, res) => {
-  const { body } = request
+}) => async (req, res) => {
+  const { body } = req
   const { modulePath, controller, method, args, ...rest } = body
 
-  const controllers = controllersByModulePath[modulePath] // eg: controllers['admin.foo']
-  const c = controllers[controller]
+  const c = findController
+    ? findController(controllersByModulePath, modulePath, controller)
+    : controllersByModulePath[modulePath][controller] // eg: controllers['admin.foo'].user
 
   if (logRequest !== false) {
     console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath, controller, method, args, context: rest })
@@ -50,7 +52,7 @@ const createHandler = ({
   }
 
   const instance = { ...c, secret }
-  const context = { modulePath, controller, method, args, ...rest, request }
+  const context = { modulePath, controller, method, args, ...rest, request: req }
 
   let response = await instance._callFilteredByRole(context)
   response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned

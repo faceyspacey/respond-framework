@@ -3,63 +3,56 @@ import { urlToLocation } from './url.js'
 import { respondEventSymbol } from '../index.js'
 
 
-export default (getStore) => {
-  let events // lazily applied after createState is complete
+export default getStore => function eventFrom(url, fallback, additionalArg, fallbackArg) {
+  const store = getStore()
 
-  return function eventFrom(url, fallback, additionalArg, fallbackArg) {
-    const store = getStore()
+  const loc = urlToLocation(url, getStore)                            // if url is already a location object, it will also be resolved
+  const { basename = '' } = store
 
-    if (!events) {
-      events = createEventsByPathSpec(store)
-    }
+  if (basename) {
+    loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
+  }
 
-    const loc = urlToLocation(url, getStore)                            // if url is already a location object, it will also be resolved
-    const { basename = '' } = store
+  const { eventsByPath } = store
+  const paths = Object.keys(eventsByPath)
 
-    if (basename) {
-      loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
-    }
+  try {
+    for (let i = 0; i < paths.length; i++) {
+      const path = paths[i]
+      const { match, keys } = matchPath(loc.pathname, path)        // long ago early Respond iterations matched even based on query/search strings and the hash, but then it became clear that's a very uncommon need; so it was decided to stick to a simpler patch matching implementation here to serve as inspiration; so if you would like to dispatch different events, say, based on different query params, then just pass in your own createEventFrom option to createStore, and you can match URLs to events any way you please
   
-    const patterns = Object.keys(events)
+      if (match) {
+        const [_path, ...values] = match
 
-    try {
-      for (let i = 0; i < patterns.length; i++) {
-        const pattern = patterns[i]
-        const { match, keys } = matchPath(loc.pathname, pattern)        // long ago early Respond iterations matched even based on query/search strings and the hash, but then it became clear that's a very uncommon need; so it was decided to stick to a simpler patch matching implementation here to serve as inspiration; so if you would like to dispatch different events, say, based on different query params, then just pass in your own createEventFrom option to createStore, and you can match URLs to events any way you please
-    
-        if (match) {
-          const [_path, ...values] = match
-  
-          const arg = keys.reduce((arg, key, index) => {
-            arg[key.name] = values[index]
-            return arg
-          }, {})
-  
-          const event = events[pattern]
+        const arg = keys.reduce((arg, key, index) => {
+          arg[key.name] = values[index]
+          return arg
+        }, {})
 
-          const argFromLoc = event.fromLocation?.(getStore(), arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
-          const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
+        const event = eventsByPath[path]
 
-          return event(argFinal)
-        }
+        const argFromLoc = event.fromLocation?.(getStore(), arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
+        const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
+
+        return event(argFinal)
       }
     }
-    catch (error) {}
-
-    if (fallback) {
-      const arg = { notFound: true, changePath: false, ...fallbackArg }
-      
-      if (fallback.event?.symbol === respondEventSymbol) {
-        Object.assign(fallback, arg)
-        Object.assign(fallback.arg, arg)
-        return fallback // fallback could be passed as an actual event
-      } 
-
-      return eventFrom(fallback, undefined, arg)
-    }
-
-    throw new Error (`respond: no event matched path "${loc.pathname}".`)
   }
+  catch (error) {}
+
+  if (fallback) {
+    const arg = { notFound: true, changePath: false, ...fallbackArg }
+    
+    if (fallback.event?.symbol === respondEventSymbol) {
+      Object.assign(fallback, arg)
+      Object.assign(fallback.arg, arg)
+      return fallback // fallback could be passed as an actual event
+    } 
+
+    return eventFrom(fallback, undefined, arg)
+  }
+
+  throw new Error (`respond: no event matched path "${loc.pathname}".`)
 }
 
 
@@ -86,26 +79,3 @@ const compilePath = (pattern, { partial = false, strict = false }) => {
 
 
 const cache = {}
-
-
-
-const createEventsByPathSpec = (mod, hash = {}) => {
-  createEvents(mod.events, hash)
-  mod.moduleKeys.forEach(k => createEventsByPathSpec(mod[k], hash))
-  return hash
-}
-
-
-const createEvents = (events = {}, hash) => {
-  Object.keys(events).forEach(k => {
-    const event = events[k]
-    const isNamespace = !event.kind
-
-    if (isNamespace) {
-      createEvents(event, hash)
-    }
-    else if (event.path) {
-      hash[event.path] = event
-    }
-  })
-}

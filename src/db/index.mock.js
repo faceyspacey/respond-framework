@@ -347,7 +347,6 @@ export default {
 
   _create(doc) {
     const id = doc?.id || objectId()
-    const instance = { ...doc, id, __type: this._name }
     return new this.Class({ ...doc, id, __type: this._name })
   },
 

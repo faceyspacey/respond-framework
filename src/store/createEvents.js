@@ -13,26 +13,88 @@ const edit = {
 
 
 
-export default (mod, getStore, cache, p = '') => ({
-  ...createEventsForModule({ start, edit, ...mod.events }, getStore, cache, p),
-  ...preparePropEvents(mod.props?.events, mod.events, cache)
-})
+export default (store, cache, mod, modulePath) =>
+  mergeDeep(
+    createEventsForModule(store, cache, mod.events ?? {}, modulePath),
+    preparePropEvents(store, cache, mod.props?.events, mod.events, modulePath),
+  )
 
 
 
-const preparePropEvents = (propEvents = {}, events = {}, cache) =>
+const createEventsForModule = (store, cache, events, modulePath, ns = '', parentType) => {
+  if (!events) return
+
+  events = parentType ? events : { start, edit, ...events }
+
+  return Object.keys(events).reduce((acc, k) => {
+    const config = events[k]
+    
+    if (!config || typeof config !== 'object') return acc // could possibly be an undefined key by accident in userland
+
+    acc[k] = !parentType && isNamespace(config)
+      ? createEventsForModule(store, cache, config, modulePath, ns ? `${ns}.${k}` : k) // namespace
+      : createEvent(store, cache, config, modulePath, ns, k, parentType)
+
+    cache.set(config, acc[k])
+
+    return acc
+  }, {})
+}
+
+
+
+const createEvent = (store, cache, config, modulePath, _namespace, _type, parentType) => {
+  const _typeResolved = parentType ? `${parentType}.${_type}` : _type 
+    
+  const namespace = modulePath
+    ? _namespace ? `${modulePath}.${_namespace}` : modulePath
+    : _namespace
+
+  const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
+
+  const kind = parentType ? _type : config.path ? 'navigation' : 'submission'
+  const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
+
+  const event = (arg = {}, meta = {}) =>  // event itself is a function
+    applyTransform(
+      store.getStore(),
+      { ...info, event, arg, meta },
+      (a, m) => dispatch({ ...arg, ...a }, { ...meta, ...m })
+    )
+
+  const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
+  const children = parentType ? {} : createEventsForModule(store, cache, builtIns, modulePath, _namespace, _type)
+
+  const dispatch = (arg, meta) => {
+    const { dispatch: d, dispatchSync: ds } = store.getStore()
+    const dispatch = event.sync ? ds : d
+    return dispatch(event(arg, meta), meta)
+  }
+
+  Object.assign(event, config, info, { dispatch, _symbol }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+
+  if (config.path) {
+    store.eventsByPath[config.path] = event
+  }
+
+  return event
+}
+
+
+
+const preparePropEvents = (store, cache, propEvents = {}, events = {}, modulePath, ns = '') =>
   Object.keys(propEvents).reduce((acc, k) => {
     const config = propEvents[k]
-    const eventOrNamespace = cache.get(config)
+    const eventOrNamespaceFromAncestor = cache.get(config)
 
-    if (eventOrNamespace) {
-      acc[k] = eventOrNamespace
+    if (eventOrNamespaceFromAncestor) {
+      acc[k] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(config)) {
-      acc[k] = preparePropEvents(config, events[k], cache)
+      acc[k] = preparePropEvents(store, cache, config, events[k], modulePath, ns ? `${ns}.${k}` : k)
     }
     else {
-      throw new Error(`respond: event props must exist in parent`, k, config)
+      acc[k] = createEvent(store, cache, config, modulePath, ns, k) // fresh event passed as prop
     }
     
     if (events[k]) {
@@ -41,65 +103,6 @@ const preparePropEvents = (propEvents = {}, events = {}, cache) =>
 
     return acc
   }, {})
-
-
-
-const createEventsForModule = (events, getStore, cache, modulePath, _namespace = '', parentType) => {
-  if (!events) return
-
-  return Object.keys(events).reduce((acc, _type) => {
-    const config = events[_type]
-    if (!config || typeof config !== 'object') return acc // could possibly be an undefined key by accident in userland
-
-    if (!parentType && isNamespace(config)) {
-      const ns = _namespace ? `${_namespace}.${_type}` : _type
-      const namespaceObject = createEventsForModule({ start, edit, ...config }, getStore, cache, modulePath, ns)
-
-      acc[_type] = namespaceObject
-      cache.set(config, namespaceObject)
-
-      return acc
-    }
-
-    const _typeResolved = parentType ? `${parentType}.${_type}` : _type 
-    
-    const namespace = modulePath
-      ? _namespace ? `${modulePath}.${_namespace}` : modulePath
-      : _namespace
-
-    const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
-
-    const kind = parentType ? _type : config.path ? 'navigation' : 'submission'
-    const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
-
-    const event = (arg = {}, meta = {}) =>  // event itself is a function
-      applyTransform(
-        getStore(),
-        { ...info, event, arg, meta },
-        (a, m) => dispatch({ ...arg, ...a }, { ...meta, ...m })
-      )
-
-    const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-    const children = parentType ? {} : createEventsForModule(builtIns, getStore, cache, modulePath, _namespace, _type)
-
-    const dispatch = (arg, meta) => {
-      const store = getStore()
-      const dispatch = event.sync ? store.dispatchSync : store.dispatch
-      return dispatch(event(arg, meta), meta)
-    }
-
-    Object.assign(event, config, info, { dispatch, _symbol }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
-
-    acc[_type] = event
-    cache.set(config, event)
-
-    return acc
-  }, {})
-}
-
-
-
-
 
 
 const applyTransform = (store, e, dispatch) => {
@@ -121,4 +124,18 @@ const applyTransform = (store, e, dispatch) => {
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal
+}
+
+
+const mergeDeep = (target, source) => {  
+  Object.keys(source).forEach(k => {
+    if (typeof target[k] !== 'object') { // non-existent namespace overwritten by namespace object prop or event function overriden by event function prop
+      target[k] = source[k]
+    }
+    else {
+      mergeDeep(target[k], source[k])
+    }
+  })
+
+  return target
 }

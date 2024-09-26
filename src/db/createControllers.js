@@ -1,5 +1,6 @@
 import Parent from './Controller.js'
 import createControllerDefault from './utils/createControllerDefault.js'
+import mergeProps from './utils/mergeProps.js'
 
 
 export default function createControllers({ options, ...controllers }, hash = {}) {
@@ -14,12 +15,13 @@ export default function createControllers({ options, ...controllers }, hash = {}
 }
 
 
-export const createControllersTree = ({ modules = {}, ...db }, hash = {}, p = '') => {
+export const createControllersTree = ({ modules = {}, props = {}, ...db }, hash = {}, p = '') => {
   hash[p] = {}
+  mergeProps(db, props)
   createControllers(db, hash[p])
-
+  
   Object.keys(modules).forEach(k => {
-    createModule(modules[k], hash, p ? `${p}.${k}` : k)
+    createControllersTree(modules[k], hash, p ? `${p}.${k}` : k)
   })
 
   return hash

@@ -7,7 +7,7 @@ import order from './utils/orderEventKeys.js'
 
 
 export default store => {
-  const prevStore = window.store
+  const { prevStore } = store
   const _devtools = connect(store)
 
   const isHMR = prevStore && !store.replays?.replay

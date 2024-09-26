@@ -8,8 +8,10 @@ export default wrapInActForTests((storeSlice, eSlice, sync) => {
   const store = storeSlice.getStore()
   const e = prependModulePathToE(eSlice)
 
+  const start = e.event === store.events.start
+
   try {
-    if (e.event === store.events.start) {
+    if (start) {
       reduceAllModules(e, store)
     }
     else {
@@ -28,7 +30,7 @@ export default wrapInActForTests((storeSlice, eSlice, sync) => {
 
   store.devtools?.send(eSlice) // devtools not available on initial reduction in createStore.js
 
-  if (!sync) return store.notify(e) // await in tests/replays
+  if (!sync && !start) return store.notify(e) // awaited in tests/replays
 })
 
 

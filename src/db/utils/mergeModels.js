@@ -1,9 +1,16 @@
-export default ({ shared = {}, client = {} } = {}) => {
+export default (models = {}) => {
+  let client = models.client ?? {}
+  let shared = models.shared ?? {}
+
+  if (!models.client && !models.shared) {
+    client = models
+  }
+
   const keys = Object.keys({ ...shared, ...client })
 
   return keys.reduce((acc, k) => {
-    const s = g(shared[k] || {})
-    const c = g(client[k] || {})
+    const s = shared[k] && g(shared[k])
+    const c = client[k] && g(client[k])
 
     const Class = function(doc) {
       if (!doc) return
