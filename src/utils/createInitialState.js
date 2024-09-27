@@ -2,9 +2,10 @@ import createClientDatabase from '../db/createClientDatabase.js'
 import mergeModels from '../db/utils/mergeModels.js'
 import findOne from '../selectors/findOne.js'
 import createEvents from '../store/createEvents.js'
-import createReducers from '../store/createReducers.js'
+import createPropReducers from '../store/createPropReducers.js'
 import createPlugins from '../store/createPlugins.js'
 import getSessionState from './getSessionState.js'
+import createSelectors from '../store/createSelectors.js'
 
 
 export default async ({ ...mod }, store, token) => {
@@ -21,91 +22,70 @@ export default async ({ ...mod }, store, token) => {
   //   mergeDeep(state, sessionState)
   // }
 
-  eventsCache.clear()
-
   return state
 }
 
 
-const createInitialState = async (mod, store, eventsCache, moduleName, modulePath, parent = {}) => {
+const createInitialState = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}) => {
+  if (!mod.id) throw new Error('respond: missing id on module: ' + modulePath)
+
+  store.modulePaths[modulePath] = true
+  store.modulePathsById[mod.id] = modulePath
+
   const proto = {}
   const state = Object.create(proto)
 
-  const { initialState, selectors = {} } = mod
+  const { id, module: _, ignoreChild, initialState, components, events = {}, selectors = {}, reducers = {}, props = {}, models, db, replays, options, plugins, pluginsSync, ...rest } = mod
   const initial = (typeof initialState === 'function' ? await initialState(store) : initialState) ?? {}
 
-  state.events = createEvents(store, eventsCache, mod, modulePath)
+  const moduleKeys = []
+  const defaultState = {}
 
-  Object.defineProperties(state, Object.getOwnPropertyDescriptors(initial))
+  Object.keys(rest).forEach(k => {
+    const v = rest[k]
 
-  const moduleKeys = Object.keys(mod).reduce((acc, k) => {
-    if (mod[k]?.module === true) acc.push(k)
-    return acc
-  }, [])
+    if (v?.module === true) moduleKeys.push(k)
+    else if (typeof v === 'function') {
+      if (v.length >= 2) reducers[k] = v
+      else selectors[k] = v
+    }
+    else defaultState[k] = v
+  })
 
-  const { id, components, reducers = {}, props = {}, models } = mod
-  Object.assign(state, { modulePath, moduleKeys, id, components, props, reducers })
-  
-  if (!id) throw new Error('respond: missing id on module: ' + modulePath)
+  Object.defineProperties(state, {
+    ...Object.getOwnPropertyDescriptors({
+      ...defaultState,
+      ...initial,
+      ...props.state,
+      ...parent[moduleName], // parent hydrated state
+      moduleKeys,
+      components,
+    }),
+    state: { enumerable: false, configurable: true, get: () => store.getProxy(state) },
+    _parent: { enumerable: false, configurable: true, writable: false, value: parent },
+  })
 
-  store.modulePaths[modulePath] = true
-  store.modulePathsById[id] = modulePath
+  state.events = createEvents(store, eventsCache, events, props.events, modulePath)
 
-  Object.defineProperty(state, 'state', { enumerable: false, configurable: true, get: () => store.getProxy(state) })
-  Object.defineProperty(state, '_parent', { enumerable: false, configurable: true, writable: false, value: parent })
+  createSelectors(proto, selectors, props.selectors, reducers, state)
+
+  createPropReducers(proto, state, moduleName, reducers, props.reducers, parent.reducers)
 
   Object.defineProperties(proto, {
     ...Object.getOwnPropertyDescriptors(store),
-    findOne: { value: findOne },
-    models: { value: models ? mergeModels(models) : parent.models ?? mergeModels(store.findInClosestParent('models')) },
-    __module: { value: true },
-  })
-
-  Object.defineProperty(proto, 'db', {
-    value: createClientDatabase(mod.db, parent.db, props, state)
-  })
-
-  Object.keys(selectors).forEach(k => {
-    const v = selectors[k]
-    const kind = v.length === 0 ? 'get' : 'value'
-
-    Object.defineProperty(proto, k, { [kind]: v, configurable: true })
-  })
-
-  if (props.selectors) {
-    const propSelectors = props.selectors
-
-    Object.keys(propSelectors).forEach(k => {
-      const v = propSelectors[k]
-      const kind = v.length === 0 ? 'get' : 'value'
-
-      const v2 = v.length === 0
-        ? function() { return v.call(this._parent) }
-        : function(...args) { return v.apply(this._parent, args) }
-
-      Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
-
-      if (reducers[k]) reducers[k].__overridenByProp = true           // delete potential child reducer mock, so selector takes precedence
-      delete state[k]                                                 // delete potential initialState too
-    })
-  }
-
-  if (props.reducers) {
-    createReducers(proto, state, moduleName, reducers, props.reducers, parent.reducers)
-  }
-
-  if (props.state) {
-    Object.defineProperties(state, Object.getOwnPropertyDescriptors(props.state))
-  }
-
-  if (parent[moduleName]) { // parent hydrated state
-    Object.defineProperties(state, Object.getOwnPropertyDescriptors(parent[moduleName]))
-  }
-  
-
-  Object.defineProperties(proto, {
-    _plugins: { value: createPlugins(state, store.options.defaultPlugins, mod.plugins) },
-    _pluginsSync: { value: createPlugins(state, store.options.defaultPluginsSync, mod.pluginsSync) },
+    ...Object.getOwnPropertyDescriptors({
+      __module: true,
+      id,
+      ignoreChild,
+      modulePath,
+      findOne,
+      props,
+      reducers,
+      models: models ? mergeModels(models) : parent.models ?? mergeModels(store.findInClosestParent('models')),
+      db: createClientDatabase(db, parent.db, props, state),
+      _plugins: createPlugins(state, store.options.defaultPlugins, plugins),
+      _pluginsSync: createPlugins(state, store.options.defaultPluginsSync, pluginsSync),
+    }),
   })
 
   for (const k of moduleKeys) {

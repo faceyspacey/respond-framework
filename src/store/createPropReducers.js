@@ -1,4 +1,4 @@
-export default function createReducers(proto, state, moduleName, reducers = {}, propReducers = {}, parentReducers = {}) {
+export default (proto, state, moduleName, reducers = {}, propReducers = {}, parentReducers = {}) => {
   const parentKeys = Object.keys(parentReducers)
 
   Object.keys(propReducers).forEach(k => {

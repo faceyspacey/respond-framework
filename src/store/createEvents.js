@@ -13,30 +13,32 @@ const edit = {
 
 
 
-export default (store, cache, mod, modulePath) =>
-  mergeDeep(
-    createEventsForModule(store, cache, mod.events ?? {}, modulePath),
-    preparePropEvents(store, cache, mod.props?.events, mod.events, modulePath),
-  )
+export default function createEvents(store, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
+  const isBuiltIns = !!parentType
+  const allEvents = isBuiltIns ? events : { start, edit, ...events }
+  const keys = Object.keys({ ...allEvents, ...propEvents })
 
+  return keys.reduce((acc, k) => {
+    const config = allEvents[k]
+    const propConfig = propEvents[k]
 
+    const eventOrNamespaceFromAncestor = cache.get(propConfig)
 
-const createEventsForModule = (store, cache, events, modulePath, ns = '', parentType) => {
-  if (!events) return
+    if (eventOrNamespaceFromAncestor) {
+      acc[k] = eventOrNamespaceFromAncestor
+    }
+    else if (isNamespace(propConfig ?? config, isBuiltIns)) {
+      acc[k] = createEvents(store, cache, config, propConfig, modulePath, ns ? `${ns}.${k}` : k)
+    }
+    else if (propConfig) {
+      acc[k] = createEvent(store, cache, propConfig, modulePath, ns, k) // fresh event passed as prop
+    }
+    else if (config) {
+      acc[k] = createEvent(store, cache, config, modulePath, ns, k, parentType)
+    }
 
-  events = parentType ? events : { start, edit, ...events }
-
-  return Object.keys(events).reduce((acc, k) => {
-    const config = events[k]
-    
-    if (!config || typeof config !== 'object') return acc // could possibly be an undefined key by accident in userland
-
-    acc[k] = !parentType && isNamespace(config)
-      ? createEventsForModule(store, cache, config, modulePath, ns ? `${ns}.${k}` : k) // namespace
-      : createEvent(store, cache, config, modulePath, ns, k, parentType)
-
-    cache.set(config, acc[k])
-
+    if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
+      
     return acc
   }, {})
 }
@@ -63,7 +65,7 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
     )
 
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-  const children = parentType ? {} : createEventsForModule(store, cache, builtIns, modulePath, _namespace, _type)
+  const children = parentType ? {} : createEvents(store, cache, builtIns, undefined, modulePath, _namespace, _type)
 
   const dispatch = (arg, meta) => {
     const { dispatch: d, dispatchSync: ds } = store.getStore()
@@ -81,28 +83,6 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
 }
 
 
-
-const preparePropEvents = (store, cache, propEvents = {}, events = {}, modulePath, ns = '') =>
-  Object.keys(propEvents).reduce((acc, k) => {
-    const config = propEvents[k]
-    const eventOrNamespaceFromAncestor = cache.get(config)
-
-    if (eventOrNamespaceFromAncestor) {
-      acc[k] = eventOrNamespaceFromAncestor
-    }
-    else if (isNamespace(config)) {
-      acc[k] = preparePropEvents(store, cache, config, events[k], modulePath, ns ? `${ns}.${k}` : k)
-    }
-    else {
-      acc[k] = createEvent(store, cache, config, modulePath, ns, k) // fresh event passed as prop
-    }
-    
-    if (events[k]) {
-      cache.set(events[k], acc[k]) // if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
-    }
-
-    return acc
-  }, {})
 
 
 const applyTransform = (store, e, dispatch) => {
@@ -124,18 +104,4 @@ const applyTransform = (store, e, dispatch) => {
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal
-}
-
-
-const mergeDeep = (target, source) => {  
-  Object.keys(source).forEach(k => {
-    if (typeof target[k] !== 'object') { // non-existent namespace overwritten by namespace object prop or event function overriden by event function prop
-      target[k] = source[k]
-    }
-    else {
-      mergeDeep(target[k], source[k])
-    }
-  })
-
-  return target
 }

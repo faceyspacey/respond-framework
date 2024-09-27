@@ -198,16 +198,18 @@ dont hide _namespace, _type in state (only in actions)
 
 
 
+#wind both propEvents + events through createEventsForModule, cache non prop
 
-extract reducers as any 2-3 arg functions in state, extract 0-1 arg functions into selectors
-immutable so replayEvents/reload works correctly
+#extract reducers as any 2-3 arg functions in state, extract 0-1 arg functions into selectors
+#immutable so replayEvents/reload works correctly
+
+
+recurse merge // createSeed, configReplays
+
+
 
 
 
 getSessionState handling of recording nested selectors
 getSessionState handling of knowing which module model prototypes came from
-
-wind both propEvents + events through createEventsForModule, cache non prop
-
-recurse createSeed, merge, configReplays
 

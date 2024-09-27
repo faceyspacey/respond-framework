@@ -10,9 +10,17 @@ export default {
     builtIn: true,
   },
   module: {
-    options: (settings, store) => Object.keys(store.modulePathsAll)
-      .filter(p => p.indexOf('replayTools') === -1)
-      .map(v => ({ value: v, label: v || 'top' })),
+    options: (settings, store) => {
+      const selected = store.replays.settings.module
+      let paths = Object.keys(store.modulePathsAll).filter(p => p.indexOf('replayTools') !== 0)
+
+      if (selected) {
+        paths = paths.map(p => p ? selected + '.' + p : selected)
+        paths.unshift('')
+      }
+
+      return paths.map(v => ({ value: v, label: v || 'top' }))
+    },
     defaultValueDevelopment: '',
     createLabel: o => 'module: ' + (o?.value || 'top'),
     builtIn: true,
