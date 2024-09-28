@@ -7,8 +7,8 @@ import createDbProxy from './utils/createDbProxy.js'
 import mergeProps from './utils/mergeProps.js'
 
 
-export default (db, parentDb, props, store) => {
-  if (!db && !parentDb) db = store.findInClosestParent('db') ?? {}
+export default (db, parentDb, props, store, findInClosestParent) => {
+  if (!db && !parentDb) db = findInClosestParent('db') ?? {}
   else if (!db) return createDbProxy({ ...parentDb })
 
   if (props?.db) mergeProps(db, props.db)

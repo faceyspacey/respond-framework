@@ -315,11 +315,11 @@ export default !isProd ? mock : {
     doc = { ...this._fromObjectIds(doc) }               // mongo ObjectId objects converted to strings for ez client consumption
     doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
     delete doc._id                                      // bye bye _id
-    return new this.Class(doc)
+    return new this.Model(doc)
   },
 
   make(doc) {
-    return new this.Class({ ...doc, __type: this._name })
+    return new this.Model({ ...doc, __type: this._name })
   },
 
   mongo() {
@@ -398,7 +398,7 @@ export default !isProd ? mock : {
     doc = { ...this._fromObjectIds(doc) }         // mongo ObjectId objects converted to strings for ez client consumption
     doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
     delete doc._id                                      // bye bye _id
-    return new this.Class(doc)
+    return new this.Model(doc)
   },
 
 

@@ -11,7 +11,7 @@ export default async function(events, delay = 0, settings = this.settings) {
   
   const nextSettings = preserveBuiltInSettings(settings, this.store)
 
-  const store = await createStore(this.store.topModuleOriginal, nextSettings)
+  const store = await createStore(this.store.top, nextSettings)
   const eventsRevived = revive(store.events, events)
 
   const { replayTools } = this.store.state

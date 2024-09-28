@@ -1,4 +1,4 @@
-import createReplayTools from '../replays/index.js'
+import createReplays from '../replays/index.js'
 import createDevTools from '../devtools/index.js'
 import createDevtoolsMock from '../devtools/index.mock.js'
 import createDispatch from './createDispatch.js'
@@ -7,7 +7,7 @@ import createFromEvent from '../utils/createFromEvent.js'
 import createEventFrom from '../utils/createEventFrom.js'
 import createCache from '../utils/createCache.js'
 import createCookies from '../cookies/index.js'
-import createHistoryDefault from '../history/index.js'
+import createOptions from './createOptions.js'
 import snapshot from '../proxy/snapshot.js'
 import createProxy from '../proxy/createProxy.js'
 import shouldUseDevtools from '../utils/shouldUseDevtools.js'
@@ -15,55 +15,36 @@ import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
 import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
 import sliceByModulePath from '../utils/sliceByModulePath.js'
-import defaultPlugins from './plugins/index.js'
-import defaultPluginsSync from './pluginsSync/index.js'
-import getSessionState from '../utils/getSessionState.js'
 import createInitialState from '../utils/createInitialState.js'
-import * as replayTools from '../modules/replayTools/index.js'
-import displaySelectorsInDevtools from './utils/displaySelectorsInDevtools.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
-import { isProd, isDev, isTest } from '../utils/bools.js'
+import { isProd } from '../utils/bools.js'
 import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
 
 
-export default async (topModuleOriginal, settings) => {
-  const replay = !!settings && !isProd
+export default async (top, settings) => {
   settings ??= await restoreSettings()
-
-  const modulePath = settings?.module || ''
-  const topModule = sliceByModulePath(topModuleOriginal, modulePath)
-  const parentModules = linkParentModules(topModuleOriginal, modulePath)
-
-  delete topModule.props // props passed from parent are not available when using replayTools to focus child modules
-
-  if (!isProd || topModuleOriginal.options?.productionReplayTools) {
-    topModule.replayTools = replayTools
-  }
-
-  // inherit from topModuleOriginal if not available on selected topModule
-  const topReplays = topModule.replays || topModuleOriginal.replays
-  const topOptions = topModule.options || topModuleOriginal.options
-
-  const cookies = topModule.cookies || createCookies()
-  const token = cookies.token || await cookies.get('token')
-
-  const replays = createReplayTools({ ...topReplays, settings: { ...settings, token }, replay })
-  
-  const options = {
-    merge: {},
-    defaultPlugins,
-    defaultPluginsSync,
-    createHistory: createHistoryDefault,
-    ...topOptions,
-    displaySelectorsInDevtools: displaySelectorsInDevtools(topOptions),
-  }
-
-  const prevStore = window.store
-  const isHMR = !!prevStore && !replays.replay
   
   const getStore = () => state
+
+  const prevStore = window.store
+
+  const replay = !!settings && !isProd
+  const isHMR = !!prevStore && !replay
+
+  const modulePath = settings?.module || ''
+  const mod = sliceByModulePath(top, modulePath)
+
+  const findInClosestParent = createFindInClosestParent(top, modulePath)
+
+  const topCookies = mod.cookies ?? findInClosestParent('cookies')
+  const topReplays = mod.replays ?? findInClosestParent('replays')
+  const topOptions = mod.options ?? findInClosestParent('options')
+
+  const cookies = createCookies(topCookies)
+  const replays = createReplays({ ...topReplays, replay, settings: { ...settings, token: await cookies.get('token') } })
+  const options = createOptions(topOptions)
   
   const eventFrom = createEventFrom(getStore)
   const fromEvent = createFromEvent(getStore)
@@ -71,12 +52,10 @@ export default async (topModuleOriginal, settings) => {
   const dispatch = createDispatch(getStore)
   const dispatchSync = createDispatchSync(getStore)
 
-  let _devtools
-  
-  const lazyCreateDevtools = () => shouldUseDevtools(options) ? createDevTools(state) : createDevtoolsMock()
-  const history = options.createHistory(topModule)
-
+  const history = options.createHistory(mod)
   const cache = createCache(getStore, options.cache)
+
+  const lazyCreateDevtools = () => shouldUseDevtools(options) ? createDevTools(state) : createDevtoolsMock()
 
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createReviver(state.events))
@@ -89,10 +68,9 @@ export default async (topModuleOriginal, settings) => {
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
   const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
 
-  const modulePaths = {}
-  const api = { ...options.merge, findInClosestParent: findInClosestParent(parentModules), ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modulePathsById: {}, get devtools() { return _devtools ?? (_devtools = lazyCreateDevtools()) }, modulePaths, modulePathsAll: modulePaths, getProxy, topModule, topModuleOriginal, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(topModule, api, replays.token)
+  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(mod, api, replays.token)
 
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
 
@@ -101,9 +79,7 @@ export default async (topModuleOriginal, settings) => {
 
   if (!isHMR) reduce(state, state.events.start())
 
-  replays.store = state
-
-  return window.store = state
+  return window.store = replays.store = state
 }
 
 
@@ -122,17 +98,15 @@ const saveModuleKeys = mod => {
 }
 
 
-const linkParentModules = (slice, modulePath) => {
-  if (!modulePath) return []
-  const arr = []
+const createFindInClosestParent = (slice, modulePath) => {
+  const parentModules = []
 
-  modulePath.split('.').forEach(k => {
-    arr.unshift(slice)
-    slice = slice[k]
-  })
+  if (modulePath) {
+    modulePath.split('.').forEach(k => {
+      parentModules.unshift(slice)
+      slice = slice[k]
+    })
+  }
 
-  return arr
+  return key => parentModules.find(p => p[key])?.[key]
 }
-
-const findInClosestParent = parentModules => key =>
-  parentModules.find(p => p[key])?.[key]

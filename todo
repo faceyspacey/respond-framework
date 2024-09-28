@@ -204,8 +204,8 @@ dont hide _namespace, _type in state (only in actions)
 #immutable so replayEvents/reload works correctly
 
 
-recurse merge // createSeed, configReplays
-
+#recurse merge // createSeed, configReplays
+#...rest needs getOwnPropertyDescriptors, getters in state, createModels
 
 
 
@@ -213,3 +213,8 @@ recurse merge // createSeed, configReplays
 getSessionState handling of recording nested selectors
 getSessionState handling of knowing which module model prototypes came from
 
+createEvents: save event in store.eventsByType
+fetch reviver: pass modulePath 
+Model: save modulePath in function(doc, modulePath)
+createInitialState: save models in store.modelsByModulePath
+getSession reviver: new store.modelsByModulePath[doc.__modulePath][v.__type](v)

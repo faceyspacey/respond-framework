@@ -10,7 +10,7 @@ export default store => {
   return devtools = extension.connect({
     name: store.options.devtools?.name || 'Respond Framework',
     actionCreators: createActionCreators(store.events),
-    stateSanitizer: state => orderState(state, store, store.topModule),
+    stateSanitizer: state => orderState(state, store),
     shouldCatchErrors: true,
     trace: false,
     traceLimit: 0,

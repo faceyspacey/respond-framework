@@ -1,7 +1,4 @@
-// order state in the clearest way to see what's going on in devtools
-
-
-const orderState = (state, store, mod, isSelectors) => {
+export default function orderState(state, store, isSelectors) { // order state in the clearest way to see what's going on in devtools
   const modules = {}
   const selectors = {}
   const booleans = {}
@@ -15,7 +12,7 @@ const orderState = (state, store, mod, isSelectors) => {
   Object.keys(state).forEach(k => {
     const v = state[k]
 
-    const childMod = mod?.moduleKeys?.includes(k) && mod[k]
+    const childMod = state.moduleKeys?.includes(k) && state[k]
     
     if (k === 'replayTools' && !store.replays.options.log) return
     
@@ -24,14 +21,14 @@ const orderState = (state, store, mod, isSelectors) => {
       : isSelectors ? k + ' (selector)' : k
 
     if (childMod) {
-      modules[k] = orderState(v, store, childMod)
+      modules[k] = orderState(v, store)
     }
     else if (k === '(selectors)') {
       if (store.options.groupSelectorsInDevtools) {
         selectors['(selectors)'] = orderState(v, store)
       }
       else {
-        Object.assign(selectors, orderState(v, store, undefined, true))
+        Object.assign(selectors, orderState(v, store, true))
       }
     }
     else if (typeof v === 'boolean') {
@@ -69,6 +66,3 @@ const orderState = (state, store, mod, isSelectors) => {
     ...everythingElse,
   }
 }
-
-
-export default orderState

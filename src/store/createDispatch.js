@@ -7,8 +7,6 @@ export default getStore => {
     const e = sliceEventByModulePath(ev)
     const store = sliceByModulePath(getStore(), e.modulePath)
     
-    const { _plugins } = store
-
     e.meta = { ...e.meta, ...meta }
   
     if (store.history.state.pop) {
@@ -16,7 +14,7 @@ export default getStore => {
     }
 
     try {
-      await dispatchPlugins([start, ..._plugins], store, e)
+      await dispatchPlugins([start, ...store._plugins], store, e)
     }
     catch (error) {
       await store.onError({ error, kind: 'dispatch', e })

@@ -6,12 +6,10 @@ export default getStore => {
     const e = sliceEventByModulePath(ev)
     const store = sliceByModulePath(getStore(), e.modulePath)
     
-    const { _pluginsSync } = store
-
     e.meta = { ...e.meta, ...meta }
   
     try {
-      return dispatchPlugins([start, ..._pluginsSync], store, e)
+      return dispatchPlugins([start, ...store._pluginsSync], store, e)
     }
     catch (error) {
       store.onError({ error, kind: 'dispatch', e })

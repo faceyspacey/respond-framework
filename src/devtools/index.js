@@ -13,7 +13,7 @@ export default store => {
   const isHMR = prevStore && !store.replays?.replay
 
   if (!prevStore || !isHMR) {
-    _devtools.init(orderState(store.state, store, store.topModule))
+    _devtools.init(orderState(store.state, store))
   }
 
   prevStore?.devtools.unsubscribe()

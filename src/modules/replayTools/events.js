@@ -220,13 +220,13 @@ export default {
   },
 
   reload: {
-    before: async ({ state, topModuleOriginal }) => {
+    before: async ({ state, top }) => {
       const { permalink: _, ...settings } = state.form
 
       await localStorage.setItem('replaySettings', JSON.stringify(settings))
       window.history.replaceState(history.state, '', settings.path)
 
-      const store = await createStore(topModuleOriginal, settings)
+      const store = await createStore(top, settings)
 
       const e = store.eventFrom(settings.path)
       await store.dispatch(e)
