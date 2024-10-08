@@ -1,4 +1,4 @@
-import { reviveObject } from '../utils/jsonReplacerReviver.js'
+import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
@@ -18,13 +18,13 @@ export default function (store, eSlice, fullModulePathAlready = false) {
   const state = store.state.replayTools
 
   if (!e.meta?.skipped) {
-    const snap = Object.create(Object.getPrototypeOf(store))
+    const snap = Object.create(Object.getPrototypeOf(store)) // create new object, as otherwise it would simply be a mutable (and circular) reference to state
     store.prevState = Object.assign(snap, store.snapshot(store))
   }
 
   if (isProd && !store.options.productionReplayTools) return
 
-  sendTrigger(e, state, store.events, this.playing)
+  sendTrigger(e, state, store, this.playing)
 
   if (e.meta?.skipped) {
     store.devtools.forceNotification({ ...e, __prefix: '-- ' })
@@ -37,14 +37,14 @@ export default function (store, eSlice, fullModulePathAlready = false) {
 }
 
 
-const sendTrigger = (e, state, storeEvents, playing) => {
+const sendTrigger = (e, state, store, playing) => {
   const index = ++state.evsIndex
   if (playing) return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
 
   const events = state.evs
 
   const prev = events[index - 1]
-  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e)
+  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e, store)
 
   if (dispatchedSameAsSkippedEvent) {
     delete prev.meta.skipped // ux optimization: user desired to unskip it by manually performing the same event
@@ -55,7 +55,7 @@ const sendTrigger = (e, state, storeEvents, playing) => {
   const shouldClipTail = index <= lastEntryIndex
 
   if (shouldClipTail) {
-    const dispatchedSameEvent = clipTail(e, state, events, index, storeEvents)
+    const dispatchedSameEvent = clipTail(e, state, events, index, store)
     if (dispatchedSameEvent) return // ux optimization: do nothing, as index increment resolves this automatically
   }
 
@@ -68,9 +68,9 @@ const sendTrigger = (e, state, storeEvents, playing) => {
 
 // helpers
 
-const clipTail = (e, state, events, index, storeEvents) => {
+const clipTail = (e, state, events, index, store) => {
   const next = events[index]
-  if (isEqual(next, e, storeEvents)) return true // user manually performed next event in sequence, so act as if there was no divergence
+  if (isEqual(next, e, store)) return true // user manually performed next event in sequence, so act as if there was no divergence
 
   events.splice(index)
   state.divergentIndex = index
@@ -78,10 +78,10 @@ const clipTail = (e, state, events, index, storeEvents) => {
 
 
 
-const isEqual = (a, b, events) => {
+const isEqual = (a, b, store) => {
   if (a.type !== b.type) return false
 
-  const arg = reviveObject(events, a.arg || {})   // revive possible event function references in test arg
+  const arg = revive(store)(a.arg || {})   // revive possible event function references in test arg
 
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
@@ -96,7 +96,7 @@ const inputConverged = (e, state, events) => {
   const eventsCombined = combineInputEvents([...events, e])
   
   const eventsFromTestSoFar = test.events.slice(0, eventsCombined.length)
-  const manuallyEnteredInputValues = isEqualDeepPartial(eventsFromTestSoFar, eventsCombined) // save some cycles, and don't reviveObject which likely isn't necessary for input events
+  const manuallyEnteredInputValues = isEqualDeepPartial(eventsFromTestSoFar, eventsCombined) // save some cycles, and don't revive which likely isn't necessary for input events
 
   if (manuallyEnteredInputValues) {
     state.evs = test.events                     // display all events from test, having only tested isEqual on the number of events dispatched factoring in combined form events

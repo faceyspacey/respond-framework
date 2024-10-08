@@ -46,7 +46,7 @@ export const prependModulePathToE = e => {
 
 export const recreateFullType = (e, modulePath = e.modulePath) => {
   const namespace = prependModulePath(e._namespace, modulePath)
-  return prependModulePath(e._type, namespace)
+  return namespace ? `${namespace}.${e._type}` : e._type
 }
 
 

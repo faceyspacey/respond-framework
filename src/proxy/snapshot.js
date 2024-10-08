@@ -1,4 +1,4 @@
-import { proxyStates, snapsToProxyCache } from './utils/helpers.js'
+import { proxyStates, snapsToProxyCache, canProxy } from './utils/helpers.js'
 
 
 export default function snapshot(proxy) {
@@ -7,19 +7,31 @@ export default function snapshot(proxy) {
 }
 
 
-function createSnapshot(proxy, { orig, version, cache, listeners, notify }) {
-  const { version: v, snap: s } = cache.snap.get(orig) ?? {}
+function createSnapshot(proxy, { orig: o, version, cache, listeners, notify }) {
+  const { version: v, snap: s } = cache.snap.get(o) ?? {}
   if (v === version) return s
 
-  const snap = Array.isArray(orig) ? [] : Object.create(Object.getPrototypeOf(orig)) // computed methods/selectors on prototype
+  const snap = isArray(o) ? [] : create(getProto(o)) // computed methods/selectors on prototype
 
-  cache.snap.set(orig, { snap, version })
-  snapsToProxyCache.set(snap, { orig, proxy, listeners, notify, cache })
+  cache.snap.set(o, { snap, version })
+  snapsToProxyCache.set(snap, { orig: o, proxy, listeners, notify, cache })
 
-  Object.keys(orig).forEach(k => {
-    const value = snapshot(orig[k])
-    Object.defineProperty(snap, k, { enumerable: true, configurable: true, writable: true, value })
-  })
+  keys(o).forEach(k => snap[k] = snapshot(o[k]))
 
   return snap // Object.preventExtensions(snap) -- todo: need to find why we needed this, and bring this back (and writable: true)
 }
+
+
+
+export const snapDeepClone = o => {
+  if (!canProxy(o)) return o
+  const snap = isArray(o) ? [] : create(getProto(o))
+  keys(o).forEach(k => snap[k] = snapDeepClone(o[k]))
+  return snap
+}
+
+
+const isArray = Array.isArray
+const keys = Object.keys
+const getProto = Object.getPrototypeOf
+const create = Object.create

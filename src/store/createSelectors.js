@@ -1,13 +1,17 @@
-export default (proto, selectors, propSelectors = {}, reducers, state) => {
-  Object.keys(selectors).forEach(k => {
-    const v = selectors[k]
+export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, state) => {
+  Object.keys(selectorDescriptors).forEach(k => {
+    const descriptor = selectorDescriptors[k]
+    const { get, value: v = get } = descriptor
+    
     const kind = v.length === 0 ? 'get' : 'value'
 
     Object.defineProperty(proto, k, { [kind]: v, configurable: true })
   })
 
-  Object.keys(propSelectors).forEach(k => {
-    const v = propSelectors[k]
+  Object.keys(propSelectorDescriptors).forEach(k => {
+    const descriptor = propSelectorDescriptors[k]
+    const { get, value: v = get } = descriptor
+
     const kind = v.length === 0 ? 'get' : 'value'
 
     const v2 = v.length === 0

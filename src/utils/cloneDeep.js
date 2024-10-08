@@ -1,3 +1,3 @@
-import { createReviver } from './jsonReplacerReviver.js'
+import { createReviver } from './revive.js'
 
-export default (obj, events) => obj && JSON.parse(JSON.stringify(obj), createReviver(events))
+export default (obj, store) => obj && JSON.parse(JSON.stringify(obj), createReviver(store))

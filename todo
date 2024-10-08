@@ -210,11 +210,46 @@ dont hide _namespace, _type in state (only in actions)
 
 
 
-getSessionState handling of recording nested selectors
-getSessionState handling of knowing which module model prototypes came from
+#getSessionState handling of recording nested selectors
+#getSessionState handling of knowing which module model prototypes came from
 
-createEvents: save event in store.eventsByType
-fetch reviver: pass modulePath 
+#createEvents: save event in store.eventsByType
+#createInitialState: save models in store.modelsByModulePath
+
 Model: save modulePath in function(doc, modulePath)
-createInitialState: save models in store.modelsByModulePath
-getSession reviver: new store.modelsByModulePath[doc.__modulePath][v.__type](v)
+
+#fetch reviver: pass modulePath 
+#getSession reviver: new store.modelsByModulePath[doc.__modulePath][v.__type](v)
+
+
+revive ssr models (posts)
+
+immutability:
+reducers
+selectors
+initial state
+
+
+#initial state + props.state may have models that need hydration
+#so like getSessionState, it would be nice to do in a second pass
+
+#prop extraction into propReducers, propSelectors, propDefaultStateDescriptors
+#hydration state is handled like getSessionState as being structured like completed state tree
+
+#models in standard state
+#cloneDeep
+
+
+#const event = eventsByType[type] ?? 
+#namespaces may match a module, conflicting in eventsByType
+
+prevState needs to exist on each module
+
+consolidate api methods in createStore
+make all tools replacable by user
+code split module
+use symbol for _parent
+
+replayToolsState can possibly piggy back on getSessionState
+
+db.create should probably create IDs client side

@@ -36,7 +36,7 @@ export default (snap, state) => {
           if (get) return get.call(proxy)
           if (typeof value === 'function') return value
 
-          recordUsage(state.affected, 'get', snap, k)
+          recordUsage(state.affected, 'get', snap, k) // record usage, as value may be assigned to state, overriding proto, in the future
           return value
         }
       }

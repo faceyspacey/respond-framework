@@ -21,7 +21,7 @@ export default (db, parentDb, props, store, findInClosestParent) => {
       get(_, method) {
         return async (...args) => {
           const context = { controller: 'developer', method, args }
-          const response = await fetch(context, db.options?.apiUrl)
+          const response = await fetch(context, db.options?.apiUrl, store)
           return sendNotification(store, { ...context, response })
         }
       }
@@ -31,7 +31,7 @@ export default (db, parentDb, props, store, findInClosestParent) => {
       const { models, modulePath, ctx } = store
     
       if (method === 'make') {
-        return doc => new models[controller]({ ...doc, __type: controller })
+        return doc => new models[controller]({ ...doc, __type: controller }, modulePath)
       }
     
       return async (...args) => {
@@ -40,14 +40,14 @@ export default (db, parentDb, props, store, findInClosestParent) => {
     
         const { token, userId, adminUserId } = store.getStore()
         const info = { token, userId, adminUserId, ...options.getContext(store, controller, method, args) }
-        const context = { ...info, modulePath, controller, method, args: clean(argsIn(args)), first: !ctx.madeFirst, request: {} }
+        const context = { ...info, modulePath, controller, method, args: clean(argsIn(args), store), first: !ctx.madeFirst, request: {} }
     
         const instance = { ...c, secret }
         const res = await instance._callFilteredByRole(context)
     
         await simulateLatency(store)
     
-        return sendNotification(store, { modulePath, controller, method, args, response: clean(res, models) })
+        return sendNotification(store, { modulePath, controller, method, args, response: clean(res, store, modulePath) })
       }
     }
   })

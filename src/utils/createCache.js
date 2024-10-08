@@ -1,8 +1,6 @@
 import sliceByModulePath from './sliceByModulePath.js'
 
 
-const _symbol = Symbol.for('respondEvent')
-
 export default (getStore, options = {}) => {
   const {
     getCacheState = store => store.state.cachedPaths,
@@ -22,21 +20,21 @@ export default (getStore, options = {}) => {
   return {
     get(eOrLoc) {
       const store = getStore()
-      const e = eOrLoc.event?._symbol === _symbol ? eOrLoc : store.eventFrom(eOrLoc)
+      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
       const k = createKey(e, store)
       return getCacheState(store)[k] ? k : null
     },
 
     set(eOrLoc) {
       const store = getStore()
-      const e = eOrLoc.event?._symbol === _symbol ? eOrLoc : store.eventFrom(eOrLoc)
+      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
       const k = createKey(e, store)
       getCacheState(store)[k] = true
     },
   
     unset(eOrLoc) {
       const store = getStore()
-      const e = eOrLoc.event?._symbol === _symbol ? eOrLoc : store.eventFrom(eOrLoc)
+      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
       const k = createKey(e, store)
       delete getCacheState(store)[k]
     },
@@ -52,7 +50,7 @@ export default (getStore, options = {}) => {
 
     has(eOrLoc) {
       const store = getStore()
-      const e = eOrLoc.event?._symbol === _symbol ? eOrLoc : store.eventFrom(eOrLoc)
+      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
       return has(e, store)
     },
   }

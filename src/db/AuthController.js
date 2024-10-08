@@ -7,7 +7,7 @@ export default {
   async _callFilteredByRole(context) {
     this.context = context
     
-    const { method, token, adminUserId, args } = context
+    const { method, token, userId, adminUserId, args } = context
     const controller = this._name
 
     if (!this[method]) {
@@ -22,7 +22,7 @@ export default {
       !this.permissions[method]?.includes('admin')          // admin making calls on behalf of user signified by accessing methods that don't have admin role
 
     if (isMasquerading) {
-      this.user = { id: context.userId, roles: ['user'] }   // replace admin user that came from token with masqueraded user
+      this.user = { id: userId, roles: ['user'] }   // replace admin user that came from token with masqueraded user
     }
 
     if (!this._hasPermission(method, this.user?.roles)) {

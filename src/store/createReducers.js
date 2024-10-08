@@ -1,6 +1,8 @@
-export default (proto, state, moduleName, reducers = {}, propReducers = {}, parentReducers = {}) => {
+export default (proto, state, moduleName, reducers, propReducers, parentReducers = {}) => {
   const parentKeys = Object.keys(parentReducers)
 
+  proto.reducers = reducers
+  
   Object.keys(propReducers).forEach(k => {
     const reducer = propReducers[k]
     const parentK = parentKeys.find(k => parentReducers[k] === reducer)

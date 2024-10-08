@@ -28,7 +28,7 @@ export default !isProd ? mock : (db, parentDb, props, store) => {
       const url = typeof apiUrl === 'function' ? apiUrl(store) : apiUrl
     
       if (method === 'make') {
-        return doc => new models[controller]({ ...doc, __type: controller })
+        return doc => new models[controller]({ ...doc, __type: controller }, modulePath)
       }
     
       return async function(...args) {
@@ -39,7 +39,7 @@ export default !isProd ? mock : (db, parentDb, props, store) => {
           const first = store.ctx.madeFirst ? false : true
     
           const context = { ...ctx, modulePath, controller, method, args, first }
-          const response = await fetch(context, url, models)
+          const response = await fetch(context, url, store)
     
           store.ctx.madeFirst = true
         

@@ -1,5 +1,4 @@
 import preserveBuiltInSettings from './helpers/preserveBuiltInSettings.js'
-import { reviveEventFunctionReferences as revive } from '../utils/jsonReplacerReviver.js'
 import createStore from '../store/createStore.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import localStorage from '../utils/localStorage.js'
@@ -7,21 +6,18 @@ import { proxyStates } from '../proxy/utils/helpers.js'
 
 
 export default async function(events, delay = 0, settings = this.settings) {
-  this.store.state.replayTools.playing = this.playing = false // stop possible previous running replay
+  const prev = this.store
+  const { replayTools, top } = prev
+
+  replayTools.playing = this.playing = false // stop possible previous running replay
   
-  const nextSettings = preserveBuiltInSettings(settings, this.store)
+  settings = preserveBuiltInSettings(settings, prev)
+  const store = await createStore(top, { settings })
 
-  const store = await createStore(this.store.top, nextSettings)
-  const eventsRevived = revive(store.events, events)
+  store.replayTools = replayTools
+  proxyStates.get(replayTools).remove(proxyStates.get(prev).notify)
 
-  const { replayTools } = this.store.state
-  
-  store.state.replayTools = replayTools
-  store.state.replayTools.evs = revive(store.events, replayTools.evs)
-
-  proxyStates.get(replayTools).remove(proxyStates.get(this.store.state).notify)
-
-  return runEvents(store, eventsRevived, delay)
+  return runEvents(store, events, delay)
 }
 
 
@@ -92,8 +88,8 @@ const timeout = (ms = 300) => {
 
 
 
-export async function restoreEvents() {         // keep in mind store and store.replays will now be in the context of the next next store
-  const state = this.store.state.replayTools
+export async function restoreEvents() {         // keep in mind store and store.replays will now be in the context of the next store
+  const state = this.store.replayTools
   const events = state.evs.slice(0, state.evsIndex + 1)
 
   state.evsIndex = -1

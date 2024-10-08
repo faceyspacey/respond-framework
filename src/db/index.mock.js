@@ -264,11 +264,7 @@ export default {
 
   create(doc) {
     const id = doc?.id || objectId()
-    return new this.Model({ ...doc, id, __type: this._name })
-  },
-
-  make(doc) {
-    return new this.Model({ ...doc, __type: this._name })
+    return this.make({ ...doc, id })
   },
 
   insertSeed(docsObject = {}) {
@@ -347,7 +343,7 @@ export default {
 
   _create(doc) {
     const id = doc?.id || objectId()
-    return new this.Model({ ...doc, id, __type: this._name })
+    return this.make({ ...doc, id })
   },
 
 

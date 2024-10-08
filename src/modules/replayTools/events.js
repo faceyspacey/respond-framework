@@ -1,6 +1,4 @@
 import { Linking } from 'react-native'
-import cloneDeep from '../../utils/cloneDeep.js'
-import { replacer } from '../../utils/jsonReplacerReviver.js'
 import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermaLink from './helpers/createPermaLink.js'
@@ -70,10 +68,7 @@ export default {
     submit: async (store, { id, index, delay }) => {
       const { state, replays } = store
 
-      const { settings, events: evsRaw } = state.tests[id]
-
-      const evsLikeJson = evsRaw.map(e => ({ ...e, event: { __event: true, type: e.type } })) // trick reviver in cloneDeep (top level events, are simplified for ez viewing in test files to not have replacer syntax like e.arg)
-      const evs = cloneDeep(evsLikeJson, store.getStore().events) // revive event function references
+      const { settings, events: evs } = state.tests[id]
 
       state.evs = evs // display all events before replayed
 
@@ -102,9 +97,8 @@ export default {
         const settings = ignoreDefaultSettings(replays.config, { ...replays.settings })
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
-        const eventsWithNestedEventFunctionsAsStrings = JSON.parse(JSON.stringify(evs, replacer))
 
-        const res = await db.developer.writeTestFile({ name, modulePath, settings, events: eventsWithNestedEventFunctionsAsStrings })
+        const res = await db.developer.writeTestFile({ name, modulePath, settings, events: evs })
         await events.tests.dispatch({ sort: 'recent' })
 
         return res
@@ -226,7 +220,7 @@ export default {
       await localStorage.setItem('replaySettings', JSON.stringify(settings))
       window.history.replaceState(history.state, '', settings.path)
 
-      const store = await createStore(top, settings)
+      const store = await createStore(top, { settings })
 
       const e = store.eventFrom(settings.path)
       await store.dispatch(e)

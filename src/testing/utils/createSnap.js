@@ -1,6 +1,6 @@
 import { act } from 'react-test-renderer'
 import createMatchSnapshots from './createMatchSnapshots.js'
-import { reviveObject } from '../../utils/jsonReplacerReviver.js'
+import revive from '../../utils/revive.js'
 import ensureTrigger from './ensureTrigger.js'
 import defaultConfig from './defaultConfig.js'
 
@@ -9,7 +9,7 @@ export default (store, renderer, dispatch, options) => {
   const matchSnapshots = createMatchSnapshots(store, renderer)
   
   return async (e, options2) => {
-    const arg = reviveObject(store.events, e.arg)
+    const arg = revive(store)(e.arg)
     e = { ...e, arg, meta: { ...e.meta } }
     const o = { ...defaultConfig, ...options, ...options2 }
 

@@ -1,8 +1,7 @@
-import cloneDeep from '../../utils/cloneDeep.js'
-
+import { isTest } from '../../utils.js'
 
 export default (settings, { seed = {} }) => {
-  seed = cloneDeep(seed) // ensure mutated nested objects don't persist across replays
+  seed = isTest ? raw : JSON.parse(JSON.stringify(seed)) // ensure mutated nested objects don't persist across replays; tests run in their own environment
 
   const db = window.db || {}
 

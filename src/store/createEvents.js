@@ -2,17 +2,6 @@ import isNamespace from '../utils/isNamespace.js'
 import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-const _symbol = Symbol.for('respondEvent')
-
-const start = {}
-
-const edit = {
-  transform: ({}, form) => ({ form }),
-  sync: true,
-}
-
-
-
 export default function createEvents(store, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
   const isBuiltIns = !!parentType
   const allEvents = isBuiltIns ? events : { start, edit, ...events }
@@ -57,12 +46,13 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
   const kind = parentType ? _type : config.path ? 'navigation' : 'submission'
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  const event = (arg = {}, meta = {}) =>  // event itself is a function
-    applyTransform(
-      store.getStore(),
-      { ...info, event, arg, meta },
-      (a, m) => dispatch({ ...arg, ...a }, { ...meta, ...m })
-    )
+  const event = window.store?.eventsByType[type] ?? function eventCreate(arg = {}, meta = {}) { // event itself is a function (preserved through HMRs + replays)
+    const store = eventCreate.getStore()
+    const e = { ...info, event, arg, meta }
+    const dispatch = (a, m) => eventCreate.dispatch({ ...arg, ...a }, { ...meta, ...m })
+    
+    return applyTransform(store, e, dispatch)
+  }
 
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
   const children = parentType ? {} : createEvents(store, cache, builtIns, undefined, modulePath, _namespace, _type)
@@ -73,7 +63,13 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
     return dispatch(event(arg, meta), meta)
   }
 
-  Object.assign(event, config, info, { dispatch, _symbol }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+  Object.assign(event, config, info, { dispatch, getStore: store.getStore, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+
+  if (store.eventsByType[type]) {
+    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`)
+  }
+
+  store.eventsByType[type] = event
 
   if (config.path) {
     store.eventsByPath[config.path] = event
@@ -104,4 +100,12 @@ const applyTransform = (store, e, dispatch) => {
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal
+}
+
+
+const start = {}
+
+const edit = {
+  transform: ({}, form) => ({ form }),
+  sync: true,
 }

@@ -8,7 +8,7 @@ export default (dbRaw, options = {}) => {
   const config = { listLimit: 10, ...options.config }
 
   const shared = models.shared ?? {}
-  const server = models.server ?? !models.shared ? models : {}
+  const server = models.server ?? (!models.shared ? models : {})
 
   for (const k in dbRaw) {
     const coll = dbRaw[k]
@@ -20,8 +20,9 @@ export default (dbRaw, options = {}) => {
     const parentModel = inherit ? model : {}
 
     const Model = createModel(k, shared[k], server[k], parentModel, { db: getDb })
+    const make = doc => new Model({ ...doc, __type: db[k]._name })
 
-    db[k] = { _name: k, _namePlural: k + 's', ...parent, ...coll, docs, Model, db: getDb, config }
+    db[k] = { _name: k, _namePlural: k + 's', make, ...parent, ...coll, docs, Model, db: getDb, config }
   }
 
   return db

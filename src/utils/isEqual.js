@@ -28,9 +28,7 @@ export const isEqualDeepPartial = (x, y)  => {
   const ty = typeof y
 
   return x && y && tx === obj && tx === ty
-
     ? ok(x).every(k => isEqualDeepPartial(x[k], y[k]))
-
     : x === y
 }
 

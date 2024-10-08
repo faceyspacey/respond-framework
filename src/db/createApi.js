@@ -13,8 +13,9 @@ export default opts => {
     }
     catch (error) {
       if (!req.body) {
-        const error = 'missing express middleware: app.use(express.json({ reviver: createReviver() }))'
-        res.json({ error, params: { controller, method, args, message: error.message } })
+        const error = 'missing express middleware: app.use(express.json({ reviver: createServerReviver() }))'
+        console.error(error)
+        res.json({ error })
         return
       }
 

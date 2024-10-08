@@ -13,7 +13,7 @@ import createProxy from '../proxy/createProxy.js'
 import shouldUseDevtools from '../utils/shouldUseDevtools.js'
 import reduce from './plugins/reduce.js'
 import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
-import { replacer, createReviver } from '../utils/jsonReplacerReviver.js'
+import revive, { replacer, createStateReviver } from '../utils/revive.js'
 import sliceByModulePath from '../utils/sliceByModulePath.js'
 import createInitialState from '../utils/createInitialState.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
@@ -23,7 +23,7 @@ import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
 
 
-export default async (top, settings) => {
+export default async (top, { settings, hydration } = {}) => {
   settings ??= await restoreSettings()
   
   const getStore = () => state
@@ -31,7 +31,7 @@ export default async (top, settings) => {
   const prevStore = window.store
 
   const replay = !!settings && !isProd
-  const isHMR = !!prevStore && !replay
+  const hmr = !!prevStore && !replay
 
   const modulePath = settings?.module || ''
   const mod = sliceByModulePath(top, modulePath)
@@ -55,10 +55,10 @@ export default async (top, settings) => {
   const history = options.createHistory(mod)
   const cache = createCache(getStore, options.cache)
 
-  const lazyCreateDevtools = () => shouldUseDevtools(options) ? createDevTools(state) : createDevtoolsMock()
+  const lazyCreateDevtools = () => !shouldUseDevtools(options) ? createDevTools(state) : createDevtoolsMock()
 
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
-  const parseJsonState = json => JSON.parse(json, createReviver(state.events))
+  const parseJsonState = json => JSON.parse(json, createStateReviver(state))
 
   const replaceState = next => { Object.keys(state).forEach(k => delete state[k]); Object.assign(state, next); }
 
@@ -68,16 +68,17 @@ export default async (top, settings) => {
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
   const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
 
-  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, snapshot, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
-  
-  const initialState = isHMR ? snapshot(prevStore.state) : await createInitialState(mod, api, replays.token)
-
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
+  
+  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  
+  const initialState = await createInitialState(mod, api, replays, hydration, hmr && prevStore.prevState)
+  const state = createProxy(initialState, undefined, proxyCache)
 
-  const state  = createProxy(initialState, undefined, proxyCache)
-  state.prevState = isHMR ? prevStore.prevState : snapshot(state)
-
-  if (!isHMR) reduce(state, state.events.start())
+  if (!hmr) {
+    state.prevState = snapshot(state)
+    reduce(state, state.events.start())
+  }
 
   return window.store = replays.store = state
 }
