@@ -23,14 +23,14 @@ import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
 
 
-export default async (top, { settings, hydration } = {}) => {
-  settings ??= await restoreSettings()
+export default async (top, { settings: rawSettings, hydration } = {}) => {
+  const settings = rawSettings ?? await restoreSettings()
   
   const getStore = () => state
 
   const prevStore = window.store
 
-  const replay = !!settings && !isProd
+  const replay = !!rawSettings && !isProd
   const hmr = !!prevStore && !replay
 
   const modulePath = settings?.module || ''
@@ -69,7 +69,7 @@ export default async (top, { settings, hydration } = {}) => {
   const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
 
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
-  
+
   const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
   const initialState = await createInitialState(mod, api, replays, hydration, hmr && prevStore.prevState)
