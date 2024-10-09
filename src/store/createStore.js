@@ -25,11 +25,8 @@ import { subscribe, notify } from './utils/subscribe.js'
 
 export default async (top, { settings: rawSettings, hydration } = {}) => {
   const settings = rawSettings ?? await restoreSettings()
-  
-  const getStore = () => state
 
   const prevStore = window.store
-
   const replay = !!rawSettings && !isProd
   const hmr = !!prevStore && !replay
 
@@ -60,8 +57,6 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createStateReviver(state))
 
-  const replaceState = next => { Object.keys(state).forEach(k => delete state[k]); Object.assign(state, next); }
-
   const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
   const awaitInReplaysOnly = async f => shouldAwait() ? await f() : state.promises.push(f())
 
@@ -70,11 +65,13 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
 
   const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
 
-  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, replaceState, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  const initialState = await createInitialState(mod, api, replays, hydration, hmr && prevStore.prevState)
+  const initialState = await createInitialState(mod, api, hmr, hydration, replays, prevStore)
   const state = createProxy(initialState, undefined, proxyCache)
 
+  function getStore() { return state }
+  
   if (!hmr) {
     state.prevState = snapshot(state)
     reduce(state, state.events.start())

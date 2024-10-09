@@ -6,42 +6,26 @@ import createReducers from '../store/createReducers.js'
 import createPlugins from '../store/createPlugins.js'
 import getSessionState from './getSessionState.js'
 import createSelectors from '../store/createSelectors.js'
-import * as replayTools from '../modules/replayTools/index.js'
+import * as replayToolsModule from '../modules/replayTools/index.js'
 import { isProd } from './bools.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 import revive, { createStateReviver } from './revive.js'
 
 
-export default async (mod, store, replays, hydration, hmrPrevState) => {
-  delete mod.props // props passed from parent are not available when using replayTools to focus child modules
+export default async (mod, store, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
+  const state = await addModule(mod, store, new Map, undefined, '', {})
 
-  if (!isProd || store.options.productionReplayTools) {
-    mod.replayTools = replayTools
-  }
+  const json = replay ? { ...hydration, replayTools }
+                : hmr ? { ...prevState, replayTools }
+                :       getSessionState() || hydration
 
-  const eventsCache = new Map
-
-  const state = await createInitialState(mod, store, eventsCache, undefined, '', {})
-
-  state.token = replays.token
-  state.cachedPaths ??= {}
-
-  hydration = replays.replay
-    ? hydration
-    : hmrPrevState || getSessionState(state) || hydration
-
-  mergeJsonState(state, hydration)
-
-  return state
+  return hydrateModules(state, json, token)
 }
 
 
-const createInitialState = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}) => {
-  const { id, module, ignoreChild, initialState, components, events = {}, props = {}, models, db, replays, options, plugins, pluginsSync } = mod
+const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}, props = {}) => {
+  const { id, module, ignoreChild, initialState, components, events = {}, models, db, replays, options, plugins, pluginsSync } = mod
   if (!id) throw new Error('respond: missing id on module: ' + modulePath)
-
-  store.modulePaths[modulePath] = true
-  store.modulePathsById[id] = modulePath
 
   const proto = {}
   const state = Object.create(proto)
@@ -132,14 +116,23 @@ const createInitialState = async (mod, store, eventsCache, moduleName, modulePat
   
   state.events = createEvents(store, eventsCache, events, props.events, modulePath)
 
-  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state)
+  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state, store)
 
-  createReducers(proto, state, moduleName, reducers, propReducers, parent.reducers)
+  createReducers(proto, state, moduleName, reducers, propReducers, parent.reducers, store)
 
   for (const k of moduleKeys) {
     const p = modulePath ? `${modulePath}.${k}` : k
-    state[k] = await createInitialState(mod[k], store, eventsCache, k, p, state)
+    state[k] = await addModule(mod[k], store, eventsCache, k, p, state, mod[k].props)
   }
+
+  if (!modulePath && store.options.replayToolsEnabled) { // add to top module only
+    const k = 'replayTools'
+    state[k] = await addModule(replayToolsModule, store, eventsCache, k, k, state)
+    moduleKeys.push(k)
+  }
+
+  store.modulePaths[modulePath] = true
+  store.modulePathsById[id] = modulePath
 
   return state
 }
@@ -150,25 +143,32 @@ const cloneDeep = o => isProd ? o : snapDeepClone(o) // clones only needed durin
 
 
 
-const mergeJsonState = (state, json) => {
-  if (!json) return
+const hydrateModules = (state, json, token) => {
+  state.token = token
+  state.cachedPaths ??= {}
+
+  if (!json) return state
 
   if (typeof json === 'object') {
-    return mergeDeep(state, revive(state)(json))
+    mergeModules(state, revive(state)(json))
+  }
+  else {
+    mergeModules(state, JSON.parse(json, createStateReviver(state)))
   }
 
-  return mergeDeep(state, JSON.parse(json, createStateReviver(state)))
+  return state
 }
 
 
 
-const mergeDeep = (state, jsonState = {}) => {
+const mergeModules = (state, json) => {
   state.moduleKeys.forEach(k => {
-    mergeDeep(state[k], jsonState[k])
-    delete jsonState[k]
+    if (!json[k]) return
+    mergeModules(state[k], json[k])
+    delete json[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
   })
 
-  Object.assign(state, jsonState)
+  Object.assign(state, json) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
 }
 
 

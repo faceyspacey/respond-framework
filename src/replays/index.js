@@ -22,10 +22,10 @@ export default ({
 } = {}) => {
   const prev = replays
 
-  const isHMR = !!replays.options // won't have on first call
+  const hmr = !!replays.options // won't have on first call
   const configChanged = conf !== prev.conf
   
-  const isCached = isHMR && !replay && !configChanged 
+  const isCached = hmr && !replay && !configChanged 
 
   if (isCached) {
     replays.replay = false

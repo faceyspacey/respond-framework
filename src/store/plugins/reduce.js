@@ -64,7 +64,7 @@ const reduceModule = (state, e, store, reducers, ignore) => {
   for (const k in reducers) {
     const reduce = reducers[k]
 
-    if (reduce.__overridenByProp) {
+    if (store.overridenReducers.get(reduce)) {
       continue
     }
     else if (typeof reduce === 'object') {
@@ -74,33 +74,5 @@ const reduceModule = (state, e, store, reducers, ignore) => {
     else {
       state[k] = reduce(state[k], e, store, state)
     }
-  }
-
-  // if (process.env.NODE_ENV === 'development' && store.options.displaySelectorsInDevtools) {
-  //   reduceSelectors(state, store, mod)
-  // }
-}
-
-
-const reduceSelectors = (state, store, mod) => {
-  if (!mod) return
-  const { selectors } = store
-
-  state['(selectors)'] = {}
-
-  for (const k in selectors) {
-    const selector = selectors[k]
-
-    if (typeof selector !== 'function') continue
-    if (selector.length > 1) continue
-
-    try {
-      const nextState = selector(state)
-
-      if (nextState !== undefined) {
-        state['(selectors)'][k] = nextState
-      }
-    }
-    catch (e) {} 
   }
 }

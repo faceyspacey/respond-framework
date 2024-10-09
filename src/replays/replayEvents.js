@@ -1,28 +1,23 @@
-import preserveBuiltInSettings from './helpers/preserveBuiltInSettings.js'
+import preserve from './helpers/preserveBuiltInSettings.js'
 import createStore from '../store/createStore.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import localStorage from '../utils/localStorage.js'
-import { proxyStates } from '../proxy/utils/helpers.js'
+import revive from '../utils/revive.js'
 
 
 export default async function(events, delay = 0, settings = this.settings) {
-  const prev = this.store
-  const { replayTools, top } = prev
+  this.store.replayTools.playing = this.playing = false // stop possible previous running replay
 
-  replayTools.playing = this.playing = false // stop possible previous running replay
-  
-  settings = preserveBuiltInSettings(settings, prev)
-  const store = await createStore(top, { settings })
+  const setts = preserve(settings, this.store)
+  const store = await createStore(this.store.top, { settings: setts })
 
-  store.replayTools = replayTools
-  proxyStates.get(replayTools).remove(proxyStates.get(prev).notify)
-
-  return runEvents(store, events, delay)
+  return run(events, delay, store)
 }
 
 
 
-const runEvents = async (store, events, delay) => {         // keep in mind store and store.replays will now be in the context of the next next store
+const run = async (events, delay, store) => {         // keep in mind store and store.replays will now be in the context of the next next store
+  const evs = revive(store)(events)
   const state = store.state.replayTools
 
   delay = delay === true ? (store.replays.settings.testDelay || 1500) : delay
@@ -36,14 +31,14 @@ const runEvents = async (store, events, delay) => {         // keep in mind stor
 
   state.evsIndex = -1                                       // start from the top, as index will increase with each event dispatched below
 
-  const last = events.length - 1
+  const last = evs.length - 1
 
   window.__idCounter = 10000
   
-  for (let i = 0; i < events.length; i++) {
+  for (let i = 0; i < evs.length; i++) {
     if (delay && !state.playing) break
 
-    const { event, arg, meta } = events[i]
+    const { event, arg, meta } = evs[i]
 
     if (i === last) {
       window.ignoreChangePath = false

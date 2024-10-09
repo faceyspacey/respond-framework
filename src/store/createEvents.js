@@ -4,8 +4,13 @@ import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.j
 
 export default function createEvents(store, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
   const isBuiltIns = !!parentType
-  const allEvents = isBuiltIns ? events : { start, edit, ...events }
+  
+  const allEvents = isBuiltIns ? events : { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents })
+
+  const isModule = !ns && !isBuiltIns
+  const start = isModule && (store.eventsByType.start ?? createEvent(store, cache, {}, modulePath, '', 'start'))
+  const acc = start ? { start } : {}
 
   return keys.reduce((acc, k) => {
     const config = allEvents[k]
@@ -29,7 +34,7 @@ export default function createEvents(store, cache, events = {}, propEvents = {},
     if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
       
     return acc
-  }, {})
+  }, acc)
 }
 
 
@@ -102,8 +107,6 @@ const applyTransform = (store, e, dispatch) => {
   return isInit ? { ...eFinal, init: true } : eFinal
 }
 
-
-const start = {}
 
 const edit = {
   transform: ({}, form) => ({ form }),

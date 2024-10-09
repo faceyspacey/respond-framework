@@ -243,6 +243,7 @@ initial state
 #const event = eventsByType[type] ?? 
 #namespaces may match a module, conflicting in eventsByType
 
+replace `store` with `state`
 prevState needs to exist on each module
 
 consolidate api methods in createStore
@@ -253,3 +254,9 @@ use symbol for _parent
 replayToolsState can possibly piggy back on getSessionState
 
 db.create should probably create IDs client side
+
+eventsByType needs to be cleared when switching modules
+
+use symbol for e.modulePath
+
+extract automatic api into its own file

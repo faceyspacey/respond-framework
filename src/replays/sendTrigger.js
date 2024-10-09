@@ -2,7 +2,6 @@ import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
-import { isProd } from '../utils/bools.js'
 import sessionStorage from '../utils/sessionStorage.js'
 
 
@@ -22,7 +21,7 @@ export default function (store, eSlice, fullModulePathAlready = false) {
     store.prevState = Object.assign(snap, store.snapshot(store))
   }
 
-  if (isProd && !store.options.productionReplayTools) return
+  if (!store.replayTools) return
 
   sendTrigger(e, state, store, this.playing)
 
