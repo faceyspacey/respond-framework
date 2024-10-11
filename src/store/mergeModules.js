@@ -19,6 +19,10 @@ export const hydrateModules = (state, json, token) => {
   if (!json) return state
 
   if (typeof json === 'object') {
+    if (json.replayTools.tests) {
+      delete json.replayTools.tests
+    }
+
     mergeModules(state, revive(state)(json))
   }
   else {
@@ -36,6 +40,10 @@ export const mergeModulesPrevState = (state, prevState = {}, store) => {
 
   const snap = Object.create(Object.getPrototypeOf(prevState))
   Object.assign(snap, prevState)
-  delete snap.prevState // prevent infinite circular references to prevStates
+
+  if (snap.prevState?.prevState) {
+    delete snap.prevState.prevState // prevent infinite circular references to prevStates
+  }
+
   state.prevState = snap
 }

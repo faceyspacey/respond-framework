@@ -4,6 +4,7 @@ import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import { mergeModulesPrevState } from '../store/mergeModules.js'
+import { snapDeepClone } from '../proxy/snapshot.js'
 
 
 
@@ -13,14 +14,16 @@ export default function (store, eSlice, fullModulePathAlready = false) {
   const state = store.replayTools
 
   if (eSlice.modulePath === 'replayTools' && !this.options.log) {
-    mergeModulesPrevState(state, store.snapshot(state))
+    // mergeModulesPrevState(state, store.snapshot(state))
+    mergeModulesPrevState(state, snapDeepClone(state))
     return
   }
   
   const e = fullModulePathAlready ? eSlice : fullPath(eSlice)
 
   if (!e.meta?.skipped) {
-    mergeModulesPrevState(store, store.snapshot(store))
+    // mergeModulesPrevState(store, store.snapshot(store))
+    mergeModulesPrevState(store, snapDeepClone(store))
   }
 
   if (!store.replayTools) return

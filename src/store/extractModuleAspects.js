@@ -32,9 +32,8 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state, mo
     moduleKeys.push(k)
   }
   else if (v?.event === true) {
-    delete v.event
-    v.__stateKey = k
-    events[k] = v
+    events[k] = { ...v, __stateKey: k }
+    delete events[k].event
   }
   else if (get) {
     selectorDescriptors[k] = descriptor

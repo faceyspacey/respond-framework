@@ -13,7 +13,7 @@ export default async function() {
   ctx.init = !!events[0]?.init            // tell start plugin the event dispatched should be treated as the init event
 
   devtools.forceNotification(n, this.store)
-  
+  console.log('events', ctx, events)
   for (let i = 0; i < length; i++) {
     const { type, arg, meta } = events[i]
     const event = eventsByType[type]

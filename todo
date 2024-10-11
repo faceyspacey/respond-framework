@@ -251,11 +251,10 @@ declare module 'respond-framework' {
 #prevState needs to exist on each module
 
 #extractable events on state via state.doSomething = { event: true }
+#replays will be faster if replayTools.tests isn't hydrated
 
 #replace `store` with `state`
 
-
-replays will be faster if replayTools.tests isn't hydrated
 
 
 
