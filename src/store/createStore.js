@@ -21,6 +21,7 @@ import render from '../react/render.js'
 import { isProd } from '../utils/bools.js'
 import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
+import { mergeModulesPrevState } from './mergeModules.js'
 
 
 export default async (top, { settings: rawSettings, hydration } = {}) => {
@@ -73,7 +74,7 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   function getStore() { return state }
   
   if (!hmr) {
-    state.prevState = snapshot(state)
+    mergeModulesPrevState(state, snapshot(state))
     reduce(state, state.events.start())
   }
 

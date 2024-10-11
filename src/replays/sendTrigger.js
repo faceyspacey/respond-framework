@@ -3,22 +3,24 @@ import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
 import sessionStorage from '../utils/sessionStorage.js'
+import { mergeModulesPrevState } from '../store/mergeModules.js'
+
+
 
 
 export default function (store, eSlice, fullModulePathAlready = false) {
   store = store.getStore()
+  const state = store.replayTools
 
   if (eSlice.modulePath === 'replayTools' && !this.options.log) {
-    store.prevState.replayTools = store.snapshot(store.replayTools)
+    mergeModulesPrevState(state, store.snapshot(state))
     return
   }
   
   const e = fullModulePathAlready ? eSlice : fullPath(eSlice)
-  const state = store.state.replayTools
 
   if (!e.meta?.skipped) {
-    const snap = Object.create(Object.getPrototypeOf(store)) // create new object, as otherwise it would simply be a mutable (and circular) reference to state
-    store.prevState = Object.assign(snap, store.snapshot(store))
+    mergeModulesPrevState(store, store.snapshot(store))
   }
 
   if (!store.replayTools) return

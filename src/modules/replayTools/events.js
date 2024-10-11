@@ -197,12 +197,11 @@ export default {
   },
 
   togglePersist: {
-    before: async store => {
-      const { state } = store
+    before: async state => {
       state.persist = !state.persist
       
       if (state.persist) {
-        const json = store.stringifyState(state)
+        const json = state.stringifyState(state)
         await sessionStorage.setItem('replayToolsState', json)
       }
       else { 
@@ -219,6 +218,8 @@ export default {
 
       await localStorage.setItem('replaySettings', JSON.stringify(settings))
       window.history.replaceState(history.state, '', settings.path)
+
+      window.store.eventsByType = {}
 
       const store = await createStore(top, { settings })
 

@@ -15,7 +15,7 @@ const custom = ({ getToken, onLogin, onLogout }) => async (store, e) => {
   const prevToken = getToken(store.prevState)
 
   if (token !== prevToken) {
-    prevState.token = state.token
+    prevState.token = token
 
     if (token) await onLogin(store, e)
     else await onLogout(store, e)

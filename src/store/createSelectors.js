@@ -1,3 +1,6 @@
+import { _parent } from './reserved.js'
+
+
 export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, state, store) => {
   Object.keys(selectorDescriptors).forEach(k => {
     const descriptor = selectorDescriptors[k]
@@ -15,8 +18,8 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, s
     const kind = v.length === 0 ? 'get' : 'value'
 
     const v2 = v.length === 0
-      ? function() { return v.call(this._parent) }
-      : function(...args) { return v.apply(this._parent, args) }
+      ? function() { return v.call(this[_parent]) }
+      : function(...args) { return v.apply(this[_parent], args) }
 
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
@@ -24,3 +27,4 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, s
     delete state[k]                                                   // delete potential initialState too
   })
 }
+

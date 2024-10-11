@@ -2,6 +2,7 @@ import createSnapProxy from '../createSnapProxy.js'
 import { canProxy, snapsToProxyCache, recordUsage } from './helpers.js'
 import createProxy from '../createProxy.js'
 import snapshot from '../snapshot.js'
+import { _parent } from '../../store/reserved.js'
 
 
 export default (snap, state) => {
@@ -25,7 +26,7 @@ export default (snap, state) => {
       snap.state[k] = v
     },
     get(snap, k, proxy) {
-      if (k === '_parent') return state.parentProxy
+      if (k === _parent) return state.parentProxy
 
       if (!snap.hasOwnProperty(k)) {
         const descriptor = protoDescriptors[k]

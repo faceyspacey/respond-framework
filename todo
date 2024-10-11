@@ -16,11 +16,7 @@ declare module 'respond-framework' {
 
 
 
-NEW UI WORK:
-- naked component functions
-- widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
-- components: Modal, Drawer, TabBar, ListView, Input, Radio, Pressable, Link
-- Docs website, Login, Recipes (plugins, modules)[multi tab recipe like vs code], Feed, Users
+
 
 
 
@@ -55,12 +51,6 @@ NEW UI WORK:
 #make tests stop snapping irrelevant areas (eg Home, Drawer)
 
 
-
-
-
-isNamespace
-use constants like kind.navigation, namespace.website
-dont hide _namespace, _type in state (only in actions)
 
 
 
@@ -138,7 +128,7 @@ dont hide _namespace, _type in state (only in actions)
 
 - remove findOne, findOnePlayer, etc -- problem is they also handle the case where u pass a pojo
 
-- children can specify their own props, and hi-jack access to parent state??
+#- children can specify their own props, and hi-jack access to parent state??
 
 
 
@@ -216,18 +206,18 @@ dont hide _namespace, _type in state (only in actions)
 #createEvents: save event in store.eventsByType
 #createInitialState: save models in store.modelsByModulePath
 
-Model: save modulePath in function(doc, modulePath)
+#Model: save modulePath in function(doc, modulePath)
 
 #fetch reviver: pass modulePath 
 #getSession reviver: new store.modelsByModulePath[doc.__modulePath][v.__type](v)
 
 
-revive ssr models (posts)
+#revive ssr models (posts)
 
-immutability:
-reducers
-selectors
-initial state
+#immutability:
+#reducers
+#selectors
+#initial state
 
 
 #initial state + props.state may have models that need hydration
@@ -243,20 +233,90 @@ initial state
 #const event = eventsByType[type] ?? 
 #namespaces may match a module, conflicting in eventsByType
 
-replace `store` with `state`
-prevState needs to exist on each module
+#eventsByType needs to be cleared when switching modules
+
+
+#deep merge reducers/propReducers - deep merge em + assign to parent + tag children that weren't using props using Map, then reduce those to to use child store + sliced e
+#extract automatic api into its own file
+
+
+
+#instead of sliceByModulePath, use store.modules[modulePath]
+
+#use symbol for _parent
+#use symbol for e.modulePath
+
+#make events + controllers + models support __esModule export as const functions
+
+#prevState needs to exist on each module
+
+#replace `store` with `state`
+
+
 
 consolidate api methods in createStore
 make all tools replacable by user
-code split module
-use symbol for _parent
 
-replayToolsState can possibly piggy back on getSessionState
+
+
+replayToolsState can possibly piggy back on getSessionState - remove getSessionState
+possibly combine replays + replayTools into a single module
 
 db.create should probably create IDs client side
+save client side
 
-eventsByType needs to be cleared when switching modules
+refactor all flags like isReplay, ignoreChangePath, etc
 
-use symbol for e.modulePath
 
-extract automatic api into its own file
+
+
+code split module
+
+
+isNamespace
+use constants like kind.navigation, namespace.website
+dont hide _namespace, _type in state (only in actions)
+
+
+
+
+
+extracable events on state via state.doSomething = { event: true }
+
+api level caching, where find/findOne are automatically cached, but like permissions, u can specify, eg: caching: { find: false, custom: true }
+
+make dispatch have hook for parent modules to listen in
+
+move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
+
+history no longer working
+
+replays will be faster if replayTools.tests isn't hydrated
+
+
+
+
+
+devtools
+rspack/repack compilation
+replace babel plugin with swc rust plugin
+code splitting + simultaneus api fetching
+api caching
+ssr
+
+- naked component functions
+- widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
+- components: Modal, Drawer, TabBar, ListView, Input, Radio, Pressable, Link
+- Docs website, Login, Recipes (plugins, modules)[multi tab recipe like vs code], Feed, Users
+
+widget/module browser on site and in devtools
+codegen
+
+typescript definitions
+
+nice api for bundler dev vs development removal of mocks etc
+
+remove/improve the ip address npm scripts handling
+
+move to deno
+

@@ -88,7 +88,7 @@ const orderSettings = config => {
   const dropdownsBuiltin = builtIns.filter(k => config[k].options)
 
   const inputs = keys.filter(k => !config[k].boolean && !config[k].options)
-  const inputsBuiltin = builtIns.filter(k => !config[k].boolean && !config[k].options)
+  const inputsBuiltin = builtIns.filter(k => !config[k].boolean && !config[k].options && k !== 'path')
 
-  return [...radios, ...radiosBuiltin, ...dropdownsBuiltin, ...dropdowns, ...inputs, ...inputsBuiltin]
+  return [...radios, ...radiosBuiltin, 'path', ...dropdownsBuiltin, ...dropdowns, ...inputs, ...inputsBuiltin]
 }

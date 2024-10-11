@@ -1,3 +1,6 @@
+import { _parent } from './reserved.js'
+
+
 export default (proto, state, moduleName, reducers, propReducers, parentReducers = {}, store) => {
   const parentKeys = Object.keys(parentReducers)
 
@@ -11,10 +14,10 @@ export default (proto, state, moduleName, reducers, propReducers, parentReducers
 
     parentReducers[k2] = reducer                                    // if existing reducer, re-assign -- otherwise, new reducer assigned to parent
 
-    const get = function() { return this._parent[k2] }              // the magic: simply select parent state
+    const get = function() { return this[_parent][k2] }              // the magic: simply select parent state
     Object.defineProperty(proto, k, { get, configurable: true })
 
     if (reducers[k]) store.overridenReducers.set(reducers[k], true) // delete potential child reducer mock, so selector takes precedence
-    delete state[k]                                                 // delete potential initialState too (note: this shouldn't be provided in userland; instead the corresponding parent state should be hydrated)
+    delete state[k]                                                 // delete potential initialState too (note: this would be a mistake if provided in userland; instead the corresponding parent state should be hydrated)
   })
 }

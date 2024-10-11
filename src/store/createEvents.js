@@ -51,13 +51,15 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
   const kind = parentType ? _type : config.path ? 'navigation' : 'submission'
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  const event = window.store?.eventsByType[type] ?? function eventCreate(arg = {}, meta = {}) { // event itself is a function (preserved through HMRs + replays)
-    const store = eventCreate.getStore()
+  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // event itself is a function (preserved through HMRs + replays)
+    const store = event.getStore()
     const e = { ...info, event, arg, meta }
-    const dispatch = (a, m) => eventCreate.dispatch({ ...arg, ...a }, { ...meta, ...m })
+    const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
     
     return applyTransform(store, e, dispatch)
   }
+
+  Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
 
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
   const children = parentType ? {} : createEvents(store, cache, builtIns, undefined, modulePath, _namespace, _type)
