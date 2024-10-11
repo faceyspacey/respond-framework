@@ -24,7 +24,7 @@ export default async (mod, store, hmr, hydration, { token, replay }, { prevState
 
 
 const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}, props = {}) => {
-  const { id, module, ignoreChild, initialState, components, events = {}, models, db, replays, options, plugins, pluginsSync } = mod
+  const { id, module, ignoreChild, initialState, components, models, db, replays, options, plugins, pluginsSync } = mod
   if (!id) throw new Error('respond: missing id on module: ' + modulePath)
 
   const proto = {}
@@ -47,11 +47,11 @@ const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', p
     _pluginsSync: createPlugins(store.options.defaultPluginsSync, pluginsSync),
   })
 
-  const [reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
-  const [propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
+  const [events, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
+  const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
   
   proto.moduleKeys = moduleKeys
-  state.events = createEvents(store, eventsCache, events, props.events, modulePath)
+  state.events = createEvents(store, state, eventsCache, events, propEvents, modulePath)
 
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state, store)
 

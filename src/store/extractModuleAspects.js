@@ -4,7 +4,8 @@ import { moduleApi } from './reserved.js'
 
 
 export default (mod, state, initialState, currState, moduleKeys) => {
-  const reducers = mod.reducers ? cloneDeep(mod.reducers) : {}
+  const events = mod.events ?? {}
+  const reducers = mod.reducers ?? {}
 
   const descriptors = Object.getOwnPropertyDescriptors(mod)
 
@@ -13,22 +14,27 @@ export default (mod, state, initialState, currState, moduleKeys) => {
 
   Object.keys(descriptors).forEach(k => {
     if (moduleApi[k]) return
-    extract(k, descriptors[k], selectorDescriptors, reducers, state, moduleKeys)
+    extract(k, descriptors[k], selectorDescriptors, events, reducers, state, moduleKeys)
   })
 
   mergeInitialState(state, initialState, currState)
 
-  return [reducers, selectorDescriptors, moduleKeys]
+  return [events, reducers, selectorDescriptors, moduleKeys]
 }
 
 
 
 
-const extract = (k, descriptor, selectorDescriptors, reducers, state, moduleKeys) => {
+const extract = (k, descriptor, selectorDescriptors, events, reducers, state, moduleKeys) => {
   const { get, value: v } = descriptor
 
   if (moduleKeys && v?.module === true) {
     moduleKeys.push(k)
+  }
+  else if (v?.event === true) {
+    delete v.event
+    v.__stateKey = k
+    events[k] = v
   }
   else if (get) {
     selectorDescriptors[k] = descriptor

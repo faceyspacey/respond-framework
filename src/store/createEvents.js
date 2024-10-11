@@ -2,14 +2,14 @@ import isNamespace from '../utils/isNamespace.js'
 import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export default function createEvents(store, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
+export default function createEvents(store, state, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents })
 
   const isModule = !ns && !isBuiltIns
-  const start = isModule && (store.eventsByType.start ?? createEvent(store, cache, {}, modulePath, '', 'start'))
+  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, cache, {}, modulePath, '', 'start'))
   const acc = start ? { start } : {}
 
   return keys.reduce((acc, k) => {
@@ -22,13 +22,13 @@ export default function createEvents(store, cache, events = {}, propEvents = {},
       acc[k] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(propConfig ?? config, isBuiltIns)) {
-      acc[k] = createEvents(store, cache, config, propConfig, modulePath, ns ? `${ns}.${k}` : k)
+      acc[k] = createEvents(store, state, cache, config, propConfig, modulePath, ns ? `${ns}.${k}` : k)
     }
     else if (propConfig) {
-      acc[k] = createEvent(store, cache, propConfig, modulePath, ns, k) // fresh event passed as prop
+      acc[k] = createEvent(store, state, cache, propConfig, modulePath, ns, k) // fresh event passed as prop
     }
     else if (config) {
-      acc[k] = createEvent(store, cache, config, modulePath, ns, k, parentType)
+      acc[k] = createEvent(store, state, cache, config, modulePath, ns, k, parentType)
     }
 
     if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
@@ -39,7 +39,7 @@ export default function createEvents(store, cache, events = {}, propEvents = {},
 
 
 
-const createEvent = (store, cache, config, modulePath, _namespace, _type, parentType) => {
+const createEvent = (store, state, cache, config, modulePath, _namespace, _type, parentType) => {
   const _typeResolved = parentType ? `${parentType}.${_type}` : _type 
     
   const namespace = modulePath
@@ -62,7 +62,7 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
   Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
 
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-  const children = parentType ? {} : createEvents(store, cache, builtIns, undefined, modulePath, _namespace, _type)
+  const children = parentType ? {} : createEvents(store, state, cache, builtIns, undefined, modulePath, _namespace, _type)
 
   const dispatch = (arg, meta) => {
     const { dispatch: d, dispatchSync: ds } = store.getStore()
@@ -80,6 +80,11 @@ const createEvent = (store, cache, config, modulePath, _namespace, _type, parent
 
   if (config.path) {
     store.eventsByPath[config.path] = event
+  }
+
+  if (config.__stateKey) {
+    state[config.__stateKey] = event
+    delete config.__stateKey
   }
 
   return event
