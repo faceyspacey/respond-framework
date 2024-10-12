@@ -1,5 +1,4 @@
 
-import sliceByModulePath from '../../utils/sliceByModulePath.js'
 import { findAllByProps} from './finders.js'
 import { isEqualDeepPartial } from '../../utils/isEqual.js'
 
@@ -8,18 +7,17 @@ export default (store, renderer, e, tc) => {
   if (e.meta.ignoreEnsure) return
   if (tc.ignored.events?.find(name => name === e.type)) return
 
-  const { events } = store
   const { testKey, testProps } = e.meta
 
-  const els = findTriggerElements(renderer, e, testKey, testProps, events)
+  const els = findTriggerElements(renderer, e, testKey, testProps, store)
   
   expect(els.length).toBeGreaterThan(0)
 }
 
 
 
-const findTriggerElements = (renderer, e, testKey, testProps, events) => {
-  const event = sliceByModulePath(events, e.type)
+const findTriggerElements = (renderer, e, testKey, testProps, store) => {
+  const event = store.eventsByType[e.type]
 
   if (testKey === false) {
     if (!testProps) throw new Error('testProps required when testKey === false')

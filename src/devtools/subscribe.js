@@ -1,6 +1,3 @@
-import sliceByModulePath from '../utils/sliceByModulePath.js'
-
-
 export default (store, triggerIndexes) => async message => {
   try {
     switch (message.type) {
@@ -58,9 +55,9 @@ const handleDispatch = async (store, message, triggerIndexes) => {
 
 
 const handleAction = async (store, message) => {
-  const { name, args } = message.payload
+  const { name: type, args } = message.payload
 
-  const event = sliceByModulePath(store.events, name)
+  const event = store.eventsByType[type]
   const [arg, meta] = args.map(a => eval('(' + a + ')'))
   
   await event.dispatch(arg, meta)

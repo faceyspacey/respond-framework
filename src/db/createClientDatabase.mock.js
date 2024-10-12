@@ -5,6 +5,8 @@ import clean from './utils/cleanLikeProduction.js'
 import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mergeProps from './utils/mergeProps.js'
+import createApiCache from './utils/createApiCache.js'
+import { replacer, createReviver } from '../utils/revive.js'
 
 
 export default (db, parentDb, props, store, findInClosestParent) => {
@@ -14,6 +16,7 @@ export default (db, parentDb, props, store, findInClosestParent) => {
   if (props?.db) mergeProps(db, props.db)
 
   const controllers = createControllers(db)
+  const cache = store.apiCache = createApiCache()
 
   return createDbProxy({
     options: { getContext() {}, ...db.options },
@@ -26,7 +29,7 @@ export default (db, parentDb, props, store, findInClosestParent) => {
         }
       }
     }),
-    _call(controller, method) {
+    _call(controller, method, useCache) {
       const { options } = this
       const { models, modulePath, ctx } = store
     
@@ -42,12 +45,27 @@ export default (db, parentDb, props, store, findInClosestParent) => {
         const info = { token, userId, adminUserId, ...options.getContext(store, controller, method, args) }
         const context = { ...info, modulePath, controller, method, args: clean(argsIn(args), store), first: !ctx.madeFirst, request: {} }
     
-        const instance = { ...c, secret }
-        const res = await instance._callFilteredByRole(context)
-    
-        await simulateLatency(store)
-    
-        return sendNotification(store, { modulePath, controller, method, args, response: clean(res, store, modulePath) })
+        let response
+
+        if (useCache) {
+          const cached = cache.get(context)
+          if (cached) response = JSON.parse(cached, createReviver(store, modulePath))
+        }
+
+        if (!response) {
+          const instance = { ...c, secret }
+          const res = await instance._callFilteredByRole(context)
+
+          await simulateLatency(store)
+          response = clean(res, store, modulePath)
+        }
+
+        const model = models[controller]?.prototype
+        const shouldCache = useCache ?? model?.shouldCache ?? method.indexOf('find') === 0
+
+        if (shouldCache) cache.set(context, JSON.stringify(response, replacer))
+
+        return sendNotification(store, { modulePath, controller, method, args, response })
       }
     }
   })

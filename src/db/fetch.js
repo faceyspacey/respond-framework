@@ -2,15 +2,21 @@ import { replacer, createReviver } from '../utils/revive.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (context = {}, apiUrl = defaultApiUrl, state) => {
-  const url = `${apiUrl}/${context.controller}/${context.method}`
+export default async (context = {}, apiUrl = defaultApiUrl, state, models, useCache) => { 
+  const { controller, method, modulePath } = context
+  const args = argsIn(context.args)
+
+  const url = `${apiUrl}/${controller}/${method}`
+  const body = JSON.stringify({ ...context, args }, replacer)
+
+  if (useCache) {
+    const cached = state.apiCache.get(context)
+    if (cached) return JSON.parse(cached, createReviver(state, modulePath))
+  }
 
   const res = await fetchWithTimeout(url, {
     method: 'POST',
-    body: JSON.stringify({
-      ...context,
-      args: argsIn(context.args)
-    }, replacer),
+    body,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -18,9 +24,11 @@ export default async (context = {}, apiUrl = defaultApiUrl, state) => {
   })
 
   const text = await res.text()
-  const reviver = createReviver(state, context.modulePath)
-  
-  return JSON.parse(text, reviver)
+
+  const shouldCache = useCache ?? models[controller]?.prototype?.shouldCache ?? method.indexOf('find') === 0
+  if (shouldCache) state.apiCache.set(context, text)
+
+  return JSON.parse(text, createReviver(state, modulePath))
 }
 
 

@@ -1,6 +1,3 @@
-import sliceByModulePath from './sliceByModulePath.js'
-
-
 export default (getStore, options = {}) => {
   const {
     getCacheState = store => store.state.cachedPaths,
@@ -61,7 +58,7 @@ export default (getStore, options = {}) => {
 
 function isCached (store, e, cache) {
   if (typeof cache === 'function') {
-    const storeSlice = sliceByModulePath(store, e.modulePath)
+    const storeSlice = store.modulePaths[e.modulePath]
     const cached = store.cache.get(e)
 
     return cache.call(e.event, storeSlice, e, cached)

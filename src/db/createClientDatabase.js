@@ -3,12 +3,15 @@ import createDbProxy from './utils/createDbProxy.js'
 import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
 import mergeProps from './utils/mergeProps.js'
+import createApiCache from './utils/createApiCache.js'
 
 
 export default !isProd ? mock : (db, parentDb, props, store) => {
   if (!db) return createDbProxy({ ...parentDb, store })
     
   if (props?.db) mergeProps(db, props.db)
+
+  store.apiCache = createApiCache()
 
   return createDbProxy({
     options: {
@@ -20,7 +23,7 @@ export default !isProd ? mock : (db, parentDb, props, store) => {
       },
       ...db.options
     },
-    _call(controller, method) {
+    _call(controller, method, useCache) {
       const { options, store } = this
       const { models, modulePath } = store
 
@@ -39,7 +42,7 @@ export default !isProd ? mock : (db, parentDb, props, store) => {
           const first = store.ctx.madeFirst ? false : true
     
           const context = { ...ctx, modulePath, controller, method, args, first }
-          const response = await fetch(context, url, store)
+          const response = await fetch(context, url, store, models, useCache)
     
           store.ctx.madeFirst = true
         

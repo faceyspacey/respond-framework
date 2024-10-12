@@ -1,17 +1,23 @@
 import isNamespace from '../utils/isNamespace.js'
-import sliceByModulePath, { stripModulePath } from '../utils/sliceByModulePath.js'
+import { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export default function createEvents(store, state, cache, events = {}, propEvents = {}, modulePath, ns = '', parentType) {
+export const kinds = { navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', cached: 'cached', data: 'data' }
+export function Namespace() {}
+
+
+export default function createEvents(store, state, cache, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents })
 
   const isModule = !ns && !isBuiltIns
-  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, cache, {}, modulePath, '', 'start'))
-  const acc = start ? { start } : {}
-
+  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, cache, {}, modulePath, '', 'start')) // same start event reference on all modules
+  
+  const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
+  Object.assign(acc, start ? { start } : {})
+  
   return keys.reduce((acc, k) => {
     const config = allEvents[k]
     const propConfig = propEvents[k]
@@ -25,10 +31,10 @@ export default function createEvents(store, state, cache, events = {}, propEvent
       acc[k] = createEvents(store, state, cache, config, propConfig, modulePath, ns ? `${ns}.${k}` : k)
     }
     else if (propConfig) {
-      acc[k] = createEvent(store, state, cache, propConfig, modulePath, ns, k) // fresh event passed as prop
+      acc[k] = createEvent(store, state, cache, propConfig, modulePath, ns, k, acc) // fresh event passed as prop
     }
     else if (config) {
-      acc[k] = createEvent(store, state, cache, config, modulePath, ns, k, parentType)
+      acc[k] = createEvent(store, state, cache, config, modulePath, ns, k, nsObj || acc, parentType)
     }
 
     if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in cache.get(config)
@@ -39,7 +45,7 @@ export default function createEvents(store, state, cache, events = {}, propEvent
 
 
 
-const createEvent = (store, state, cache, config, modulePath, _namespace, _type, parentType) => {
+const createEvent = (store, state, cache, config, modulePath, _namespace, _type, nsObj, parentType) => {
   const _typeResolved = parentType ? `${parentType}.${_type}` : _type 
     
   const namespace = modulePath
@@ -48,10 +54,10 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
 
   const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
 
-  const kind = parentType ? _type : config.path ? 'navigation' : 'submission'
+  const kind = parentType ? _type : config.path ? kinds.navigation : kinds.submission
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // event itself is a function (preserved through HMRs + replays)
+  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // preserve ref thru hmr/replace ?? note: event itself is a function
     const store = event.getStore()
     const e = { ...info, event, arg, meta }
     const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
@@ -62,15 +68,17 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
   Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
 
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-  const children = parentType ? {} : createEvents(store, state, cache, builtIns, undefined, modulePath, _namespace, _type)
+  const children = parentType ? {} : createEvents(store, state, cache, builtIns, undefined, modulePath, _namespace, nsObj, _type)
 
-  const dispatch = (arg, meta) => {
-    const { dispatch: d, dispatchSync: ds } = store.getStore()
-    const dispatch = event.sync ? ds : d
-    return dispatch(event(arg, meta), meta)
-  }
+  const dispatch = (arg, meta) =>
+    event.sync
+      ? store.dispatchSync(event(arg, meta), meta)
+      : store.dispatch(event(arg, meta), meta)
 
   Object.assign(event, config, info, { dispatch, getStore: store.getStore, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+  Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
+  Object.defineProperty(event, 'module', { get: () => store.getProxy(state), enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
+  delete event.type // can't have type string as it changes depending on what module is reducing the e object
 
   if (store.eventsByType[type]) {
     throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`)
@@ -93,6 +101,7 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
 
 
 
+
 const applyTransform = (store, e, dispatch) => {
   const { modulePathReduced, init } = store.ctx
 
@@ -104,8 +113,8 @@ const applyTransform = (store, e, dispatch) => {
   }
 
   if (e.event.transform) {
-    const storeModule = sliceByModulePath(store, e.modulePath)
-    payload = e.event.transform(storeModule, e.arg, e.meta) || {}
+    const state = store.modulePaths[e.modulePath]
+    payload = e.event.transform(state, e.arg, e.meta) || {}
   }
 
   const eFinal =  { ...e.arg, ...payload, ...e, payload, dispatch } // overwrite name clashes in payload, but also put here for convenience

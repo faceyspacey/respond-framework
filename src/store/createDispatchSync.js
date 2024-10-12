@@ -1,19 +1,17 @@
-import sliceByModulePath, { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
+import { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
 
 
-export default getStore => {
-  return (ev, meta) => {
-    const e = sliceEventByModulePath(ev)
-    const store = sliceByModulePath(getStore(), e.modulePath)
+export default async function(ev, meta) {
+  const e = sliceEventByModulePath(ev)
+  const store = this.modulePaths[e.modulePath]
     
-    e.meta = { ...e.meta, ...meta }
-  
-    try {
-      return dispatchPlugins([start, ...store._pluginsSync], store, e)
-    }
-    catch (error) {
-      store.onError({ error, kind: 'dispatch', e })
-    }
+  e.meta = { ...e.meta, ...meta }
+
+  try {
+    return dispatchPlugins([start, ...store._pluginsSync], store, e)
+  }
+  catch (error) {
+    store.onError({ error, kind: 'dispatch', e })
   }
 }
 

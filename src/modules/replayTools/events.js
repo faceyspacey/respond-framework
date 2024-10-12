@@ -16,19 +16,19 @@ export default {
   },
 
   settings: {
-    isNamespace: false,
+    namespace: false,
     navigation: true,
     end: () => localStorage.setItem('replayToolsTab', 'settings')
   },
 
   events: {
-    isNamespace: false,
+    namespace: false,
     navigation: true,
     end: () => localStorage.setItem('replayToolsTab', 'events')
   },
 
   tests: {
-    isNamespace: false,
+    namespace: false,
     navigation: true,
     cache: false,
     fetch: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter),

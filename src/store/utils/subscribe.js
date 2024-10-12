@@ -1,4 +1,4 @@
-import sliceByModulePath, { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
 export function subscribe(send) {
@@ -19,7 +19,7 @@ export function notify(e) {
     const isSelfOrAncestor = e.modulePath.indexOf(send.modulePath) === 0
     if (!isSelfOrAncestor) return
     
-    const storeSlice = sliceByModulePath(state, send.modulePath)
+    const storeSlice = this.modulePaths[send.modulePath]
     const eSlice = sliceEventByModulePath(e, send.modulePath)
 
     return send(storeSlice, eSlice)

@@ -255,42 +255,45 @@ declare module 'respond-framework' {
 
 #replace `store` with `state`
 
+#api level caching, where find/findOne are automatically cached, but like permissions, u can specify, eg: caching: { find: false, custom: true }
+
+#history no longer working
+
+#isNamespace
+#use constants like kind.navigation, namespace.website
 
 
 
-consolidate api methods in createStore
-make all tools replacable by user
 
-history no longer working
 
 replayToolsState can possibly piggy back on getSessionState - remove getSessionState
 move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
 possibly combine replays + replayTools into a single module
 
+consolidate api methods in createStore
+make all tools replacable by user
+
 db.create should probably create IDs client side
 save client side
 
+
 refactor all flags like isReplay, ignoreChangePath, etc
 
-isNamespace
-use constants like kind.navigation, namespace.website
 
 
-code split module
 
-api level caching, where find/findOne are automatically cached, but like permissions, u can specify, eg: caching: { find: false, custom: true }
 make dispatch have hook for parent modules to listen in
 
+controllers probably should use prototype
 
 
 
 
-
+dynamic modules
 devtools
 rspack/repack compilation
 replace babel plugin with swc rust plugin
 code splitting + simultaneus api fetching
-api caching
 ssr
 
 naked component functions
@@ -298,7 +301,6 @@ widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
 components: Modal, Drawer, TabBar, ListView, Input, Radio, Pressable, Link
 Docs website, Login, Recipes (plugins, modules)[multi tab recipe like vs code], Feed, Users
 
-widget/module browser on site and in devtools
 codegen
 
 typescript definitions

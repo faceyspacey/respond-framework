@@ -1,8 +1,8 @@
 import createReplays from '../replays/index.js'
 import createDevTools from '../devtools/index.js'
 import createDevtoolsMock from '../devtools/index.mock.js'
-import createDispatch from './createDispatch.js'
-import createDispatchSync from './createDispatchSync.js'
+import dispatch from './createDispatch.js'
+import dispatchSync from './createDispatchSync.js'
 import createFromEvent from '../utils/createFromEvent.js'
 import createEventFrom from '../utils/createEventFrom.js'
 import createCache from '../utils/createCache.js'
@@ -22,10 +22,16 @@ import { isProd } from '../utils/bools.js'
 import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
 import { mergeModulesPrevState } from './mergeModules.js'
+import { kinds } from './createEvents.js'
 
 
 export default async (top, { settings: rawSettings, hydration } = {}) => {
   const settings = rawSettings ?? await restoreSettings()
+
+  const proto = {}
+  const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
+
+  const state = createProxy(Object.create(proto), undefined, proxyCache)
 
   const prevStore = window.store
   const replay = !!rawSettings && !isProd
@@ -47,9 +53,6 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const eventFrom = createEventFrom(getStore)
   const fromEvent = createFromEvent(getStore)
 
-  const dispatch = createDispatch(getStore)
-  const dispatchSync = createDispatchSync(getStore)
-
   const history = options.createHistory(mod)
   const cache = createCache(getStore, options.cache)
 
@@ -64,12 +67,9 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
   const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
 
-  const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
-
-  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, kinds, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  const initialState = await createInitialState(mod, api, hmr, hydration, replays, prevStore)
-  const state = createProxy(initialState, undefined, proxyCache)
+  await createInitialState(mod, api, proto, state, hmr, hydration, replays, prevStore)
 
   function getStore() { return state }
   

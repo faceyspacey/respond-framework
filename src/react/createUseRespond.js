@@ -8,7 +8,7 @@ export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const storeTop = useContext(RespondContext)
     const modulePath = storeTop.modulePathsById[id]
-    return sliceByModulePath(storeTop, modulePath)
+    return storeTop.modulePaths[modulePath]
   }
 
 
@@ -18,7 +18,7 @@ export default (id = createUniqueModuleId()) => {
 
     const snap = useSnapshot(storeTop, sync)
 
-    const store = sliceByModulePath(storeTop, modulePath)
+    const store = storeTop.modulePaths[modulePath]
     const state = sliceByModulePath(snap, modulePath) // selector props require slicing storeTop.state to crawl to top of state tree
 
     return { events: state.events, state, store }

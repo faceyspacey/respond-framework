@@ -12,23 +12,20 @@ import { _parent } from '../store/reserved.js'
 import { hydrateModules} from '../store/mergeModules.js'
 
 
-export default async (mod, store, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
-  const state = await addModule(mod, store, new Map, undefined, '', {})
+export default async (mod, store, proto, state, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
+  await addModule(mod, store, new Map, undefined, '', {}, {}, proto, state)
 
-  const json = replay ? { ...hydration, replayTools }
+  hydration = replay ? { ...hydration, replayTools }
                 : hmr ? { ...prevState, replayTools }
                 :       getSessionState() || hydration
 
-  return hydrateModules(state, json, token)
+  hydrateModules(state, hydration, token)
 }
 
 
-const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}, props = {}) => {
+const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', parent = {}, props = {}, proto = {}, state = Object.create(proto)) => {
   const { id, module, ignoreChild, initialState, components, models, db, replays, options, plugins, pluginsSync } = mod
   if (!id) throw new Error('respond: missing id on module: ' + modulePath)
-
-  const proto = {}
-  const state = Object.create(proto)
 
   Object.defineProperties(proto, Object.getOwnPropertyDescriptors(store))
 
@@ -51,7 +48,7 @@ const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', p
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
   
   proto.moduleKeys = moduleKeys
-  state.events = createEvents(store, state, eventsCache, events, propEvents, modulePath)
+  proto.events = createEvents(store, state, eventsCache, events, propEvents, modulePath)
 
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state, store)
 
@@ -68,7 +65,8 @@ const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', p
     moduleKeys.push(k)
   }
 
-  store.modulePaths[modulePath] = true
+  Object.defineProperty(store.modulePaths, modulePath, { get: () => store.getProxy(state), enumerable: false, configurable: true })
+  if (!modulePath) Object.defineProperty(store.modulePaths, undefined, { get: () => store.getProxy(state), enumerable: false, configurable: true })
   store.modulePathsById[id] = modulePath
 
   return state

@@ -1,30 +1,28 @@
-import sliceByModulePath, { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
+import { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
 import start from './plugins/start.js'
 
 
-export default getStore => {
-  return async (ev, meta) => {
-    const e = sliceEventByModulePath(ev)
-    const store = sliceByModulePath(getStore(), e.modulePath)
-    
-    e.meta = { ...e.meta, ...meta }
+export default async function(ev, meta) {
+  const e = sliceEventByModulePath(ev)
+  const store = this.modulePaths[e.modulePath]
   
-    if (store.history.state.pop) {
-      e.meta.pop = store.history.state.pop
-    }
+  e.meta = { ...e.meta, ...meta }
 
-    try {
-      await dispatchPlugins([start, ...store._plugins], store, e)
-    }
-    catch (error) {
-      await store.onError({ error, kind: 'dispatch', e })
-    }
+  if (store.history.state.pop) {
+    e.meta.pop = store.history.state.pop
+  }
 
-    if (e.meta.trigger) {
-      await Promise.all(store.promises)
-      store.promises.length = 0
-      store.ctx.changedPath = !e.meta.pop ? false : store.ctx.changedPath
-    }
+  try {
+    await dispatchPlugins([start, ...store._plugins], store, e)
+  }
+  catch (error) {
+    await store.onError({ error, kind: 'dispatch', e })
+  }
+
+  if (e.meta.trigger) {
+    await Promise.all(store.promises)
+    store.promises.length = 0
+    store.ctx.changedPath = !e.meta.pop ? false : store.ctx.changedPath
   }
 }
 
