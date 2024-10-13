@@ -2,7 +2,7 @@ import createSnapProxy from '../createSnapProxy.js'
 import { canProxy, snapsToProxyCache, recordUsage } from './helpers.js'
 import createProxy from '../createProxy.js'
 import snapshot from '../snapshot.js'
-import { _parent } from '../../store/reserved.js'
+import { _module, _parent } from '../../store/reserved.js'
 
 
 export default (snap, state) => {
@@ -55,8 +55,14 @@ export default (snap, state) => {
       
         parent.orig[k] = proxy
         
-        if (v.__module) {
-          Object.defineProperty(v, '_parent', { enumerable: false, configurable: false, writable: false, value: parent.proxy })
+        if (v[_module]) {
+          v.moduleKeys.forEach(k => {
+            const child = v[k]
+            const proto = Object.getPrototypeOf(child)
+            proto[_parent] = proxy
+          })
+
+          Object.defineProperty(v.modulePaths, v.modulePath, { value: proxy, enumerable: false, configurable: true })
         }
 
         v = snapshot(proxy)

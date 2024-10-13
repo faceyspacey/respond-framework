@@ -8,7 +8,7 @@ import getSessionState from './getSessionState.js'
 import createSelectors from '../store/createSelectors.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 import extractModuleAspects from '../store/extractModuleAspects.js'
-import { _parent } from '../store/reserved.js'
+import { _module, _parent } from '../store/reserved.js'
 import { hydrateModules} from '../store/mergeModules.js'
 
 
@@ -30,14 +30,14 @@ const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', p
   Object.defineProperties(proto, Object.getOwnPropertyDescriptors(store))
 
   Object.assign(proto, {
-    __module: true,
+    [_module]: true,
+    [_parent]: parent,
     id,
     ignoreChild,
     modulePath,
     findOne,
     components,
     state,
-    [_parent]: parent,
     models: createModels(store, models, parent, modulePath),
     db: createClientDatabase(db, parent.db, props, state, store.findInClosestParent),
     _plugins: createPlugins(store.options.defaultPlugins, plugins),
@@ -65,8 +65,9 @@ const addModule = async (mod, store, eventsCache, moduleName, modulePath = '', p
     moduleKeys.push(k)
   }
 
-  Object.defineProperty(store.modulePaths, modulePath, { get: () => store.getProxy(state), enumerable: false, configurable: true })
-  if (!modulePath) Object.defineProperty(store.modulePaths, undefined, { get: () => store.getProxy(state), enumerable: false, configurable: true })
+  Object.defineProperty(store.modulePaths, modulePath, { value: state, enumerable: false, configurable: true })
+  if (!modulePath) Object.defineProperty(store.modulePaths, undefined, { value: state, enumerable: false, configurable: true })
+
   store.modulePathsById[id] = modulePath
 
   return state

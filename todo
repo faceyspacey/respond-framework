@@ -265,49 +265,46 @@ declare module 'respond-framework' {
 
 
 
+controllers probably should use prototypes
+refactor all flags like isReplay, isFastReplay, ignoreChangePath, __idCounter, appParams, __sessionRestored, db, appName, appParams, app
+
+db.create should probably create IDs client side
+.save client side
+
+consolidate api methods in createStore
+make all tools replacable by user
 
 replayToolsState can possibly piggy back on getSessionState - remove getSessionState
 move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
 possibly combine replays + replayTools into a single module
 
-consolidate api methods in createStore
-make all tools replacable by user
+re-organize files
 
-db.create should probably create IDs client side
-save client side
-
-
-refactor all flags like isReplay, ignoreChangePath, etc
-
-
-
-
-make dispatch have hook for parent modules to listen in
-
-controllers probably should use prototype
 
 
 
 
 dynamic modules
-devtools
-rspack/repack compilation
-replace babel plugin with swc rust plugin
+make dispatch have hook for parent modules to listen in
 code splitting + simultaneus api fetching
 ssr
+
+devtools
+
+
 
 naked component functions
 widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
 components: Modal, Drawer, TabBar, ListView, Input, Radio, Pressable, Link
 Docs website, Login, Recipes (plugins, modules)[multi tab recipe like vs code], Feed, Users
 
-codegen
-
-typescript definitions
-
+rspack/repack compilation
+replace babel plugin with swc rust plugin
 nice api for bundler dev vs development removal of mocks etc
-
 remove/improve the ip address npm scripts handling
 
-move to deno
+typescript definitions
+deno
 
+codegen
+animation/timers component interface

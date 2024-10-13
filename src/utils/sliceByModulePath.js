@@ -9,18 +9,12 @@ export default function sliceByModulePath(obj, modulePath) {
 
 
 export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
-  if (!modulePath) return { ...e }
+  if (!modulePath) return e
 
   const type = stripModulePath(e.type, modulePath)
   const namespace = stripModulePath(e.namespace, modulePath)
 
-  return {
-    type, // appear first in devtools
-    namespace,
-    ...e,
-    type, // overwrite
-    namespace,
-  }
+  return { ...e, type, namespace }
 }
 
 
@@ -40,7 +34,7 @@ export const prependModulePathToE = e => {
   const namespace = prependModulePath(e._namespace, e.modulePath)
   const type = namespace ? `${namespace}.${e._type}` : e._type
 
-  return { type, namespace, ...e, type, namespace }
+  return { ...e, type, namespace }
 }
 
 

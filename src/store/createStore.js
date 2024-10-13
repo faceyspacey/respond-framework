@@ -29,9 +29,11 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const settings = rawSettings ?? await restoreSettings()
 
   const proto = {}
-  const proxyCache = { proxy: new WeakMap, snap: new WeakMap }
+  
+  const proxyCache = new WeakMap
+  const snapCache = new WeakMap
 
-  const state = createProxy(Object.create(proto), undefined, proxyCache)
+  const state = createProxy(Object.create(proto), undefined, { proxy: proxyCache, snap: snapCache})
 
   const prevStore = window.store
   const replay = !!rawSettings && !isProd
@@ -65,7 +67,7 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const awaitInReplaysOnly = async f => shouldAwait() ? await f() : state.promises.push(f())
 
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
-  const getProxy = orig => proxyCache.proxy.get(orig) ?? orig
+  const getProxy = orig => proxyCache.get(orig) ?? orig
 
   const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, kinds, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
