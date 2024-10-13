@@ -3,7 +3,7 @@ import { isTest } from '../utils/bools.js'
 
 
 export default (proxy, callback, sync) => {
-  sync ||= isTest || window.isFastReplay
+  sync ||= isTest || window.store?.ctx.isFastReplay
   
   const { listeners } = proxyStates.get(proxy)
   const batched = sync ? callback : batch(callback)

@@ -1,44 +1,44 @@
 export default (getStore, options = {}) => {
   const {
-    getCacheState = store => store.state.cachedPaths,
-    createKey = (e, store) => store.fromEvent(e).url,
-    has = (e, store) => {
+    getCacheState = state => state.cachedPaths,
+    createKey = (e, state) => state.fromEvent(e).url,
+    has = (e, state) => {
       const { cache } = e.event
 
       if (cache !== undefined) {
-        return isCached(store, e, cache)
+        return isCached(state, e, cache)
       }
 
-      return !!(e.cached || !e.event.fetch || store.cache.get(e))
+      return !!(e.cached || !e.event.fetch || state.cache.get(e))
     }
   } = options
 
 
   return {
     get(eOrLoc) {
-      const store = getStore()
-      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
-      const k = createKey(e, store)
-      return getCacheState(store)[k] ? k : null
+      const state = getStore()
+      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
+      const k = createKey(e, state)
+      return getCacheState(state)[k] ? k : null
     },
 
     set(eOrLoc) {
-      const store = getStore()
-      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
-      const k = createKey(e, store)
-      getCacheState(store)[k] = true
+      const state = getStore()
+      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
+      const k = createKey(e, state)
+      getCacheState(state)[k] = true
     },
   
     unset(eOrLoc) {
-      const store = getStore()
-      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
-      const k = createKey(e, store)
-      delete getCacheState(store)[k]
+      const state = getStore()
+      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
+      const k = createKey(e, state)
+      delete getCacheState(state)[k]
     },
     
     clear() {
-      const store = getStore()
-      const keys = getCacheState(store)
+      const state = getStore()
+      const keys = getCacheState(state)
 
       for (const k in keys) {
         delete keys[k]
@@ -46,9 +46,9 @@ export default (getStore, options = {}) => {
     },
 
     has(eOrLoc) {
-      const store = getStore()
-      const e = eOrLoc.event?.__event ? eOrLoc : store.eventFrom(eOrLoc)
-      return has(e, store)
+      const state = getStore()
+      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
+      return has(e, state)
     },
   }
 }
@@ -56,10 +56,10 @@ export default (getStore, options = {}) => {
 
 
 
-function isCached (store, e, cache) {
+function isCached (state, e, cache) {
   if (typeof cache === 'function') {
-    const storeSlice = store.modulePaths[e.modulePath]
-    const cached = store.cache.get(e)
+    const storeSlice = state.modulePaths[e.modulePath]
+    const cached = state.cache.get(e)
 
     return cache.call(e.event, storeSlice, e, cached)
   }

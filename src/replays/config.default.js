@@ -12,7 +12,7 @@ export default {
   module: {
     options: (settings, store) => {
       const selected = store.replays.settings.module
-      let paths = Object.keys(store.modulePaths).filter(p => p.indexOf('replayTools') !== 0)
+      let paths = Object.keys(store.modulePaths).filter(p => p.indexOf('replayTools') !== 0 && p !== 'undefined')
 
       if (selected) {
         paths = paths.map(p => p ? selected + '.' + p : selected)
@@ -25,11 +25,6 @@ export default {
     createLabel: o => 'module: ' + (o?.value || 'top'),
     builtIn: true,
   },
-  // path: {
-  //   options: [],
-  //   createLabel: o => 'path: ' + (o?.value || 'none'),
-  //   builtIn: true,
-  // },
   path: {
     placeholder: 'path: eg /',
     builtIn: true,

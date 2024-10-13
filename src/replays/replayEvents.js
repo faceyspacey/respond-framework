@@ -19,12 +19,13 @@ export default async function(events, delay = 0, settings = this.settings) {
 const run = async (events, delay, store) => {         // keep in mind store and store.replays will now be in the context of the next next store
   const evs = revive(store)(events)
   const state = store.state.replayTools
+  const { ctx } = store
 
   delay = delay === true ? (store.replays.settings.testDelay || 1500) : delay
 
-  window.ignoreChangePath = true
-  window.isReplay = true
-  if (!delay) window.isFastReplay = true                    // turn animations + timeouts off
+  ctx.ignoreChangePath = true
+  ctx.isReplay = true
+  if (!delay) ctx.isFastReplay = true                    // turn animations + timeouts off
   
   store.replays.playing = true                              // so sendTrigger knows to only increment the index of events it's already aware of
   state.playing = !!delay                                   // display display STOP REPLAY button (and allow replay to progress), but only when there's a delay (otherwise it's instant and shouldn't flicker red)
@@ -41,7 +42,7 @@ const run = async (events, delay, store) => {         // keep in mind store and 
     const { event, arg, meta } = evs[i]
 
     if (i === last) {
-      window.ignoreChangePath = false
+      ctx.ignoreChangePath = false
       state.playing = false                   // change red STOP REPLAY button to green SAVE TEST button instantly on last event before dispatch resolves + timeout
     }
 
@@ -57,8 +58,8 @@ const run = async (events, delay, store) => {         // keep in mind store and 
   if (!delay) store.render()                                // if no delay, only render once events are done and state is fully updated for a clean single re-render
 
   setTimeout(() => {
-    window.isReplay = false
-    window.isFastReplay = false
+    ctx.isReplay = false
+    ctx.isFastReplay = false
   }, 100)                                                        // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
 
   const json = JSON.stringify(store.replays.settings)
@@ -86,10 +87,11 @@ const timeout = (ms = 300) => {
 export async function restoreEvents() {         // keep in mind store and store.replays will now be in the context of the next store
   const state = this.store.replayTools
   const events = state.evs.slice(0, state.evsIndex + 1)
+  const { ctx } = this.store
 
   state.evsIndex = -1
 
-  window.ignoreChangePath = window.isReplay = window.isFastReplay = true
+  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = true
   state.playing = this.playing = true              // so sendTrigger knows to only increment the index of events it's already aware of
 
   for (let i = 0; i < events.length; i++) {
@@ -97,6 +99,6 @@ export async function restoreEvents() {         // keep in mind store and store.
     await event.dispatch(arg,  { ...meta, trigger: true })
   }
 
-  window.ignoreChangePath = window.isReplay = window.isFastReplay = false
+  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = false
   state.playing = this.playing = false
 }

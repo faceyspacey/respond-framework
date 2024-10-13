@@ -4,10 +4,10 @@ import { argsOut } from './fetch.js'
 
 
 export default {
-  async _callFilteredByRole(context) {
-    this.context = context
+  async _callFilteredByRole(body) {
+    this.context = body
     
-    const { method, token, userId, adminUserId, args } = context
+    const { method, token, userId, adminUserId, args } = body
     const controller = this._name
 
     if (!this[method]) {

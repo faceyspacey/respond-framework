@@ -18,7 +18,7 @@ import sliceByModulePath from '../utils/sliceByModulePath.js'
 import createInitialState from '../utils/createInitialState.js'
 import restoreSettings from '../replays/helpers/restoreSettings.js'
 import render from '../react/render.js'
-import { isProd } from '../utils/bools.js'
+import { isProd, isTest } from '../utils/bools.js'
 import onError from './utils/onError.js'
 import { subscribe, notify } from './utils/subscribe.js'
 import { mergeModulesPrevState } from './mergeModules.js'
@@ -29,7 +29,7 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const settings = rawSettings ?? await restoreSettings()
 
   const proto = {}
-  
+
   const proxyCache = new WeakMap
   const snapCache = new WeakMap
 
@@ -63,15 +63,15 @@ export default async (top, { settings: rawSettings, hydration } = {}) => {
   const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
   const parseJsonState = json => JSON.parse(json, createStateReviver(state))
 
-  const shouldAwait = () => window.isFastReplay || process.env.NODE_ENV === 'test'
+  const shouldAwait = () => ctx.isFastReplay || isTest
   const awaitInReplaysOnly = async f => shouldAwait() ? await f() : state.promises.push(f())
 
   const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
-  const getProxy = orig => proxyCache.get(orig) ?? orig
 
-  const api = { ...options.merge, findInClosestParent, ctx: { init: true }, listeners: [], promises: [], refs: {}, kinds, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, getProxy, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
+  const ctx = { ...prevStore?.ctx, init: true, madeFirst: false }
+  const respond = { ...options.merge, findInClosestParent, ctx, listeners: [], promises: [], refs: {}, kinds, proxyCache, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
   
-  await createInitialState(mod, api, proto, state, hmr, hydration, replays, prevStore)
+  await createInitialState(mod, respond, proto, state, hmr, hydration, replays, prevStore)
 
   function getStore() { return state }
   

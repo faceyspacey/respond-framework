@@ -1,7 +1,7 @@
 import { _parent } from './reserved.js'
 
 
-export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, state, store) => {
+export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, state, respond) => {
   Object.keys(selectorDescriptors).forEach(k => {
     const descriptor = selectorDescriptors[k]
     const { get, value: v = get } = descriptor
@@ -23,8 +23,8 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, reducers, s
 
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
-    if (reducers[k]) store.overridenReducers.set(reducers[k], true)  // delete potential child reducer mock, so selector takes precedence
-    delete state[k]                                                   // delete potential initialState too
+    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // delete potential child reducer mock, so selector takes precedence
+    delete state[k]                                                     // delete potential initialState too
   })
 }
 

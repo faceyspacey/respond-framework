@@ -1,5 +1,6 @@
 export default (ms = 300) => {
-  const dontAwait = window.isFastReplay || process.env.NODE_ENV === 'test' || window.isReplay
+  const { ctx } = window.store ?? { ctx: {} }
+  const dontAwait =  ctx.isReplay || ctx.isFastReplay || process.env.NODE_ENV === 'test'
   if (dontAwait) return
   return new Promise(res => setTimeout(res, ms))
 }

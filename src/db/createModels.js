@@ -1,7 +1,7 @@
-export default (store, models, parent, modulePath) => {
+export default (respond, models, parent, modulePath) => {
   if (!models) {
     if (parent.models) return parent.models
-    models = store.findInClosestParent('models') ?? {}
+    models = respond.findInClosestParent('models') ?? {}
   }
 
   const shared = models.shared ?? {}
@@ -13,7 +13,7 @@ export default (store, models, parent, modulePath) => {
     models[k] = createModel(k, shared[k], client[k])
   }
 
-  return store.modelsByModulePath[modulePath] = models
+  return respond.modelsByModulePath[modulePath] = models
 }
 
 

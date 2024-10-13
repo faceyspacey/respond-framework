@@ -8,9 +8,9 @@ import { argsOut } from '../db/fetch.js'
 
 
 export default {
-  _callFilteredByRole(context) {
-    this.context = context
-    return this[context.method](...argsOut(context.args))
+  _callFilteredByRole(body) {
+    this.context = body
+    return this[body.method](...argsOut(body.args))
   },
 
   findTests(modulePath, includeChildren, searched, filter) {
@@ -82,6 +82,9 @@ export default {
     
     const test = findTest(completeFilename)
 
-    this.context.io.sockets.emit('wallaby', { test, index, delay })
+    this.io.sockets.emit('wallaby', { test, index, delay })
   },
+
+  _name: 'developer',
+  _namePlural: 'developers',
 }

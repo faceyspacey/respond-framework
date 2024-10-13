@@ -6,51 +6,52 @@ import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
 
 
-export default !isProd ? mock : (db, parentDb, props, store) => {
-  if (!db) return createDbProxy({ ...parentDb, store })
+export default !isProd ? mock : (db, parentDb, props, state) => {
+  if (!db && !parentDb) db = {}
+  else if (!db) return parentDb
     
   if (props?.db) mergeProps(db, props.db)
 
-  store.apiCache = createApiCache()
+  state.apiCache = createApiCache()
 
   return createDbProxy({
     options: {
       getContext() {},
-      onServerUp: store => store._serverDown = false,
-      onServerDown: store => store._serverDown = true,
+      onServerUp: state => state._serverDown = false,
+      onServerDown: state => state._serverDown = true,
       retryRequest(controller, method, args) {
         return this._call(controller, method)(...args)
       },
       ...db.options
     },
     _call(controller, method, useCache) {
-      const { options, store } = this
-      const { models, modulePath } = store
+      const { options, state } = this
+      const { models, modulePath } = state
 
       const { apiUrl } = options
-      const url = typeof apiUrl === 'function' ? apiUrl(store) : apiUrl
+      const url = typeof apiUrl === 'function' ? apiUrl(state) : apiUrl
     
       if (method === 'make') {
         return doc => new models[controller]({ ...doc, __type: controller }, modulePath)
       }
     
       return async function(...args) {
-        const { token, userId, adminUserId } = store
-        const ctx = { token, userId, adminUserId, ...options.getContext(store, controller, method, args) }
+        const { token, userId, adminUserId } = state
+        const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
     
         try {
-          const first = store.ctx.madeFirst ? false : true
+          const first = state.ctx.madeFirst ? false : true
     
-          const context = { ...ctx, modulePath, controller, method, args, first }
-          const response = await fetch(context, url, store, models, useCache)
+          const body = { ...context, modulePath, controller, method, args, first }
+          const response = await fetch(url, body, state, models, useCache)
     
-          store.ctx.madeFirst = true
+          state.ctx.madeFirst = true
         
-          store.devtools.sendNotification({ type: `=> db.${controller}.${method}`, ...context, response })
+          state.devtools.sendNotification({ type: `=> db.${controller}.${method}`, ...body, response })
           
           if (_serverDown) {
             _serverDown = false
-            options.onServerUp(store)
+            options.onServerUp(state)
           }
     
           return response
@@ -58,7 +59,7 @@ export default !isProd ? mock : (db, parentDb, props, store) => {
         catch (error) {
           _serverDown = true
           console.warn('db timeout: retrying every 12 seconds...', error)     // fetch made with 12 second timeout, then throw -- see fetchWithTimeout.js
-          options.onServerDown(store)
+          options.onServerDown(state)
           return options.retryRequest(controller, method, args)            // timeouts are the only way to trigger this error, so we know it its in need of a retry
         }
       }

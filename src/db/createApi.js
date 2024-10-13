@@ -37,29 +37,26 @@ const createHandler = ({
   logResponse = false
 }) => async (req, res) => {
   const { body } = req
-  const { modulePath, controller, method, args, ...rest } = body
+  const { modulePath, controller, method } = body
 
-  const c = findController
+  const Controller = findController
     ? findController(controllersByModulePath, modulePath, controller)
     : controllersByModulePath[modulePath][controller] // eg: controllers['admin.foo'].user
 
   if (logRequest !== false) {
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath, controller, method, args, context: rest })
+    console.log(`Respond (REQUEST): db.${controller}.${method}`, body)
   }
 
-  if (!c) {
+  if (!Controller) {
     res.json({ error: 'controller-not-permitted', params: { modulePath, controller, method } })
     return
   }
 
-  const instance = { ...c, secret }
-  const context = { modulePath, controller, method, args, ...rest, request: req }
-
-  let response = await instance._callFilteredByRole(context)
+  let response = await new Controller(request, secret)._callFilteredByRole(body)
   response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned
 
   if (logResponse !== false) {
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath, controller, method, args, context: rest, response })
+    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { ...body, response })
   }
   
   if (response?.error) {
@@ -78,25 +75,26 @@ const createHandler = ({
 const createHandlerDev = opts => {
   const io = opts.server && createWallabySocketsServer(opts.server)
 
+  function Controller(io, request = {}) { this.io = io, this.request = request }
+  Controller.prototype = Developer
+
   return async (req, res) => {
     const { body } = req
-    const { controller, method, args, ...rest } = body
+    const { controller, method } = body
   
     if (controller !== 'developer') {
       res.json({ error: 'invalid developer controller' })
       return
     }
   
-    const context = { controller, method, args, ...rest, request: req, io }
-    const instance = { ...Developer, ...opts.developerControllerMixin, context }
-    
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath: '', controller, method, args, context: rest })
+    console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath: '', ...body })
   
-    let response = await instance._callFilteredByRole(context)
+    let response = await new Controller(io, req)._callFilteredByRole(body)
     response = response === undefined ? {} : response
   
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath: '', controller, method, args, context: rest, response })
+    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath: '', ...body, response })
     
     res.json(response)
   }
 }
+

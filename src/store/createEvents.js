@@ -56,7 +56,7 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
   const kind = parentType ? _type : config.path ? kinds.navigation : kinds.submission
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // preserve ref thru hmr/replace ?? note: event itself is a function
+  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // preserve ref thru hmr/replays ?? note: event itself is a function
     const store = event.getStore()
     const e = { ...info, event, arg, meta }
     const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
@@ -76,8 +76,10 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
 
   Object.assign(event, config, info, { dispatch, getStore: store.getStore, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
-  Object.defineProperty(event, 'module', { get: () => store.getProxy(state), enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
+  Object.defineProperty(event, 'module', { get: () => proxyCache.get(state) ?? state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
   delete event.type // can't have type string as it changes depending on what module is reducing the e object
+
+  const { proxyCache } = store
 
   if (store.eventsByType[type]) {
     throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`)

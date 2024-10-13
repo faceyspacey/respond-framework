@@ -9,19 +9,19 @@ export default () => ({
       ? `${JSON.stringify(args, replacer)}:${userId}`
       : `${JSON.stringify(args, replacer)}`
   },
-  get(context) {
-    const { controller, method } = context
-    const k = this.key(context)
+  get(body) {
+    const { controller, method } = body
+    const k = this.key(body)
 
-    this.map.set(context, k) // key generated once per request on cache.get (optimzation)
+    this.map.set(body, k) // key generated once per request on cache.get (optimization)
 
     return this.controllers[controller]?.[method]?.[k]
   },
-  set(context, v) {
-    const { controller, method } = context
-    const k = this.map.get(context) ?? this.key(context)
+  set(body, v) {
+    const { controller, method } = body
+    const k = this.map.get(body) ?? this.key(body)
 
-    this.map.delete(context)
+    this.map.delete(body)
 
     this.controllers[controller] ??= {}
     this.controllers[controller][method] ??= {}

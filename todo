@@ -253,8 +253,6 @@ declare module 'respond-framework' {
 #extractable events on state via state.doSomething = { event: true }
 #replays will be faster if replayTools.tests isn't hydrated
 
-#replace `store` with `state`
-
 #api level caching, where find/findOne are automatically cached, but like permissions, u can specify, eg: caching: { find: false, custom: true }
 
 #history no longer working
@@ -262,33 +260,37 @@ declare module 'respond-framework' {
 #isNamespace
 #use constants like kind.navigation, namespace.website
 
+#controllers probably should use prototypes
+#refactor all flags like isReplay, isFastReplay, ignoreChangePath, __idCounter, appParams, __sessionRestored, db, appName, appParams, app
 
 
 
-controllers probably should use prototypes
-refactor all flags like isReplay, isFastReplay, ignoreChangePath, __idCounter, appParams, __sessionRestored, db, appName, appParams, app
+#replace `store` with `state`
+#consolidate api methods in createStore
+#make all tools replacable by user
+#re-organize files
+
+
+
+
 
 db.create should probably create IDs client side
-.save client side
+.save client side; rename make to applyModels, make client code use .create
 
-consolidate api methods in createStore
-make all tools replacable by user
 
 replayToolsState can possibly piggy back on getSessionState - remove getSessionState
 move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
 possibly combine replays + replayTools into a single module
-
-re-organize files
 
 
 
 
 
 dynamic modules
-make dispatch have hook for parent modules to listen in
 code splitting + simultaneus api fetching
 ssr
 
+make dispatch have hook for parent modules to listen in
 devtools
 
 

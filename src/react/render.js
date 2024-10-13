@@ -7,15 +7,16 @@ import RespondProvider from './Provider.js'
 
 export default function render(props = {}) {
   const app = createApp(this, props)
+  const { ctx } = this
 
   if (isTest) return app
 
-  startReplay(this)
+  startReplay(ctx, this)
 
-  if (!isNative) renderWeb(app)
-  else renderNative(app, props)
+  if (!isNative) renderWeb(ctx, app)
+  else renderNative(ctx, app, props)
 
-  endReplay()
+  endReplay(ctx)
 }
 
 
@@ -27,31 +28,31 @@ const createApp = (store, props) => {
 }
 
 
-const renderWeb = app => {
+const renderWeb = (ctx, app) => {
   const el = document.getElementById('root')
 
-  window.app ??= createRoot(el) // assign to window so component HMR can occur as a natural by-product of HRM (without Fast Refresh webpack plugin) if desired
-  window.app.render(app)
+  ctx.app ??= createRoot(el) // assign to window so component HMR can occur as a natural by-product of HRM (without Fast Refresh webpack plugin) if desired
+  ctx.app.render(app)
 }
 
-const renderNative = (app, props) => {
-  const { appName = window.appName, appParams = window.appParams } = props
+const renderNative = (ctx, app, props) => {
+  const { appName = ctx.appName, appParams = ctx.appParams } = props
 
   AppRegistry.registerComponent(appName, () => () => app)
   AppRegistry.runApplication(appName, appParams)
 
-  window.appName = appName // cache for replays
-  window.appParams = appParams
+  ctx.appName = appName // cache for replays
+  ctx.appParams = appParams
 }
 
 
-const startReplay = state => {
-  window.ignoreChangePath = window.isReplay = window.isFastReplay = true
+const startReplay = (ctx, state) => {
+  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = true
   state.replayTools.playing = state.replays.playing = false
 }
 
-const endReplay = () => {
+const endReplay = ctx => {
   requestAnimationFrame(() => {
-    window.ignoreChangePath = window.isReplay = window.isFastReplay = false
+    ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = false
   })
 }

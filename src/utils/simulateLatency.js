@@ -1,9 +1,13 @@
+import { isTest } from './bools.js'
 import timeout from './timeout.js'
 
 
 export default async store => {
-  const { latency } = store.replays.settings
-  const dontAwait = !latency || window.isFastReplay || process.env.NODE_ENV === 'test'
+  const { replays, ctx } = store
+  const { latency } = replays.settings
+
+  const dontAwait = !latency || ctx.isFastReplay || isTest
   if (dontAwait) return
+
   await timeout(latency)
 }

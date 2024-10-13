@@ -8,7 +8,9 @@ export default function createControllers({ options, ...controllers }, hash = {}
 
   for (const _name in controllers) {
     const Child = { _name, _namePlural: _name + 's', ...controllers[_name] }
-    hash[_name] = create(Child, Parent)
+    function Controller(secret, request = {}) { this.secret = secret, this.request = request }
+    Controller.prototype = create(Child, Parent)
+    hash[_name] = Controller
   }
 
   return hash
