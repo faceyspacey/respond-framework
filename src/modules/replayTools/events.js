@@ -213,7 +213,7 @@ export default {
   },
 
   reload: {
-    before: async ({ state, top }) => {
+    before: async ({ state, topModule }) => {
       const { permalink: _, ...settings } = state.form
 
       await localStorage.setItem('replaySettings', JSON.stringify(settings))
@@ -222,7 +222,7 @@ export default {
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
       window.__idCounter = 10000
 
-      const store = await createStore(top, { settings })
+      const store = await createStore(topModule, { settings })
 
       const e = store.eventFrom(settings.path)
       await store.dispatch(e)

@@ -1,4 +1,4 @@
-import { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
+import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
 export default async function(ev, meta) {

@@ -1,20 +1,20 @@
 import { compile } from 'path-to-regexp'
-import { cleanLocation, urlToLocation } from './url.js'
+import { cleanLocation, urlToLocation } from '../../utils/url.js'
 
 
 const cache = {}
 
-export default getStore => e => {
-  const { basename = '' } = getStore().state
+export default function(e) {
+  const { basename = '' } = this
 
   if (typeof e === 'string') {
     const url = `${basename}${e}`
-    return urlToLocation(url, getStore) // path or location object passed
+    return urlToLocation(url, this) // path or location object passed
   }
 
   if (e.pathname) {
     const url = `${basename}${e.pathname}`
-    return urlToLocation(url, getStore) // path or location object passed
+    return urlToLocation(url, this) // path or location object passed
   }
 
   const { path } = e.event || {}
@@ -24,9 +24,9 @@ export default getStore => e => {
 
   try {
     if (e.event.toLocation) {
-      const loc = e.event.toLocation(getStore(), e)     // expected: { pathname: '/foo', query: { bar: 'baz}, hash='bla' } -- you can just return a query obj, and don't need to parse parse/prepare anything
+      const loc = e.event.toLocation(this, e)     // expected: { pathname: '/foo', query: { bar: 'baz}, hash='bla' } -- you can just return a query obj, and don't need to parse parse/prepare anything
       loc.pathname = `${basename}${loc.pathname}`
-      return cleanLocation(loc, getStore)               // result:   { pathname: '/foo', search: 'bar=baz', hash='bla', url: '/foo?bar=baz#bla, query: { bar: 'baz} }
+      return cleanLocation(loc, this)               // result:   { pathname: '/foo', search: 'bar=baz', hash='bla', url: '/foo?bar=baz#bla, query: { bar: 'baz} }
     }
     else {
       let pathname = toPath(e.arg, { encode: x => x })  // just pathname by default, eg: '/foo'

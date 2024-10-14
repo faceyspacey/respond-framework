@@ -1,4 +1,4 @@
-export default (getStore, options = {}) => {
+export default (state, options = {}) => {
   const {
     getCacheState = state => state.cachedPaths,
     createKey = (e, state) => state.fromEvent(e).url,
@@ -16,28 +16,24 @@ export default (getStore, options = {}) => {
 
   return {
     get(eOrLoc) {
-      const state = getStore()
       const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
       const k = createKey(e, state)
       return getCacheState(state)[k] ? k : null
     },
 
     set(eOrLoc) {
-      const state = getStore()
       const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
       const k = createKey(e, state)
       getCacheState(state)[k] = true
     },
   
     unset(eOrLoc) {
-      const state = getStore()
       const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
       const k = createKey(e, state)
       delete getCacheState(state)[k]
     },
     
     clear() {
-      const state = getStore()
       const keys = getCacheState(state)
 
       for (const k in keys) {
@@ -46,7 +42,6 @@ export default (getStore, options = {}) => {
     },
 
     has(eOrLoc) {
-      const state = getStore()
       const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
       return has(e, state)
     },

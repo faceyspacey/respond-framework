@@ -1,9 +1,9 @@
 import { parseSearch, stringifyQuery } from './searchQuery.js'
 
 
-export const urlToLocation = (url, getStore) => {
+export const urlToLocation = (url, state) => {
   if (typeof url === 'object') {
-    return cleanLocation(url, getStore)
+    return cleanLocation(url, state)
   }
 
   let pathname = url.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
@@ -28,7 +28,7 @@ export const urlToLocation = (url, getStore) => {
     pathname = '/' + pathname
   }
 
-  const query = !search ? {} : parseSearch(search, getStore) 
+  const query = !search ? {} : parseSearch(search, state) 
 
   url = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
 
@@ -36,7 +36,7 @@ export const urlToLocation = (url, getStore) => {
 }
 
 
-export const cleanLocation = (loc = {}, getStore) => {
+export const cleanLocation = (loc = {}, state) => {
   const { pathname: p, search: s, hash: h, query: q } = loc
   
   const pathname = p?.charAt(0) === '/' ? p : p ? '/' + p : '/'
@@ -45,10 +45,10 @@ export const cleanLocation = (loc = {}, getStore) => {
 
   const url = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
 
-  const query = q || (!search ? {} : parseSearch(search, getStore)) 
+  const query = q || (!search ? {} : parseSearch(search, state)) 
 
   if (!search && q) {
-    search = stringifyQuery(q)
+    search = stringifyQuery(q, state)
   }
 
   return { url, pathname, search, hash, query }

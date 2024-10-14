@@ -1,5 +1,5 @@
-import { sliceEventByModulePath } from '../utils/sliceByModulePath.js'
-import start from './plugins/start.js'
+import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import start from '../plugins/start.js'
 
 
 export default async function(ev, meta) {

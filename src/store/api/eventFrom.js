@@ -1,19 +1,16 @@
 import { pathToRegexp } from 'path-to-regexp'
-import { urlToLocation } from './url.js'
-import { respondEventSymbol } from '../index.js'
+import { urlToLocation } from '../../utils/url.js'
 
 
-export default getStore => function eventFrom(url, fallback, additionalArg, fallbackArg) {
-  const store = getStore()
-
-  const loc = urlToLocation(url, getStore)                            // if url is already a location object, it will also be resolved
-  const { basename = '' } = store
+export default function eventFrom(url, fallback, additionalArg, fallbackArg) {
+  const loc = urlToLocation(url, this)                            // if url is already a location object, it will also be resolved
+  const { basename = '' } = this
 
   if (basename) {
     loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
   }
 
-  const { eventsByPath } = store
+  const { eventsByPath } = this
   const paths = Object.keys(eventsByPath)
 
   try {
@@ -31,7 +28,7 @@ export default getStore => function eventFrom(url, fallback, additionalArg, fall
 
         const event = eventsByPath[path]
 
-        const argFromLoc = event.fromLocation?.(getStore(), arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
+        const argFromLoc = event.fromLocation?.(this, arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createStore({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
         const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
 
         return event(argFinal)
@@ -43,7 +40,7 @@ export default getStore => function eventFrom(url, fallback, additionalArg, fall
   if (fallback) {
     const arg = { notFound: true, changePath: false, ...fallbackArg }
     
-    if (fallback.event?.symbol === respondEventSymbol) {
+    if (fallback.event?.__event) {
       Object.assign(fallback, arg)
       Object.assign(fallback.arg, arg)
       return fallback // fallback could be passed as an actual event

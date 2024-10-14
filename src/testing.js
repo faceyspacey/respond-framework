@@ -6,5 +6,3 @@ export { default as mockMongoId } from './testing/utils/mockMongoId.js'
 export { default as mockGlobals } from './testing/utils/mockGlobals.js'
 
 export { suffix } from './utils/objectIdDevelopment.js'
-
-export const respondEventSymbol = Symbol.for('respondEvent')

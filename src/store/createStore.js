@@ -1,113 +1,52 @@
-import createReplays from '../replays/index.js'
-import createDevTools from '../devtools/index.js'
-import createDevtoolsMock from '../devtools/index.mock.js'
-import dispatch from './createDispatch.js'
-import dispatchSync from './createDispatchSync.js'
-import createFromEvent from '../utils/createFromEvent.js'
-import createEventFrom from '../utils/createEventFrom.js'
-import createCache from '../utils/createCache.js'
-import createCookies from '../cookies/index.js'
-import createOptions from './createOptions.js'
-import snapshot from '../proxy/snapshot.js'
 import createProxy from '../proxy/createProxy.js'
-import shouldUseDevtools from '../utils/shouldUseDevtools.js'
-import reduce from './plugins/reduce.js'
-import { addToCache, addToCacheDeep } from '../utils/addToCache.js'
-import revive, { replacer, createStateReviver } from '../utils/revive.js'
-import sliceByModulePath from '../utils/sliceByModulePath.js'
-import createInitialState from '../utils/createInitialState.js'
+import addModules from './addModules.js'
+import api from './api/index.js'
+
+import createCookies from '../cookies/index.js'
+import createReplays from '../replays/index.js'
+import createOptions from './createOptions.js'
+
+import createHistory from '../history/index.js'
+import createCache from '../utils/createCache.js'
+import createDevtools from '../devtools/index.mock.js'
+
 import restoreSettings from '../replays/helpers/restoreSettings.js'
-import render from '../react/render.js'
-import { isProd, isTest } from '../utils/bools.js'
-import onError from './utils/onError.js'
-import { subscribe, notify } from './utils/subscribe.js'
+import sliceByModulePath from '../utils/sliceByModulePath.js'
 import { mergeModulesPrevState } from './mergeModules.js'
-import { kinds } from './createEvents.js'
 
 
-export default async (top, { settings: rawSettings, hydration } = {}) => {
-  const settings = rawSettings ?? await restoreSettings()
-
+export default async (topModule, { settings: rawSettings, hydration } = {}) => {
   const proto = {}
+  const state = createProxy(Object.create(proto))
 
-  const proxyCache = new WeakMap
-  const snapCache = new WeakMap
+  const settings = rawSettings ?? await restoreSettings()
+  const { prevStore, replay, hmr, modulePath } = api.getStatus(rawSettings, settings)
 
-  const state = createProxy(Object.create(proto), undefined, { proxy: proxyCache, snap: snapCache})
-
-  const prevStore = window.store
-  const replay = !!rawSettings && !isProd
-  const hmr = !!prevStore && !replay
-
-  const modulePath = settings?.module || ''
-  const mod = sliceByModulePath(top, modulePath)
-
-  const findInClosestParent = createFindInClosestParent(top, modulePath)
-
-  const topCookies = mod.cookies ?? findInClosestParent('cookies')
-  const topReplays = mod.replays ?? findInClosestParent('replays')
-  const topOptions = mod.options ?? findInClosestParent('options')
+  const mod = sliceByModulePath(topModule, modulePath)
+  
+  const topCookies = mod.cookies ?? api.findInClosestParent('cookies', topModule, modulePath)
+  const topReplays = mod.replays ?? api.findInClosestParent('replays', topModule, modulePath)
+  const topOptions = mod.options ?? api.findInClosestParent('options', topModule, modulePath)
 
   const cookies = createCookies(topCookies)
   const replays = createReplays({ ...topReplays, replay, settings: { ...settings, token: await cookies.get('token') } })
   const options = createOptions(topOptions)
+
+  const history = createHistory(mod)
+  const cache = createCache(state, options.cache)
+  const devtools = createDevtools()
+
+  const madeFirst = hmr ? prevStore?.ctx.madeFirst : false
+  const ctx = { ...prevStore?.ctx, init: true, madeFirst }
+
+  const respond = { ...options.merge, ...api, ctx, topModule, cookies, replays, options, history, cache, devtools, getStore: () => state }
   
-  const eventFrom = createEventFrom(getStore)
-  const fromEvent = createFromEvent(getStore)
-
-  const history = options.createHistory(mod)
-  const cache = createCache(getStore, options.cache)
-
-  const lazyCreateDevtools = () => !shouldUseDevtools(options) ? createDevTools(state) : createDevtoolsMock()
-
-  const stringifyState = st => JSON.stringify(snapshot(st || state), replacer)
-  const parseJsonState = json => JSON.parse(json, createStateReviver(state))
-
-  const shouldAwait = () => ctx.isFastReplay || isTest
-  const awaitInReplaysOnly = async f => shouldAwait() ? await f() : state.promises.push(f())
-
-  const isEqualNavigations = (a, b) => a && b && fromEvent(a).url === fromEvent(b).url
-
-  const ctx = { ...prevStore?.ctx, init: true, madeFirst: false }
-  const respond = { ...options.merge, findInClosestParent, ctx, listeners: [], promises: [], refs: {}, kinds, proxyCache, eventsByPath: {}, modelsByModulePath: {}, eventsByType: {}, overridenReducers: new Map, modulePaths: {}, modulePathsById: {}, get devtools() { return options.d ?? (options.d = lazyCreateDevtools()) }, top, options, cookies, replays, history, render, onError, snapshot, dispatch, dispatchSync, awaitInReplaysOnly, shouldAwait, cache, reduce, subscribe, notify, eventFrom, fromEvent, isEqualNavigations, addToCache, addToCacheDeep, getStore, onError, stringifyState, parseJsonState }
-  
-  await createInitialState(mod, respond, proto, state, hmr, hydration, replays, prevStore)
-
-  function getStore() { return state }
+  await addModules(mod, respond, proto, state, hmr, hydration, replays, prevStore)
   
   if (!hmr) {
-    mergeModulesPrevState(state, snapshot(state))
-    reduce(state, state.events.start())
+    mergeModulesPrevState(state, api.snapshot(state))
+    api.reduce(state, state.events.start())
   }
 
   return window.store = replays.store = state
-}
-
-
-
-const saveModuleKeys = mod => {
-  mod.moduleKeys = Object.keys(mod).reduce((acc, k) => {
-    child = mod[k]
-
-    if (child?.module === true) {
-      acc.push(k)
-      saveModuleKeys(child)
-    }
-
-    return acc
-  }, [])
-}
-
-
-const createFindInClosestParent = (slice, modulePath) => {
-  const parentModules = []
-
-  if (modulePath) {
-    modulePath.split('.').forEach(k => {
-      parentModules.unshift(slice)
-      slice = slice[k]
-    })
-  }
-
-  return key => parentModules.find(p => p[key])?.[key]
 }

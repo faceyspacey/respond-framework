@@ -2,8 +2,8 @@ import * as qs from 'qs'
 import isNumber from './isNumber.js'
 
 
-export const parseSearch = (search, getStore) => {
-  const parse = getStore?.().options.parseSearch || ps
+export const parseSearch = (search, state) => {
+  const parse = state?.options.parseSearch ?? ps
   return parse(search)
 }
 
@@ -34,7 +34,7 @@ const ps = search => {
 
 
 
-export const stringifyQuery = (query, getStore) => {
-  const stringify = getStore?.().options.stringifyQuery || qs.stringify
+export const stringifyQuery = (query, state) => {
+  const stringify = state?.options.stringifyQuery ?? qs.stringify
   return '?' + stringify(query)
 }

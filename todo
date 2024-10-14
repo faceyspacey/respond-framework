@@ -16,7 +16,10 @@ declare module 'respond-framework' {
 
 
 
-
+expect.addSnapshotSerializer({
+  print: event => event.type,
+  test: v => typeof v === 'function' && v.__event
+})
 
 
 
@@ -274,9 +277,9 @@ declare module 'respond-framework' {
 
 
 
-replayToolsState can possibly piggy back on getSessionState - remove getSessionState
-move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
-possibly combine replays + replayTools into a single module
+#replayToolsState can possibly piggy back on getSessionState - remove getSessionState
+#move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
+#possibly combine replays + replayTools into a single module
 
 
 
@@ -313,3 +316,9 @@ deno
 
 codegen
 animation/timers component interface
+
+
+
+
+is it useful to have methods scoped to the current module's state?
+prevState is mutable -- does cloning object in createProxy fix this?
