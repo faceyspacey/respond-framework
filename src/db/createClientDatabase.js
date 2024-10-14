@@ -4,6 +4,7 @@ import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
 import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
+import { ObjectId } from 'bson'
 
 
 export default !isProd ? mock : (db, parentDb, props, state) => {
@@ -32,7 +33,11 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
       const url = typeof apiUrl === 'function' ? apiUrl(state) : apiUrl
     
       if (method === 'make') {
-        return doc => new models[controller]({ ...doc, __type: controller }, modulePath)
+        return d => models[controller]({ ...d, __type: controller }, modulePath)
+      }
+      
+      if (method === 'create') {
+        return d => models[controller]({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
       }
     
       return async function(...args) {
@@ -70,3 +75,5 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
 
 
 let _serverDown
+
+const obId = () => new ObjectId().toString()

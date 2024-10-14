@@ -7,6 +7,7 @@ import createDbProxy from './utils/createDbProxy.js'
 import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
 import { replacer, createReviver } from '../utils/revive.js'
+import obId from '../utils/objectIdDevelopment.js'
 
 
 export default (db, parentDb, props, state, findInClosestParent) => {
@@ -33,8 +34,14 @@ export default (db, parentDb, props, state, findInClosestParent) => {
       const { options } = this
       const { models, modulePath, ctx } = state
     
+      const Model = models[controller]
+
       if (method === 'make') {
-        return doc => new models[controller]({ ...doc, __type: controller }, modulePath)
+        return d => new Model({ ...d, __type: controller }, modulePath)
+      }
+
+      if (method === 'create') {
+        return d => new Model({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
       }
     
       return async (...args) => {
@@ -59,7 +66,7 @@ export default (db, parentDb, props, state, findInClosestParent) => {
           response = clean(res, state, modulePath)
         }
 
-        const model = models[controller]?.prototype
+        const model = Model?.prototype
         const shouldCache = useCache ?? model?.shouldCache ?? method.indexOf('find') === 0
 
         if (shouldCache) cache.set(body, JSON.stringify(response, replacer))

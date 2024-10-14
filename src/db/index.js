@@ -48,9 +48,8 @@ export default !isProd ? mock : {
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
-    if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
-
-    const { id, createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
+    const id = typeof selector === 'string' ? selector : selector.id
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
 
     selector = this._toObjectIdsSelector(id ? { id } : selector)
 
@@ -62,10 +61,18 @@ export default !isProd ? mock : {
     return result.value && this._create(result.value)
   },
 
-  async upsert(selector, doc, { insertDoc, project } = {}) {
-    const result = await this.mongo().findOneAndUpdate(this._toObjectIdsSelector(selector), {
+  async upsert(selector, newDoc, { insertDoc, project } = {}) {
+    const id = typeof selector === 'string' ? selector : selector.id
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // upsert accepts this signature: upsert(doc)
+
+    selector = this._toObjectIdsSelector(id ? { id } : selector)
+    insertDoc = this._toObjectIdsSelector(insertDoc)
+
+    const sel = typeof selector === 'object' ? selector : undefined
+
+    const result = await this.mongo().findOneAndUpdate(selector, {
       $set: this._toObjectIds(doc),
-      $setOnInsert: this._toObjectIdsSelector({ ...selector, ...insertDoc, createdAt: new Date }),
+      $setOnInsert: { ...sel, ...insertDoc, createdAt: new Date },
       $currentDate: { updatedAt: true }
     }, { upsert: true, projection: this._toProject(project), returnDocument: 'after' })
 
@@ -375,9 +382,8 @@ export default !isProd ? mock : {
   },
 
   async _updateOne(selector, newDoc, { project } = {}) {
-    if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
-
-    const { id, createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
+    const id = typeof selector === 'string' ? selector : selector.id
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // accept signature: updateOne(doc)
 
     selector = this._toObjectIdsSelector(id ? { id } : selector)
 
@@ -385,7 +391,6 @@ export default !isProd ? mock : {
       $set: this._toObjectIds(doc),
       $currentDate: { updatedAt: true }
     }, { projection: this._toProject(project), returnDocument: 'after' })
-
 
     return result.value && this._create(result.value)
   },

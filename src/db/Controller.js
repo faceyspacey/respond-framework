@@ -102,6 +102,16 @@ export default  {
     return db[this._name].incrementOne(...args)
   },
 
+  async save(...args) {
+    return { 
+      [this._name]: await db[this._name].upsert(...args)
+    }
+  },
+
+  async remove(...args) {
+    return db[this._name].deleteOne(...args)
+  },
+  
   async findOneSafe(...args) {
     return { 
       [this._name]: await db[this._name].findOneSafe(...args)
@@ -127,6 +137,12 @@ export default  {
   },
 
   async upsertSafe(...args) {
+    return { 
+      [this._name]: await db[this._name].upsertSafe(...args)
+    }
+  },
+
+  async saveSafe(...args) {
     return { 
       [this._name]: await db[this._name].upsertSafe(...args)
     }

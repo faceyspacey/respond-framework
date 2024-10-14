@@ -16,20 +16,13 @@ export const hydrateModules = (state, json, token) => {
   state.token = token
   state.cachedPaths ??= {}
 
-  if (!json) return state
-
   if (typeof json === 'object') {
-    if (json.replayTools.tests) {
-      delete json.replayTools.tests
-    }
-
+    if (json.replayTools.tests) delete json.replayTools.tests // don't waste cycles reviving tons of tests with their events
     mergeModules(state, revive(state)(json))
   }
-  else {
+  else if (json) {
     mergeModules(state, JSON.parse(json, createStateReviver(state)))
   }
-
-  return state
 }
 
 

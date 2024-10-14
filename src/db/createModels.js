@@ -1,4 +1,7 @@
-export default (respond, models, parent, modulePath) => {
+import mixin from './model.client.js'
+
+
+export default (respond, models, parent, modulePath, db) => {
   if (!models) {
     if (parent.models) return parent.models
     models = respond.findInClosestParent('models') ?? {}
@@ -10,7 +13,7 @@ export default (respond, models, parent, modulePath) => {
   models = {}
 
   for (const k in { ...shared, ...client }) {
-    models[k] = createModel(k, shared[k], client[k])
+    models[k] = createModel(k, shared[k], client[k], mixin, { db })
   }
 
   return respond.modelsByModulePath[modulePath] = models
@@ -18,9 +21,9 @@ export default (respond, models, parent, modulePath) => {
 
 
 
-export const createModel = (k, shared, serverOrClient, parent, extra) => {
+export const createModel = (k, shared, serverOrClient, mixin, extra) => {
   const base = { _name: k, _namePlural: k + 's' }
-  const descriptors = Object.assign(g(base), g(parent), g(shared), g(serverOrClient), g(extra))
+  const descriptors = Object.assign(g(base), g(mixin), g(shared), g(serverOrClient), g(extra))
 
   Object.defineProperty(Model, 'name', { value: k })
   Object.defineProperties(Model.prototype, descriptors)

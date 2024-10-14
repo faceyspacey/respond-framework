@@ -24,8 +24,10 @@ export default async (mod, respond, proto, state, hmr, hydration, { token, repla
 
 
 const addModule = async (mod, respond, eventsCache, moduleName, modulePath = '', parent = {}, props = {}, proto = {}, state = Object.create(proto)) => {
-  const { id, module, ignoreChild, initialState, components, models, db, replays, options, plugins, pluginsSync } = mod
+  const { id, module, ignoreChild, initialState, components, models, replays, options, plugins, pluginsSync } = mod
   if (!id) throw new Error('respond: missing id on module: ' + modulePath)
+
+  const db = createClientDatabase(mod.db, parent.db, props, state, respond.findInClosestParent)
 
   Object.defineProperties(proto, Object.getOwnPropertyDescriptors(respond))
 
@@ -39,8 +41,8 @@ const addModule = async (mod, respond, eventsCache, moduleName, modulePath = '',
     components,
     state,
     respond,
-    models: createModels(respond, models, parent, modulePath),
-    db: createClientDatabase(db, parent.db, props, state, respond.findInClosestParent),
+    db,
+    models: createModels(respond, models, parent, modulePath, db),
     _plugins: createPlugins(respond.options.defaultPlugins, plugins),
     _pluginsSync: createPlugins(respond.options.defaultPluginsSync, pluginsSync),
   })

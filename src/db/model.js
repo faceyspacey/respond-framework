@@ -20,6 +20,22 @@ export default !isProd ? mock : {
     return this
   },
 
+  async saveSafe(moreDoc) {
+    if (moreDoc) {
+      Object.assign(this, moreDoc)
+    }
+
+    this.updatedAt = new Date
+    this.createdAt ??= this.updatedAt
+
+    const { id, _id: _, roles: __, ...doc } = this
+    const selector = toObjectIdsSelector({ id: this.id })
+
+    await this.db(this._name).mongo().updateOne(selector, { $set: toObjectIds(doc) }, { upsert: true })
+
+    return this
+  },
+
   async remove() {
     const selector = toObjectIdsSelector({ id: this.id })
     await this.db(this._name).mongo().deleteOne(selector)

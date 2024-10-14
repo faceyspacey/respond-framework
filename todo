@@ -263,6 +263,8 @@ declare module 'respond-framework' {
 #controllers probably should use prototypes
 #refactor all flags like isReplay, isFastReplay, ignoreChangePath, __idCounter, appParams, __sessionRestored, db, appName, appParams, app
 
+#db.create should probably create IDs client side
+#.save client side; rename make to applyModels, make client code use .create
 
 
 #replace `store` with `state`
@@ -270,12 +272,6 @@ declare module 'respond-framework' {
 #make all tools replacable by user
 #re-organize files
 
-
-
-
-
-db.create should probably create IDs client side
-.save client side; rename make to applyModels, make client code use .create
 
 
 replayToolsState can possibly piggy back on getSessionState - remove getSessionState
@@ -286,12 +282,19 @@ possibly combine replays + replayTools into a single module
 
 
 
-dynamic modules
-code splitting + simultaneus api fetching
-ssr
 
+
+dynamic modules
 make dispatch have hook for parent modules to listen in
+
+code splitting + simultaneus api fetching
+ssr, make universal-cookie in our own code, createControllers needs to be passed the db it uses, createDatabase needs new names for things such as model, parent etc
+
+
+
 devtools
+
+
 
 
 

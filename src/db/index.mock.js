@@ -1,4 +1,4 @@
-import objectId from '../utils/objectIdDevelopment.js'
+import ObjectId from '../utils/objectIdDevelopment.js'
 import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import pick from './utils/pick.js'
@@ -35,7 +35,7 @@ export default {
   },
 
   async insertOne(doc, { project } = {}) {
-    doc.id ??= objectId() // if id present, client generated client side optimistically
+    doc.id ??= ObjectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this._create(doc)
@@ -43,35 +43,33 @@ export default {
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
-    if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
-
     const id = typeof selector === 'string' ? selector : selector.id
-    const { id: _, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
 
     const model = await this._findOne(id || selector)
+    if (!model) return
 
-    if (model) {
-      Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
-      model.updatedAt = new Date
-      this.docs[model.id] = model
-    }
+    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
+    model.updatedAt = new Date
+    this.docs[model.id] = model
 
     return this._pick(model, project)
   },
 
-  async upsert(selector, doc, { insertDoc, project } = {}) {
-    const existingDoc = await this._findOne(selector)
+  async upsert(selector, newDoc, { insertDoc, project } = {}) {
+    const id = typeof selector === 'string' ? selector : selector.id
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // upsert accepts this signature: upsert(doc)
+
+    const existingDoc = await this._findOne(id || selector)
 
     if (existingDoc) {
       doc.updatedAt = new Date
-
-      Object.assign(existingDoc, doc)
-      this.docs[existingDoc.id] = existingDoc
-      
-      return this._findOne(selector, project)
+      this.docs[existingDoc.id] = Object.assign(existingDoc, doc)
+      return this._findOne(selector, { project })
     }
 
-    return this._insertOne({ ...selector, ...doc, ...insertDoc })
+    const sel = typeof selector === 'object' ? selector : undefined
+    return this._insertOne({ ...sel, ...doc, ...insertDoc }, { project })
   },
 
   async findAll(selector, options) {
@@ -211,7 +209,7 @@ export default {
 
   async insertMany(docs) {
     for (const doc of docs) {
-      doc.id ??= objectId()
+      doc.id ??= ObjectId()
       doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
       this.docs[doc.id] = this._create(doc)
@@ -263,7 +261,7 @@ export default {
   },
 
   create(doc) {
-    const id = doc?.id || objectId()
+    const id = doc?.id || ObjectId()
     return this.make({ ...doc, id })
   },
 
@@ -317,7 +315,7 @@ export default {
   },
   
   async _insertOne(doc, { project } = {}) {
-    doc.id ??= objectId() // if id present, client generated client side optimistically
+    doc.id ??= ObjectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
   
     this.docs[doc.id] = this._create(doc)
@@ -325,24 +323,21 @@ export default {
   },
   
   async _updateOne(selector, newDoc, { project } = {}) {
-    if (!selector) throw new Error('respond: undefined or null selector passed to updateOne(selector)')
-  
     const id = typeof selector === 'string' ? selector : selector.id
-    const { id: _, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
-  
+    const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
+
     const model = await this._findOne(id || selector)
-  
-    if (model) {
-      Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
-      model.updatedAt = new Date
-      this.docs[model.id] = model
-    }
-  
+    if (!model) return
+
+    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
+    model.updatedAt = new Date
+    this.docs[model.id] = model
+
     return this._pick(model, project)
   },
 
   _create(doc) {
-    const id = doc?.id || objectId()
+    const id = doc?.id || ObjectId()
     return this.make({ ...doc, id })
   },
 
