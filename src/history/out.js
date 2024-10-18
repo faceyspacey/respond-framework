@@ -10,7 +10,7 @@ export default back => back ? backOut() : forwardOut()
 
 
 const backOut = async () => {
-  sessionStorage.setItem('sessionState', window.store.stringifyState())
+  sessionStorage.setItem('sessionState', window.state.respond.stringifyState())
 
   bs.prevIndex = -1
 
@@ -31,7 +31,7 @@ const forwardOut = async () => {
     return false
   }
 
-  sessionStorage.setItem('sessionState', window.store.stringifyState())
+  sessionStorage.setItem('sessionState', window.state.respond.stringifyState())
   
   bs.prevIndex = bs.maxIndex + 1
   bs.out = true
@@ -66,12 +66,12 @@ export const linkOut = async (url, e) => {
     return
   }
 
-  if (isPopDisabled(window.store)) {
+  if (isPopDisabled()) {
     window.location = url
     return
   }
 
-  sessionStorage.setItem('sessionState', window.store.stringifyState())
+  sessionStorage.setItem('sessionState', window.state.respond.stringifyState())
 
   bs.prevIndex = bs.maxIndex + 1
   bs.linkedOut = true

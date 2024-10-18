@@ -1,63 +1,28 @@
-export default (state, options = {}) => {
-  const {
-    getCacheState = state => state.cachedPaths,
-    createKey = (e, state) => state.fromEvent(e).url,
-    has = (e, state) => {
-      const { cache } = e.event
+export default state => ({
+  get(e) {
+    const k = state.respond.fromEvent(e).url
+    return state.cachedPaths[k] ? k : null
+  },
 
-      if (cache !== undefined) {
-        return isCached(state, e, cache)
-      }
+  set(e) {
+    const k = state.respond.fromEvent(e).url
+    state.cachedPaths[k] = true
+  },
 
-      return !!(e.cached || !e.event.fetch || state.cache.get(e))
-    }
-  } = options
+  delete(e) {
+    const k = state.respond.fromEvent(e).url
+    delete state.cachedPaths[k]
+  },
 
+  clear() {
+    const keys = state.respond.cachedPaths
+    for (const k in keys) delete keys[k]
+  },
 
-  return {
-    get(eOrLoc) {
-      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
-      const k = createKey(e, state)
-      return getCacheState(state)[k] ? k : null
-    },
-
-    set(eOrLoc) {
-      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
-      const k = createKey(e, state)
-      getCacheState(state)[k] = true
-    },
-  
-    unset(eOrLoc) {
-      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
-      const k = createKey(e, state)
-      delete getCacheState(state)[k]
-    },
-    
-    clear() {
-      const keys = getCacheState(state)
-
-      for (const k in keys) {
-        delete keys[k]
-      }
-    },
-
-    has(eOrLoc) {
-      const e = eOrLoc.event?.__event ? eOrLoc : state.eventFrom(eOrLoc)
-      return has(e, state)
-    },
-  }
-}
-
-
-
-
-function isCached (state, e, cache) {
-  if (typeof cache === 'function') {
-    const storeSlice = state.modulePaths[e.modulePath]
-    const cached = state.cache.get(e)
-
-    return cache.call(e.event, storeSlice, e, cached)
-  }
-
-  return !!cache
-}
+  has(e) {
+    const { cache } = e.event
+    if (typeof cache === 'function') return cache.call(e.event, state.respond.modulePaths[e.modulePath], e, this.get(e))
+    if (cache !== undefined) return !!cache
+    return !!(e.cached || !e.event.fetch || this.get(e))
+  },
+})

@@ -27,8 +27,9 @@ export default (mod, state, initialState, currState, moduleKeys) => {
 
 const extract = (k, descriptor, selectorDescriptors, events, reducers, state, moduleKeys) => {
   const { get, value: v } = descriptor
+  const isModule = moduleKeys && v?.plugins && v.components && v.id
 
-  if (moduleKeys && v?.module === true) {
+  if (isModule) {
     moduleKeys.push(k)
   }
   else if (v?.event === true) {

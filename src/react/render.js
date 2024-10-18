@@ -6,12 +6,12 @@ import RespondProvider from './Provider.js'
 
 
 export default function render(props = {}) {
-  const app = createApp(this, props)
+  const app = createApp(this.state, props)
   const { ctx } = this
 
   if (isTest) return app
 
-  startReplay(ctx, this)
+  startReplay(ctx, this.state, this)
 
   if (!isNative) renderWeb(ctx, app)
   else renderNative(ctx, app, props)
@@ -20,11 +20,11 @@ export default function render(props = {}) {
 }
 
 
-const createApp = (store, props) => {
-  const Provider = props.Provider || store.components?.Provider || RespondProvider
-  const { App, Error } = store.components ?? {}
+const createApp = (state, props) => {
+  const Provider = props.Provider || state.components?.Provider || RespondProvider
+  const { App, Error } = state.components ?? {}
 
-  return React.createElement(Provider, { store, App, Error, ...props })
+  return React.createElement(Provider, { state, App, Error, ...props })
 }
 
 
@@ -46,9 +46,9 @@ const renderNative = (ctx, app, props) => {
 }
 
 
-const startReplay = (ctx, state) => {
+const startReplay = (ctx, state, respond) => {
   ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = true
-  state.replayTools.playing = state.replays.playing = false
+  state.replayTools.playing = respond.replays.playing = false
 }
 
 const endReplay = ctx => {

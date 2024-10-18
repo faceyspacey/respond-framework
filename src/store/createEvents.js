@@ -77,7 +77,6 @@ const createEvent = (store, state, cache, config, modulePath, _namespace, _type,
   Object.assign(event, config, info, { dispatch, getStore: store.getStore, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
   Object.defineProperty(event, 'module', { get: () => modulePaths[modulePath] ?? state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
-  delete event.type // can't have type string as it changes depending on what module is reducing the e object
 
   const { modulePaths } = store
 

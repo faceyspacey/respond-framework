@@ -2,10 +2,9 @@ import { Linking } from 'react-native'
 import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermaLink from './helpers/createPermaLink.js'
-import createStore from '../../store/createStore.js'
+import createState from '../../store/createState.js'
 import sessionStorage from '../../utils/sessionStorage.js'
 import localStorage from '../../utils/localStorage.js'
-import copyToClipboard from '../../utils/copyToClipboard.js'
 
 
 export default {
@@ -65,9 +64,7 @@ export default {
 
   test: {
     navigation: true,
-    submit: async (store, { id, index, delay }) => {
-      const { state, replays } = store
-
+    submit: async (state, { id, index, delay }) => {
       const { settings, events: evs } = state.tests[id]
 
       state.evs = evs // display all events before replayed
@@ -79,7 +76,7 @@ export default {
       const events = evs.slice(0, index + 1)
 
       await localStorage.setItem('replayToolsTab', 'events')
-      await replays.replayEvents(events, delay, settings)
+      await state.replays.replayEvents(events, delay, settings)
 
       return false
     },
@@ -131,20 +128,15 @@ export default {
   },
 
   replayEventsToIndex: {
-    before: async (store, { index, delay }) => {
-      const { state, replays } = store
+    before: async (state, { index, delay }) => {
       const events = state.evs.slice(0, index + 1)
-
-      await replays.replayEvents(events, delay)
-
+      await state.replays.replayEvents(events, delay)
       return false
     }
   },
 
   changeIndex: {
-    before: async (store, { index, delta }) => {
-      const { state, replays } = store
-
+    before: async (state, { index, delta }) => {
       const lastIndex = state.evs.length - 1
       const nextIndex = Math.max(0, Math.min(lastIndex, index + delta))
 
@@ -159,16 +151,14 @@ export default {
 
       const eventsToIndex = events.slice(0, state.evsIndex + 1)
       
-      await replays.replayEvents(eventsToIndex)
+      await state.replays.replayEvents(eventsToIndex)
 
       return false
     }
   },
 
   skipEvent: {
-    before: async (store, { index }) => {
-      const { state, replays } = store
-
+    before: async (state, { index }) => {
       const e = state.evs[index]
       const skipped = !e.meta?.skipped
 
@@ -177,7 +167,7 @@ export default {
       const end = state.evsIndex + 1
       const events = state.evs.slice(0, end)
 
-      await replays.replayEvents(events)
+      await state.replays.replayEvents(events)
 
       return false
     }
@@ -201,7 +191,7 @@ export default {
       state.persist = !state.persist
       
       if (state.persist) {
-        const json = state.stringifyState(state)
+        const json = state.respond.stringifyState(state)
         await sessionStorage.setItem('replayToolsState', json)
       }
       else { 
@@ -213,8 +203,8 @@ export default {
   },
 
   reload: {
-    before: async ({ state, topModule }) => {
-      const { permalink: _, ...settings } = state.form
+    before: async ({ form, persist, topModule }) => {
+      const { permalink: _, ...settings } = form
 
       await localStorage.setItem('replaySettings', JSON.stringify(settings))
       window.history.replaceState(history.state, '', settings.path)
@@ -222,14 +212,14 @@ export default {
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
       window.__idCounter = 10000
 
-      const store = await createStore(topModule, { settings })
+      const top = await createState(topModule, { settings })
 
-      const e = store.eventFrom(settings.path)
-      await store.dispatch(e)
+      const e = top.eventFrom(settings.path)
+      await top.dispatch(e)
       
-      store.render()
+      top.render()
 
-      store.state.replayTools.persist = state.persist
+      top.replayTools.persist = persist
 
       return false
     }
@@ -240,11 +230,8 @@ export default {
       const url = createPermaLink(state, replays, arg)
 
       Linking.openURL(url)
-      copyToClipboard(url)
 
       console.log('Your permalink is:\n', url)
-      console.log(`It's been copied to your clipboard :)`)
-
       alert(`Check the console for a permalink you can copy & paste.`)
 
       return false

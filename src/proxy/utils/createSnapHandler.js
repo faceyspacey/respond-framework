@@ -22,9 +22,6 @@ export default (snap, state) => {
       recordUsage(state.affected, 'getOwnPropertyDescriptor', snap, k)
       return Reflect.getOwnPropertyDescriptor(snap, k)
     },
-    set(snap, k, v, proxy) {
-      snap.state[k] = v
-    },
     get(snap, k, proxy) {
       if (k === _parent) return state.parentProxy
 
@@ -45,6 +42,7 @@ export default (snap, state) => {
       recordUsage(state.affected, 'get', snap, k)
 
       let v = Reflect.get(snap, k)
+      // return canProxy(v) ? createSnapProxy(v, state) : v
       if (!canProxy(v)) return v
 
       let child = snapsToProxyCache.get(v)
@@ -62,7 +60,7 @@ export default (snap, state) => {
             proto[_parent] = proxy
           })
 
-          Object.defineProperty(v.modulePaths, v.modulePath, { value: proxy, enumerable: false, configurable: true })
+          v.modulePaths[v.modulePath] = proxy
         }
 
         v = snapshot(proxy)

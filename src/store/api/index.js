@@ -5,7 +5,6 @@ import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
 
 import snapshot from '../../proxy/snapshot.js'
-import reduce from '../plugins/reduce.js'
 import render from '../../react/render.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
@@ -14,115 +13,202 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
-export default {
-  modulePaths: {},
-  modulePathsById: {},
-  modelsByModulePath: {},
+export default (state, replayModulePath, respond) => {
+  const modulePaths = { ['']: state, undefined: state }
+  const listeners = []
+  const promises = []
 
-  eventsByPath: {},
-  eventsByType: {},
-
-  listeners: [],
-  promises: [],
-  refs: {},
-  overridenReducers: new Map,
-
-  dispatch,
-  dispatchSync,
-
-  fromEvent,
-  eventFrom,
-
-  addToCache,
-  addToCacheDeep,
-
-  snapshot,
-  reduce,
-  render,
-
-  kinds,
-  replacer,
-
-  stringifyState(st) {
-    return JSON.stringify(snapshot(st || this), this.replacer)
-  },
-  parseJsonState(json) {
-    return JSON.parse(json, createStateReviver(this))
-  },
-
-  shouldAwait() {
-    return this.ctx.isFastReplay || isTest
-  },
-  awaitInReplaysOnly(f) {
-    return this.shouldAwait() ? f() : this.promises.push(f()) // f is async
-  },
-
-  isEqualNavigations(a, b) {
-    return a && b && this.fromEvent(a).url === this.fromEvent(b).url
-  },
-
-  findInClosestParent(key, slice = this.top, modulePath = this.getStore().modulePath) {
-    const parentModules = []
+  return {
+    ...respond,
+    state,
   
-    if (modulePath) {
-      modulePath.split('.').forEach(k => {
-        parentModules.unshift(slice)
-        slice = slice[k]
-      })
-    }
+    modulePaths,
+    modulePathsById: {},
+    modelsByModulePath: {},
   
-    return parentModules.find(p => p[key])?.[key]
-  },
-
-  getStatus(rawSettings, settings) {
-    const prevStore = window.store
-    
-    const replay = !!rawSettings && !isProd
-    const hmr = !!prevStore && !replay
-
-    const modulePath = settings?.module || ''
-
-    return { prevStore, replay, hmr, modulePath }
-  },
-
-  subscribe(send) {
-    send.modulePath = this.modulePath
-    this.listeners.push(send)
+    eventsByPath: {},
+    eventsByType: {},
   
-    return () => {
-      const index = this.listeners.findIndex(l => l === send)
-      this.listeners.splice(index, 1)
-    }
-  },
+    listeners,
+    promises,
+    refs: {},
+    overridenReducers: new Map,
   
-  notify(e) {
-    const state = this.getStore()
+    kinds, //?
   
-    const sent = state.listeners.map(send => {
-      const isSelfOrAncestor = e.modulePath.indexOf(send.modulePath) === 0
-      if (!isSelfOrAncestor) return
+    dispatch, //
+    dispatchSync, //
+  
+    fromEvent, //
+    eventFrom, //
+  
+    addToCache, //
+    addToCacheDeep, //
+  
+    snapshot, //
+    render, //
+  
+    getStore() {
+      return state
+    },
+  
+    stringifyState(st) {
+      return JSON.stringify(snapshot(st || state), this.options.replacer ?? replacer)
+    },
+    parseJsonState(json) {
+      return JSON.parse(json, createStateReviver(state))
+    },
+  
+    shouldAwait() {
+      return state.ctx.isFastReplay || isTest
+    },
+    awaitInReplaysOnly(f) {
+      return state.ctx.isFastReplay || isTest ? f() : promises.push(f()) // f is async
+    },
+  
+    isEqualNavigations(a, b) {
+      return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
+    },
+  
+    findInClosestAncestor(key, modulePath, top = respond.topModule) {
+      modulePath = replayModulePath
+        ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath
+        : modulePath
+
+      if (!modulePath) return top[key]  // top.db
+
+      let mod = top
+  
+      return modulePath                 // 'admin.foo'
+        .split('.')                     // ['admin', 'foo']
+        .slice(0, -1)
+        .map(k => mod = mod[k])         // [admin, foo]
+        .reverse()                      // [foo, admin]
+        .find(p => p[key])              // admin.db
+        ?.[key] ?? top[key]             // admin.db ?? top.db
+    },
+
+    findInClosestAncestorOld(key, modulePath, top = state.topModule) {
+      const path = replayModulePath
+        ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath // a nested module may be set in the replaytools, and the purpose of this function is to be able to scan back through unused ancestor modules for inherited pillars like `db`
+        : modulePath
+
+      if (!path) return top[key]
+
+      const parentModules = []
+      let mod = top
       
-      const storeSlice = this.modulePaths[send.modulePath]
-      const eSlice = sliceEventByModulePath(e, send.modulePath)
+      if (path) {
+        path.split('.').forEach(k => {
+          parentModules.unshift(mod)
+          mod = mod[k] ?? {}
+        })
+      }
+    
+      return parentModules.find(p => p[key])?.[key]
+    },
   
-      return send(storeSlice, eSlice)
-    })
+    subscribe(send) {
+      send.modulePath = this.respond.state.modulePath // modulePath of module attached to `respond` object unique to each module
+      listeners.push(send)
+    
+      return () => {
+        const index = listeners.findIndex(l => l === send)
+        listeners.splice(index, 1)
+      }
+    },
+    
+    notify(e) {  
+      const sent = listeners.map(send => {
+        const mp = send.modulePath // ancestor which has subscribed
+        const eventIsChildOfSubscribingModuleOrTheSameModule = e.modulePath.indexOf(mp) === 0
   
-    const promise = Promise.all(sent).catch(error => {
-      state.onError({ error, kind: 'subscriptions', e })
-    })
+        if (!eventIsChildOfSubscribingModuleOrTheSameModule) return
+        
+        return send(
+          modulePaths[mp],
+          sliceEventByModulePath(e, mp)
+        )
+      })
+    
+      const promise = Promise.all(sent).catch(error => {
+        state.onError({ error, kind: 'subscriptions', e })
+      })
+    
+      if (state.shouldAwait()) return promise
+    },
   
-    if (state.shouldAwait()) return promise
-  },
+    onError(err)  {
+      const { error, kind = 'unknown', e } = err
+    
+     if (kind !== 'render') { // react render errors already logged
+      console.error('respond: ' + kind, e || '')
+      console.error(error)
+     }
+    
+      const onError = this.respond.state.options.onError ?? state.options.onError
 
-  onError(err)  {
-    const { error, kind = 'unknown', e } = err
-  
-   if (kind !== 'render') { // react render errors already logged
-    console.error('respond: ' + kind, e || '')
-    console.error(error)
-   }
-  
-    return this.options?.onError?.({ ...err, store: this })
+      return onError?.({ ...err, store: state })
+    }
   }
+}
+
+
+export function getStatus(rawSettings, settings) {
+  const prevStore = window.store
+  
+  const replay = !!rawSettings && !isProd
+  const hmr = !!prevStore && !replay
+
+  const modulePath = settings?.module || ''
+
+  return { prevStore, replay, hmr, modulePath }
+}
+
+
+
+
+export function findInClosestAncestor(key, modulePath, top = state.topModule) {
+  if (!modulePath) return top[key]  // top.db
+
+  let mod = top
+
+  return modulePath                 // 'admin.foo'
+    .split('.')                     // ['admin', 'foo']
+    .slice(0, -1)
+    .map(k => mod = mod[k])         // [admin, foo]
+    .reverse()                      // [foo, admin]
+    .find(p => p[key])              // admin.db
+    ?.[key] ?? top[key]             // admin.db ?? top.db
+}
+
+
+
+// const createFindInClosestParent = replayModulePath => {
+//   const parentModules = []
+//   let slice = state
+
+//   if (replayModulePath) {
+//     replayModulePath.split('.').forEach(k => {
+//       parentModules.unshift(slice)
+//       slice = slice[k]
+//     })
+//   }
+
+//   return key => parentModules.find(p => p[key])?.[key]
+// }
+
+
+const createFindInClosestParent = (top, modulePath) => {
+  const parentModules = []
+  let slice = top
+
+  if (modulePath) {
+    modulePath.split('.').forEach(k => {
+      parentModules.unshift(slice)
+      slice = slice[k]
+    })
+  }
+
+  return parentModules.find(p => p[key])?.[key]
 }

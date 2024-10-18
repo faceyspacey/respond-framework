@@ -6,8 +6,8 @@ import { createTrap } from './createTrap.js'
 export default async e => {
   if (!shouldChange(e)) return
   
-  const { fromEvent, ctx } = window.store
-  const { url } = fromEvent(e)
+  const { respond, ctx } = window.store
+  const { url } = respond.fromEvent(e)
 
   change(url, ctx.changedPath)
 

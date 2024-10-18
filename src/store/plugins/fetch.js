@@ -18,7 +18,7 @@ export default async (store, e) => {
         await e.event.error.dispatch(res, { from: e })
         
         if (e.event.path) {
-          store.cache.unset(e)
+          store.cache.delete(e)
         }
 
         return false

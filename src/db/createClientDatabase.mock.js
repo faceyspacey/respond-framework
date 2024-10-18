@@ -10,8 +10,8 @@ import { replacer, createReviver } from '../utils/revive.js'
 import obId from '../utils/objectIdDevelopment.js'
 
 
-export default (db, parentDb, props, state, findInClosestParent) => {
-  if (!db && !parentDb) db = findInClosestParent('db') ?? {}
+export default (db, parentDb, props, state, respond, modulePath) => {
+  if (!db && !parentDb) db = respond.findInClosestAncestor('db', modulePath) ?? {}
   else if (!db) return parentDb
 
   if (props?.db) mergeProps(db, props.db)
@@ -30,7 +30,7 @@ export default (db, parentDb, props, state, findInClosestParent) => {
         }
       }
     }),
-    _call(controller, method, useCache) {
+    _call(controller, method) {
       const { options } = this
       const { models, modulePath, ctx } = state
     
@@ -44,7 +44,12 @@ export default (db, parentDb, props, state, findInClosestParent) => {
         return d => new Model({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
       }
     
-      return async (...args) => {
+      let useCache
+      meth.cache = function(...args) { useCache = true; return meth(...args); }
+      
+      return meth
+
+      async function meth(...args) {
         const Controller = controllers[controller]
         if (!Controller) throw new Error(`controller "${controller}" does not exist in ${modulePath ?? 'top'} module`)
     

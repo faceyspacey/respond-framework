@@ -3,7 +3,7 @@ import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 export default async function(ev, meta) {
   const e = sliceEventByModulePath(ev)
-  const store = this.modulePaths[e.modulePath]
+  const store = this.respond.modulePaths[e.modulePath]
     
   e.meta = { ...e.meta, ...meta }
 

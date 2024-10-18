@@ -35,7 +35,7 @@ export default function (store, eSlice, fullModulePathAlready = false) {
   }
 
   if (state.persist && !this.playing) {
-    const json = store.stringifyState(state)
+    const json = store.respond.stringifyState(state)
     sessionStorage.setItem('replayToolsState', json)
   }
 }

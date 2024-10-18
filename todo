@@ -281,17 +281,14 @@ expect.addSnapshotSerializer({
 #move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
 #possibly combine replays + replayTools into a single module
 
-
-
-
-
-
-
 dynamic modules
 make dispatch have hook for parent modules to listen in
 
 code splitting + simultaneus api fetching
-ssr, make universal-cookie in our own code, createControllers needs to be passed the db it uses, createDatabase needs new names for things such as model, parent etc
+ssr, createControllers needs to be passed the db it uses, createDatabase needs new names for things such as model, parent etc
+
+
+
 
 
 
@@ -322,3 +319,43 @@ animation/timers component interface
 
 is it useful to have methods scoped to the current module's state?
 prevState is mutable -- does cloning object in createProxy fix this?
+
+
+move replay flag to createReplays + cookies.get('token')
+apply prefixPath function in createEvents
+
+.subscribe/eventFrom/fromEvent/isEqualNavigations needs to happen on the correct module
+
+
+just use getSessionState
+
+keep all respond api methods on state, but make sure they're overwritable, and bind em within respond.
+
+
+options (such as parseSearch) can't use global top options, as they are module-scoped
+
+eventsCache will need to be preserved for async addModule
+
+maybe make cache module-specific?
+
+createReplays needs to determine hmr, replay status, and modulePath
+
+need to call createRespond for each module, and bind functions to new respond object
+
+dont pass options.merge from parent to child in addModules ; also explicitly specify merges in app modules
+
+navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
+createClientDatabase needs to allow u to specify apiCache key
+prefetching depends on both navigationCache and apiCache, and therefore fetch.js plugin
+start plugin is coupled to fetch cache
+
+always serve non history mock on web, and use shouldChange to prevent changing during replays
+
+e.cached -> e.meta.cached
+options.alwaysDispatchFollowUp
+
+what is a module? respond or state? do we return respond or state from createModule?
+
+do we still need madeFirst?
+
+call createRespond in addModule maybe, bind state to api methods

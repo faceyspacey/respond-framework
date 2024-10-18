@@ -49,7 +49,7 @@ export const popListener = async () => {
   }
   
   bs.pop = back ? 'back' : 'forward'                  // ensure all dispatches in pop handler are considered pops
-  await events.pop?.dispatch(undefined, { trigger: true })
+  events.pop ? await events.pop.dispatch(undefined, { trigger: true }) : alert('Add a `pop` event to your top module to enable browser history back/forward.\n\nSee RespondFramework.com/docs/history for usage.')
   bs.pop = false                                      // ...so changedUrl is queued, so we can go to tail if no change made, OR use replaceState as browsers don't honor history stack when more than one push is performed per user-triggered event
 
   const changed = ctx.changedPath

@@ -4,12 +4,12 @@ import ErrorBoundary from './ErrorBoundary.js'
 import ReplayTools from '../modules/replayTools/App/index.js'
 import { isProd, isTest } from '../utils/bools.js'
 
-export default ({ store, Error = store.components?.Error, App = store.components?.App }) => {
-  const hide = isTest || (isProd && !store.options.productionReplayTools) || store.options.disableReplayTools
+export default ({ state, Error = state.components?.Error, App = state.components?.App }) => {
+  const hide = isTest || (isProd && !state.respond.options.productionReplayTools) || state.respond.options.disableReplayTools
 
   return (
-    <RespondContext.Provider value={store}>
-      <ErrorBoundary store={store} Error={Error}>
+    <RespondContext.Provider value={state}>
+      <ErrorBoundary state={state} Error={Error}>
         <App />
       </ErrorBoundary>
       

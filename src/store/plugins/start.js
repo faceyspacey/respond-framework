@@ -9,7 +9,7 @@ export default async (store, e) => {
     if (res.includes(false)) return false
   }
 
-  if (e.event.path && store.cache.has(e)) {
+  if (e.event.path && store.cache?.has(e)) {
     e.cached = true
   }
 

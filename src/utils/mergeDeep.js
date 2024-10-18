@@ -1,5 +1,6 @@
-// this is for deep merge in reducers
-// if arrays are involved, only model arrays containing ids can currently be deep merged properly
+import { canProxy } from '../proxy/utils/helpers.js'
+
+// this is for deep merge in reducers (model arrays containing matching ids are deep merged)
 
 export default function mergeDeep(target, source = {}) {
   Object.keys(source).forEach(k => {
@@ -8,8 +9,8 @@ export default function mergeDeep(target, source = {}) {
     if (Array.isArray(v)) {
       mergeModelArray(target, k, v)
     }
-    else if (isObj(v)) {
-      if (!target[k]) target[k] = {}
+    else if (canProxy(v)) {
+      if (!target[k]) target[k] = Object.create(Object.getPrototypeOf(v))
       mergeDeep(target[k], v)
     }
     else target[k] = v
@@ -21,31 +22,29 @@ export default function mergeDeep(target, source = {}) {
 
 
 
-const isObj = v =>
-  v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)
-
-
 const mergeModelArray = (target, k, v) => {
-  if (!target[k] || target[k].length === 0) {
-    target[k] = v.slice() // note, for perf we aren't concerned about cloning deep in order to create new references, but probably should
+  const t = target[k]
+
+  if (!t || t.length === 0 || !v[0]?.id) { // no target || empty target || not an array of models with IDs
+    target[k] = v.slice() // note, for perf we aren't concerned about cloning deep in order to create new references, as mergeDeep is only used for fresh objects parsed from the network in addToCache.js within reducers, or elsewhere with the same assumption
   }
   else {
-    // try to merge models in arrays
+    v.forEach((el, i) => {
+      const prev = t[i]
 
-    if (!v[0]?.id) { // if not an array of models with IDs, don't try to match em 
-      target[k] = v.slice()
-    }
-    else {
-      v.forEach(el => {
-        const currEl = target[k].find(({ id }) => id === el.id) // models may not be in the same order, so we try to match em
-        
-        if (currEl) {
-          mergeDeep(currEl, el)
-        }
-        else {
-          target[k].push(el)
-        }
-      })
-    }
+      const { id } = el
+      const prevId = prev?.id
+
+      const currEl = id === prevId
+        ? prev
+        : target[k].find(prev => prev.id === el.id) // models may not be in the same order, so we try to match em
+      
+      if (currEl) {
+        mergeDeep(currEl, el)
+      }
+      else {
+        target[k].push(el)
+      }
+    })
   }
 }

@@ -6,22 +6,22 @@ import RespondContext from './context.js'
 
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
-    const storeTop = useContext(RespondContext)
-    const modulePath = storeTop.modulePathsById[id]
-    return storeTop.modulePaths[modulePath]
+    const top = useContext(RespondContext)
+    const modulePath = top.modulePathsById[id]
+    return top.modulePaths[modulePath]
   }
 
 
   const useRespond = sync => {
-    const storeTop = useContext(RespondContext)
-    const modulePath = storeTop.modulePathsById[id]
+    const top = useContext(RespondContext)
+    const modulePath = top.modulePathsById[id]
 
-    const snap = useSnapshot(storeTop, sync)
+    const snap = useSnapshot(top, sync)
+    const state = sliceByModulePath(snap, modulePath) // selector props require slicing top.state to crawl to top of state tree
+    
+    const store = top.modulePaths[modulePath]
 
-    const store = storeTop.modulePaths[modulePath]
-    const state = sliceByModulePath(snap, modulePath) // selector props require slicing storeTop.state to crawl to top of state tree
-
-    return { events: state.events, state, store }
+    return { state, events: state.events, store }
   }
 
 
@@ -57,7 +57,7 @@ export default (id = createUniqueModuleId()) => {
   
     useEffect(() => {
       listener(store)
-      return store.subscribe(listener)
+      return store.respond.subscribe(listener)
     }, [store, ...deps])
   }
 

@@ -1,14 +1,8 @@
-export default (defaultPlugins, plugins = defaultPlugins) => {
-  if (typeof plugins === 'function') {
-    plugins = plugins(defaultPlugins)
-  }
-
-  return plugins.filter(p => p).map(p => {
+export default plugins =>
+  plugins.filter(p => p).map(p => {
     if (typeof p === 'function') return p
     return createPluginObject(p)
   })
-}
-
 
 
 const createPluginObject = p => {

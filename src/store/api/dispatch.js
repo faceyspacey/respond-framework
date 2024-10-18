@@ -3,8 +3,10 @@ import start from '../plugins/start.js'
 
 
 export default async function(ev, meta) {
+  ev = typeof ev === 'string' || !ev.type ? this.respond.eventFrom(ev) : ev
+
   const e = sliceEventByModulePath(ev)
-  const store = this.modulePaths[e.modulePath]
+  const store = this.respond.modulePaths[e.modulePath]
   
   e.meta = { ...e.meta, ...meta }
 

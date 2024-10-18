@@ -19,18 +19,16 @@ export const plugins = [error, loadTests, restoreSession, ...defaultPlugins]
 
 export const ignoreChild = true
 
-export const initialState = async store => {
-  const { open, permalink } = store.replays.settings
+export const initialState = async state => {
+  const { open, permalink } = state.replays.settings
   const tab = (await localStorage.getItem('replayToolsTab')) || 'settings'
 
   if (!window.__sessionRestored && !permalink && !getSessionState()) { // call only on initial browser refresh (not replays) | nor for permalinks | and don't apply replayToolsState if returning after linking out (await not required as it only occurs in the browser)
     const json = await sessionStorage.getItem('replayToolsState')
 
     if (json) { 
-      const state = store.parseJsonState(json)
-
       return {
-        ...state,
+        ...state.respond.parseJsonState(json),
         open,
         tab,
       }
@@ -38,7 +36,7 @@ export const initialState = async store => {
   }
 
   return {
-    form: store.replays.settings,
+    form: state.replays.settings,
     open,
     tab,
     evsIndex: -1,

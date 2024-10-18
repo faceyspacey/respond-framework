@@ -8,7 +8,7 @@ export const addToCache = (cache, docs, doc, useSlug) => {
     ? [...docs, doc]
     : doc ? [doc] : docs
 
-  const func = useSlug ? addToCacheSlug : addOneToCache
+  const func = useSlug ? addOneToCacheSlug : addOneToCache
 
   return models.reduce(func, cache)
 }
@@ -24,24 +24,22 @@ export const addOneToCache = (cache, doc) => {
   return cache
 }
 
-export const addToCacheDeep = (cache, doc) => {
-  const prev = cache[doc.id]
 
-  cache[doc.id] = prev ? mergeDeep(prev, doc) : doc
-
-  return cache
-}
-
-
-
-// for seo-oriented posts
-
-export const addToCacheSlug = (cache, doc) => {
+export const addOneToCacheSlug = (cache, doc) => { // for seo posts
   if (!doc) return cache
   
   const prev = cache[doc.slug]
 
   cache[doc.slug] = prev ? Object.assign(prev, doc) : doc
   
+  return cache
+}
+
+
+export const addToCacheDeep = (cache, doc) => {
+  const prev = cache[doc.id]
+
+  cache[doc.id] = prev ? mergeDeep(prev, doc) : doc
+
   return cache
 }

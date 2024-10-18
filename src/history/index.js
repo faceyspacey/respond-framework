@@ -5,8 +5,8 @@ import { linkOut } from './out.js'
 import state from './browserState.js'
 
 
-export default store => {
-  if (isPopDisabled(store)) {
+export default () => {
+  if (isPopDisabled()) {
     return { state, linkOut, changePath: changePathMock }
   }
 

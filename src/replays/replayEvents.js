@@ -1,5 +1,5 @@
 import preserve from './helpers/preserveBuiltInSettings.js'
-import createStore from '../store/createStore.js'
+import createState from '../store/createState.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import localStorage from '../utils/localStorage.js'
 import revive from '../utils/revive.js'
@@ -9,7 +9,7 @@ export default async function(events, delay = 0, settings = this.settings) {
   this.store.replayTools.playing = this.playing = false // stop possible previous running replay
 
   const setts = preserve(settings, this.store)
-  const store = await createStore(this.store.topModule, { settings: setts })
+  const store = await createState(this.store.topModule, { settings: setts })
 
   return run(events, delay, store)
 }
@@ -18,19 +18,21 @@ export default async function(events, delay = 0, settings = this.settings) {
 
 const run = async (events, delay, store) => {         // keep in mind store and store.replays will now be in the context of the next next store
   const evs = revive(store)(events)
-  const state = store.state.replayTools
-  const { ctx } = store
+  const state = store.replayTools
 
-  delay = delay === true ? (store.replays.settings.testDelay || 1500) : delay
+  const { respond } = store
+  const { ctx } = respond
+
+  delay = delay === true ? (respond.replays.settings.testDelay || 1500) : delay
 
   ctx.ignoreChangePath = true
   ctx.isReplay = true
   if (!delay) ctx.isFastReplay = true                    // turn animations + timeouts off
   
-  store.replays.playing = true                              // so sendTrigger knows to only increment the index of events it's already aware of
-  state.playing = !!delay                                   // display display STOP REPLAY button (and allow replay to progress), but only when there's a delay (otherwise it's instant and shouldn't flicker red)
+  respond.replays.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
+  state.playing = !!delay                                // display display STOP REPLAY button (and allow replay to progress), but only when there's a delay (otherwise it's instant and shouldn't flicker red)
 
-  state.evsIndex = -1                                       // start from the top, as index will increase with each event dispatched below
+  state.evsIndex = -1                                    // start from the top, as index will increase with each event dispatched below
 
   const last = evs.length - 1
 

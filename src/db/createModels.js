@@ -1,10 +1,10 @@
 import mixin from './model.client.js'
 
 
-export default (respond, models, parent, modulePath, db) => {
+export default (models, db, parent, respond, modulePath) => {
   if (!models) {
     if (parent.models) return parent.models
-    models = respond.findInClosestParent('models') ?? {}
+    models = respond.findInClosestAncestor('models', modulePath) ?? {}
   }
 
   const shared = models.shared ?? {}

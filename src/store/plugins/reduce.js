@@ -28,7 +28,7 @@ export default wrapInActForTests((storeSlice, eSlice, sync) => {
     delete store.ctx.init // while false or true, tag the first navigation event with .init, even if after redirects, see createEvents.js
   }
 
-  store.devtools?.send(eSlice) // devtools not available on initial reduction in createStore.js
+  store.devtools?.send(eSlice) // devtools not available on initial reduction in createState.js
 
   if (!sync && !start) return store.notify(e) // awaited in tests/replays
 })

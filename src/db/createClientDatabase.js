@@ -25,7 +25,7 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
       },
       ...db.options
     },
-    _call(controller, method, useCache) {
+    _call(controller, method) {
       const { options, state } = this
       const { models, modulePath } = state
 
@@ -40,7 +40,12 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
         return d => models[controller]({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
       }
     
-      return async function(...args) {
+      let useCache
+      meth.cache = function(...args) { useCache = true; return meth(...args); }
+      
+      return meth
+
+      async function meth(...args) {
         const { token, userId, adminUserId } = state
         const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
     

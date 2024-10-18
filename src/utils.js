@@ -1,5 +1,5 @@
 export { isProd, isTest, isDev, isServer, hasLocalStorage, hasSessionStorage, isNative, isNative as useNativeDriver } from './utils/bools.js'
-export { addToCache, addToCacheDeep, addOneToCache, addToCacheSlug } from './utils/addToCache.js'
+export { addToCache, addToCacheDeep, addOneToCache, addOneToCacheSlug } from './utils/addToCache.js'
 export { memo, isEqualDeepPartial } from './utils/isEqual.js'
 export { createReviver, createApiReviver, createServerReviver } from './utils/revive.js'
 export { kinds } from './store/createEvents.js'
