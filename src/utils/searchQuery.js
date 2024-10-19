@@ -1,4 +1,4 @@
-import * as qs from 'qs'
+import * as qs from 'qs' // we like the qs library because it handles nested objects in query strings
 import isNumber from './isNumber.js'
 
 
@@ -21,7 +21,7 @@ const ps = search => {
         ret = defaultDecoder(v)
       }
       else if (type === 'value') {
-        ret = /^false|true$/.test(v)      ? JSON.parse(v) // converts boolean
+        ret = /^false|true$/.test(v)      ? v === 'true'
           : isNumber(v) && !/Id/.test(k)  ? parseInt(v)
           :                                 defaultDecoder(v)
       }
@@ -30,7 +30,6 @@ const ps = search => {
     }
   })
 }
-// we like the qs library because it handles nested objects in query strings
 
 
 

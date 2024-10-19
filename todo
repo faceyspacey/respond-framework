@@ -317,45 +317,57 @@ animation/timers component interface
 
 
 
-is it useful to have methods scoped to the current module's state?
-prevState is mutable -- does cloning object in createProxy fix this?
+#is it useful to have methods scoped to the current module's state?
+#prevState is mutable -- does cloning object in createProxy fix this?
 
 
 move replay flag to createReplays + cookies.get('token')
 apply prefixPath function in createEvents
 
-.subscribe/eventFrom/fromEvent/isEqualNavigations needs to happen on the correct module
+#.subscribe/eventFrom/fromEvent/isEqualNavigations needs to happen on the correct module
+
+#what is a module? respond or state? do we return respond or state from createModule?
+
+#just use getSessionState
+
+#keep all respond api methods on state, but make sure they're overwritable, and bind em within respond.
+#maybe make cache module-specific?
+
+#dont pass options.merge from parent to child in addModules ; also explicitly specify merges in app modules
+#need to call createRespond for each module, and bind functions to new respond object
+
+#do we still need madeFirst? -- it needs to be module specific and remembered in state so it works via getSessionState
+
+#call createRespond in addModule maybe, bind state to api methods
 
 
-just use getSessionState
 
-keep all respond api methods on state, but make sure they're overwritable, and bind em within respond.
+eventsCache will need to be preserved for async addModule
+always serve non history mock on web, and use shouldChange to prevent changing during replays
+
 
 
 options (such as parseSearch) can't use global top options, as they are module-scoped
-
-eventsCache will need to be preserved for async addModule
-
-maybe make cache module-specific?
-
 createReplays needs to determine hmr, replay status, and modulePath
 
-need to call createRespond for each module, and bind functions to new respond object
 
-dont pass options.merge from parent to child in addModules ; also explicitly specify merges in app modules
+
+
 
 navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
 createClientDatabase needs to allow u to specify apiCache key
 prefetching depends on both navigationCache and apiCache, and therefore fetch.js plugin
 start plugin is coupled to fetch cache
-
-always serve non history mock on web, and use shouldChange to prevent changing during replays
-
 e.cached -> e.meta.cached
 options.alwaysDispatchFollowUp
 
-what is a module? respond or state? do we return respond or state from createModule?
 
-do we still need madeFirst?
 
-call createRespond in addModule maybe, bind state to api methods
+getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
+
+
+always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
+
+createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed
+
+basename in fromEvent is tied to a module, maybe we can use basename to prefix paths to modules; but if not, we need to use global basename instead

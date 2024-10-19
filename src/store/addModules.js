@@ -17,8 +17,8 @@ import defaultPluginsSync from './pluginsSync/index.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default async (mod, respond, proto, state, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
-  await addModule(mod, respond, new Map, undefined, '', {}, {}, proto, state)
+export default async (mod, respond, state, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
+  await addModule(mod, respond, new Map, undefined, '', {}, {}, Object.getPrototypeOf(state), state)
 
   hydration = replay  ? { ...hydration, replayTools }
                 : hmr ? { ...prevState, replayTools }
@@ -28,11 +28,11 @@ export default async (mod, respond, proto, state, hmr, hydration, { token, repla
 }
 
 
-export const addModule = async (mod, respond, eventsCache, moduleName, modulePath = '', parent = {}, props = {}, proto = {}, state = Object.create(proto)) => {
+export const addModule = async (mod, respondOrig, eventsCache, moduleName, modulePath = '', parent = {}, props = {}, proto = {}, state = Object.create(proto)) => {
   const { id, module, ignoreChild, initialState, components, replays, options = {}, plugins, pluginsSync } = mod
   if (!id) throw new Error('respond: missing id on module: ' + modulePath)
 
-  respond = { ...options.merge, ...respond, state, modulePath, options }
+  const respond = { ...options.merge, ...respondOrig, state, modulePath, options }
   respond.respond = respond
 
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, modulePath)
@@ -59,7 +59,7 @@ export const addModule = async (mod, respond, eventsCache, moduleName, modulePat
 
   for (const k of moduleKeys) {
     const p = modulePath ? `${modulePath}.${k}` : k
-    state[k] = await addModule(mod[k], respond, eventsCache, k, p, state, mod[k].props)
+    state[k] = await addModule(mod[k], respondOrig, eventsCache, k, p, state, mod[k].props)
     respond.state = state[k]
 
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function

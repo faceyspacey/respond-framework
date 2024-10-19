@@ -13,13 +13,14 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
-export default (state, replayModulePath, respond) => {
+export default (state, replayModulePath, { ctx, ...respond }) => {
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
 
   return {
     ...respond,
+    ctx,
     state,
   
     modulePaths,
@@ -60,10 +61,15 @@ export default (state, replayModulePath, respond) => {
     },
   
     shouldAwait() {
-      return state.ctx.isFastReplay || isTest
+      return this.ctx.isFastReplay || isTest
     },
     awaitInReplaysOnly(f) {
-      return state.ctx.isFastReplay || isTest ? f() : promises.push(f()) // f is async
+      return this.shouldAwait() ? f() : promises.push(f()) // f is async
+    },
+    async promisesCompleted(e) {
+      await Promise.all(promises)
+      promises.length = 0
+      ctx.changedPath = !e.meta.pop ? false : ctx.changedPath
     },
   
     isEqualNavigations(a, b) {
@@ -79,9 +85,9 @@ export default (state, replayModulePath, respond) => {
 
       let mod = top
   
-      return modulePath                 // 'admin.foo'
-        .split('.')                     // ['admin', 'foo']
-        .slice(0, -1)
+      return modulePath                 // 'admin.foo.bar'
+        .split('.')                     // ['admin', 'foo', 'bar]
+        .slice(0, -1)                   // ['admin', 'foo']   
         .map(k => mod = mod[k])         // [admin, foo]
         .reverse()                      // [foo, admin]
         .find(p => p[key])              // admin.db

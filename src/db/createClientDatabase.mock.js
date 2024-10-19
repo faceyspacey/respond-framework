@@ -55,7 +55,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
     
         const { token, userId, adminUserId } = state.getStore()
         const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
-        const body = { ...context, modulePath, controller, method, args: clean(argsIn(args), state), first: !ctx.madeFirst  }
+        const body = { ...context, modulePath, controller, method, args: clean(argsIn(args), state), first: !state.__dbFirstCall  }
     
         let response
 
@@ -84,7 +84,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
 
 
 const sendNotification = (state, n) => {
-  state.ctx.madeFirst = true
+  state.__dbFirstCall = true
 
   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
     const type = `=> db.${n.controller}.${n.method}`
@@ -93,5 +93,3 @@ const sendNotification = (state, n) => {
 
   return n.response
 }
-
-

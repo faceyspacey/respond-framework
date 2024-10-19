@@ -16,37 +16,27 @@ import { mergeModulesPrevState } from './mergeModules.js'
 import reduce from './plugins/reduce.js'
 
 
-export default async (topModule, { settings: rawSettings, hydration } = {}) => {
-  const proto = {}
-  const state = createProxy(Object.create(proto))
+export default async (topModule, opts = {}) => {
+  const state = createProxy(Object.create({}))
 
-  const settings = rawSettings ?? await restoreSettings()
-  const { prevStore, replay, hmr, modulePath } = getStatus(rawSettings, settings)
+  const replays = await createReplays(topModule, opts)
 
-  const mod = sliceByModulePath(topModule, modulePath)
-  
-  const topCookies = mod.cookies ?? findInClosestAncestor('cookies', modulePath, topModule)
-  const topReplays = mod.replays ?? findInClosestAncestor('replays', modulePath, topModule)
-
-  const cookies = createCookies(topCookies)
-  const replays = createReplays({ ...topReplays, replay, settings: { ...settings, token: await cookies.get('token') } })
+  const mod = sliceByModulePath(topModule, replays.settings.modulePath)
 
   const history = createHistory()
   const cache = createCache(state)
-  
   const devtools = createDevtools()
 
-  const madeFirst = hmr ? prevStore?.ctx.madeFirst : false
-  const ctx = { ...prevStore?.ctx, init: true, madeFirst }
+  const ctx = { ...window.store?.ctx, init: true }
 
-  const respond = createRespond(state, modulePath, { ctx, topModule, cookies, replays, history, cache, devtools })
+  const respond = createRespond(state, modulePath, { ctx, topModule, replays, history, cache, devtools })
   
-  await addModules(mod, respond, proto, state, hmr, hydration, replays, prevStore)
+  await addModules(mod, respond, state, opts.hydration, replays, window.store)
   
-  if (!hmr) {
+  if (!replays.hmr) {
     mergeModulesPrevState(state, respond.snapshot(state))
     reduce(state, state.events.start())
   }
 
-  return window.store = replays.store = state
+  return window.store = window.state = replays.store = state
 }

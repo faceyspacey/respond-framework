@@ -12,6 +12,7 @@ export default async e => {
   change(url, ctx.changedPath)
 
   ctx.changedPath = true
-  
+  ctx.prevUrl = url
+
   createTrap()
 }

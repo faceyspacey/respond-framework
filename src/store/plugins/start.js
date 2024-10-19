@@ -9,6 +9,10 @@ export default async (store, e) => {
     if (res.includes(false)) return false
   }
 
+  if (store.history.state.pop) {
+    e.meta.pop = store.history.state.pop
+  }
+  
   if (e.event.path && store.cache?.has(e)) {
     e.cached = true
   }

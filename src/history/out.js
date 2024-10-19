@@ -19,8 +19,6 @@ const backOut = async () => {
 
   await bf.go(-getIndex())
   history.back()
-
-  return false
 }
 
 
@@ -28,7 +26,8 @@ const forwardOut = async () => {
   if (!bs.linkedOut) {
     await bf.go(bs.maxIndex - getIndex())
     bs.prevIndex = bs.maxIndex
-    return false
+    history.replaceState(history.state, '', window.state.respond.ctx.prevUrl) // ensure the same/previous url appears on our placeholder tail entry
+    return
   }
 
   sessionStorage.setItem('sessionState', window.state.respond.stringifyState())
@@ -41,8 +40,6 @@ const forwardOut = async () => {
 
   await bf.go(bs.maxIndex - getIndex())
   history.forward()
-
-  return false
 }
 
 

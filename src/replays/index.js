@@ -23,9 +23,8 @@ export default ({
   const prev = replays
 
   const hmr = !!replays.options // won't have on first call
-  const configChanged = conf !== prev.conf
   
-  const isCached = hmr && !replay && !configChanged 
+  const isCached = hmr && !replay && conf === prev.conf // cached when hmr, but not replays, and not if the replays config was changed, causing hmr
 
   if (isCached) {
     replays.replay = false

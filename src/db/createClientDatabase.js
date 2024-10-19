@@ -50,12 +50,10 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
         const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
     
         try {
-          const first = state.ctx.madeFirst ? false : true
-    
-          const body = { ...context, modulePath, controller, method, args, first }
+          const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }
           const response = await fetch(url, body, state, models, useCache)
     
-          state.ctx.madeFirst = true
+          state.__dbFirstCall = true
         
           state.devtools.sendNotification({ type: `=> db.${controller}.${method}`, ...body, response })
           
