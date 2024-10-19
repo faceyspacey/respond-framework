@@ -9,7 +9,7 @@ export default async function(ev, meta) {
   e.meta = { ...e.meta, ...meta }
 
   try {
-    await dispatchPlugins([start, ...store._plugins], store, e)
+    await dispatchPlugins([start, ...store.plugins], store, e)
   }
   catch (error) {
     await store.onError({ error, kind: 'dispatch', e })

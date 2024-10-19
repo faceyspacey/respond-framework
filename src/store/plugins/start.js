@@ -12,7 +12,7 @@ export default async (store, e) => {
   if (store.history.state.pop) {
     e.meta.pop = store.history.state.pop
   }
-  
+
   if (e.event.path && store.cache?.has(e)) {
     e.cached = true
   }
@@ -37,7 +37,7 @@ const loadPlugins = async (store, e) => {
   const top = store.getStore()
   
   traverseModules(top, store => {
-    store._plugins.forEach(p => {
+    store.plugins.forEach(p => {
       if (!p.load) return
 
       const promise = p.load(store, e)

@@ -17,62 +17,51 @@ import defaultPluginsSync from './pluginsSync/index.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default async (mod, respond, state, hmr, hydration, { token, replay }, { prevState, replayTools } = {}) => {
-  await addModule(mod, respond, new Map, undefined, '', {}, {}, Object.getPrototypeOf(state), state)
+export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name) {
+  const { id, ignoreChild, initialState, components, replays, options = {} } = mod
+  if (!id) throw new Error('respond: missing id on module: ' + path)
 
-  hydration = replay  ? { ...hydration, replayTools }
-                : hmr ? { ...prevState, replayTools }
-                :       getSessionState() || hydration
-
-  hydrateModules(state, hydration, token)
-}
-
-
-export const addModule = async (mod, respondOrig, eventsCache, moduleName, modulePath = '', parent = {}, props = {}, proto = {}, state = Object.create(proto)) => {
-  const { id, module, ignoreChild, initialState, components, replays, options = {}, plugins, pluginsSync } = mod
-  if (!id) throw new Error('respond: missing id on module: ' + modulePath)
-
-  const respond = { ...options.merge, ...respondOrig, state, modulePath, options }
+  const respond = { ...options.merge, ...r, state, path, options }
   respond.respond = respond
 
-  const db = createClientDatabase(mod.db, parent.db, props, state, respond, modulePath)
-  const models = createModels(mod.models, db, parent, respond, modulePath)
+  const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
+  const models = createModels(mod.models, db, parent, respond, path)
 
-  const _plugins = createPlugins(plugins)
-  const _pluginsSync = createPlugins(pluginsSync ?? defaultPluginsSync)
+  const plugins = createPlugins(mod.plugins)
+  const pluginsSync = createPlugins(mod.pluginsSync ?? defaultPluginsSync)
 
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreChild, findOne, components, state, db, models, _plugins, _pluginsSync })
+  const proto = Object.getPrototypeOf(state)
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreChild, findOne, components, state, db, models, plugins, pluginsSync })
 
   const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
   
-  const events = createEvents(respond, state, eventsCache, evs, propEvents, modulePath)
+  const events = createEvents(respond, state, evs, propEvents, path)
 
   Object.assign(proto, { moduleKeys, events })
   
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state, respond)
 
-  createReducers(proto, state, moduleName, reducers, propReducers, parent.reducers, respond)
+  createReducers(proto, state, name, reducers, propReducers, parent.reducers, respond)
 
-  respond.modulePathsById[id] = modulePath
-  respond.modulePaths[modulePath] = state
+  respond.modulePathsById[id] = path
+  respond.modulePaths[path] = state
 
   for (const k of moduleKeys) {
-    const p = modulePath ? `${modulePath}.${k}` : k
-    state[k] = await addModule(mod[k], respondOrig, eventsCache, k, p, state, mod[k].props)
-    respond.state = state[k]
-
+    const p = path ? `${path}.${k}` : k
+    state[k] = await addModule(mod[k], r, state, mod[k].props, p, k)
+    state[k].respond.state = state[k]
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
-    //   const p = modulePath ? `${modulePath}.${k2}` : k2
-    //   state[k][k2] = await addModule(mod, respond, eventsCache, k2, p, state, mod.props)
+    //   const p = path ? `${path}.${k2}` : k2
+    //   state[k][k2] = await addModule(mod, respond, k2, p, state, mod.props)
     // }
   }
 
-  if (!modulePath && !isProd) { // add replayTools to top module only
+  if (!path && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
-    state[k] = await addModule(replayToolsModule, respond, eventsCache, k, k, state)
+    state[k] = await addModule(replayToolsModule, r, k, k, state)
+    state[k].respond.state = state[k]
     moduleKeys.push(k)
-    respond.state = state[k]
   }
 
   return state

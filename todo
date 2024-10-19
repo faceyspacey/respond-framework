@@ -340,16 +340,15 @@ apply prefixPath function in createEvents
 
 #call createRespond in addModule maybe, bind state to api methods
 
+#eventsCache will need to be preserved for async addModule
 
+#createReplays needs to determine hmr, replay status, and modulePath
 
-eventsCache will need to be preserved for async addModule
 always serve non history mock on web, and use shouldChange to prevent changing during replays
 
 
 
-options (such as parseSearch) can't use global top options, as they are module-scoped
-createReplays needs to determine hmr, replay status, and modulePath
-
+eventFrom/fromEvent needs to determine event before parsing location, and then use event's module's options.parseSearch -- event matching probably can't be modular
 
 
 
@@ -363,6 +362,7 @@ options.alwaysDispatchFollowUp
 
 
 
+replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage)
 getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
 

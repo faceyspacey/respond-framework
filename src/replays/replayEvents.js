@@ -9,7 +9,7 @@ export default async function(events, delay = 0, settings = this.settings) {
   this.store.replayTools.playing = this.playing = false // stop possible previous running replay
 
   const setts = preserve(settings, this.store)
-  const store = await createState(this.store.topModule, { settings: setts })
+  const store = await createState(this.store.top, { settings: setts, replay: true })
 
   return run(events, delay, store)
 }

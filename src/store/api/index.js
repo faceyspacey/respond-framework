@@ -13,10 +13,11 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
-export default (state, replayModulePath, { ctx, ...respond }) => {
+export default (state, replayModulePath, respond) => {
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
+  const ctx = { ...window.store?.ctx, init: true }
 
   return {
     ...respond,
@@ -33,6 +34,7 @@ export default (state, replayModulePath, { ctx, ...respond }) => {
     listeners,
     promises,
     refs: {},
+    eventsCache: new Map,
     overridenReducers: new Map,
   
     kinds, //?
@@ -76,7 +78,7 @@ export default (state, replayModulePath, { ctx, ...respond }) => {
       return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
     },
   
-    findInClosestAncestor(key, modulePath, top = respond.topModule) {
+    findInClosestAncestor(key, modulePath, top = respond.top) {
       modulePath = replayModulePath
         ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath
         : modulePath
@@ -94,7 +96,7 @@ export default (state, replayModulePath, { ctx, ...respond }) => {
         ?.[key] ?? top[key]             // admin.db ?? top.db
     },
 
-    findInClosestAncestorOld(key, modulePath, top = state.topModule) {
+    findInClosestAncestorOld(key, modulePath, top = state.top) {
       const path = replayModulePath
         ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath // a nested module may be set in the replaytools, and the purpose of this function is to be able to scan back through unused ancestor modules for inherited pillars like `db`
         : modulePath
@@ -174,7 +176,7 @@ export function getStatus(rawSettings, settings) {
 
 
 
-export function findInClosestAncestor(key, modulePath, top = state.topModule) {
+export function findInClosestAncestor(key, modulePath, top = state.top) {
   if (!modulePath) return top[key]  // top.db
 
   let mod = top

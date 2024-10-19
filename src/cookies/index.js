@@ -3,9 +3,7 @@ import createCookiesNative from './cookies.native.js'
 import createCookiesWeb from './cookies.web.js'
 
 
-export default cookies => cookies ?? createCookies()
-
-const createCookies = process.env.NODE_ENV !== 'production'
+export default process.env.NODE_ENV !== 'production'
   ? createCookiesMock
   : process.env.WEB
     ? createCookiesWeb

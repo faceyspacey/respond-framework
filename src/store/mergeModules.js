@@ -1,27 +1,29 @@
 import revive, { createStateReviver } from '../utils/revive.js'
 
 
-export default function mergeModules(state, json) {
+export default function mergeModules(state, hydration) {
   state.moduleKeys.forEach(k => {
-    if (!json[k]) return
-    mergeModules(state[k], json[k])
-    delete json[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
+    if (!hydration[k]) return
+    mergeModules(state[k], hydration[k])
+    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
   })
 
-  Object.assign(state, json) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
+  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
 }
 
 
-export const hydrateModules = (state, json, token) => {
+export const hydrateModules = (state, replays) => {
+  const { token, hydration, hmr } = replays
+
   state.token = token
   state.cachedPaths ??= {}
 
-  if (typeof json === 'object') {
-    if (json.replayTools.tests) delete json.replayTools.tests // don't waste cycles reviving tons of tests with their events
-    mergeModules(state, revive(state)(json))
-  }
-  else if (json) {
-    mergeModules(state, JSON.parse(json, createStateReviver(state)))
+  if (hydration?.replayTools?.tests) delete hydration.replayTools.tests // don't waste cycles reviving tons of tests with their events
+  
+  mergeModules(state, revive(state)(hydration))
+
+  if (!hmr) {
+    mergeModulesPrevState(state, state.respond.snapshot(state))
   }
 }
 

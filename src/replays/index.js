@@ -9,36 +9,40 @@ import replayEvents, { restoreEvents } from './replayEvents.js'
 
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
+import defaultCreateCookies from '../cookies/index.js'
 import defaultCreateToken from './utils/createToken.js'
 
+import { findInClosestAncestor } from '../store/api/index.js'
 
-export default ({
-  config: conf,
-  createSettings = defaultCreateSettings,
-  createSeed = defaultCreateSeed,
-  createToken = defaultCreateToken,
-  replay = false,
-  ...options
-} = {}) => {
-  const prev = replays
 
-  const hmr = !!replays.options // won't have on first call
-  
-  const isCached = hmr && !replay && conf === prev.conf // cached when hmr, but not replays, and not if the replays config was changed, causing hmr
+export default async (top, opts) => {
+  const hydration = replay  ? { ...opts.hydration, replayTools }
+                      : hmr ? { ...prevState,      replayTools }
+                      :       await getSessionState(opts) || opts.hydration
+  const {
+    config: conf,
+    createSettings = defaultCreateSettings,
+    createSeed = defaultCreateSeed,
+    createCookies = defaultCreateCookies,
+    createToken = defaultCreateToken,
+    replay = false,
+    hmr = false,
+    caching = true,
+    ...options
+  } = top.replays ?? findInClosestAncestor('replays', modulePath, top)
 
-  if (isCached) {
-    replays.replay = false
-    return replays
-  }
+  const isCached = hmr && caching && !replay && conf === replays.conf // cached when hmr and caching enabled, but not replays, and not if hmr was caused by editing replays config
+  if (isCached) return Object.assign(replays, { replay: false }) // prevent rebuilding seed (which can be slow) -- caching can be disabled if results from the db are inconsitent between hmr replays of last event, but for most development use cases, it's fine
 
   const config = mergeDeep({ ...configDefault }, conf)
 
-  const settings = createSettings(config, options.settings)
+  const settings = createSettings(config, options.settings ?? hydration?.replays.settings)
   const seed = isProd ? {} : createSeed(settings, options)
-  const token = createToken(settings, seed, options)
+  const cookies = createCookies()
+  const token = isProd ? await cookies.get('token') : createToken(settings, seed, options)
 
-  const next = { conf, config, replay, options, settings, seed, token, sendTrigger, replayLastEvent, replayEvents, restoreEvents, devtoolsIndexes: {} }
+  const next = { conf, config, hydration, replay, hmr, cookies, options, settings, seed, token, sendTrigger, replayLastEvent, replayEvents, restoreEvents, devtoolsIndexes: {} }
   Object.assign(replays, next)
-  
+
   return next
 }
