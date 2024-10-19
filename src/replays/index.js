@@ -2,47 +2,57 @@ import replays from '../replays.js'
 
 import { isProd } from '../utils/bools.js'
 import mergeDeep from '../utils/mergeDeep.js'
-import configDefault from './config.default.js'
+import defaultDefaultConfig from './config.default.js'
 import sendTrigger from './sendTrigger.js'
-import replayLastEvent from './replayLastEvent.js'
-import replayEvents, { restoreEvents } from './replayEvents.js'
+import replayEvents from './replayEvents.js'
 
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateCookies from '../cookies/index.js'
 import defaultCreateToken from './utils/createToken.js'
 
-import { findInClosestAncestor } from '../store/api/index.js'
+import findInClosestAncestor from '../utils/findInClosestAncestor.js'
+import getSessionState from '../utils/getSessionState.js'
 
 
-export default async (top, opts) => {
-  const hydration = replay  ? { ...opts.hydration, replayTools }
-                      : hmr ? { ...prevState,      replayTools }
-                      :       await getSessionState(opts) || opts.hydration
+export default async (top, opts, state) => {
+  const { replays: hydratedReplays = {}, ...hydration } = await getSessionState(opts) ?? {}
+  console.log('hydration', opts, hydratedReplays, hydration)
+
+  const settingsRaw = hydratedReplays.settings
+  const replayModulePath = settingsRaw?.modulePath
+
+  const { reload, replay, hmr } = opts
+
+  const getTopState = () => state
+
   const {
-    config: conf,
     createSettings = defaultCreateSettings,
     createSeed = defaultCreateSeed,
     createCookies = defaultCreateCookies,
     createToken = defaultCreateToken,
-    replay = false,
-    hmr = false,
+    defaultConfig = defaultDefaultConfig,
+    config: conf,
     caching = true,
     ...options
-  } = top.replays ?? findInClosestAncestor('replays', modulePath, top)
+  } = top.replays ?? findInClosestAncestor('replays', replayModulePath, top)
 
-  const isCached = hmr && caching && !replay && conf === replays.conf // cached when hmr and caching enabled, but not replays, and not if hmr was caused by editing replays config
-  if (isCached) return Object.assign(replays, { replay: false }) // prevent rebuilding seed (which can be slow) -- caching can be disabled if results from the db are inconsitent between hmr replays of last event, but for most development use cases, it's fine
+  const proto = Object.getPrototypeOf(replays)
+  const isCached = hmr && caching && !reload && !replay && conf === replays.conf // cached when hmr and caching enabled, but not replays, and not if hmr was caused by editing replays config
+  
+  if (isCached) {
+    Object.assign(proto, { hydration })
+    return Object.assign(replays, { hmr, getTopState }) // prevent rebuilding seed (which can be slow) -- caching can be disabled if results from the db are inconsitent between hmr replays of last event, but for most development use cases, it's fine
+  }
 
-  const config = mergeDeep({ ...configDefault }, conf)
+  const config = mergeDeep({ ...defaultConfig }, conf)
 
-  const settings = createSettings(config, options.settings ?? hydration?.replays.settings)
+  const settings = createSettings(config, settingsRaw)
   const seed = isProd ? {} : createSeed(settings, options)
   const cookies = createCookies()
   const token = isProd ? await cookies.get('token') : createToken(settings, seed, options)
 
-  const next = { conf, config, hydration, replay, hmr, cookies, options, settings, seed, token, sendTrigger, replayLastEvent, replayEvents, restoreEvents, devtoolsIndexes: {} }
-  Object.assign(replays, next)
+  Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents })
 
-  return next
+  return Object.assign(replays, { settings, hmr, getTopState, session: hydratedReplays.session })
 }

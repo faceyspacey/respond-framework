@@ -1,7 +1,7 @@
 import { Linking } from 'react-native'
 import { isPopDisabled } from './utils/backForward.js'
 import { getIndex } from './utils/helpers.js'
-import sessionStorage from 'respond-framework/utils/sessionStorage.js'
+import sessionStorage from '../utils/sessionStorage.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
 

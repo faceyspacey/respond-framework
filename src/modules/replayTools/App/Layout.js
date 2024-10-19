@@ -15,7 +15,7 @@ export default ({ open }, events, { tab, loading }, { replays }) => {
 
   const x = p?.left ? 'left' : 'right'
   const y = p?.top ? 'top' : 'bottom'
-  
+
   const d = useSlide(open, width + margin)
   const translateX = p?.left ? d : Animated.multiply(d, -1)
 

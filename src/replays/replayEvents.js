@@ -1,15 +1,13 @@
-import preserve from './helpers/preserveBuiltInSettings.js'
 import createState from '../store/createState.js'
-import sessionStorage from '../utils/sessionStorage.js'
-import localStorage from '../utils/localStorage.js'
 import revive from '../utils/revive.js'
 
 
 export default async function(events, delay = 0, settings = this.settings) {
-  this.store.replayTools.playing = this.playing = false // stop possible previous running replay
+  const top = this.getTopState()
+  top.replayTools.playing = this.playing = false // stop possible previous running replay
 
-  const setts = preserve(settings, this.store)
-  const store = await createState(this.store.top, { settings: setts, replay: true })
+  const setts = preserveBuiltInSettings(settings, top)
+  const store = await createState(top.top, { settings: setts, replay: true })
 
   return run(events, delay, store)
 }
@@ -62,15 +60,8 @@ const run = async (events, delay, store) => {         // keep in mind store and 
   setTimeout(() => {
     ctx.isReplay = false
     ctx.isFastReplay = false
+    respond.queueSaveSession()
   }, 100)                                                        // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
-
-  const json = JSON.stringify(store.replays.settings)
-  await localStorage.setItem('replaySettings', json)
-
-  if (state.persist) {
-    const json = store.stringifyState(state)
-    await sessionStorage.setItem('replayToolsState', json)
-  }
 
   return store
 }
@@ -84,23 +75,14 @@ const timeout = (ms = 300) => {
 
 
 
+const preserveBuiltInSettings = (settings, store) => {
+  const { config, settings: sets } = store.replays
 
+  return Object.keys(config).reduce((acc, k) => {
+    if (config[k].builtIn) {
+      acc[k] = sets[k] // preserve builtIn settings
+    }
 
-export async function restoreEvents() {         // keep in mind store and store.replays will now be in the context of the next store
-  const state = this.store.replayTools
-  const events = state.evs.slice(0, state.evsIndex + 1)
-  const { ctx } = this.store
-
-  state.evsIndex = -1
-
-  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = true
-  state.playing = this.playing = true              // so sendTrigger knows to only increment the index of events it's already aware of
-
-  for (let i = 0; i < events.length; i++) {
-    const { event, arg, meta } = events[i]
-    await event.dispatch(arg,  { ...meta, trigger: true })
-  }
-
-  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = false
-  state.playing = this.playing = false
+    return acc
+  }, { ...settings })
 }

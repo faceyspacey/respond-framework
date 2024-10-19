@@ -1,10 +1,16 @@
-import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import dispatchPlugins from '../../utils/dispatchPlugins.js'
 import start from '../plugins/start.js'
+import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 
 export default async function(ev, meta) {
   const e = sliceEventByModulePath(ev)
   const store = this.respond.modulePaths[e.modulePath]
+  
+  if (store.replays.session) {
+    store.replays.session = false
+    return
+  }
   
   e.meta = { ...e.meta, ...meta }
 
@@ -16,22 +22,4 @@ export default async function(ev, meta) {
   }
 
   if (e.meta.trigger) await this.respond.promisesCompleted(e)
-}
-
-
-
-const dispatchPlugins = (plugins, store, e) => {
-  return next(0)
-
-  async function next(i) {
-    const plugin = plugins[i]
-    if (!plugin) return
-
-    const res = await plugin(store, e)
-    if (res === false) return false
-
-    e = res ? { ...e, ...res } : e
-
-    return await next(i + 1)
-  }
 }

@@ -2,7 +2,6 @@ import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
-import sessionStorage from '../utils/sessionStorage.js'
 import { mergeModulesPrevState } from '../store/mergeModules.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
@@ -33,16 +32,13 @@ export default function (store, eSlice, fullModulePathAlready = false) {
   if (e.meta?.skipped) {
     store.devtools.forceNotification({ ...e, __prefix: '-- ' })
   }
-
-  if (state.persist && !this.playing) {
-    const json = store.respond.stringifyState(state)
-    sessionStorage.setItem('replayToolsState', json)
-  }
 }
 
 
 const sendTrigger = (e, state, store, playing) => {
   const index = ++state.evsIndex
+  state.evs[index] = e
+  
   if (playing) return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
 
   const events = state.evs

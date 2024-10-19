@@ -13,8 +13,11 @@ export default ({ modelsByModulePath = {}, eventsByType = {} }, modulePath = '')
   if (v?.__type) {
     const p = v.__modulePath ?? modulePath
     const Model = modelsByModulePath[p]?.[v.__type] ?? modelsByModulePath['']?.[v.__type]
-    if (!Model) return v
-    return new Model(v, p)
+
+    const snap = {}
+    keys(v).forEach(k => snap[k] = rev(v[k], k))
+
+    return Model ? new Model(snap, p) : snap
   }
 
   if (!canProxy(v)) return v

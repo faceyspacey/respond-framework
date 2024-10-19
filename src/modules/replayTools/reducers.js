@@ -2,8 +2,11 @@ import { addToCache } from '../../utils/addToCache.js'
 import resolveModulePath from './helpers/resolveModulePath.js'
 
 
-export const open = (state, e, { events }) => {
+export const open = (state = false, e, { events }) => {
   switch (e.event) {
+    case events.toggle:
+      return !state
+      
     case events.settings:
     case events.tests:
     case events.events:
@@ -14,8 +17,7 @@ export const open = (state, e, { events }) => {
   return state
 }
 
-
-export const tab = (state, e, { events }) => {
+export const tab = (state = 'settings', e, { events }) => {
   switch (e.event) {
     case events.settings:
       return 'settings'
@@ -38,7 +40,7 @@ export const loading = (_, e, { state }) => {
 }
 
 
-export const form = (state, e, store) => e.form ? { ...state, ...e.form } : state
+export const form = (state = {}, e, store) => e.form ? { ...state, ...e.form } : state
 
 
 export const tests = (state = {}, e, { events, replays }) => {

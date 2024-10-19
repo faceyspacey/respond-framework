@@ -361,8 +361,11 @@ e.cached -> e.meta.cached
 options.alwaysDispatchFollowUp
 
 
+state.token may need to be added to all modules
+optimize getSessionState for production
 
-replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage)
+
+replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage), replays.settings must live in state, and be revived from state and transfered to replays.settings
 getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
 

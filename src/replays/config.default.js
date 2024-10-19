@@ -1,9 +1,4 @@
 export default {
-  open: {
-    boolean: true,
-    defaultValueDevelopment: false,
-    builtIn: true,
-  },
   advanced: {
     boolean: true,
     defaultValueDevelopment: false,

@@ -119,7 +119,9 @@ const applyTransform = (store, e, dispatch) => {
     payload = e.event.transform(state, e.arg, e.meta) || {}
   }
 
-  const eFinal =  { ...e.arg, ...payload, ...e, payload, dispatch } // overwrite name clashes in payload, but also put here for convenience
+  const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
+
+  const eFinal =  { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience
   const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
 
   return isInit ? { ...eFinal, init: true } : eFinal

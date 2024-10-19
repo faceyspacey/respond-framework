@@ -1,3 +1,5 @@
+import sessionStorage from '../../utils/sessionStorage.js'
+
 import dispatch from './dispatch.js'
 import dispatchSync from './dispatchSync.js'
 
@@ -7,20 +9,30 @@ import eventFrom from './eventFrom.js'
 import snapshot from '../../proxy/snapshot.js'
 import render from '../../react/render.js'
 
+import createHistory from '../../history/index.js'
+import createDevtools from '../../devtools/index.mock.js'
+import createCache from '../../utils/createCache.js'
+
 import { isTest, isProd, kinds} from '../../utils.js'
 import { createStateReviver, replacer } from '../../utils/revive.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 
 
-export default (state, replayModulePath, respond) => {
+export default (top, state, replays) => {
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
   const ctx = { ...window.store?.ctx, init: true }
 
+  const { cookies, modulePath: replayModulePath } = replays
+  state.replays = replays
+
   return {
-    ...respond,
+    top,
+    replays,
+    cookies,
     ctx,
     state,
   
@@ -37,6 +49,10 @@ export default (state, replayModulePath, respond) => {
     eventsCache: new Map,
     overridenReducers: new Map,
   
+    history: createHistory(),
+    devtools: createDevtools(),
+    cache: createCache(state),
+
     kinds, //?
   
     dispatch, //
@@ -55,8 +71,17 @@ export default (state, replayModulePath, respond) => {
       return state
     },
   
-    stringifyState(st) {
-      return JSON.stringify(snapshot(st || state), this.options.replacer ?? replacer)
+    saveSessionState() {
+      sessionStorage.setItem('sessionState', this.stringifyState())
+    },
+    stringifyState() {
+      let s = snapshot(state)
+      
+      if (s.replayTools?.tests) {
+        s = { ...s, replayTools: { ...s.replayTools, tests: undefined } } // don't waste cycles on tons of tests with their events
+      }
+
+      return JSON.stringify(s, this.options.replacer ?? replacer)
     },
     parseJsonState(json) {
       return JSON.parse(json, createStateReviver(state))
@@ -72,48 +97,33 @@ export default (state, replayModulePath, respond) => {
       await Promise.all(promises)
       promises.length = 0
       ctx.changedPath = !e.meta.pop ? false : ctx.changedPath
+      this.queueSaveSession()
+    },
+
+    queueSaveSession() {
+      if (isProd || isTest) return
+      if (this.replays.playing || ctx.saveQueued) return
+
+      ctx.saveQueued = true
+
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          this.saveSessionState()
+          ctx.saveQueued = false
+        })
+      }, 500)
     },
   
     isEqualNavigations(a, b) {
       return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
     },
   
-    findInClosestAncestor(key, modulePath, top = respond.top) {
+    findInClosestAncestor(key, modulePath) {
       modulePath = replayModulePath
         ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath
         : modulePath
 
-      if (!modulePath) return top[key]  // top.db
-
-      let mod = top
-  
-      return modulePath                 // 'admin.foo.bar'
-        .split('.')                     // ['admin', 'foo', 'bar]
-        .slice(0, -1)                   // ['admin', 'foo']   
-        .map(k => mod = mod[k])         // [admin, foo]
-        .reverse()                      // [foo, admin]
-        .find(p => p[key])              // admin.db
-        ?.[key] ?? top[key]             // admin.db ?? top.db
-    },
-
-    findInClosestAncestorOld(key, modulePath, top = state.top) {
-      const path = replayModulePath
-        ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath // a nested module may be set in the replaytools, and the purpose of this function is to be able to scan back through unused ancestor modules for inherited pillars like `db`
-        : modulePath
-
-      if (!path) return top[key]
-
-      const parentModules = []
-      let mod = top
-      
-      if (path) {
-        path.split('.').forEach(k => {
-          parentModules.unshift(mod)
-          mod = mod[k] ?? {}
-        })
-      }
-    
-      return parentModules.find(p => p[key])?.[key]
+      return findInClosestAncestor(key, modulePath, this.respond.top)
     },
   
     subscribe(send) {
@@ -159,64 +169,4 @@ export default (state, replayModulePath, respond) => {
       return onError?.({ ...err, store: state })
     }
   }
-}
-
-
-export function getStatus(rawSettings, settings) {
-  const prevStore = window.store
-  
-  const replay = !!rawSettings && !isProd
-  const hmr = !!prevStore && !replay
-
-  const modulePath = settings?.module || ''
-
-  return { prevStore, replay, hmr, modulePath }
-}
-
-
-
-
-export function findInClosestAncestor(key, modulePath, top = state.top) {
-  if (!modulePath) return top[key]  // top.db
-
-  let mod = top
-
-  return modulePath                 // 'admin.foo'
-    .split('.')                     // ['admin', 'foo']
-    .slice(0, -1)
-    .map(k => mod = mod[k])         // [admin, foo]
-    .reverse()                      // [foo, admin]
-    .find(p => p[key])              // admin.db
-    ?.[key] ?? top[key]             // admin.db ?? top.db
-}
-
-
-
-// const createFindInClosestParent = replayModulePath => {
-//   const parentModules = []
-//   let slice = state
-
-//   if (replayModulePath) {
-//     replayModulePath.split('.').forEach(k => {
-//       parentModules.unshift(slice)
-//       slice = slice[k]
-//     })
-//   }
-
-//   return key => parentModules.find(p => p[key])?.[key]
-// }
-
-
-const createFindInClosestParent = (top, modulePath) => {
-  const parentModules = []
-  let slice = top
-
-  if (modulePath) {
-    modulePath.split('.').forEach(k => {
-      parentModules.unshift(slice)
-      slice = slice[k]
-    })
-  }
-
-  return parentModules.find(p => p[key])?.[key]
 }

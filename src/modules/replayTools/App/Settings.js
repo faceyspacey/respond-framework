@@ -17,7 +17,7 @@ export default (props, events) => {
     <View style={s.c}>
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
         {settings}
-        <Link style={s.link} event={events.openPermaLink}>share settings permalink</Link>
+        <Link style={s.link} event={events.openPermalink}>share settings permalink</Link>
       </ScrollView>
 
       <Button text='RELOAD' event={events.reload} />

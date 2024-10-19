@@ -1,29 +1,21 @@
 import { Linking } from 'react-native'
 import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
-import createPermaLink from './helpers/createPermaLink.js'
+import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
-import sessionStorage from '../../utils/sessionStorage.js'
-import localStorage from '../../utils/localStorage.js'
 
 
 export default {
-  toggle: {
-    before: ({ state }) => {
-      state.open = !state.open
-    }
-  },
+  toggle: {},
 
   settings: {
     namespace: false,
     navigation: true,
-    end: () => localStorage.setItem('replayToolsTab', 'settings')
   },
 
   events: {
     namespace: false,
     navigation: true,
-    end: () => localStorage.setItem('replayToolsTab', 'events')
   },
 
   tests: {
@@ -31,7 +23,6 @@ export default {
     navigation: true,
     cache: false,
     fetch: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter),
-    end: () => localStorage.setItem('replayToolsTab', 'tests')
   },
   
   sortTests: {
@@ -75,7 +66,6 @@ export default {
       index = index === undefined ? evs.length - 1 : index
       const events = evs.slice(0, index + 1)
 
-      await localStorage.setItem('replayToolsTab', 'events')
       await state.replays.replayEvents(events, delay, settings)
 
       return false
@@ -189,50 +179,36 @@ export default {
   togglePersist: {
     before: async state => {
       state.persist = !state.persist
-      
-      if (state.persist) {
-        const json = state.respond.stringifyState(state)
-        await sessionStorage.setItem('replayToolsState', json)
-      }
-      else { 
-        await sessionStorage.removeItem('replayToolsState')
-      }
-
       return false
     }
   },
 
   reload: {
-    before: async ({ form, persist, top }) => {
-      const { permalink: _, ...settings } = form
-
-      await localStorage.setItem('replaySettings', JSON.stringify(settings))
+    before: async ({ form: settings, top }) => {
       window.history.replaceState(history.state, '', settings.path)
 
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
       window.__idCounter = 10000
 
-      const top = await createState(top, { settings, replay: true })
+      const store = await createState(top, { settings, reload: true })
 
-      const e = top.eventFrom(settings.path)
-      await top.dispatch(e)
+      const e = store.eventFrom(settings.path)
+      await store.dispatch(e)
       
-      top.render()
-
-      top.replayTools.persist = persist
+      store.render()
 
       return false
     }
   },
 
-  openPermaLink: {
-    before: async ({ state, replays }, { arg }) => {
-      const url = createPermaLink(state, replays, arg)
-
-      Linking.openURL(url)
+  openPermalink: {
+    before: async ({ state, replays }) => {
+      const { url, relativeUrl } = createPermalink(state, replays)
 
       console.log('Your permalink is:\n', url)
-      alert(`Check the console for a permalink you can copy & paste.`)
+      alert(`Your permalink is:\n\n${relativeUrl}\n\nYou can copy paste it from the console.You will be redirected now.`)
+
+      Linking.openURL(url)
 
       return false
     },

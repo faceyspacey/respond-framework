@@ -1,25 +1,12 @@
-import revive, { createStateReviver } from '../utils/revive.js'
+import revive from '../utils/revive.js'
 
 
-export default function mergeModules(state, hydration) {
-  state.moduleKeys.forEach(k => {
-    if (!hydration[k]) return
-    mergeModules(state[k], hydration[k])
-    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
-  })
-
-  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
-}
-
-
-export const hydrateModules = (state, replays) => {
+export function hydrateModules(state, replays) {
   const { token, hydration, hmr } = replays
 
   state.token = token
   state.cachedPaths ??= {}
 
-  if (hydration?.replayTools?.tests) delete hydration.replayTools.tests // don't waste cycles reviving tons of tests with their events
-  
   mergeModules(state, revive(state)(hydration))
 
   if (!hmr) {
@@ -28,7 +15,7 @@ export const hydrateModules = (state, replays) => {
 }
 
 
-export const mergeModulesPrevState = (state, prevState = {}, store) => {
+export function mergeModulesPrevState(state, prevState = {}, store) {
   state.moduleKeys.forEach(k => {
     mergeModulesPrevState(state[k], prevState[k], store)
   })
@@ -41,4 +28,15 @@ export const mergeModulesPrevState = (state, prevState = {}, store) => {
   }
 
   state.prevState = snap
+}
+
+
+function mergeModules(state, hydration = {}) {
+  state.moduleKeys.forEach(k => {
+    if (!hydration[k]) return
+    mergeModules(state[k], hydration[k])
+    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
+  })
+
+  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
 }

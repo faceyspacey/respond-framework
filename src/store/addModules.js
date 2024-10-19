@@ -6,11 +6,9 @@ import createSelectors from './createSelectors.js'
 import createReducers from './createReducers.js'
 
 import extractModuleAspects from './extractModuleAspects.js'
-import getSessionState from '../utils/getSessionState.js'
 
 import findOne from '../selectors/findOne.js'
 import { _module, _parent } from './reserved.js'
-import { hydrateModules} from './mergeModules.js'
 import { isProd } from '../utils.js'
 import defaultPluginsSync from './pluginsSync/index.js'
 
@@ -49,7 +47,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   for (const k of moduleKeys) {
     const p = path ? `${path}.${k}` : k
-    state[k] = await addModule(mod[k], r, state, mod[k].props, p, k)
+    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k)
     state[k].respond.state = state[k]
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
     //   const p = path ? `${path}.${k2}` : k2
@@ -59,7 +57,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   if (!path && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
-    state[k] = await addModule(replayToolsModule, r, k, k, state)
+    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k)
     state[k].respond.state = state[k]
     moduleKeys.push(k)
   }
