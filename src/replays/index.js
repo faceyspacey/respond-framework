@@ -22,9 +22,10 @@ export default async (top, opts, state) => {
   const settingsRaw = hydratedReplays.settings
   const replayModulePath = settingsRaw?.modulePath
 
-  const { reload, replay, hmr } = opts
-
   const getTopState = () => state
+  const status = hydratedReplays.status ?? opts.status ?? 'reload'
+  
+  if (status === 'reload' || status === 'replay') window.__idCounter = 10000 // todo: store in state for sessions
 
   const {
     createSettings = defaultCreateSettings,
@@ -38,11 +39,11 @@ export default async (top, opts, state) => {
   } = top.replays ?? findInClosestAncestor('replays', replayModulePath, top)
 
   const proto = Object.getPrototypeOf(replays)
-  const isCached = hmr && caching && !reload && !replay && conf === replays.conf // cached when hmr and caching enabled, but not replays, and not if hmr was caused by editing replays config
+  const isCached = caching && status === 'hmr' && conf === replays.conf // cached when hmr and caching enabled, but not replays, and not if hmr was caused by editing replays config
   
   if (isCached) {
     Object.assign(proto, { hydration })
-    return Object.assign(replays, { hmr, getTopState }) // prevent rebuilding seed (which can be slow) -- caching can be disabled if results from the db are inconsitent between hmr replays of last event, but for most development use cases, it's fine
+    return Object.assign(replays, { status, getTopState }) // prevent rebuilding seed (which can be slow) -- caching can be disabled if results from the db are inconsitent between hmr replays of last event, but for most development use cases, it's fine
   }
 
   const config = mergeDeep({ ...defaultConfig }, conf)
@@ -54,5 +55,5 @@ export default async (top, opts, state) => {
 
   Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents })
 
-  return Object.assign(replays, { settings, hmr, getTopState, session: hydratedReplays.session })
+  return Object.assign(replays, { settings, status, getTopState })
 }

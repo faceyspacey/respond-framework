@@ -24,7 +24,12 @@ export default (top, state, replays) => {
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
-  const ctx = { ...window.store?.ctx, init: true }
+
+  const ctx = {
+    ...window.store?.ctx,
+    init: replays.status !== 'session',
+    pluginsLoaded: replays.status === 'hmr' ? window.store?.ctx.pluginsLoaded : false
+  }
 
   const { cookies, modulePath: replayModulePath } = replays
   state.replays = replays
@@ -77,8 +82,8 @@ export default (top, state, replays) => {
     stringifyState() {
       let s = snapshot(state)
       
-      if (s.replayTools?.tests) {
-        s = { ...s, replayTools: { ...s.replayTools, tests: undefined } } // don't waste cycles on tons of tests with their events
+      if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
+        s = { ...s, replayTools: { ...s.replayTools, tests: {} } } // don't waste cycles on tons of tests with their events
       }
 
       return JSON.stringify(s, this.options.replacer ?? replacer)
@@ -103,7 +108,8 @@ export default (top, state, replays) => {
     queueSaveSession() {
       if (isProd || isTest) return
       if (this.replays.playing || ctx.saveQueued) return
-
+      if (window.state !== state) return // new store created
+      
       ctx.saveQueued = true
 
       setTimeout(() => {
@@ -137,17 +143,19 @@ export default (top, state, replays) => {
     },
     
     notify(e) {  
-      const sent = listeners.map(send => {
-        const mp = send.modulePath // ancestor which has subscribed
-        const eventIsChildOfSubscribingModuleOrTheSameModule = e.modulePath.indexOf(mp) === 0
-  
-        if (!eventIsChildOfSubscribingModuleOrTheSameModule) return
-        
-        return send(
-          modulePaths[mp],
-          sliceEventByModulePath(e, mp)
-        )
-      })
+      if (e.event.sync) return
+      if (e.event === state.events.start) return
+
+      const sent = listeners
+        .filter(send => e.modulePath.indexOf(send.modulePath) === 0) // event is child of subscribed module or the same module
+        .map(send => {
+          const p = send.modulePath
+          const mod = modulePaths[p]
+          const eMod = sliceEventByModulePath(e, p)
+          send(mod, eMod)
+        })
+
+      if (sent.length === 0) return
     
       const promise = Promise.all(sent).catch(error => {
         state.onError({ error, kind: 'subscriptions', e })

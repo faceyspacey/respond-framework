@@ -105,13 +105,12 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
 
 
 const applyTransform = (store, e, dispatch) => {
-  const { modulePathReduced, init } = store.ctx
-
+  const { modulePathReduced } = store.ctx
   let payload = { ...e.arg }
 
   if (modulePathReduced) {
     e.type = stripModulePath(e.type, modulePathReduced)             // remove path prefix so e objects created in reducers are unaware of parent modules
-    e.namespace = stripModulePath(e.namespace, modulePathReduced)   // eg 'grand.parent.child' => 'child'
+    e.namespace = stripModulePath(e.namespace, modulePathReduced)   // eg: stripModulePath('parent.child', 'parent'): 'child'
   }
 
   if (e.event.transform) {
@@ -121,10 +120,7 @@ const applyTransform = (store, e, dispatch) => {
 
   const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
 
-  const eFinal =  { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience
-  const isInit = init !== undefined && e.kind === 'navigation' // while init === false || true, tag the first navigation event with .init -- it's deleted on first successful navigation reducion with e.init, facilitating before redirects maintaining e.init
-
-  return isInit ? { ...eFinal, init: true } : eFinal
+  return { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience
 }
 
 

@@ -344,11 +344,20 @@ apply prefixPath function in createEvents
 
 #createReplays needs to determine hmr, replay status, and modulePath
 
-always serve non history mock on web, and use shouldChange to prevent changing during replays
+
+#replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage), replays.settings must live in state, and be revived from state and transfered to replays.settings
+#getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
 
 
-eventFrom/fromEvent needs to determine event before parsing location, and then use event's module's options.parseSearch -- event matching probably can't be modular
+
+#always serve non history mock on web, and use shouldChange to prevent changing during replays
+
+#eventFrom/fromEvent needs to determine event before parsing location, and then use event's module's options.parseSearch -- event matching probably can't be modular
+#basename in fromEvent is tied to a module, maybe we can use basename to prefix paths to modules; but if not, we need to use global basename instead
+
+#state.token may need to be added to all modules
+#optimize getSessionState for production
 
 
 
@@ -361,16 +370,16 @@ e.cached -> e.meta.cached
 options.alwaysDispatchFollowUp
 
 
-state.token may need to be added to all modules
-optimize getSessionState for production
+createDispatch per module
+
+bind methods in respond
+ignoreChild could be better or removed
+.prevState.prevState optimization
 
 
-replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage), replays.settings must live in state, and be revived from state and transfered to replays.settings
-getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
+refactor replayEvents
+refactor sendTrigger
 
 always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
-
 createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed
-
-basename in fromEvent is tied to a module, maybe we can use basename to prefix paths to modules; but if not, we need to use global basename instead

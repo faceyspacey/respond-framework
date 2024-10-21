@@ -1,5 +1,5 @@
 import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
-
+import dispatchPluginsAsync from '../../utils/dispatchPlugins.js'
 
 export default async function(ev, meta) {
   const e = sliceEventByModulePath(ev)
@@ -18,19 +18,22 @@ export default async function(ev, meta) {
 
 
 const dispatchPlugins = (plugins, store, e) => {
-  const last = plugins.length - 1
   return next(0)
 
   function next(i) {
     const plugin = plugins[i]
 
-    if (i === last) {
-      return Promise.resolve(plugin(store, e, true))
-        .then(res => res !== false && e.event.end?.(store, { ...e, ...res })) // last plugin can be async, since it runs after reduction
-        .catch(error => store.onError({ error, kind: 'dispatch', e }))
+    const res = plugin(store, e)
+
+    if (res instanceof Promise) {
+      return Promise.resolve(res) // plugins are allowed to be async after sync reduction
+        .then(res => {
+          const asyncPlugins = plugins.slice(i + 1)
+          e = res ? { ...e, ...res } : e
+          dispatchPluginsAsync(asyncPlugins, store, e)
+        })
     }
 
-    const res = plugin(store, e, true)
     if (res === false) return
 
     e = res ? { ...e, ...res } : e

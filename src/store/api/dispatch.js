@@ -7,11 +7,6 @@ export default async function(ev, meta) {
   const e = sliceEventByModulePath(ev)
   const store = this.respond.modulePaths[e.modulePath]
   
-  if (store.replays.session) {
-    store.replays.session = false
-    return
-  }
-  
   e.meta = { ...e.meta, ...meta }
 
   try {

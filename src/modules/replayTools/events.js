@@ -3,6 +3,7 @@ import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
+import revive from '../../utils/revive.js'
 
 
 export default {
@@ -58,7 +59,7 @@ export default {
     submit: async (state, { id, index, delay }) => {
       const { settings, events: evs } = state.tests[id]
 
-      state.evs = evs // display all events before replayed
+      state.evs = evs
 
       state.divergentIndex = evs.length // purple event rows will appear at end of event list if new events manually triggered by using app
       state.selectedTestId = id
@@ -164,15 +165,17 @@ export default {
   },
 
   deleteEvent: {
-    submit: ({ state, events }, { index: i }) => {
+    before: async ({ state }, { index: i }) => {
       state.evs.splice(i, 1)
 
       if (state.divergentIndex && i < state.divergentIndex) {
         state.divergentIndex--
       }
 
-      const index = state.evsIndex - 1
-      return events.replayEventsToIndex({ index })
+      const events = state.evs.slice(0, i)
+      await state.replays.replayEvents(events)
+
+      return false
     }
   },
 
@@ -186,15 +189,10 @@ export default {
   reload: {
     before: async ({ form: settings, top }) => {
       window.history.replaceState(history.state, '', settings.path)
-
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
-      window.__idCounter = 10000
 
-      const store = await createState(top, { settings, reload: true })
-
-      const e = store.eventFrom(settings.path)
-      await store.dispatch(e)
-      
+      const store = await createState(top, { settings, status: 'reload' })
+      await store.eventFrom(settings.path).trigger()
       store.render()
 
       return false

@@ -20,7 +20,7 @@ export default async (top, opts = {}) => {
   
   hydrateModules(state, replays)
 
-  if (!replays.hmr) reduce(state, state.events.start())
+  if (replays.status !== 'hmr') reduce(state, state.events.start())
 
   return window.store = window.state = state
 }

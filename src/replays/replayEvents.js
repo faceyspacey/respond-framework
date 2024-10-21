@@ -7,14 +7,14 @@ export default async function(events, delay = 0, settings = this.settings) {
   top.replayTools.playing = this.playing = false // stop possible previous running replay
 
   const setts = preserveBuiltInSettings(settings, top)
-  const store = await createState(top.top, { settings: setts, replay: true })
+  const store = await createState(top.top, { settings: setts, status: 'replay' })
 
   return run(events, delay, store)
 }
 
 
 
-const run = async (events, delay, store) => {         // keep in mind store and store.replays will now be in the context of the next next store
+const run = async (events, delay, store) => {           // keep in mind store and store.replays will now be in the context of the next next store
   const evs = revive(store)(events)
   const state = store.replayTools
 
@@ -29,8 +29,6 @@ const run = async (events, delay, store) => {         // keep in mind store and 
   
   respond.replays.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
   state.playing = !!delay                                // display display STOP REPLAY button (and allow replay to progress), but only when there's a delay (otherwise it's instant and shouldn't flicker red)
-
-  state.evsIndex = -1                                    // start from the top, as index will increase with each event dispatched below
 
   const last = evs.length - 1
 

@@ -19,7 +19,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
   const { id, ignoreChild, initialState, components, replays, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
-  const respond = { ...options.merge, ...r, state, path, options }
+  const respond = { ...options.merge, ...r, state, options, modulePath: path }
   respond.respond = respond
 
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)

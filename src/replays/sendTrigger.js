@@ -37,10 +37,12 @@ export default function (store, eSlice, fullModulePathAlready = false) {
 
 const sendTrigger = (e, state, store, playing) => {
   const index = ++state.evsIndex
-  state.evs[index] = e
-  
-  if (playing) return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
 
+  if (playing) {
+    state.evs[index] = e // event from tests isn't fully created yet, so we need to manually add it to the events array
+    if (playing) return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
+  }
+  
   const events = state.evs
 
   const prev = events[index - 1]
@@ -89,7 +91,10 @@ const isEqual = (a, b, store) => {
 
 
 const inputConverged = (e, state, events) => {
-  const isPossibleConvergingInputEvent = state.selectedTestId && e.meta.input && state.divergentIndex !== undefined
+  const isPossibleConvergingInputEvent = e.meta.input && state.selectedTestId
+    && state.tests[state.selectedTestId] // test may not exist if sessionState revived after refresh, as tests aren't stringified for perf
+    && state.divergentIndex !== undefined
+
   if (!isPossibleConvergingInputEvent) return
 
   const test = state.tests[state.selectedTestId]

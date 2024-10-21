@@ -2,14 +2,14 @@ import revive from '../utils/revive.js'
 
 
 export function hydrateModules(state, replays) {
-  const { token, hydration, hmr } = replays
+  const { token, hydration, status } = replays
 
   state.token = token
   state.cachedPaths ??= {}
 
   mergeModules(state, revive(state)(hydration))
 
-  if (!hmr) {
+  if (status !== 'hmr') {
     mergeModulesPrevState(state, state.respond.snapshot(state))
   }
 }
