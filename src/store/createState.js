@@ -14,7 +14,7 @@ export default async (top, opts = {}) => {
 
   const replays = await createReplays(top, opts, state)
   const respond = createRespond(top, state, replays)
-  const mod = sliceByModulePath(top, replays.settings.modulePath)
+  const mod = sliceByModulePath(top, replays.settings.module)
 
   await addModule(mod, respond, state)
   

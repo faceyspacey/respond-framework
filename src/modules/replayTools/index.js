@@ -11,7 +11,7 @@ export * as reducers from './reducers.js'
 
 export const plugins = [error, loadTests, ...defaultPlugins]
 
-export const ignoreChild = true
+export const ignoreParents = true
 
 export const initialState = state => ({
   form: state.replays.settings,

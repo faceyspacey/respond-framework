@@ -16,7 +16,7 @@ import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
 export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name) {
-  const { id, ignoreChild, initialState, components, replays, options = {} } = mod
+  const { id, ignoreParents, initialState, components, replays, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   const respond = { ...options.merge, ...r, state, options, modulePath: path }
@@ -29,7 +29,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
   const pluginsSync = createPlugins(mod.pluginsSync ?? defaultPluginsSync)
 
   const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreChild, findOne, components, state, db, models, plugins, pluginsSync })
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, pluginsSync })
 
   const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)

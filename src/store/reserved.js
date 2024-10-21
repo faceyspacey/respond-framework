@@ -5,7 +5,7 @@ export const moduleApi = {
   __esModule: true,
   id: true,
   module: true,
-  ignoreChild: true,
+  ignoreParents: true,
   initialState: true,
   components: true,
   events: true,

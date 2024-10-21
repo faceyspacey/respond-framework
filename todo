@@ -348,6 +348,7 @@ apply prefixPath function in createEvents
 #replayToolsState (remove, now depends on sessionState), replaySettings (move from localStorage to sessionStorage), replays.settings must live in state, and be revived from state and transfered to replays.settings
 #getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
+#ignoreChild could be better or removed
 
 
 
@@ -373,7 +374,6 @@ options.alwaysDispatchFollowUp
 createDispatch per module
 
 bind methods in respond
-ignoreChild could be better or removed
 .prevState.prevState optimization
 
 

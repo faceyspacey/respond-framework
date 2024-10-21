@@ -39,7 +39,7 @@ const reduceAllModules = (e, mod) => {
 // const reduceBranch = (e, mod, remainingPaths) => {
 //   const k = remainingPaths.shift()
 //   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
-//   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreChild)
+//   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreParents)
 
 //   if (!k) return
 
@@ -55,16 +55,16 @@ const reduceBranch = (e, mod, remainingPaths) => {
   if (k) {
     const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
     const type = namespace ? `${namespace}.${e._type}` : e._type
-    reduceBranch({ ...e, type, namespace }, mod[k], remainingPaths)
+
+    const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingPaths)
+    if (ignoreParents || mod[k].ignoreParents) return true
   }
 
-  reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreChild)
+  reduceModule(mod, e, mod, mod.reducers)
 }
 
 
 const reduceModule = (state, e, mod, reducers, ignore) => {
-  if (ignore) return
-
   mod.ctx.modulePathReduced = mod.modulePath
   
   for (const k in reducers) {
