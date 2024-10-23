@@ -1,4 +1,3 @@
-import { getIndex } from './utils/helpers.js'
 import { addPopListener, removePopListener } from './utils/popListener.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
@@ -19,20 +18,20 @@ export const removeTrap = () => {
 }
 
 export const popListener = async () => {
-  const index = getIndex()
-  const back = index < bs.prevIndex
+  const i = history.state?.index
+  const back = i < bs.prevIndex
 
   const { events, ctx } = window.store
 
-  if (bs.prevIndex === -1 && index === 0) {                               // browser cached on return from front
-    bs.prevIndex = index
+  if (bs.prevIndex === -1 && i === 0) {                               // browser cached on return from front
+    bs.prevIndex = i
     return
   }
-  else if (bs.prevIndex === bs.maxIndex + 1 && index === bs.maxIndex) {   // browser cached on return from tail
-    bs.prevIndex = index
+  else if (bs.prevIndex === bs.maxIndex + 1 && i === bs.maxIndex) {   // browser cached on return from tail
+    bs.prevIndex = i
     return
   }
-  else if (index === bs.prevIndex) {
+  else if (i === bs.prevIndex) {
     console.warn(`store.history: pop back/next cannot be determined as the current history index is equal to the previous one.${isDev ? ' This is likely a development/HMR-only problem' : ' Please test all browsers and submit a repro with a very precise set of instructions.'}`)
     return
   }
@@ -42,10 +41,10 @@ export const popListener = async () => {
   // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
 
   if (back) {
-    if (bs.maxIndex - index > 1) await bf.forward()   // trap user by reversing
+    if (bs.maxIndex - i > 1) await bf.forward()       // trap user by reversing
   }
   else {
-    if (index > 1) await bf.back()                    // trap user by reversing
+    if (i > 1) await bf.back()                        // trap user by reversing
   }
   
   bs.pop = back ? 'back' : 'forward'                  // ensure all dispatches in pop handler are considered pops

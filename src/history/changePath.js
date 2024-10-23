@@ -1,15 +1,14 @@
-import { shouldChange } from './utils/helpers.js'
 import change from './utils/change.js'
 import { createTrap } from './createTrap.js'
 
 
-export default async e => {
-  if (!shouldChange(e)) return
-  
+export default async (e, redirect) => {
   const { respond, ctx } = window.store
-  const { url } = respond.fromEvent(e)
+  if (ctx.isReplay || e?.changePath === false) return
+  
+  const url = respond.fromEvent(e).relativeUrl
 
-  change(url, ctx.changedPath)
+  change(url, ctx.changedPath || redirect)
 
   ctx.changedPath = true
   ctx.prevUrl = url

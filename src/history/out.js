@@ -1,9 +1,8 @@
 import { Linking } from 'react-native'
-import { isPopDisabled } from './utils/backForward.js'
-import { getIndex } from './utils/helpers.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
+import { isNative, isTest } from '../utils/bools.js'
 
 
 export default back => back ? backOut() : forwardOut()
@@ -43,28 +42,21 @@ const forwardOut = async () => {
 }
 
 
-export const linkOut = async (url, e) => {
+export const linkOut = (url, e) => {
   e = typeof url === 'object' ? url : e                       // convenience: <a href={url} onClick={store.history.linkOut}
   url = typeof url === 'string' ? url : e?.currentTarget.href
   
   e?.preventDefault()
 
-  if (process.env.NODE_ENV === 'test') {
-    return url
-  }
+  if (isTest) return url
 
-  if (!process.env.WEB) {
+  if (isNative) {
     Linking.openURL(url)
     return
   }
 
   if (location.host === new URL(url).host) {
     window.open(url, '_blank') // a host of problems will occur if you open your site twice in the same tab, as they'll share the same sessionStorage -- apps should be designed to not need reloads, which is especially easy to resolve given Respond keeps pretty much everything in state, including things such as basenames and cachedPaths; if you really need this -- which is a non-ideal workaround in today's reactive landscape -- feel free to work on this file and submit a PR; basically you will have to differentiate between the below sessionStorage items between multiple tabs somehow; the juice most likely isn't worth the squeeze
-    return
-  }
-
-  if (isPopDisabled()) {
-    window.location = url
     return
   }
 
@@ -79,3 +71,6 @@ export const linkOut = async (url, e) => {
 
   window.location = url
 }
+
+
+const getIndex = () => history.state?.index ?? 0 // should never be 0 if everything is working correctly

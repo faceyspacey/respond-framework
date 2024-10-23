@@ -19,3 +19,5 @@ export const initialState = state => ({
   evs: [],
   divergentIndex: undefined,
 })
+
+export const lastEvent = state => state.evs[state.evsIndex]

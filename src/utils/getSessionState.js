@@ -1,5 +1,6 @@
 import sessionStorage from './sessionStorage.js'
 import { searchToSettings as permalinkSettings } from '../modules/replayTools/helpers/createPermalink.js'
+import { isProd } from './bools.js'
 
 
 export default async ({ status, settings, hydration } = {}) => {
@@ -11,10 +12,10 @@ export default async ({ status, settings, hydration } = {}) => {
     case 'hmr':     return { ...prevState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
   }
 
-  const perm = permalinkSettings()
+  const perm = !isProd && permalinkSettings()
   if (perm) return { ...hydration, replays: { settings: perm } }
 
-  const session = await sessionStorage.getItem('sessionState')
+  const session = !isProd && await sessionStorage.getItem('sessionState')
   if (!session) return hydration
 
   const state = JSON.parse(session)

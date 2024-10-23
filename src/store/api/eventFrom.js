@@ -1,11 +1,11 @@
 import { pathToRegexp } from 'path-to-regexp'
-import { urlToLocation } from '../../utils/url.js'
+import { cleanSearchHash, locationToRespondLocation, urlToLocation } from '../../utils/url.js'
 
 
-export default function eventFrom(url, fallback, additionalArg, fallbackArg) {
+export default function eventFrom(url, additionalArg, dontThrow = false) {
   const { state, eventsByPath } = this.respond
+  const loc = urlToLocation(url)
 
-  const loc = urlToLocation(url, state)                            // if url is already a location object, it will also be resolved
   const { basename = '' } = state
 
   if (basename) {
@@ -18,39 +18,40 @@ export default function eventFrom(url, fallback, additionalArg, fallbackArg) {
     for (let i = 0; i < paths.length; i++) {
       const path = paths[i]
       const { match, keys } = matchPath(loc.pathname, path)        // long ago early Respond iterations matched even based on query/search strings and the hash, but then it became clear that's a very uncommon need; so it was decided to stick to a simpler patch matching implementation here to serve as inspiration; so if you would like to dispatch different events, say, based on different query params, then just pass in your own createEventFrom option to createState, and you can match URLs to events any way you please
-  
-      if (match) {
-        const [_path, ...values] = match
+      
+      if (!match) continue
 
-        const arg = keys.reduce((arg, key, index) => {
-          arg[key.name] = values[index]
-          return arg
-        }, {})
+      const [_path, ...values] = match
 
-        const event = eventsByPath[path]
+      const arg = keys.reduce((arg, key, index) => {
+        arg[key.name] = values[index]
+        return arg
+      }, {})
 
-        const argFromLoc = event.fromLocation?.(state, arg, loc) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createState({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
-        const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
+      const event = eventsByPath[path]
+      let argFromLoc
 
-        return event(argFinal)
+      if (event.fromLocation) {
+        const state = event.module
+        const respondLoc = locationToRespondLocation(loc, state)
+        argFromLoc = event.fromLocation(state, { ...additionalArg, ...arg, ...respondLoc }) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createState({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
       }
+      else if (event.fromLocationCustom) {
+        const state = event.module
+        const respondLocSearchHashCleaned = cleanSearchHash(loc)
+        argFromLoc = event.fromLocationCustom(state, { ...additionalArg, ...arg, ...respondLocSearchHashCleaned })
+      }
+      
+      const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
+
+      return event(argFinal)
     }
   }
   catch (error) {}
 
-  if (fallback) {
-    const arg = { notFound: true, changePath: false, ...fallbackArg }
-    
-    if (fallback.event?.__event) {
-      Object.assign(fallback, arg)
-      Object.assign(fallback.arg, arg)
-      return fallback // fallback could be passed as an actual event
-    } 
+  if (dontThrow) return
 
-    return eventFrom(fallback, undefined, arg)
-  }
-
-  throw new Error (`respond: no event matched path "${loc.pathname}".`)
+  throw new Error (`respond: no event matched path "${pathname}".`)
 }
 
 

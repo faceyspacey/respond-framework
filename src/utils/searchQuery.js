@@ -33,7 +33,7 @@ const ps = search => {
 
 
 
-export const stringifyQuery = (query, state) => {
+export const stringifyQuery = (query, state, prefix = '?') => {
   const stringify = state?.options.stringifyQuery ?? qs.stringify
-  return '?' + stringify(query)
+  return prefix + stringify(query)
 }

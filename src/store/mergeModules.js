@@ -1,13 +1,18 @@
-import revive from '../utils/revive.js'
+import revive  from '../utils/revive.js'
+import sessionStorage from '../utils/sessionStorage.js'
+import { isProd } from '../utils/bools.js'
 
 
-export function hydrateModules(state, replays) {
-  const { token, hydration, status } = replays
+export async function hydrateModules(state, replays) {
+  const { token, status } = replays
 
   state.token = token
   state.cachedPaths ??= {}
 
-  mergeModules(state, revive(state)(hydration))
+  const session = isProd && await sessionStorage.getItem('sessionState')
+  const hydration = session ? state.respond.parseJsonState(session) : revive(state)(replays.hydration)
+
+  mergeModules(state, hydration)
 
   if (status !== 'hmr') {
     mergeModulesPrevState(state, state.respond.snapshot(state))

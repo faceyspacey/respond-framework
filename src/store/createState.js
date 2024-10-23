@@ -18,7 +18,7 @@ export default async (top, opts = {}) => {
 
   await addModule(mod, respond, state)
   
-  hydrateModules(state, replays)
+  await hydrateModules(state, replays)
 
   if (replays.status !== 'hmr') reduce(state, state.events.start())
 

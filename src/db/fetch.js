@@ -1,4 +1,5 @@
 import { replacer, createReviver } from '../utils/revive.js'
+import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
@@ -31,9 +32,7 @@ export default async (apiUrl = defaultApiUrl, body = {}, state, models = {}, use
 }
 
 
-const defaultApiUrl = typeof window !== 'undefined' && window.location?.href
-  ? window.location.href.slice(0, window.location.href.lastIndexOf('/')) + '/api'
-  : 'http://localhost:3000/api'
+const defaultApiUrl = defaultOrigin + '/api'
 
 
 export const argsIn = args =>

@@ -1,16 +1,16 @@
 export default state => ({
   get(e) {
-    const k = state.respond.fromEvent(e).url
+    const k = state.respond.fromEvent(e).relativeUrl
     return state.cachedPaths[k] ? k : null
   },
 
   set(e) {
-    const k = state.respond.fromEvent(e).url
+    const k = state.respond.fromEvent(e).relativeUrl
     state.cachedPaths[k] = true
   },
 
   delete(e) {
-    const k = state.respond.fromEvent(e).url
+    const k = state.respond.fromEvent(e).relativeUrl
     delete state.cachedPaths[k]
   },
 

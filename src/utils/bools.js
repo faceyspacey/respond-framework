@@ -8,6 +8,8 @@ export const isServer = typeof window === 'undefined'
 
 export const isNative = !isServer && !(typeof document !== 'undefined' && document.querySelector) && !isTest
 
+export const hasHistory = !(isTest || isNative)
+
 export const hasLocalStorage = typeof localStorage !== 'undefined'
 
 export const hasSessionStorage = typeof sessionStorage !== 'undefined'

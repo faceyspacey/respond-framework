@@ -349,16 +349,26 @@ apply prefixPath function in createEvents
 #getSessionState, createReplayModule, replace other sessionStorage methods, put cookies in replays,
 
 #ignoreChild could be better or removed
+#refactor replayEvents
+#refactor sendTrigger
+#createDispatch per module
 
-
-
+#optimize getSessionState for production
+#state.token may need to be added to all modules
 #always serve non history mock on web, and use shouldChange to prevent changing during replays
 
 #eventFrom/fromEvent needs to determine event before parsing location, and then use event's module's options.parseSearch -- event matching probably can't be modular
 #basename in fromEvent is tied to a module, maybe we can use basename to prefix paths to modules; but if not, we need to use global basename instead
 
-#state.token may need to be added to all modules
-#optimize getSessionState for production
+#pre-apply basenames to tree
+#changeBasename 
+#eventsByPath[path] quick check
+
+#locationFrom
+
+
+bind methods in respond
+.prevState.prevState optimization
 
 
 
@@ -371,15 +381,14 @@ e.cached -> e.meta.cached
 options.alwaysDispatchFollowUp
 
 
-createDispatch per module
-
-bind methods in respond
-.prevState.prevState optimization
 
 
 
-refactor replayEvents
-refactor sendTrigger
+
+put playing in reactive replays.playing state
+
+
+remove .call
 
 always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
 createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed

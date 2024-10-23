@@ -1,16 +1,12 @@
-import { isPopDisabled, hydrateFromSessionStorage} from './utils/backForward.js'
+import sesh from '../utils/sessionStorage.js'
 import changePath from './changePath.js'
-import changePathMock from './changePath.mock.js'
 import { linkOut } from './out.js'
-import state from './browserState.js'
+import bs from './browserState.js'
+import { hasHistory } from '../utils/bools.js'
 
 
-export default () => {
-  if (isPopDisabled()) {
-    return { state, linkOut, changePath: changePathMock }
-  }
-
-  hydrateFromSessionStorage()
-
-  return { state, linkOut, changePath }
+export default {
+  state: hasHistory ? Object.assign(bs, JSON.parse(sesh.getItem('browserState'))) : {},
+  changePath: hasHistory ? changePath : function() {},
+  linkOut,
 }

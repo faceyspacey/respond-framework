@@ -1,6 +1,4 @@
-import { isNative, isTest, isDev } from '../../utils.js'
-import sessionStorage from 'respond-framework/utils/sessionStorage.js'
-import bs from '../browserState.js'
+import { isNative, isTest } from '../../utils.js'
 import { createTrap, removeTrap } from '../createTrap.js'
 import { addPopListener, removePopListener } from './popListener.js'
 
@@ -51,12 +49,3 @@ export const go = async delta => {
     history.go(delta)
   })
 }
-
-
-export const hydrateFromSessionStorage = () => {
-  const state = JSON.parse(sessionStorage.getItem('browserState'))
-  Object.assign(bs, state)
-}
-
-
-export const isPopDisabled = () => isTest || isNative || window.store?.ctx.isReplay

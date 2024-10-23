@@ -9,14 +9,14 @@ import eventFrom from './eventFrom.js'
 import snapshot from '../../proxy/snapshot.js'
 import render from '../../react/render.js'
 
-import createHistory from '../../history/index.js'
+import history from '../../history/index.js'
 import createDevtools from '../../devtools/index.mock.js'
 import createCache from '../../utils/createCache.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { createStateReviver, replacer } from '../../utils/revive.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import { sliceEventByModulePath, traverseModules } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 
 
@@ -54,7 +54,7 @@ export default (top, state, replays) => {
     eventsCache: new Map,
     overridenReducers: new Map,
   
-    history: createHistory(),
+    history,
     devtools: createDevtools(),
     cache: createCache(state),
 
@@ -109,7 +109,7 @@ export default (top, state, replays) => {
       if (isProd || isTest) return
       if (this.replays.playing || ctx.saveQueued) return
       if (window.state !== state) return // new store created
-      
+
       ctx.saveQueued = true
 
       setTimeout(() => {
@@ -121,7 +121,37 @@ export default (top, state, replays) => {
     },
   
     isEqualNavigations(a, b) {
-      return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
+      return a && b && this.respond.fromEvent(a).relativeUrl === this.respond.fromEvent(b).relativeUrl
+    },
+
+    changeBasename(basename) {
+      let prevBasename = this.respond.state.basename ?? ''
+      this.respond.state.basename = basename
+
+      traverseModules(this.respond.state, store => {
+        prevBasename += store.basename
+        basename += store.basename
+        store.basename.replace(prevBasename, basename)
+      })
+
+      const { eventsByPath } = this.respond
+      const next = {}
+
+      Object.keys(eventsByPath).forEach(prevPath => {
+        const event = eventsByPath[prevPath]
+
+        const { basename } = event.module
+        const path = basename ? `${basename}${event.path}` : event.path
+
+        next[path] = event
+
+        delete eventsByPath[prevPath]
+      })
+
+      Object.assign(eventsByPath, next)
+
+      const e = this.respond.getStore().replayTools.lastEvent
+      this.respond.changePath(e, true)
     },
   
     findInClosestAncestor(key, modulePath) {

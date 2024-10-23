@@ -82,9 +82,7 @@ const clipTail = (e, state, events, index, store) => {
 
 const isEqual = (a, b, store) => {
   if (a.type !== b.type) return false
-
   const arg = revive(store)(a.arg || {})   // revive possible event function references in test arg
-
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
 
