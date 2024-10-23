@@ -6,7 +6,7 @@ export default async (store, e) => {
 
   await store.awaitInReplaysOnly(async () => {
     try {
-      const res = await e.event.after.call(e.event, store, e)
+      const res = await e.event.after(store, e)
   
       store.devtools.sendPluginNotification({ type: 'after', returned: res }, e)
   

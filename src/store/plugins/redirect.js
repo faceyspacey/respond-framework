@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.redirect) return
 
-  const res = await e.event.redirect.call(e.event, store, e)
+  const res = await e.event.redirect(store, e)
 
   store.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
 

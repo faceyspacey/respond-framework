@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.before) return
 
-  const res = await e.event.before.call(e.event, store, e)
+  const res = await e.event.before(store, e)
 
   if (res === false) {
     store.devtools.sendPrevented({ type: 'before', returned: res }, e)

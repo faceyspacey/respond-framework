@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.end) return
 
-  const res = await e.event.end.call(e.event, store, e)
+  const res = await e.event.end(store, e)
 
   store.devtools.sendPluginNotification({ type: 'end', returned: res }, e)
 

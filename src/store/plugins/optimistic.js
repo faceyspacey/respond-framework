@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.optimistic) return
 
-  const res = await e.event.optimistic.call(e.event, store, e) // async supported, but optimistic is generally syncronous or at least fast
+  const res = await e.event.optimistic(store, e) // async supported, but optimistic is generally syncronous or at least fast
 
   store.devtools.sendPluginNotification({ type: 'optimistic', returned: res }, e)
 

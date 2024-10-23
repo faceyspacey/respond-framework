@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.submit) return
 
-  const res = await e.event.submit.call(e.event, store, e)
+  const res = await e.event.submit(store, e)
 
   store.devtools.sendPluginNotification({ type: 'submit', returned: res }, e)
 

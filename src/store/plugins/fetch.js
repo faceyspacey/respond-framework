@@ -7,7 +7,7 @@ export default async function fetchPlugin(store, e) {
 async function fetch(store, e) {
   if (e.event.path) store.cache.set(e)
   
-  const res = await e.event.fetch.call(e.event, store, e)
+  const res = await e.event.fetch(store, e)
   store.devtools.sendPluginNotification({ type: 'fetch', returned: res }, e)
 
   if (res?.error) {

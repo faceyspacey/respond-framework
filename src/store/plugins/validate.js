@@ -1,7 +1,7 @@
 export default async (store, e) => {
   if (!e.event.validate) return
 
-  const res = await e.event.validate.call(e.event, store, e)
+  const res = await e.event.validate(store, e)
 
   if (res === false) {
     store.devtools.sendPrevented({ type: 'validate', returned: res }, e)

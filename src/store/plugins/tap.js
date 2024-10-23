@@ -4,7 +4,7 @@ export default async (store, e) => {
   await store.awaitInReplaysOnly(async () => {
     try {
       store.devtools.sendPluginNotification({ type: 'tap' }, e)
-      await e.event.tap.call(e.event, store, e)
+      await e.event.tap(store, e)
     }
     catch (error) {
       store.onError({ error, kind: 'tap', e })

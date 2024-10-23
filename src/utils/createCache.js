@@ -21,7 +21,7 @@ export default state => ({
 
   has(e) {
     const { cache } = e.event
-    if (typeof cache === 'function') return cache.call(e.event, state.respond.modulePaths[e.modulePath], e, this.get(e))
+    if (typeof cache === 'function') return e.event.cache(state.respond.modulePaths[e.modulePath], e, this.get(e))
     if (cache !== undefined) return !!cache
     return !!(e.cached || !e.event.fetch || this.get(e))
   },
