@@ -1,6 +1,7 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
 import defaultPlugins from '../../store/plugins/index.js'
+import { _parent } from '../../store/reserved.js'
 
 
 export { id } from './respond.js'
@@ -20,4 +21,10 @@ export const initialState = state => ({
   divergentIndex: undefined,
 })
 
-export const lastEvent = state => state.evs[state.evsIndex]
+export function findLastEvent() {
+  return this.evs[this.evsIndex]
+}
+
+export function playing() {
+  return this[_parent].replays.playing
+}

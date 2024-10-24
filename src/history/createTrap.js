@@ -21,9 +21,13 @@ export const popListener = async () => {
   const i = history.state?.index
   const back = i < bs.prevIndex
 
-  const { events, ctx } = window.store
+  const { events, ctx, respond } = window.store
 
-  if (bs.prevIndex === -1 && i === 0) {                               // browser cached on return from front
+  if (i === undefined) {
+    await respond.eventFrom(window.location.href).trigger()
+    return // reloading current first page, because eg simply the hash was changed -- this probably covers other caching related extraneous browser pops
+  }
+  else if (bs.prevIndex === -1 && i === 0) {                          // browser cached on return from front
     bs.prevIndex = i
     return
   }

@@ -1,5 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp'
-import { cleanSearchHash, locationToRespondLocation, urlToLocation } from '../../utils/url.js'
+import { cleanSearchHash, searchHashToQueryHash, urlToLocation } from '../../utils/url.js'
 
 
 export default function eventFrom(url, additionalArg, dontThrow = false) {
@@ -12,6 +12,9 @@ export default function eventFrom(url, additionalArg, dontThrow = false) {
     loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
   }
 
+  const event = eventsByPath[loc.pathname] // basic match, eg '/about', '/admin/users' etc
+  if (event) return createEvent(event, loc, additionalArg)
+
   const paths = Object.keys(eventsByPath)
 
   try {
@@ -23,37 +26,34 @@ export default function eventFrom(url, additionalArg, dontThrow = false) {
 
       const [_path, ...values] = match
 
-      const arg = keys.reduce((arg, key, index) => {
-        arg[key.name] = values[index]
-        return arg
+      const arg = keys.reduce((acc, key, index) => {
+        acc[key.name] = values[index]
+        return acc
       }, {})
 
-      const event = eventsByPath[path]
-      let argFromLoc
-
-      if (event.fromLocation) {
-        const state = event.module
-        const respondLoc = locationToRespondLocation(loc, state)
-        argFromLoc = event.fromLocation(state, { ...additionalArg, ...arg, ...respondLoc }) // pathname, search, hash, query are fully abstracted -- Respond doesn't know it's running in a browser -- so you convert, for example, the search string to a relevant pre-transformed payload on e.arg, which will then be passed to e.event.transform if available -- search strings will be pre-converted to a query object for you; and you can overwrite how that's performed via createState({ options: { parseSearch } }) or customize conversion by ignore loc.query and performing your own on loc.search passed to e.event.fromLocation
-      }
-      else if (event.fromLocationCustom) {
-        const state = event.module
-        const respondLocSearchHashCleaned = cleanSearchHash(loc)
-        argFromLoc = event.fromLocationCustom(state, { ...additionalArg, ...arg, ...respondLocSearchHashCleaned })
-      }
-      
-      const argFinal = { ...additionalArg, ...arg, ...argFromLoc } 
-
-      return event(argFinal)
+      return createEvent(eventsByPath[path], loc, additionalArg, arg)
     }
   }
-  catch (error) {}
+  catch {}
 
   if (dontThrow) return
-
-  throw new Error (`respond: no event matched path "${pathname}".`)
+  throw new Error (`respond: no event matched path "${loc.pathname}".`)
 }
 
+
+const createEvent = (event, loc, additionalArg, arg) => {
+  const state = event.module
+  let argFromLoc
+
+  if (event.fromLocation) {
+    argFromLoc = event.fromLocation(state, { ...additionalArg, ...arg, ...loc, ...cleanSearchHash(loc) })
+  }
+  else if (loc.search || loc.hash) {
+    argFromLoc = searchHashToQueryHash(loc, state)
+  }
+  
+  return event({ ...additionalArg, ...arg, ...argFromLoc } )
+}
 
 
 const matchPath = (pathname, pattern, options = {}) => {

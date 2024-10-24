@@ -23,24 +23,17 @@ const run = async (events, delay, store) => {           // keep in mind store an
 
   delay = delay === true ? (respond.replays.settings.testDelay || 1500) : delay
 
-  ctx.ignoreChangePath = true
-  ctx.isReplay = true
-  if (!delay) ctx.isFastReplay = true                    // turn animations + timeouts off
-  
   respond.replays.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
-  state.playing = !!delay                                // display display STOP REPLAY button (and allow replay to progress), but only when there's a delay (otherwise it's instant and shouldn't flicker red)
-
+  ctx.isFastReplay = !delay                    // turn animations + timeouts off
+  
   const last = evs.length - 1
 
-  window.__idCounter = 10000
-  
   for (let i = 0; i < evs.length; i++) {
     if (delay && !state.playing) break
 
     const { event, arg, meta } = evs[i]
 
     if (i === last) {
-      ctx.ignoreChangePath = false
       state.playing = false                   // change red STOP REPLAY button to green SAVE TEST button instantly on last event before dispatch resolves + timeout
     }
 
@@ -51,13 +44,12 @@ const run = async (events, delay, store) => {           // keep in mind store an
     if (!meta?.skipped) await timeout(delay)
   }
 
-  state.playing = store.replays.playing = false
+  store.replays.playing = false
+  ctx.isFastReplay = false
 
   if (!delay) store.render()                                // if no delay, only render once events are done and state is fully updated for a clean single re-render
 
   setTimeout(() => {
-    ctx.isReplay = false
-    ctx.isFastReplay = false
     respond.queueSaveSession()
   }, 100)                                                        // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
 

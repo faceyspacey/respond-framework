@@ -1,15 +1,9 @@
-import { traverseModules } from '../../utils/sliceByModulePath.js'
+import { traverseModulesAsyncParallel } from '../../utils/sliceByModulePath.js'
 
 
 export default async (store, e) => {
-  if (!store.ctx.pluginsLoaded) {
+  if (!store[pluginsLoaded]) {
     await loadPlugins(store, e)
-  }
-
-  if (store.replays.status === 'session') {
-    store.replays.status = 'reload'
-    store.getStore().__navigated = true
-    return
   }
 
   applyFirstNavigation(store, e)
@@ -20,6 +14,11 @@ export default async (store, e) => {
 
   if (e.event.path && store.cache?.has(e)) {
     e.cached = true
+  }
+
+  if (store.replays.status === 'session') {
+    store.replays.status = 'reload'
+    return
   }
 
   if (!e.meta.trigger) return
@@ -39,20 +38,14 @@ const applyFirstNavigation = (store, e) => {
 }
 
 
-const loadPlugins = store => {
-  const promises = []
-  const top = store.getStore()
-  
-  store.ctx.pluginsLoaded = true
+const loadPlugins = state => {
+  const top = state.getStore()
+  state[pluginsLoaded] = true
 
-  traverseModules(top, store => {
-    store.plugins.forEach(p => {
-      if (!p.load) return
-
-      const promise = p.load(store)
-      promises.push(promise)
-    })
+  return traverseModulesAsyncParallel(top, state => {
+    const promises = state.plugins.map(p => p.load?.(state))
+    return Promise.all(promises)
   })
-  
-  return Promise.all(promises)
 }
+
+const pluginsLoaded = Symbol('pluginsLoaded') // preserve through HMR, but not sessionStorage.getItem('sessionState')

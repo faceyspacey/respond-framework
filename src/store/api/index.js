@@ -25,11 +25,7 @@ export default (top, state, replays) => {
   const listeners = []
   const promises = []
 
-  const ctx = {
-    ...window.store?.ctx,
-    init: replays.status !== 'session',
-    pluginsLoaded: replays.status === 'hmr' ? window.store?.ctx.pluginsLoaded : false
-  }
+  const ctx = window.store?.ctx ?? {}
 
   const { cookies, modulePath: replayModulePath } = replays
   state.replays = replays
@@ -58,19 +54,19 @@ export default (top, state, replays) => {
     devtools: createDevtools(),
     cache: createCache(state),
 
-    kinds, //?
+    kinds,
   
-    dispatch, //
-    dispatchSync, //
+    dispatch,
+    dispatchSync,
   
-    fromEvent, //
-    eventFrom, //
+    fromEvent,
+    eventFrom,
   
-    addToCache, //
-    addToCacheDeep, //
-  
-    snapshot, //
-    render, //
+    snapshot,
+    render,
+
+    addToCache,
+    addToCacheDeep,
   
     getStore() {
       return state
@@ -84,6 +80,10 @@ export default (top, state, replays) => {
       
       if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
         s = { ...s, replayTools: { ...s.replayTools, tests: {} } } // don't waste cycles on tons of tests with their events
+      }
+
+      if (s.prevState?.prevState) {
+        delete s.prevState.prevState // HMR requires/keeps 2 levels, but sessionState does not
       }
 
       return JSON.stringify(s, this.options.replacer ?? replacer)
@@ -121,7 +121,7 @@ export default (top, state, replays) => {
     },
   
     isEqualNavigations(a, b) {
-      return a && b && this.respond.fromEvent(a).relativeUrl === this.respond.fromEvent(b).relativeUrl
+      return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
     },
 
     changeBasename(basename) {
@@ -150,7 +150,7 @@ export default (top, state, replays) => {
 
       Object.assign(eventsByPath, next)
 
-      const e = this.respond.getStore().replayTools.lastEvent
+      const e = this.respond.getStore().replayTools.findLastEvent
       this.respond.changePath(e, true)
     },
   

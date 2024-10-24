@@ -1,6 +1,8 @@
+import { isTest } from './bools.js'
+
+
 export default (ms = 300) => {
-  const { ctx } = window.store ?? { ctx: {} }
-  const dontAwait =  ctx.isReplay || ctx.isFastReplay || process.env.NODE_ENV === 'test'
+  const dontAwait = window.store?.replays.playing || isTest
   if (dontAwait) return
   return new Promise(res => setTimeout(res, ms))
 }

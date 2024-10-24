@@ -1,5 +1,5 @@
 import sessionStorage from './sessionStorage.js'
-import { searchToSettings as permalinkSettings } from '../modules/replayTools/helpers/createPermalink.js'
+import { hashToSettings as permalinkSettings } from '../modules/replayTools/helpers/createPermalink.js'
 import { isProd } from './bools.js'
 
 

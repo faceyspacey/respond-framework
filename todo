@@ -272,8 +272,6 @@ expect.addSnapshotSerializer({
 
 #replace `store` with `state`
 #consolidate api methods in createStore
-#make all tools replacable by user
-#re-organize files
 
 
 
@@ -281,22 +279,15 @@ expect.addSnapshotSerializer({
 #move localStorage.getItem('replayToolsTab') into localStorage.getItem('replaySettings') like other settings
 #possibly combine replays + replayTools into a single module
 
+
+
 dynamic modules
 make dispatch have hook for parent modules to listen in
 
 code splitting + simultaneus api fetching
 ssr, createControllers needs to be passed the db it uses, createDatabase needs new names for things such as model, parent etc
 
-
-
-
-
-
 devtools
-
-
-
-
 
 naked component functions
 widgets: Box, Row, Button, Dropdown, Switch, Checkbox, Radio, Card
@@ -365,12 +356,20 @@ apply prefixPath function in createEvents
 #eventsByPath[path] quick check
 
 #locationFrom
+#remove .call
+
+#.prevState.prevState optimization
+#permaLink search -- use hash
+
+#if session restored, ignore first event + events.start()
+
+#bind methods in respond
 
 
-bind methods in respond
-.prevState.prevState optimization
+#searchQuery.js should use reviver/replacer
 
-
+#dont repeat identical navigation events
+#put playing in reactive replays.playing state
 
 
 navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
@@ -381,14 +380,18 @@ e.cached -> e.meta.cached
 options.alwaysDispatchFollowUp
 
 
+make all tools replacable by user (including reviver)
+re-organize files
+
+combine replays/replayTools?
+
+overridenReducers should be per module (aside: should explicitly differentiate between module context + global context objects)
 
 
 
+replayEvents need to dispatch last path
 
-put playing in reactive replays.playing state
 
-
-remove .call
 
 always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
-createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed
+createSeed needs to run per module, as nested modules need to provide their own seed -- the challenge is that the collections can be shared between modules -- old: createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed

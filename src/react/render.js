@@ -11,12 +11,8 @@ export default function render(props = {}) {
 
   if (isTest) return app
 
-  startReplay(ctx, this.state, this)
-
   if (!isNative) renderWeb(ctx, app)
   else renderNative(ctx, app, props)
-
-  endReplay(ctx)
 }
 
 
@@ -43,16 +39,4 @@ const renderNative = (ctx, app, props) => {
 
   ctx.appName = appName // cache for replays
   ctx.appParams = appParams
-}
-
-
-const startReplay = (ctx, state, respond) => {
-  ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = true
-  state.replayTools.playing = respond.replays.playing = false
-}
-
-const endReplay = ctx => {
-  requestAnimationFrame(() => {
-    ctx.ignoreChangePath = ctx.isReplay = ctx.isFastReplay = false
-  })
 }

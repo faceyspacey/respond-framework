@@ -37,10 +37,10 @@ export default async function addModule(mod, r, state = Object.create({}), paren
   const events = createEvents(respond, state, evs, propEvents, path)
 
   Object.assign(proto, { moduleKeys, events })
-  
-  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, reducers, state, respond)
 
   createReducers(proto, state, name, reducers, propReducers, parent.reducers, respond)
+
+  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, state, respond)
 
   respond.modulePathsById[id] = path
   respond.modulePaths[path] = state

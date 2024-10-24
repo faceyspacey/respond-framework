@@ -111,11 +111,7 @@ export default {
   },
 
   stopReplay: {
-    before: ({ replays, state }) => {
-      replays.playing = false
-      state.playing = false
-      return false
-    }
+    before: ({ replays }) => replays.playing = false
   },
 
   replayEventsToIndex: {

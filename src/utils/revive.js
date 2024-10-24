@@ -1,7 +1,7 @@
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
-export default ({ modelsByModulePath = {}, eventsByType = {} }, modulePath = '') => function rev(v, k) {
+export default ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => function rev(v, k) {
   if (dateKeyReg.test(k)) {
     return v ? new Date(v) : v
   }

@@ -1,10 +1,11 @@
 import revive  from '../utils/revive.js'
 import sessionStorage from '../utils/sessionStorage.js'
 import { isProd } from '../utils/bools.js'
+import reduce from './plugins/reduce.js'
 
 
 export async function hydrateModules(state, replays) {
-  const { token, status } = replays
+  const { token } = replays
 
   state.token = token
   state.cachedPaths ??= {}
@@ -14,9 +15,10 @@ export async function hydrateModules(state, replays) {
 
   mergeModules(state, hydration)
 
-  if (status !== 'hmr') {
-    mergeModulesPrevState(state, state.respond.snapshot(state))
-  }
+  if (state.prevState) return // hmr + session have prevState + state already populated
+
+  mergeModulesPrevState(state, state.respond.snapshot(state))
+  reduce(state, state.events.start())
 }
 
 
@@ -25,14 +27,14 @@ export function mergeModulesPrevState(state, prevState = {}, store) {
     mergeModulesPrevState(state[k], prevState[k], store)
   })
 
-  const snap = Object.create(Object.getPrototypeOf(prevState))
-  Object.assign(snap, prevState)
+  const prev = Object.create(Object.getPrototypeOf(prevState))
+  Object.assign(prev, prevState)
 
-  if (snap.prevState?.prevState) {
-    delete snap.prevState.prevState // prevent infinite circular references to prevStates
+  if (prev.prevState?.prevState) {
+    delete prev.prevState.prevState // prevent infinite circular references to prevStates (however: we need 2 prevStates for HMR which hydrates from prevState; otherwise, this would be cut off 1 level sooner)
   }
 
-  state.prevState = snap
+  state.prevState = prev
 }
 
 

@@ -1,42 +1,30 @@
-import { isNative } from './bools.js'
 import { parseSearch, stringifyQuery } from './searchQuery.js'
-import defaultOrigin from './constants.js'
 
 
-export const locationToRespondLocation = (loc = {}, state = {}) => {     // input: { pathname: '/foo', search: '?bar=baz', hash='#bla' }
-  const { pathname, search: s, hash: h } = loc
-  
-  const hash = h?.charAt(0) === '#' ? h.substr(1) : h || ''
-  const search = s?.charAt(0) === '?' ? s.substr(1) : s || ''
-
+export const searchHashToQueryHash = ({ search, hash: h } = {}, state = {}) => {     // input: { search: '?bar=baz', hash='#bla' }
   const query = search ? parseSearch(search, state) : {}
-
-  const relativeUrl = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
-
-  return { relativeUrl, pathname, search, hash, query }                   // output: { pathname: '/foo', query: { bar: 'baz' }, hash='bla', search: 'bar=baz', relativeUrl: '/foo?bar=baz#bla, }
+  const hash = !h ? '' : h[0] === '#' ? h.substr(1) : h
+  return { query, hash }                                                            // output: { query: { bar: 'baz' }, hash: 'bla' }   
 }
 
 
-export const userLocationToRespondLocation = (loc = {}, state = {}) => {  // input: { pathname: '/foo', query: { bar: 'baz' }, hash='bla' }
-  const { pathname = '/', query, hash: h } = loc
-  
-  const hash = h?.charAt(0) === '#' ? h.substr(1) : h || ''
-  const search = query ? stringifyQuery(query, state, '') : ''
-
-  const relativeUrl = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
-
-  return { relativeUrl, pathname, search, hash, query }                   // output: { pathname: '/foo', query: { bar: 'baz' }, hash='bla', search: 'bar=baz', relativeUrl: '/foo?bar=baz#bla, }
+export const queryHashToSearchHash = ({ query, hash: h } = {}, state = {}) => {     // input: { query: { bar: 'baz' }, hash='bla' }
+  const search = query ? stringifyQuery(query, state) : ''
+  const hash = !h ? '' : h[0] === '#' ? h.substr(1) : h
+  return { search, hash }                                                           // output: { search: 'bar=baz', hash: 'bla' }  
 }
 
 
 
 
-export const cleanSearchHash = ({ search: s, hash: h, ...rest }) => ({
-  ...rest,
-  search: s?.charAt(0) === '?' ? s.substr(1) : s || '',
-  hash: h?.charAt(0) === '#' ? h.substr(1) : h || ''
+export const cleanSearchHash = ({ search: s, hash: h }) => ({
+  hash:   !h ? '' : h[0] === '#' ? h.substr(1) : h,
+  search: !s ? '' : s[0] === '?' ? s.substr(1) : s,
 })
 
+
+export const createRelativeUrl = (pathname, search, hash) =>
+  `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
 
 
 
@@ -44,7 +32,6 @@ export const cleanSearchHash = ({ search: s, hash: h, ...rest }) => ({
 
 export const urlToLocation = url => {
   if (typeof url === 'object') return url
-  if (!isNative) return new URL(defaultOrigin + url) // RN historically has had problems with the URL class -- todo: replace when no longer an issue
 
   let pathname = url.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
   let search = ''

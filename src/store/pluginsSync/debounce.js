@@ -2,7 +2,7 @@ export default async (store, e) => {
   const func = e.event.debounce
   if (!func) return
 
-  const debounced = weakMap.get(func) || create(func, e.event.debounceDuration)
+  const debounced = weakMap.get(func) ?? create(func, e.event.debounceDuration)
 
   const res = await debounced.call(e.event, store, e)
   

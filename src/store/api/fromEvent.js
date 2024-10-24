@@ -1,36 +1,43 @@
 import { compile } from 'path-to-regexp'
-import { cleanSearchHash, userLocationToRespondLocation } from '../../utils/url.js'
+import { cleanSearchHash, createRelativeUrl, queryHashToSearchHash } from '../../utils/url.js'
 
 
 const cache = {}
 
-export default function(e, basename = e.event.module.basename ?? '') {
+const opts = { encode: x => x } // just pathname by default, eg: '/foo'
+
+const createPathname = (path, e) => {
+  const argsToPathName = cache[path] ??= compile(path)
+  return argsToPathName(e, opts)
+}
+
+
+export default function(e, basename) {
   const { path } = e.event ?? {}
   if (!path) return null
 
   const { event } = e
   const state = event.module
 
+  basename ??= state.basename ?? ''
+
   try {
     if (event.locationFrom) {
-      const loc = event.locationFrom(state, e)                      // expected: { query: { bar: 'baz' }, hash='bla' } -- you can just return a query obj, and don't need to parse parse/prepare anything
-      const toPath = cache[path] = cache[path] || compile(path)
-      loc.pathname ??= toPath(e.arg, { encode: x => x })  
-      loc.pathname = `${basename}${loc.pathname}`
-      return userLocationToRespondLocation(loc, state, basename)  // result:   { pathname: '/foo', search: 'bar=baz', hash='bla', url: '/foo?bar=baz#bla, query: { bar: 'baz' } }
-    }
-    else if (event.locationFromCustom) {
-      const { pathname: p, query = {}, ...loc } = event.locationFromCustom(state, e)
+      const loc = event.locationFrom(state, e) // user can customize search serialization
+      const pathname = basename + loc.pathname // user also responsible for providing pathname, but not applying basename
       const { search, hash } = cleanSearchHash(loc)
-      const pathname = `${basename}${p}`
-      const relativeUrl = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
-      return { relativeUrl, pathname, search, hash, query }
+      const url = createRelativeUrl(pathname, search, hash)
+      return { url, pathname, search, hash }
+    }
+    else if (e.query || e.hash) {                   
+      const pathname = basename + createPathname(path, e)  
+      const { search, hash } = queryHashToSearchHash(e, state)
+      const url = createRelativeUrl(pathname, search, hash)
+      return { url, pathname, search, hash }
     }
     else {
-      const toPath = cache[path] = cache[path] || compile(path)
-      const p = toPath(e.arg, { encode: x => x })  // just pathname by default, eg: '/foo'
-      const pathname = `${basename}${p}`
-      return { relativeUrl: pathname, pathname, search: '', hash: '', query: {} }
+      const pathname = basename + createPathname(path, e)
+      return { url: pathname, pathname, search: '', hash: '' }
     }
   }
   catch (error) {
