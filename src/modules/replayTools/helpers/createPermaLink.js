@@ -1,21 +1,16 @@
 import * as qs from 'qs'
 import { parseSearch } from '../../../utils/searchQuery.js'
+import { defaultOrigin } from '../../../utils/constants.js'
 
 
 
 export default (state, replays) => {
-  const { path = '', ...settings } = state.form
-
-  const host = typeof location !== 'undefined'
-    ? location.protocol + '//' + location.host
-    : 'http://localhost:3000/'
-
-  const p = path.indexOf('#') > -1 ? path.slice(0, path.indexOf('#')) : path // permalinks can't be used in combination with userland hashes, but search queries can!
+  const { path = '/', ...settings } = state.form
   const hash = settingsToHash(settings, replays.config)
 
   return {
-    relativeUrl: p + hash,
-    url: host + p + hash
+    relativeUrl: path + hash,
+    url: defaultOrigin + path + hash
   }
 }
 
@@ -35,10 +30,22 @@ const settingsToHash = (settings, config) => {
 
 
 export const hashToSettings = () => {
-  const hash = typeof window !== undefined && window.location?.hash
-  return hash?.indexOf(prefix) === 0 && parseSearch(hash.slice(length)) // use hash so search can still be used in userland
+  const h = typeof window !== undefined && window.location?.hash
+
+  if (h?.indexOf(prefix) > -1) {
+    const index = h.indexOf(prefix)
+    const search = h.slice(index + length)
+    return parseSearch(search) // use hash so search can still be used in userland
+  }
 }
 
 
-const prefix = '#respondPermalink:'
+export const prefix = '#respond:'
 const length = prefix.length
+
+
+export const stripPermalinkPrefix = h => {
+  h = h[0] === '#' ? h.substr(1) : h
+  const index = h.indexOf(prefix)
+  return index === -1 ? h : h.slice(0, index)
+}

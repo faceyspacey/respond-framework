@@ -25,6 +25,12 @@ export function findLastEvent() {
   return this.evs[this.evsIndex]
 }
 
-export function playing() {
-  return this[_parent].replays.playing
+export const selectors = {
+  get playing() {
+    return this[_parent].replays.playing
+  }
 }
+
+// export function playing() {
+//   return this[_parent].replays.playing
+// }

@@ -16,8 +16,6 @@ export const stringifyQuery = (query, state) => {
 
 
 const ps = (search, state) => {
-  search = search.indexOf('?') === 0 ? search.substring(1) : search
-
   const rev = revive(state)
   let k
 
@@ -39,12 +37,12 @@ const ps = (search, state) => {
     return ret === '' ? undefined : ret
   }
 
-  return qs.parse(search, { decoder })
+  return qs.parse(search.replace(/^\?/, ''), { decoder })
 }
 
 
 
-const sq = (query, state, prefix = '') => {
+const sq = (query, state) => {
   let k
 
   const encoder = (v, defaultEncoder, charset, type) => {
@@ -57,5 +55,5 @@ const sq = (query, state, prefix = '') => {
     }
   }
 
-  return prefix + qs.stringify(query, { encoder })
+  return qs.stringify(query, { encoder })
 }

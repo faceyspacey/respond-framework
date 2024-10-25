@@ -32,7 +32,7 @@ export default (top, state, replays) => {
 
   return {
     top,
-    replays,
+    replays: state.replays,
     cookies,
     ctx,
     state,
@@ -107,7 +107,7 @@ export default (top, state, replays) => {
 
     queueSaveSession() {
       if (isProd || isTest) return
-      if (this.replays.playing || ctx.saveQueued) return
+      if (ctx.saveQueued || this.replays.playing) return
       if (window.state !== state) return // new store created
 
       ctx.saveQueued = true

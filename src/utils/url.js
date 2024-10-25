@@ -1,16 +1,17 @@
 import { parseSearch, stringifyQuery } from './searchQuery.js'
+import { stripPermalinkPrefix as stripPermalink } from '../modules/replayTools/helpers/createPermalink.js'
 
 
 export const searchHashToQueryHash = ({ search, hash: h } = {}, state = {}) => {     // input: { search: '?bar=baz', hash='#bla' }
   const query = search ? parseSearch(search, state) : {}
-  const hash = !h ? '' : h[0] === '#' ? h.substr(1) : h
+  const hash = !h ? '' : stripPermalink(h)
   return { query, hash }                                                            // output: { query: { bar: 'baz' }, hash: 'bla' }   
 }
 
 
 export const queryHashToSearchHash = ({ query, hash: h } = {}, state = {}) => {     // input: { query: { bar: 'baz' }, hash='bla' }
   const search = query ? stringifyQuery(query, state) : ''
-  const hash = !h ? '' : h[0] === '#' ? h.substr(1) : h
+  const hash = !h ? '' : stripPermalink(h)
   return { search, hash }                                                           // output: { search: 'bar=baz', hash: 'bla' }  
 }
 
@@ -18,9 +19,13 @@ export const queryHashToSearchHash = ({ query, hash: h } = {}, state = {}) => { 
 
 
 export const cleanSearchHash = ({ search: s, hash: h }) => ({
-  hash:   !h ? '' : h[0] === '#' ? h.substr(1) : h,
+  hash:   !h ? '' : stripPermalink(h),
   search: !s ? '' : s[0] === '?' ? s.substr(1) : s,
 })
+
+
+
+
 
 
 export const createRelativeUrl = (pathname, search, hash) =>

@@ -111,7 +111,7 @@ export default {
   },
 
   stopReplay: {
-    before: ({ replays }) => replays.playing = false
+    before: ({ replays }) => window.store.replays.playing = false
   },
 
   replayEventsToIndex: {

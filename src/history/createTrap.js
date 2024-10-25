@@ -3,6 +3,7 @@ import bs from './browserState.js'
 import * as bf from './utils/backForward.js'
 import out from './out.js'
 import { isDev } from '../utils.js'
+import { prefix as permalinkPrefix } from '../modules/replayTools/helpers/createPermalink.js'
 
 
 export const createTrap = () => {
@@ -24,8 +25,7 @@ export const popListener = async () => {
   const { events, ctx, respond } = window.store
 
   if (i === undefined) {
-    await respond.eventFrom(window.location.href).trigger()
-    return // reloading current first page, because eg simply the hash was changed -- this probably covers other caching related extraneous browser pops
+    return await handleHashChange(respond) // reloading current first page, because eg simply the hash was changed -- this probably covers other caching related extraneous browser pops
   }
   else if (bs.prevIndex === -1 && i === 0) {                          // browser cached on return from front
     bs.prevIndex = i
@@ -61,6 +61,18 @@ export const popListener = async () => {
   if (!changed) await out(back)  // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
 }
 
+
+
+const handleHashChange = respond => {
+  const url = window.location.href
+
+  if (url.indexOf(permalinkPrefix) > -1) {
+    window.location.reload() // reload page to trigger permalink change
+  }
+  else {
+    return respond.eventFrom(url).trigger()
+  }
+}
 
 // ADDITIONAL NOTES:
 // Ideally, the trap would kick on index 1. On index 0, there's no need, as there's no question of where to take the user except to the previous site. The same

@@ -370,6 +370,8 @@ apply prefixPath function in createEvents
 
 #dont repeat identical navigation events
 #put playing in reactive replays.playing state
+#replayEvents need to dispatch last path
+
 
 
 navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
@@ -389,7 +391,7 @@ overridenReducers should be per module (aside: should explicitly differentiate b
 
 
 
-replayEvents need to dispatch last path
+
 
 
 
