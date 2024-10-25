@@ -46,8 +46,8 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
       return meth
 
       async function meth(...args) {
-        const { token, userId, adminUserId } = state
-        const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
+        const { token, userId, adminUserId, basename, basenameFull } = state
+        const context = { token, userId, adminUserId, basename, basenameFull, ...options.getContext(state, controller, method, args) }
     
         try {
           const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }

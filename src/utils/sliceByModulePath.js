@@ -46,11 +46,19 @@ export const recreateFullType = (e, modulePath = e.modulePath) => {
 
 
 
-export const traverseModules = (state, callback) => {
-  callback(state)
+export const traverseModules = (state, callback, parent) => {
+  callback(state, parent)
 
   for (const k of state.moduleKeys) {
-    traverseModules(state[k], callback)
+    traverseModules(state[k], callback, state)
+  }
+}
+
+
+export const traverseModuleChildren = (state, callback) => {
+  for (const k of state.moduleKeys) {
+    callback(state[k], state)
+    traverseModuleChildren(state[k], callback)
   }
 }
 

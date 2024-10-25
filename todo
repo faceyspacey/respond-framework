@@ -385,6 +385,7 @@ options.alwaysDispatchFollowUp
 How to facilitate prefetching through caching fetch/api results, without the initial dispatch modifying state?
 
 
+basename isn't hydrated yet when events are created
 
 
 make all tools replacable by user (including reviver)

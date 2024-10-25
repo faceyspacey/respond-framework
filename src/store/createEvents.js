@@ -89,7 +89,7 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
   store.eventsByType[type] = event
 
   if (config.path) {
-    const path = state.basename ? `${state.basename}${config.path}` : config.path
+    const path = state.basenameFull ? `${state.basenameFull}${config.path}` : config.path
     store.eventsByPath[path] = event
   }
 

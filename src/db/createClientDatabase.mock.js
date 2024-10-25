@@ -53,8 +53,8 @@ export default (db, parentDb, props, state, respond, modulePath) => {
         const Controller = controllers[controller]
         if (!Controller) throw new Error(`controller "${controller}" does not exist in ${modulePath ?? 'top'} module`)
     
-        const { token, userId, adminUserId } = state.getStore()
-        const context = { token, userId, adminUserId, ...options.getContext(state, controller, method, args) }
+        const { token, userId, adminUserId, basename, basenameFull } = state.getStore()
+        const context = { token, userId, adminUserId, basename, basenameFull, ...options.getContext(state, controller, method, args) }
         const body = { ...context, modulePath, controller, method, args: clean(argsIn(args), state), first: !state.__dbFirstCall  }
     
         let response

@@ -16,7 +16,7 @@ import createCache from '../../utils/createCache.js'
 import { isTest, isProd, kinds} from '../../utils.js'
 import { createStateReviver, replacer } from '../../utils/revive.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { sliceEventByModulePath, traverseModules } from '../../utils/sliceByModulePath.js'
+import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 
 
@@ -124,33 +124,33 @@ export default (top, state, replays) => {
     },
 
     changeBasename(basename) {
-      let prevBasename = this.respond.state.basename ?? ''
-      this.respond.state.basename = basename
+      const e = this.respond.eventFrom(window.location.href)
+      const { state } = this.respond
 
-      traverseModules(this.respond.state, store => {
-        prevBasename += store.basename
-        basename += store.basename
-        store.basename.replace(prevBasename, basename)
+      const prevBasename = state.basename
+      const prevBasenameFull = state.basenameFull
+      
+      state.basename = basename
+      state.basenameFull = prevBasenameFull.replace(new RegExp(prevBasename + '$'), basename)
+
+      traverseModuleChildren(state, (state, parent) => {
+        state.basenameFull = parent.basenameFull + state.basename
       })
 
       const { eventsByPath } = this.respond
       const next = {}
 
-      Object.keys(eventsByPath).forEach(prevPath => {
-        const event = eventsByPath[prevPath]
-
-        const { basename } = event.module
-        const path = basename ? `${basename}${event.path}` : event.path
-
+      Object.keys(eventsByPath).forEach(prev => {
+        const event = eventsByPath[prev]
+        const path = event.module.basenameFull + event.path
         next[path] = event
-
-        delete eventsByPath[prevPath]
+        delete eventsByPath[prev]
       })
 
       Object.assign(eventsByPath, next)
 
-      const e = this.respond.getStore().replayTools.findLastEvent
-      this.respond.changePath(e, true)
+      this.respond.history.changePath(e, true)
+      this.respond.queueSaveSession()
     },
   
     findInClosestAncestor(key, modulePath) {

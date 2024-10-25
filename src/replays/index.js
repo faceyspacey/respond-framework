@@ -25,7 +25,8 @@ export default async (top, opts, state) => {
   const getTopState = () => state
   const status = hydratedReplays.status ?? opts.status ?? 'reload'
   
-  if (status === 'reload' || status === 'replay') window.__idCounter = 10000 // todo: store in state for sessions
+  window.__respondContext.idCounter = hydration.__respondContext?.idCounter ?? 10000
+  state.__respondContext = window.__respondContext
 
   const {
     createSettings = defaultCreateSettings,

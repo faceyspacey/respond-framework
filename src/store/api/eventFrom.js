@@ -6,11 +6,11 @@ export default function eventFrom(url, additionalArg, dontThrow = false) {
   const { state, eventsByPath } = this.respond
   const loc = urlToLocation(url)
 
-  const { basename = '' } = state
+  // const { basename = '' } = state
 
-  if (basename) {
-    loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
-  }
+  // if (basename) {
+  //   loc.pathname = loc.pathname.substring(basename.length)            // strip basename, as event-to-url matching assumes it's not there
+  // }
 
   const event = eventsByPath[loc.pathname] // basic match, eg '/about', '/admin/users' etc
   if (event) return createEvent(event, loc, additionalArg)
@@ -20,17 +20,8 @@ export default function eventFrom(url, additionalArg, dontThrow = false) {
   try {
     for (let i = 0; i < paths.length; i++) {
       const path = paths[i]
-      const { match, keys } = matchPath(loc.pathname, path)        // long ago early Respond iterations matched even based on query/search strings and the hash, but then it became clear that's a very uncommon need; so it was decided to stick to a simpler patch matching implementation here to serve as inspiration; so if you would like to dispatch different events, say, based on different query params, then just pass in your own createEventFrom option to createState, and you can match URLs to events any way you please
-      
-      if (!match) continue
-
-      const [_path, ...values] = match
-
-      const arg = keys.reduce((acc, key, index) => {
-        acc[key.name] = values[index]
-        return acc
-      }, {})
-
+      const arg = createArgIfMatch(loc, path)
+      if (!arg) continue
       return createEvent(eventsByPath[path], loc, additionalArg, arg)
     }
   }
@@ -38,6 +29,19 @@ export default function eventFrom(url, additionalArg, dontThrow = false) {
 
   if (dontThrow) return
   throw new Error (`respond: no event matched path "${loc.pathname}".`)
+}
+
+
+const createArgIfMatch = (loc, path) => {
+  const { match, keys } = matchPath(loc.pathname, path)        // long ago early Respond iterations matched even based on query/search strings and the hash, but then it became clear that's a very uncommon need; so it was decided to stick to a simpler patch matching implementation here to serve as inspiration; so if you would like to dispatch different events, say, based on different query params, then just pass in your own createEventFrom option to createState, and you can match URLs to events any way you please
+  if (!match) return
+
+  const [_path, ...values] = match
+
+  return keys.reduce((acc, key, index) => {
+    acc[key.name] = values[index]
+    return acc
+  }, {})
 }
 
 

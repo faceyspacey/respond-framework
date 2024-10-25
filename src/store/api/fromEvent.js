@@ -12,31 +12,31 @@ const createPathname = (path, e) => {
 }
 
 
-export default function(e, basename) {
+export default function(e) {
   const { path } = e.event ?? {}
   if (!path) return null
 
   const { event } = e
   const state = event.module
 
-  basename ??= state.basename ?? ''
+  const bn = state.basenameFull
 
   try {
     if (event.locationFrom) {
       const loc = event.locationFrom(state, e) // user can customize search serialization
-      const pathname = basename + loc.pathname // user also responsible for providing pathname, but not applying basename
+      const pathname = bn + loc.pathname // user also responsible for providing pathname, but not applying basename
       const { search, hash } = cleanSearchHash(loc)
       const url = createRelativeUrl(pathname, search, hash)
       return { url, pathname, search, hash }
     }
     else if (e.query || e.hash) {                   
-      const pathname = basename + createPathname(path, e)  
+      const pathname = bn + createPathname(path, e)  
       const { search, hash } = queryHashToSearchHash(e, state)
       const url = createRelativeUrl(pathname, search, hash)
       return { url, pathname, search, hash }
     }
     else {
-      const pathname = basename + createPathname(path, e)
+      const pathname = bn + createPathname(path, e)
       return { url: pathname, pathname, search: '', hash: '' }
     }
   }

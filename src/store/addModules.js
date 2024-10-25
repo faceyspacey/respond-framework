@@ -16,11 +16,17 @@ import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
 export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name) {
-  const { id, ignoreParents, initialState, components, replays, options = {} } = mod
+  const { id, ignoreParents, initialState, components, replays, options = {}, basename = '' } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   const respond = { ...options.merge, ...r, state, options, modulePath: path, overridenReducers: new Map }
   respond.respond = respond
+
+  state.basename = basename
+
+  state.basenameFull = parent.basenameFull
+    ? parent.basenameFull + basename
+    : basename
 
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
   const models = createModels(mod.models, db, parent, respond, path)
