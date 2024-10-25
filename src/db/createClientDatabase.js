@@ -51,7 +51,7 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
     
         try {
           const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }
-          const response = await fetch(url, body, state, models, useCache)
+          const response = await fetch(url, body, state, useCache)
     
           state.__dbFirstCall = true
         

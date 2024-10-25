@@ -15,7 +15,7 @@ export default async ({ status, settings, hydration } = {}) => {
   const perm = !isProd && permalinkSettings()
   if (perm) return { ...hydration, replays: { settings: perm } }
 
-  const session = !isProd && await sessionStorage.getItem('sessionState')
+  const session = await sessionStorage.getItem('sessionState')
   if (!session) return hydration
 
   const state = JSON.parse(session)

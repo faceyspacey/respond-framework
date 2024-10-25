@@ -1,7 +1,18 @@
-export default async function fetchPlugin(store, e) {
-  if (!e.event.fetch || e.cached) return
-  await fetch(store, e)
-}
+import createCache from '../../utils/createCache.js'
+
+
+export default {
+  async enter(state, e) {
+    if (!e.event.fetch || e.meta.cached) return
+    await fetch(state, e)
+  },
+
+  load(state) {
+    const cache = createCache(state)
+    state.respond.cache = cache
+    state.cache = cache
+  }
+} 
 
 
 async function fetch(store, e) {
@@ -24,7 +35,7 @@ async function fetch(store, e) {
 
 export async function fetchPluginWithCachedFollowUp(store, e) {
   if (e.event.fetch) {
-    if (e.cached) await e.event.cached.dispatch(undefined, { from: e })
+    if (e.meta.cached) await e.event.cached.dispatch(undefined, { from: e })
     else await fetch(store, e)
   }
   else if (e.event.path) {

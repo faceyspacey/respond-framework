@@ -23,6 +23,12 @@ export default state => ({
     const { cache } = e.event
     if (typeof cache === 'function') return e.event.cache(state.respond.modulePaths[e.modulePath], e, this.get(e))
     if (cache !== undefined) return !!cache
-    return !!(e.cached || !e.event.fetch || this.get(e))
+    return !!(e.meta.cached || !e.event.fetch || this.get(e))
   },
+
+  async prefetch(event, arg, meta) {
+    if (!e.event.fetch) return
+    const e = event(arg, meta)
+    await event.fetch(state, e)
+  }
 })

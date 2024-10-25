@@ -71,10 +71,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
           response = clean(res, state, modulePath)
         }
 
-        const model = Model?.prototype
-        const shouldCache = useCache ?? model?.shouldCache ?? method.indexOf('find') === 0
-
-        if (shouldCache) cache.set(body, JSON.stringify(response, replacer))
+        if (useCache) cache.set(body, JSON.stringify(response, replacer))
 
         return sendNotification(state, { modulePath, controller, method, args, response })
       }

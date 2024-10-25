@@ -51,7 +51,6 @@ export default (top, state, replays) => {
   
     history,
     devtools: createDevtools(),
-    cache: createCache(state),
 
     kinds,
   

@@ -15,18 +15,16 @@ import defaultPluginsSync from './pluginsSync/index.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name) {
-  const { id, ignoreParents, initialState, components, replays, options = {}, basename = '' } = mod
+export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name, hydration = r.replays.hydration ?? {}) {
+  const { id, ignoreParents, initialState, components, replays, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
-  const respond = { ...options.merge, ...r, state, options, modulePath: path, overridenReducers: new Map }
+  const respond = { ...options.merge, ...r, options, modulePath: path, overridenReducers: new Map }
   respond.respond = respond
+  Object.defineProperty(respond, 'state', { get: () => r.modulePaths[path] ?? state, enumerable: false, configurable: true })
 
-  state.basename = basename
-
-  state.basenameFull = parent.basenameFull
-    ? parent.basenameFull + basename
-    : basename
+  state.basename = hydration.basename ?? props.basename ?? mod.basename ?? ''
+  state.basenameFull = (parent.basenameFull ?? '') + state.basename
 
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
   const models = createModels(mod.models, db, parent, respond, path)
@@ -53,7 +51,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   for (const k of moduleKeys) {
     const p = path ? `${path}.${k}` : k
-    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k)
+    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k, hydration[k])
     state[k].respond.state = state[k]
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
     //   const p = path ? `${path}.${k2}` : k2
@@ -63,7 +61,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   if (!path && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
-    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k)
+    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k, hydration[k])
     state[k].respond.state = state[k]
     moduleKeys.push(k)
   }

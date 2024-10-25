@@ -3,7 +3,7 @@ import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (apiUrl = defaultApiUrl, body = {}, state, models = {}, useCache) => { 
+export default async (apiUrl = defaultApiUrl, body = {}, state, useCache) => { 
   const { controller, method, modulePath } = body
   
   const url = `${apiUrl}/${controller}/${method}`
@@ -24,10 +24,7 @@ export default async (apiUrl = defaultApiUrl, body = {}, state, models = {}, use
   })
 
   const text = await res.text()
-
-  const shouldCache = useCache ?? models[controller]?.prototype?.shouldCache ?? method.indexOf('find') === 0
-  if (shouldCache) state.apiCache.set(body, text)
-
+  if (useCache) state.apiCache.set(body, text)
   return JSON.parse(text, createReviver(state, modulePath))
 }
 

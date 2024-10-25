@@ -391,13 +391,16 @@ apply prefixPath function in createEvents
 #firstNavigation + curr reducer?
 
 
-replace createProxyHandler
-make all tools replacable by user (including reviver)
-re-organize files
-finalize implementation of respond object etc
 
 
 always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
 reduce needs way to dynamically toggle deepth-first vs breadth-first
 
 createSeed needs to run per module, and also have access to previous module's underlying db
+
+
+
+replace createProxyHandler
+make all tools replacable by user (including reviver)
+re-organize files
+finalize implementation of respond object etc

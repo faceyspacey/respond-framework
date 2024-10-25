@@ -13,7 +13,7 @@ const createPluginObject = p => {
     : function() {}
 
   if (p.load) {
-    enter.load = (...args) => p.load.call(self, ...args)
+    enter.load = state => p.load.call(self, state)
   }
 
   return enter

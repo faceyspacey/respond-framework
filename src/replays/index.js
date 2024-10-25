@@ -18,12 +18,12 @@ import getSessionState from '../utils/getSessionState.js'
 export default async (top, opts, state) => {
   const { replays: hydratedReplays = {}, ...hydration } = await getSessionState(opts) ?? {}
   console.log('hydration', opts, hydratedReplays, hydration)
-
+  
   const settingsRaw = hydratedReplays.settings
   const replayModulePath = settingsRaw?.modulePath
 
   const getTopState = () => state
-  const status = hydratedReplays.status ?? opts.status ?? 'reload'
+  const status = hydratedReplays.status ?? opts.status ?? 'init'
   
   window.__respondContext.idCounter = hydration.__respondContext?.idCounter ?? 10000
   state.__respondContext = window.__respondContext

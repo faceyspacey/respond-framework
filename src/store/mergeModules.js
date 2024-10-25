@@ -1,6 +1,4 @@
 import revive  from '../utils/revive.js'
-import sessionStorage from '../utils/sessionStorage.js'
-import { isProd } from '../utils/bools.js'
 import reduce from './plugins/reduce.js'
 
 
@@ -10,8 +8,7 @@ export async function hydrateModules(state, replays) {
   state.token = token
   state.cachedPaths ??= {}
 
-  const session = isProd && await sessionStorage.getItem('sessionState')
-  const hydration = session ? state.respond.parseJsonState(session) : revive(state)(replays.hydration)
+  const hydration = revive(state)(replays.hydration)
 
   mergeModules(state, hydration)
 

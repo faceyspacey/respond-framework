@@ -13,11 +13,11 @@ export default async (store, e) => {
   }
 
   if (e.event.path && store.cache?.has(e)) {
-    e.cached = true
+    e.meta.cached = true
   }
 
   if (store.replays.status === 'session') {
-    store.replays.status = 'reload'
+    store.replays.status = 'init'
     return
   }
 
