@@ -375,23 +375,29 @@ apply prefixPath function in createEvents
 #overridenReducers should be per module (aside: should explicitly differentiate between module context + global context objects)
 
 
-navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
-createClientDatabase needs to allow u to specify apiCache key
-prefetching depends on both navigationCache and apiCache, and therefore fetch.js plugin
-start plugin is coupled to fetch cache
-e.cached -> e.meta.cached
-options.alwaysDispatchFollowUp
+#navigationCache needs to be modular, so cachedPaths key can be specified, and exists per module, and needs to be created within fetch.js plugin
+#createClientDatabase needs to allow u to specify apiCache key
+#prefetching depends on both navigationCache and apiCache, and therefore fetch.js plugin
+#start plugin is coupled to fetch cache
+#e.cached -> e.meta.cached
+#options.alwaysDispatchFollowUp
 
-How to facilitate prefetching through caching fetch/api results, without the initial dispatch modifying state?
-
-
-basename isn't hydrated yet when events are created
+#How to facilitate prefetching through caching fetch/api results, without the initial dispatch modifying state?
 
 
+#basename isn't hydrated yet when events are created
+#reactive URLs (with basename) - fromEvent
+
+#firstNavigation + curr reducer?
+
+
+replace createProxyHandler
 make all tools replacable by user (including reviver)
 re-organize files
-
+finalize implementation of respond object etc
 
 
 always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
-createSeed needs to run per module, as nested modules need to provide their own seed -- the challenge is that the collections can be shared between modules -- old: createSeed might benefit from coupling to createStore; createSeed might need to happen per module, or maybe parent createSeed calls child createSeed
+reduce needs way to dynamically toggle deepth-first vs breadth-first
+
+createSeed needs to run per module, and also have access to previous module's underlying db
