@@ -48,7 +48,6 @@ export default (top, state, replays) => {
     promises,
     refs: {},
     eventsCache: new Map,
-    overridenReducers: new Map,
   
     history,
     devtools: createDevtools(),

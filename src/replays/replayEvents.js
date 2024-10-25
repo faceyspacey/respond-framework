@@ -29,7 +29,7 @@ const run = async (events, delay, respond) => {           // keep in mind store 
     const first = i === 0
     const last =  i === events.length - 1
 
-    if (last) ctx.isFastReplay = false
+    if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
     if (delay ? first : last) respond.render()                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
     await timeout(delay, replays.settings, meta, last)
@@ -47,7 +47,7 @@ const run = async (events, delay, respond) => {           // keep in mind store 
 
 
 const timeout = (delay, settings, meta, last) => {
-  if (!delay || isTest || meta?.skipped || last) return
+  if (isTest || !delay || meta?.skipped || last) return
   const ms = delay !== true ? delay : settings.testDelay || 1500
   return new Promise(res => setTimeout(res, ms))
 }
