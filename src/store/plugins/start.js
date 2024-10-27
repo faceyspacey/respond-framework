@@ -1,11 +1,4 @@
-import { traverseModulesAsyncParallel } from '../../utils/sliceByModulePath.js'
-
-
-export default async (store, e) => {
-  if (!store[pluginsLoaded]) {
-    await loadPlugins(store, e)
-  }
-
+export default (store, e) => {
   applyFirstNavigation(store, e)
 
   if (store.history.state.pop) {
@@ -36,16 +29,3 @@ const applyFirstNavigation = (store, e) => {
 
   e.meta.firstNavigation = true
 }
-
-
-const loadPlugins = state => {
-  const top = state.getStore()
-  state[pluginsLoaded] = true
-
-  return traverseModulesAsyncParallel(top, state => {
-    const promises = state.plugins.map(p => p.load?.(state))
-    return Promise.all(promises)
-  })
-}
-
-const pluginsLoaded = Symbol('pluginsLoaded') // preserve through HMR, but not sessionStorage.getItem('sessionState')

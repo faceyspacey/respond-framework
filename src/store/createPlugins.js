@@ -1,8 +1,29 @@
-export default plugins =>
-  plugins.filter(p => p).map(p => {
-    if (typeof p === 'function') return p
-    return createPluginObject(p)
+export default (plugins, pluginMap) => {
+  if (!pluginMap) {
+    return plugins.filter(p => p).map(p => {
+      if (typeof p === 'function') return p
+      return createPluginObject(p)
+    })
+  }
+
+  const plugs = plugins.filter(p => p).map(p => {
+    if (typeof p !== 'function') {
+      p = createPluginObject(p)
+    }
+
+    const state = pluginMap.get(p)
+
+    if (state) {
+      Object.defineProperty(p, 'state', { value: state, enumerable: false, configurable: true })
+    }
+
+    return p
   })
+
+  pluginMap.clear()
+
+  return plugs
+}
 
 
 const createPluginObject = p => {

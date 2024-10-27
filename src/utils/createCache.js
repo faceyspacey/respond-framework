@@ -25,10 +25,4 @@ export default state => ({
     if (cache !== undefined) return !!cache
     return !!(e.meta.cached || !e.event.fetch || this.get(e))
   },
-
-  async prefetch(event, arg, meta) {
-    if (!e.event.fetch) return
-    const e = event(arg, meta)
-    await event.fetch(state, e)
-  }
 })

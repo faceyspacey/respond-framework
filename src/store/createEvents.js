@@ -71,12 +71,17 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
   const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
   const children = parentType ? {} : createEvents(store, state, builtIns, undefined, modulePath, _namespace, nsObj, _type)
 
-  const dispatch = (arg, meta) =>
-    event.sync
-      ? store.dispatchSync(event(arg, meta), meta)
-      : store.dispatch(event(arg, meta), meta)
+  const dispatch = (arg, meta) => store.dispatch(event(arg, meta), meta)
 
-  Object.assign(event, config, info, { dispatch, getStore: store.getStore, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+  const prefetch = config.fetch && (async (arg, meta) => {
+    const e = event(arg, meta)
+    const state = modulePaths[modulePath]
+
+    const fetch = e.event.prefetch ?? e.event.fetch
+    await fetch.call(e.event, state, e)
+  })
+  
+  Object.assign(event, config, info, { dispatch, prefetch, getStore: store.getStore, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
   Object.defineProperty(event, 'module', { get: () => modulePaths[modulePath] ?? state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 

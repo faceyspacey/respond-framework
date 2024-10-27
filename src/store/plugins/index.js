@@ -1,3 +1,4 @@
+import edit from './edit/index.js'
 import before from './before.js'
 import validate from './validate.js'
 import reduce from './reduce.js'
@@ -15,6 +16,7 @@ import auth from './auth.js'
 // default plugins
 
 export default [
+  edit,
   before,
   validate,
   reduce,

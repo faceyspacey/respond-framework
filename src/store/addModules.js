@@ -10,7 +10,7 @@ import extractModuleAspects from './extractModuleAspects.js'
 import findOne from '../selectors/findOne.js'
 import { _module, _parent } from './reserved.js'
 import { isProd } from '../utils.js'
-import defaultPluginsSync from './pluginsSync/index.js'
+import defaultPluginsSync from './plugins/edit/index.js'
 
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
@@ -29,11 +29,31 @@ export default async function addModule(mod, r, state = Object.create({}), paren
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
   const models = createModels(mod.models, db, parent, respond, path)
 
-  const plugins = createPlugins(mod.plugins)
-  const pluginsSync = createPlugins(mod.pluginsSync ?? defaultPluginsSync)
+  const pluginMap = new Map
+
+  // const plugins = typeof props.plugins === 'function'
+  //   ? createPlugins(props.plugins(mod.plugins.map(p => pluginMap.set(p, true))), state, pluginMap)
+  //   : createPlugins(mod.plugins, state)
+
+  const plugins = typeof mod.plugins !== 'function'
+    ? createPlugins(mod.plugins)
+    : createPlugins(
+        mod.plugins(Object.keys(props.plugins ?? {})
+          .reduce((acc, k) => {
+            const plugin = props.plugins[k]
+            
+            if (!pluginMap.has(plugin)) {
+              pluginMap.set(plugin, true)
+            }
+
+            acc[k] = plugin
+            return acc
+          }, {})
+        ), pluginMap
+      )
 
   const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, pluginsSync })
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins })
 
   const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
