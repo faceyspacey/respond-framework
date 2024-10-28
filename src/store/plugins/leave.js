@@ -1,20 +1,22 @@
-export default (
+export default ({
   condition = defaultCondition,
   findCurr = defaultFindCurr
-) => async (state, e, next) => {
+}) => async (state, e, next) => {
   if (!condition(state, e)) return
 
-  const curr = findCurr(state)
-  const canLeave = await curr.beforeLeave?.(state, e)
+  const event = findCurr(state).event
+
+  const modState = event.module // callback could be in any module
+  const canLeave = await event.beforeLeave?.(modState, e)
 
   if (canLeave === false) {
-    state.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
+    modState.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
     return false
   }
   
-  await curr.leave?.(state, e)
+  await event.leave?.(modState, e)
   await next()
-  await curr.afterLeave?.(state, e)
+  await event.afterLeave?.(modState, e)
 }
 
 

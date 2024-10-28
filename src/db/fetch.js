@@ -3,16 +3,14 @@ import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (apiUrl = defaultApiUrl, body = {}, state, useCache) => { 
+export default async (apiUrl = defaultApiUrl, body = {}, state, cache) => { 
   const { controller, method, modulePath } = body
   
   const url = `${apiUrl}/${controller}/${method}`
   const args = argsIn(body.args)
 
-  if (useCache) {
-    const cached = state.apiCache.get(body)
-    if (cached) return JSON.parse(cached, createReviver(state, modulePath))
-  }
+  const cached = cache?.get(body)
+  if (cached) return Object.assign({}, cached, { meta: { dbCached: true } })
 
   const res = await fetchWithTimeout(url, {
     method: 'POST',
@@ -24,8 +22,11 @@ export default async (apiUrl = defaultApiUrl, body = {}, state, useCache) => {
   })
 
   const text = await res.text()
-  if (useCache) state.apiCache.set(body, text)
-  return JSON.parse(text, createReviver(state, modulePath))
+  const response = JSON.parse(text, createReviver(state, modulePath))
+
+  if (cache) cache.set(body, response)
+
+  return response
 }
 
 

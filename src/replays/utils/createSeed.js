@@ -6,7 +6,7 @@ export default (settings, { seed = {} }) => {
   const db = window.db || {}
 
   return Object.keys(db).reduce((acc, k) => {
-    acc[k] = db[k].insertSeed(seed[k] || {})
+    acc[k] = db[k].insertSeed(seed[k] ?? {})
     return acc
   }, {})
 }

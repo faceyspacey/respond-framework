@@ -5,7 +5,9 @@ import curr from './reducers/curr.js'
 export default (proto, state, moduleName, reducers, propReducers, parentReducers = {}, respond) => {
   const parentKeys = Object.keys(parentReducers)
 
-  reducers = { curr: (...args) => curr(...args), ...reducers, curry: (...args) => curr(...args) }
+  const uniqueCurr = curr.bind(null)
+  
+  reducers = { curr: uniqueCurr, ...reducers }
   proto.reducers = reducers
   
   Object.keys(propReducers).forEach(k => {

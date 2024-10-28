@@ -13,9 +13,10 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
     
   if (props?.db) mergeProps(db, props.db)
 
-  state.apiCache = createApiCache()
+  const cache = createApiCache(state)
 
   return createDbProxy({
+    cache,
     options: {
       getContext() {},
       onServerUp: state => state._serverDown = false,
@@ -51,7 +52,7 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
     
         try {
           const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }
-          const response = await fetch(url, body, state, useCache)
+          const response = await fetch(url, body, state, useCache && cache)
     
           state.__dbFirstCall = true
         

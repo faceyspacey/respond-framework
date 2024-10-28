@@ -13,6 +13,7 @@ import defaultCreateToken from './utils/createToken.js'
 
 import findInClosestAncestor from '../utils/findInClosestAncestor.js'
 import getSessionState from '../utils/getSessionState.js'
+import { traverseModulesDepthFirst } from '../utils/sliceByModulePath.js'
 
 
 export default async (top, opts, state) => {
@@ -57,4 +58,29 @@ export default async (top, opts, state) => {
   Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents })
 
   return Object.assign(replays, { settings, status, getTopState })
+}
+
+
+
+const createSeedRecursive = (top, settings, options) => {
+  let prevDb
+  const seed = {}
+
+  traverseModulesDepthFirst(top, (state, modulePath) => {
+    const createSeed = state.options.createSeed ?? defaultCreateSeed
+    const db = mergeDb(state.replays.db, prevDb)
+    seed[modulePath] = prevDb = createSeed(settings, options, db)
+  })
+}
+
+
+
+const mergeDb = (db, prevDb) => {
+  if (!prevDb) return db
+
+  Object.keys(db).forEach(k => {
+    if (prevDb[k] === 'object') {
+      db[k].docs = prevDb[k].docs
+    }
+  })
 }

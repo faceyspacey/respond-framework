@@ -8,8 +8,10 @@ import dispatchPlugins from '../../../utils/dispatchPlugins.js'
 
 const plugins = [before, reduce, debounce, end]
 
-export default async (store, e) => {
+export default async function edit(store, e) {
   if (!e.event.sync) return
   await dispatchPlugins(plugins, store, e)
   return false
 }
+
+edit.sync = true

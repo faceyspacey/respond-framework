@@ -391,8 +391,10 @@ apply prefixPath function in createEvents
 #firstNavigation + curr reducer?
 
 
+#make arg accept .meta prop
 
 
+seed isn't preserved across dev refreshes
 
 
 

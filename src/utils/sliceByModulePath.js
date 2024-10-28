@@ -63,6 +63,14 @@ export const traverseModules = (state, callback, parent) => {
 }
 
 
+export const traverseModulesDepthFirst = (state, callback, parent) => {
+  for (const k of state.moduleKeys) {
+    traverseModules(state[k], callback, state)
+  }
+
+  callback(state, parent)
+}
+
 export const traverseModulesAsync = async (state, callback) => {
   await callback(state)
 

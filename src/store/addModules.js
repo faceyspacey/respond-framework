@@ -15,7 +15,17 @@ import defaultPluginsSync from './plugins/edit/index.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default async function addModule(mod, r, state = Object.create({}), parent = {}, props = {}, path = '', name, hydration = r.replays.hydration ?? {}) {
+export default async function addModule(
+  mod,
+  r,
+  state = Object.create({}),
+  parent = {},
+  props = {},
+  path = '',
+  name, hydration = r.replays.hydration ?? {},
+  ancestorPlugins,
+  parentModulePath
+) {
   const { id, ignoreParents, initialState, components, replays, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
@@ -29,28 +39,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
   const models = createModels(mod.models, db, parent, respond, path)
 
-  const pluginMap = new Map
-
-  // const plugins = typeof props.plugins === 'function'
-  //   ? createPlugins(props.plugins(mod.plugins.map(p => pluginMap.set(p, true))), state, pluginMap)
-  //   : createPlugins(mod.plugins, state)
-
-  const plugins = typeof mod.plugins !== 'function'
-    ? createPlugins(mod.plugins)
-    : createPlugins(
-        mod.plugins(Object.keys(props.plugins ?? {})
-          .reduce((acc, k) => {
-            const plugin = props.plugins[k]
-            
-            if (!pluginMap.has(plugin)) {
-              pluginMap.set(plugin, true)
-            }
-
-            acc[k] = plugin
-            return acc
-          }, {})
-        ), pluginMap
-      )
+  const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, respond, parentModulePath)
 
   const proto = Object.getPrototypeOf(state)
   Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins })
@@ -71,7 +60,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   for (const k of moduleKeys) {
     const p = path ? `${path}.${k}` : k
-    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k, hydration[k])
+    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k, hydration[k], propPlugins, path)
     state[k].respond.state = state[k]
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
     //   const p = path ? `${path}.${k2}` : k2
@@ -81,7 +70,7 @@ export default async function addModule(mod, r, state = Object.create({}), paren
 
   if (!path && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
-    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k, hydration[k])
+    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k, hydration[k], propPlugins, path)
     state[k].respond.state = state[k]
     moduleKeys.push(k)
   }

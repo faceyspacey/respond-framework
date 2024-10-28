@@ -17,6 +17,7 @@ export default wrapInActForTests((state, e) => {
     }
     else {
       reduceBranch(eTop, top, modulePath.split('.'))
+      e.event.mutate?.(state, e)
     }
   }
   catch (error) {
@@ -24,7 +25,6 @@ export default wrapInActForTests((state, e) => {
   }
 
   delete ctx.modulePathReduced    // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)  
-  if (e.kind === kinds.navigation) top.__navigated = true
   devtools.send(eTop)
   return respond.notify(eTop)
 })
@@ -48,9 +48,20 @@ const reduceAllModules = (e, mod) => {
 //   reduceBranch({ ...e, type, namespace }, mod[k], remainingPaths)
 // }
 
+
+
 const reduceBranch = (e, mod, remainingPaths) => {
   const k = remainingPaths.shift()
   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
+
+  const breadth = e.breadthFirst ?? mod.breadthFirst ?? mod[k]?.breadthFirst
+
+  if (breadth) {
+    reduceModule(mod, e, mod, mod.reducers)
+  }
+  else if (mod.beforeReduce) {
+    mod.beforeReduce(mod, e)
+  }
 
   if (k) {
     const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
@@ -60,8 +71,30 @@ const reduceBranch = (e, mod, remainingPaths) => {
     if (ignoreParents || mod[k].ignoreParents) return true
   }
 
-  reduceModule(mod, e, mod, mod.reducers)
+  if (!breadth) {
+    reduceModule(mod, e, mod, mod.reducers)
+  }
+  else if (mod.afterReduce) {
+    mod.afterReduce(mod, e)
+  }
 }
+
+
+
+// const reduceBranch = (e, mod, remainingPaths) => {
+//   const k = remainingPaths.shift()
+//   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
+
+//   if (k) {
+//     const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
+//     const type = namespace ? `${namespace}.${e._type}` : e._type
+
+//     const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingPaths)
+//     if (ignoreParents || mod[k].ignoreParents) return true
+//   }
+
+//   reduceModule(mod, e, mod, mod.reducers)
+// }
 
 
 const reduceModule = (state, e, mod, reducers, ignore) => {

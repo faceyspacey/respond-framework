@@ -2,7 +2,7 @@ import isNamespace from '../utils/isNamespace.js'
 import { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export const kinds = { navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', cached: 'cached', data: 'data' }
+export const kinds = { start: 'start', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
 
 
 export default function createEvents(store, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
@@ -12,7 +12,7 @@ export default function createEvents(store, state, events = {}, propEvents = {},
   const keys = Object.keys({ ...allEvents, ...propEvents })
 
   const isModule = !ns && !isBuiltIns
-  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, {}, modulePath, '', 'start')) // same start event reference on all modules
+  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, { kind: 'start' }, modulePath, '', 'start')) // same start event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
   Object.assign(acc, start ? { start } : {})
@@ -47,7 +47,8 @@ export default function createEvents(store, state, events = {}, propEvents = {},
 
 
 const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj, parentType) => {
-  const _typeResolved = parentType ? `${parentType}.${_type}` : _type 
+  const isBuiltIn = !!parentType
+  const _typeResolved = isBuiltIn ? `${parentType}.${_type}` : _type 
     
   const namespace = modulePath
     ? _namespace ? `${modulePath}.${_namespace}` : modulePath
@@ -55,11 +56,18 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
 
   const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
 
-  const kind = parentType ? _type : config.path ? kinds.navigation : kinds.submission
+  const kind = config.kind ?? (config.path ? kinds.navigation : kinds.submission)
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
   const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // preserve ref thru hmr/replays ?? note: event itself is a function
     const store = event.getStore()
+
+    if (arg.meta) {
+      const { meta: m, ...rest } = arg
+      meta = { ...m, ...meta }
+      arg = rest
+    }
+    
     const e = { ...info, event, arg, meta }
     const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
     
@@ -68,8 +76,7 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
 
   Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
 
-  const builtIns = { done: config.done || {}, error: config.error || {}, cached: config.cached || {}, data: config.data || {} }
-  const children = parentType ? {} : createEvents(store, state, builtIns, undefined, modulePath, _namespace, nsObj, _type)
+  const children = !isBuiltIn && createEvents(store, state, createBuiltIns(config), undefined, modulePath, _namespace, nsObj, _type)
 
   const dispatch = (arg, meta) => store.dispatch(event(arg, meta), meta)
 
@@ -108,6 +115,11 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
 
 
 
+const createBuiltIns = ({ done, error, data }) => ({
+  done:  assign({ kind: 'done'  }, done),
+  error: assign({ kind: 'error' }, error),
+  data:  assign({ kind: 'data' } , data)
+})
 
 
 const applyTransform = (store, e, dispatch) => {
@@ -148,3 +160,6 @@ function is(namespaceOrEvent) {
 function includesThis(...namespacesOrEvents) {
   return namespacesOrEvents.includes(this)
 }
+
+
+const assign = Object.assign

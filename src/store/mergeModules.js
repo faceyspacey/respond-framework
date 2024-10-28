@@ -6,7 +6,6 @@ export async function hydrateModules(state, replays) {
   const { token } = replays
 
   state.token = token
-  state.cachedPaths ??= {}
 
   const hydration = revive(state)(replays.hydration)
 

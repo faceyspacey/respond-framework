@@ -267,10 +267,10 @@ export default {
 
   insertSeed(docsObject = {}) {
     if (!isServer && window.opener) {
-      return this.docs = window.opener.store.replays.seed[this._name] // child window shares db/seed with parent
+      return this.docs ??= window.opener.store.replays.seed[this._name] // child window shares db/seed with parent
     }
 
-    this.docs = docsObject
+    this.docs ??= {}
 
     const docs = Object.values(docsObject)
     const now = new Date().getTime() - (docs.length * 1000) // set clock back in time

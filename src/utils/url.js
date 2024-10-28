@@ -3,17 +3,24 @@ import { stripPermalinkPrefix as stripPermalink } from '../modules/replayTools/h
 
 
 export const searchHashToQueryHash = ({ search, hash: h } = {}, state = {}) => {     // input: { search: '?bar=baz', hash='#bla' }
-  const query = search ? parseSearch(search, state) : {}
-  const hash = !h ? '' : stripPermalink(h)
-  return { query, hash }                                                            // output: { query: { bar: 'baz' }, hash: 'bla' }   
-}
+  const query = search && parseSearch(search, state)
+  const hash = h && stripPermalink(h)
+  
+  // only return what's actually available
+  // note: #respond: prefix possibly removed and is really non-existent
+  
+  if (query && hash) return { query, hash }
+  if (query) return { query }
+  if (hash) return { hash }
+}                                                                                   // output: { query: { bar: 'baz' }, hash: 'bla' }   
+
 
 
 export const queryHashToSearchHash = ({ query, hash: h } = {}, state = {}) => {     // input: { query: { bar: 'baz' }, hash='bla' }
   const search = query ? stringifyQuery(query, state) : ''
   const hash = !h ? '' : stripPermalink(h)
-  return { search, hash }                                                           // output: { search: 'bar=baz', hash: 'bla' }  
-}
+  return { search, hash }
+}                                                                                   // output: { search: 'bar=baz', hash: 'bla' }  
 
 
 

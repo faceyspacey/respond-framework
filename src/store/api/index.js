@@ -11,7 +11,7 @@ import render from '../../react/render.js'
 
 import history from '../../history/index.js'
 import createDevtools from '../../devtools/index.mock.js'
-import createCache from '../../utils/createCache.js'
+import createCache from '../plugins/fetch/createCache.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { createStateReviver, replacer } from '../../utils/revive.js'

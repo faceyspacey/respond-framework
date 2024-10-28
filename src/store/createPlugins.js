@@ -1,43 +1,37 @@
-export default (plugins, pluginMap) => {
-  if (!pluginMap) {
-    return plugins.filter(p => p).map(p => {
-      if (typeof p === 'function') return p
-      return createPluginObject(p)
-    })
-  }
+export default (plugins, propPlugins, ancestorPlugins, respond, parentModulePath) => {
+  plugins = plugins.map(createPluginObject)
 
-  const plugs = plugins.filter(p => p).map(p => {
-    if (typeof p !== 'function') {
-      p = createPluginObject(p)
-    }
+  if (!propPlugins && !ancestorPlugins) return [plugins]
 
-    const state = pluginMap.get(p)
-
-    if (state) {
-      Object.defineProperty(p, 'state', { value: state, enumerable: false, configurable: true })
-    }
-
+  const descriptor = { get: () => respond.modulePaths[parentModulePath], enumerable: false, configurable: true }
+  
+  propPlugins = propPlugins?.map(createPluginObject).map(p => { 
+    Object.defineProperty(p, 'state', descriptor)           // propPlugins/ancestors will be run in multiple child dispatch pipelines, but will need access to their own module's state -- also note: we create each one once, so the plugin instance object will be shared across possibly multiple modules
     return p
-  })
+  }) ?? []
 
-  pluginMap.clear()
+  // order plugins: [mod.plugins (sync), parents, grandParentsEtc, mod.plugins (async)]
 
-  return plugs
+  ancestorPlugins ??= []
+  ancestorPlugins = [ ...propPlugins, ...ancestorPlugins ]  // dispatch pipeline will call plugins of closest ancestor modules first, allowing for standard execution of child modules before parents get a chance to interfere :) -- perhaps one "changes its mind" and short-circuits (i.e. returns false) before a parent module finds out that nothing indeed happened
+
+  const index = plugins.findLastIndex(p => p.sync)          // ancestorPlugins could be async, so we must put after sync plugins like `edit
+  plugins.splice(index + 1, 0, ...ancestorPlugins)          // the final plugins to dispatch will be the actual async plugins of the given module
+
+  return [plugins, ancestorPlugins]                         // return ancestors so child modules will again have acecss to them
 }
 
 
 const createPluginObject = p => {
-  const self = { ...p } // ensure plugin has unique self context when used in multiple modules
+  const enter = typeof p === 'function' ? p : p.enter
 
-  const enter = p.enter
-    ? (...args) => p.enter.call(self, ...args)
+  const enterFunc = enter
+    ? (...args) => enter.call(enterFunc, ...args)
     : function() {}
 
-  if (p.load) {
-    enter.load = state => p.load.call(self, state)
-  }
+  Object.assign(enterFunc, p) // p.load will be assigned, and any other properties used by the plugin -- creating a new object/function, also ensures different instances across modules
 
-  return enter
+  return enterFunc
 }
 
 

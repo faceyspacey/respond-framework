@@ -4,7 +4,7 @@ import validate from './validate.js'
 import reduce from './reduce.js'
 import changePath from './changePath.js'
 import optimistic from './optimistic.js'
-import fetch from './fetch.js'
+import fetch from './fetch/index.js'
 import tap from './tap.js'
 import submit from './submit.js'
 import redirect from './redirect.js'
@@ -22,7 +22,7 @@ export default [
   reduce,
   changePath,
   optimistic,
-  fetch,
+  fetch(),
   tap,
   submit,
   redirect,
