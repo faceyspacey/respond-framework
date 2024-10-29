@@ -23,7 +23,7 @@ export default (state, k = 'navigationCache') => {
     },
   
     clear() {
-      for (const k in cache) delete keys[k]
+      for (const k in cache) delete cache[k]
     },
   
     has(e) {

@@ -119,7 +119,10 @@ export default (top, state, replays) => {
     },
   
     isEqualNavigations(a, b) {
-      return a && b && this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
+      if (!a || !b) return false
+      if (a.event !== b.event) return false
+      if (a.kind !== kinds.navigation) return false
+      return this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
     },
 
     changeBasename(basename) {

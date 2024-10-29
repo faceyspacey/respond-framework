@@ -17,5 +17,5 @@ export const moduleApi = {
   replays: true,
   options: true,
   plugins: true,
-  pluginsSync: true,
+  reduce: true,
 }

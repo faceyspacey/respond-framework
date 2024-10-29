@@ -1,6 +1,6 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
-import defaultPlugins from '../../store/plugins/index.js'
+import defaultPlugins from '../../plugins.js'
 import { _parent } from '../../store/reserved.js'
 
 

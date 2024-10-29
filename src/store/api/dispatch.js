@@ -1,33 +1,37 @@
 import dispatchPlugins from '../../utils/dispatchPlugins.js'
-import start from '../plugins/start.js'
 import { sliceEventByModulePath, traverseModulesAsyncParallel } from '../../utils/sliceByModulePath.js'
 
 
 export default async function(ev, meta) {
-  const e = sliceEventByModulePath(ev)
-  const store = this.respond.modulePaths[e.modulePath]
-  
-  e.meta = { ...e.meta, ...meta }
+  ev.meta = { ...ev.meta, ...meta }
 
-  if (!store[pluginsLoaded]) {
-    await loadPlugins(store, e)
-  }
+  const { replays, modulePaths } = this.respond
+  const { trigger, skipped } = ev.meta
+
+  const e = sliceEventByModulePath(ev)
+  const state = modulePaths[e.modulePath]
+
+  if (replays.status === 'session') return replays.ready()
+  if (!state[loaded]) await loadPlugins(state, e)
+    
+  if (trigger) replays.sendTrigger(state, e)
+  if (skipped) return
 
   try {
-    await dispatchPlugins([start, ...store.plugins], store, e)
+    await dispatchPlugins(state.plugins, state, e)
   }
   catch (error) {
-    await store.onError({ error, kind: 'dispatch', e })
+    await state.onError({ error, kind: 'dispatch', e })
   }
 
-  if (e.meta.trigger) await this.respond.promisesCompleted(e)
+  if (trigger) await this.respond.promisesCompleted(e)
 }
 
 
 
 const loadPlugins = state => {
   const top = state.getStore()
-  state[pluginsLoaded] = true
+  state[loaded] = true
 
   return traverseModulesAsyncParallel(top, state => {
     const promises = state.plugins.map(p => p.load?.(state))
@@ -35,4 +39,4 @@ const loadPlugins = state => {
   })
 }
 
-const pluginsLoaded = Symbol('pluginsLoaded') // preserve through HMR, but not sessionStorage.getItem('sessionState')
+const loaded = Symbol('pluginsLoaded') // preserve through HMR, but not sessionStorage.getItem('sessionState')

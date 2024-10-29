@@ -14,8 +14,10 @@ export default (plugins, propPlugins, ancestorPlugins, respond, parentModulePath
 
   ancestorPlugins ??= []
   ancestorPlugins = [ ...propPlugins, ...ancestorPlugins ]  // dispatch pipeline will call plugins of closest ancestor modules first, allowing for standard execution of child modules before parents get a chance to interfere :) -- perhaps one "changes its mind" and short-circuits (i.e. returns false) before a parent module finds out that nothing indeed happened
+  
+  ancestorPlugins.sort((a, b) => !!b.sync - !!a.sync)       // ensure sync plugins are called before async ones, regardless of module
 
-  const index = plugins.findLastIndex(p => p.sync)          // ancestorPlugins could be async, so we must put after sync plugins like `edit
+  const index = plugins.findLastIndex(p => p.sync)          // ancestorPlugins could be async, so we must put after sync plugins like `edit`
   plugins.splice(index + 1, 0, ...ancestorPlugins)          // the final plugins to dispatch will be the actual async plugins of the given module
 
   return [plugins, ancestorPlugins]                         // return ancestors so child modules will again have acecss to them

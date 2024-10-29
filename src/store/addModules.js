@@ -26,7 +26,7 @@ export default async function addModule(
   ancestorPlugins,
   parentModulePath
 ) {
-  const { id, ignoreParents, initialState, components, replays, options = {} } = mod
+  const { id, ignoreParents, initialState, components, replays, reduce, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   const respond = { ...options.merge, ...r, options, modulePath: path, overridenReducers: new Map }
@@ -42,7 +42,7 @@ export default async function addModule(
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, respond, parentModulePath)
 
   const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins })
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, reduce })
 
   const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)

@@ -24,7 +24,7 @@ export default async (top, opts, state) => {
   const replayModulePath = settingsRaw?.modulePath
 
   const getTopState = () => state
-  const status = hydratedReplays.status ?? opts.status ?? 'init'
+  const status = hydratedReplays.status ?? opts.status ?? 'ready'
   
   window.__respondContext.idCounter = hydration.__respondContext?.idCounter ?? 10000
   state.__respondContext = window.__respondContext
@@ -55,12 +55,15 @@ export default async (top, opts, state) => {
   const cookies = createCookies()
   const token = isProd ? await cookies.get('token') : createToken(settings, seed, options)
 
-  Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents })
+  Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents, ready })
 
   return Object.assign(replays, { settings, status, getTopState })
 }
 
 
+function ready() {
+  this.status = 'ready'
+}
 
 const createSeedRecursive = (top, settings, options) => {
   let prevDb

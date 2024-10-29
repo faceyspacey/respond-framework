@@ -1,31 +1,39 @@
+import { kinds } from '../../store/createEvents.js'
+
+
 export default ({
   condition = defaultCondition,
   findCurr = defaultFindCurr
-}) => async (state, e, next) => {
+} = {}) => async (state, e, next) => {
   if (!condition(state, e)) return
 
   const event = findCurr(state).event
-
   const modState = event.module // callback could be in any module
-  const canLeave = await event.beforeLeave?.(modState, e)
+
+  return handleLeave(modState, e, next, event)  
+}
+
+
+const handleLeave = async (state, e, next, event) => {
+  const canLeave = await event.beforeLeave?.(state, e)
 
   if (canLeave === false) {
-    modState.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
+    state.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
     return false
   }
   
-  await event.leave?.(modState, e)
+  await event.leave?.(state, e)
   await next()
-  await event.afterLeave?.(modState, e)
+  await event.afterLeave?.(state, e)
 }
 
 
 
 const defaultFindCurr = state => state.curr
 
-const defaultCondition = (state, e) =>
-    e.kind === state.respond.kinds.navigation &&
-    e.event !== state.curr.event
+const defaultCondition = (state, e) => e.kind === navigation && !state.respond.isEqualNavigations(e, state.curr)
+
+const { navigation } = kinds
 
 
 // example conditions

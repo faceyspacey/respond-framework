@@ -122,8 +122,10 @@ const createBuiltIns = ({ done, error, data }) => ({
 })
 
 
-const applyTransform = (store, e, dispatch) => {
-  const { modulePathReduced } = store.ctx
+const applyTransform = ({ ctx, modulePaths, respond }, e, dispatch) => {
+  const { modulePathReduced } = ctx
+  const modState = modulePaths[e.modulePath]
+
   let payload = { ...e.arg }
 
   if (modulePathReduced) {
@@ -132,9 +134,14 @@ const applyTransform = (store, e, dispatch) => {
   }
 
   if (e.event.transform) {
-    const state = store.modulePaths[e.modulePath]
-    payload = e.event.transform(state, e.arg, e.meta) || {}
+    payload = e.event.transform(modState, e.arg, e.meta) || {}
   }
+
+  if (e.event.path && modState.respond.cache?.has(e)) {
+    e.meta.cached = true
+  }
+
+  e.meta.pop = respond.history.state.pop
 
   const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
 
