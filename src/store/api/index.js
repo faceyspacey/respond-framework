@@ -173,7 +173,7 @@ export default (top, state, replays) => {
     
     notify(e) {  
       if (e.event.sync) return
-      if (e.event === state.events.start) return
+      if (e.event === state.events.init) return
 
       const sent = listeners
         .filter(send => e.modulePath.indexOf(send.modulePath) === 0) // event is child of subscribed module or the same module

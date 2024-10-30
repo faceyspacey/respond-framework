@@ -2,7 +2,7 @@ import { kinds } from '../createEvents.js'
 
 
 export default (curr, e, { events }) => {
-  if (!curr && e.event === events.start) return e
+  if (!curr && e.event === events.init) return e
   return e.kind === kinds.navigation ? e : curr
 }
 
@@ -28,6 +28,6 @@ export default (curr, e, { events }) => {
 
 // const firstNavigationPlugin = (store, e) => {
 //   if (e.kind !== kinds.navigation) return
-//   if (store.curr?.event !== store.events.start) return
+//   if (store.curr?.event !== store.events.init) return
 //   e.meta.firstNavigation = true
 // }

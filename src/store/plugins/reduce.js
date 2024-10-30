@@ -13,7 +13,7 @@ export default wrapInActForTests((state, e) => {
   const eTop = prependModulePathToE(e)
 
   try {
-    if (e.event === top.events.start) {
+    if (e.event === top.events.init) {
       reduceAllModules(eTop, top)
     }
     else {

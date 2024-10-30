@@ -14,7 +14,7 @@ export async function hydrateModules(state, replays) {
   if (state.prevState) return // hmr + session have prevState + state already populated
 
   mergeModulesPrevState(state, state.respond.snapshot(state))
-  reduce(state, state.events.start())
+  reduce(state, state.events.init())
 }
 
 

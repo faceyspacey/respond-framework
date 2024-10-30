@@ -2,7 +2,7 @@ import isNamespace from '../utils/isNamespace.js'
 import { stripModulePath } from '../utils/sliceByModulePath.js'
 
 
-export const kinds = { start: 'start', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
+export const kinds = { init: 'init', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
 
 
 export default function createEvents(store, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
@@ -12,10 +12,10 @@ export default function createEvents(store, state, events = {}, propEvents = {},
   const keys = Object.keys({ ...allEvents, ...propEvents })
 
   const isModule = !ns && !isBuiltIns
-  const start = isModule && (store.eventsByType.start ?? createEvent(store, state, { kind: 'start' }, modulePath, '', 'start')) // same start event reference on all modules
+  const init = isModule && (store.eventsByType.init ?? createEvent(store, state, { kind: 'init' }, modulePath, '', 'init')) // same init event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
-  Object.assign(acc, start ? { start } : {})
+  Object.assign(acc, init ? { init } : {})
   
   const cache = store.eventsCache
 
