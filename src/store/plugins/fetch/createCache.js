@@ -28,10 +28,10 @@ export default (state, k = 'navigationCache') => {
   
     has(e) {
       const { event } = e
-      const { cache } = event
-      if (typeof cache === 'function') return event.cache(modulePaths[e.modulePath], e, this.get(e))
-      if (cache !== undefined) return !!cache
-      return !!(e.meta.cached || !event.fetch || this.get(e))
+      if (!event.path) return false
+      if (typeof event.cache === 'function') return event.cache(modulePaths[e.modulePath], e, this.get(e))
+      if (event.cache !== undefined) return !!event.cache
+      return !!(!event.fetch || e.meta.cached || this.get(e))
     },
   }
 }

@@ -1,10 +1,15 @@
-export * from './store/plugins/index.js'
-
 import * as plugins from './store/plugins/index.js'
 
 
-export const defaultPlugins = [ // default plugins
+export * from './store/plugins/index.js'
+
+export const defaultSyncPlugins = [
   plugins.edit,
+  plugins.markPop,
+  plugins.markCached
+]
+
+export const defaultAsyncPlugins = [
   plugins.before,
   plugins.validate,
   plugins.reduce,
@@ -16,8 +21,9 @@ export const defaultPlugins = [ // default plugins
   plugins.redirect,
   plugins.end,
   plugins.after,
-  plugins.auth(),
+  plugins.auth()
 ]
 
+export const defaultPlugins = [...defaultSyncPlugins, ...defaultAsyncPlugins]
 
 export default defaultPlugins

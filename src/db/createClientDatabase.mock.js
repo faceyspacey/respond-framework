@@ -25,14 +25,14 @@ export default (db, parentDb, props, state, respond, modulePath) => {
       get(_, method) {
         return async (...args) => {
           const body = { controller: 'developer', method, args }
-          const response = await fetch(db.options?.apiUrl, body, state, {}, false)
+          const response = await fetch(db.options?.apiUrl, body, state)
           return handleResponse(state, { ...body, response })
         }
       }
     }),
     _call(controller, method) {
       const { options } = this
-      const { models, modulePath, ctx } = state
+      const { models, modulePath } = state
     
       const Model = models[controller]
 

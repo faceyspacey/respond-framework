@@ -57,7 +57,7 @@ const reduceBranch = (e, mod, [...remainingPaths]) => {
   }
 
   function reduce(override) {
-    if (ignore && !override) return // ignore only works recursively backwards when depth-first (which is default), otherwise if mod.reduce switches to breadth-first by calling reduce before next, you only get one level ignoring; and optionally parents in mod.reduce can `override` ignoreParents
+    if (ignore && !override) return // ignore only applies to entire tree when depth-first (which is default), otherwise if mod.reduce switches to breadth-first by calling reduce before next, you only get one level ignoring; and optionally parents in mod.reduce can `override` ignoreParents
     reduceModule(mod, e, mod, mod.reducers)
     reduced = true
   }

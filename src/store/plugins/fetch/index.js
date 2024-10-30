@@ -3,6 +3,10 @@ import createCache from './createCache.js'
 
 export default ({ cache = true } = {}) => cache ? fetchWithNavigationCache : fetchWithConsistentFollowup
 
+export const markCached = (state, e) => {
+  if (state.respond.cache?.has(e)) e.meta.cached = true
+}
+
 
 const fetchWithNavigationCache = {
   enter(state, e) {

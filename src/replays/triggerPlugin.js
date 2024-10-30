@@ -6,36 +6,36 @@ import { mergeModulesPrevState } from '../store/mergeModules.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
 
+export default function (state, e) {
+  const { replays, devtools } = state.respond
 
+  if (!e.meta.trigger) return
+  if (replays.status === 'session') return replays.status = 'ready' && false
 
-export default function (store, eSlice, fullModulePathAlready = false) {
-  store = store.getStore()
-  const state = store.replayTools
+  const top = state.getStore()
 
-  if (eSlice.modulePath === 'replayTools' && !this.options.log) {
-    // mergeModulesPrevState(state, store.snapshot(state))
-    mergeModulesPrevState(state, snapDeepClone(state))
+  if (e.modulePath === 'replayTools' && !replays.options.log) {
+    mergeModulesPrevState(top.replayTools, snapDeepClone(top.replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
     return
   }
-  
-  const e = fullModulePathAlready ? eSlice : fullPath(eSlice)
 
-  if (!e.meta?.skipped) {
-    // mergeModulesPrevState(store, store.snapshot(store))
-    mergeModulesPrevState(store, snapDeepClone(store))
+  if (!e.meta.skipped) {
+    mergeModulesPrevState(top, snapDeepClone(top)) // mergeModulesPrevState(top, top.respond.snapshot(top))
   }
 
-  if (!store.replayTools) return
+  if (!top.replayTools) return
 
-  sendTrigger(e, state, store, this.playing)
+  sendTrigger(fullPath(e), top.replayTools, top, replays.playing)
 
-  if (e.meta?.skipped) {
-    store.devtools.forceNotification({ ...e, __prefix: '-- ' })
+  if (e.meta.skipped) {
+    // devtools.forceNotification({ ...fullPath(e), __prefix: '-- ' })
+    return false
   }
 }
 
 
-const sendTrigger = (e, state, store, playing) => {
+
+const sendTrigger = (e, state, top, playing) => {
   const index = ++state.evsIndex
 
   if (playing) {
@@ -46,7 +46,7 @@ const sendTrigger = (e, state, store, playing) => {
   const events = state.evs
 
   const prev = events[index - 1]
-  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e, store)
+  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e, top)
 
   if (dispatchedSameAsSkippedEvent) {
     delete prev.meta.skipped // ux optimization: user desired to unskip it by manually performing the same event
@@ -57,7 +57,7 @@ const sendTrigger = (e, state, store, playing) => {
   const shouldClipTail = index <= lastEntryIndex
 
   if (shouldClipTail) {
-    const dispatchedSameEvent = clipTail(e, state, events, index, store)
+    const dispatchedSameEvent = clipTail(e, state, events, index, top)
     if (dispatchedSameEvent) return // ux optimization: do nothing, as index increment resolves this automatically
   }
 
@@ -70,9 +70,9 @@ const sendTrigger = (e, state, store, playing) => {
 
 // helpers
 
-const clipTail = (e, state, events, index, store) => {
+const clipTail = (e, state, events, index, top) => {
   const next = events[index]
-  if (isEqual(next, e, store)) return true // user manually performed next event in sequence, so act as if there was no divergence
+  if (isEqual(next, e, top)) return true // user manually performed next event in sequence, so act as if there was no divergence
 
   events.splice(index)
   state.divergentIndex = index
@@ -80,9 +80,9 @@ const clipTail = (e, state, events, index, store) => {
 
 
 
-const isEqual = (a, b, store) => {
+const isEqual = (a, b, top) => {
   if (a.type !== b.type) return false
-  const arg = revive(store)(a.arg || {})   // revive possible event function references in test arg
+  const arg = revive(top)(a.arg || {})   // revive possible event function references in test arg
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
 

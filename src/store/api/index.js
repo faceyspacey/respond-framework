@@ -1,7 +1,6 @@
 import sessionStorage from '../../utils/sessionStorage.js'
 
 import dispatch from './dispatch.js'
-import dispatchSync from './dispatchSync.js'
 
 import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
@@ -55,7 +54,6 @@ export default (top, state, replays) => {
     kinds,
   
     dispatch,
-    dispatchSync,
   
     fromEvent,
     eventFrom,

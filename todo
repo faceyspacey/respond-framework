@@ -392,10 +392,7 @@ apply prefixPath function in createEvents
 
 
 #make arg accept .meta prop
-
-
-
-
+#make history + isCached their own plugins
 
 
 #always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
@@ -406,7 +403,10 @@ createSeed needs to run per module, and also have access to previous module's un
 seed isn't preserved across dev refreshes
 
 
+
+
 re-organize files
-replace createProxyHandler
 make all tools replacable by user (including reviver)
+
+replace createProxyHandler
 finalize implementation of respond object etc

@@ -30,13 +30,13 @@ export default ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath 
 
 
 
-export const createReviver = (state, modulePath) => {
+export const createReviver = (state = {}, modulePath) => {
   const isApiResponse = modulePath !== undefined
   return isApiResponse ? createApiReviver(state, modulePath) : createStateReviver(state) 
 }
 
 
-export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} }) => (k, v) => {
+export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}) => (k, v) => {
   if (dateKeyReg.test(k)) {
     return v ? new Date(v) : v
   }
@@ -60,7 +60,7 @@ export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} 
 
 
 
-export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} }, modulePath = '') => (k, v) => {
+export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => (k, v) => {
   if (dateKeyReg.test(k)) {
     return v ? new Date(v) : v
   }

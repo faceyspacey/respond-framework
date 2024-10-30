@@ -3,7 +3,7 @@ import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (apiUrl = defaultApiUrl, body = {}, state, cache) => { 
+export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => { 
   const { controller, method, modulePath } = body
   
   const url = `${apiUrl}/${controller}/${method}`

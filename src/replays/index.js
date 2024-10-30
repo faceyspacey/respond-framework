@@ -3,7 +3,6 @@ import replays from '../replays.js'
 import { isProd } from '../utils/bools.js'
 import mergeDeep from '../utils/mergeDeep.js'
 import defaultDefaultConfig from './config.default.js'
-import sendTrigger from './sendTrigger.js'
 import replayEvents from './replayEvents.js'
 
 import defaultCreateSettings from './utils/createSettings.js'
@@ -55,7 +54,7 @@ export default async (top, opts, state) => {
   const cookies = createCookies()
   const token = isProd ? await cookies.get('token') : createToken(settings, seed, options)
 
-  Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, sendTrigger, replayEvents, ready })
+  Object.assign(proto, { replayModulePath, conf, config, hydration, cookies, options, seed, token, replayEvents, ready })
 
   return Object.assign(replays, { settings, status, getTopState })
 }
@@ -70,8 +69,11 @@ const createSeedRecursive = (top, settings, options) => {
   const seed = {}
 
   traverseModulesDepthFirst(top, (state, modulePath) => {
-    const createSeed = state.options.createSeed ?? defaultCreateSeed
+    if (!state.replays) return
+
+    const createSeed = state.replays.createSeed ?? defaultCreateSeed
     const db = mergeDb(state.replays.db, prevDb)
+    
     seed[modulePath] = prevDb = createSeed(settings, options, db)
   })
 }
@@ -83,7 +85,7 @@ const mergeDb = (db, prevDb) => {
 
   Object.keys(db).forEach(k => {
     if (prevDb[k] === 'object') {
-      db[k].docs = prevDb[k].docs
+      db[k].docs = prevDb[k].docs ?? {}
     }
   })
 }

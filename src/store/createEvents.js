@@ -69,9 +69,11 @@ const createEvent = (store, state, config, modulePath, _namespace, _type, nsObj,
     }
     
     const e = { ...info, event, arg, meta }
+
     const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
-    
-    return applyTransform(store, e, dispatch)
+    const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
+
+    return applyTransform(store, e, dispatch, trigger)
   }
 
   Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
@@ -122,10 +124,8 @@ const createBuiltIns = ({ done, error, data }) => ({
 })
 
 
-const applyTransform = ({ ctx, modulePaths, respond }, e, dispatch) => {
-  const { modulePathReduced } = ctx
-  const modState = modulePaths[e.modulePath]
-
+const applyTransform = (state, e, dispatch, trigger) => {
+  const { modulePathReduced } = state.ctx
   let payload = { ...e.arg }
 
   if (modulePathReduced) {
@@ -134,18 +134,11 @@ const applyTransform = ({ ctx, modulePaths, respond }, e, dispatch) => {
   }
 
   if (e.event.transform) {
-    payload = e.event.transform(modState, e.arg, e.meta) || {}
+    const modState = state.modulePaths[e.modulePath]
+    payload = e.event.transform(modState, e.arg, e) ?? {}
   }
 
-  if (e.event.path && modState.respond.cache?.has(e)) {
-    e.meta.cached = true
-  }
-
-  e.meta.pop = respond.history.state.pop
-
-  const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
-
-  return { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience
+  return { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience 
 }
 
 

@@ -6,6 +6,7 @@ import sliceByModulePath from '../utils/sliceByModulePath.js'
 import addModule from './addModules.js'
 
 import { hydrateModules } from './mergeModules.js'
+import loadPlugins from '../utils/loadPlugins.js'
 
 
 export default async (top, opts = {}) => {
@@ -14,9 +15,10 @@ export default async (top, opts = {}) => {
   const respond = createRespond(top, state, replays)
 
   const mod = sliceByModulePath(top, replays.settings.module)
-  await addModule(mod, respond, state)
   
+  await addModule(mod, respond, state)
   await hydrateModules(state, replays)
+  await loadPlugins(state)
 
   return window.store = window.state = state
 }
