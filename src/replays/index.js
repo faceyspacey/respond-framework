@@ -15,12 +15,12 @@ import getSessionState from '../utils/getSessionState.js'
 import sliceByModulePath, { findByModulePath, traverseModules, traverseModulesDepthFirst } from '../utils/sliceByModulePath.js'
 
 
-export default async (top, opts, state) => {
+export default async (topModule, opts, state) => {
   const { replays: hydratedReplays = {}, ...hydration } = await getSessionState(opts) ?? {}
   console.log('hydration', opts, hydratedReplays, hydration)
   
   const settingsSupplied = hydratedReplays.settings ?? {}
-  const replayModulePath = settingsSupplied?.modulePath
+  const replayModulePath = settingsSupplied?.module
 
   const getTopState = () => state
   const status = hydratedReplays.status ?? opts.status ?? 'ready'
@@ -28,7 +28,7 @@ export default async (top, opts, state) => {
   window.__respondContext.idCounter = hydration.__respondContext?.idCounter ?? 10000
   state.__respondContext = window.__respondContext
 
-  top = top.replays ? top : findClosestAncestorWith('replays', replayModulePath, top) ?? top
+  const top = findClosestAncestorWith('replays', replayModulePath, topModule) ?? topModule
 
   let {
     createSettings = defaultCreateSettings,
@@ -38,7 +38,6 @@ export default async (top, opts, state) => {
     defaultConfig = defaultDefaultConfig,
     config: conf,
     caching = true,
-    db,
     ...options
   } = top.replays
 
@@ -54,39 +53,34 @@ export default async (top, opts, state) => {
   // const settings = createSettings(config, settingsSupplied)
   // const seed = isProd ? {} : createSeed(settings, options, db)
 
-  const { config, settings, db: nextDb, seed } = createSeedRecursive(top, settingsSupplied)
-  db = nextDb
+  const finalize = async (state) => {
+    const { config, settings, db, seed } = createSeedRecursive(topModule, state, settingsSupplied, replayModulePath)
+    const token = isProd ? await cookies.get('token') : createToken(settings, db, options)
 
-  console.log('yo', config, settings, db)
+    Object.assign(proto, { config, db, token, seed })
+    Object.assign(replays, { settings })
+
+    state.replayTools.form = settings
+  }
 
   const cookies = createCookies()
-  const token = isProd ? await cookies.get('token') : createToken(settings, db, options)
+  
+  Object.assign(proto, { replayModulePath, conf, hydration, cookies, options, replayEvents, finalize })
 
-  Object.assign(proto, { db, replayModulePath, conf, config, hydration, cookies, options, seed, token, replayEvents })
-
-  return Object.assign(replays, { settings, status, getTopState })
+  return Object.assign(replays, { status, getTopState })
 }
 
 
 
-const createSeedRecursive = (top, settingsSupplied) => {
+const createSeedRecursive = (topModule, top, settingsSupplied, replayModulePath) => {
   let db = {}
   
-  top.moduleKeys = ['admin', 'website']
-  top.admin.moduleKeys = ['foo']
-  top.website.moduleKeys = []
-  top.admin.foo.moduleKeys = []
-
-  top.modulePath = ''
-  top.admin.modulePath = 'admin'
-  top.website.modulePath = 'website'
-  top.admin.foo.modulePath = 'admin.foo'
-
   const configsByPath = {}
   const settingsByPath = {}
 
   const traverseModuleChildren = (state, configsByPath, settingsByPath) => {
     for (const k of state.moduleKeys) {
+      if (k === 'replayTools') continue
       configsByPath[k] = {}
       settingsByPath[k] = {}
       traverseModuleChildren(state[k], configsByPath[k], settingsByPath[k])
@@ -96,7 +90,16 @@ const createSeedRecursive = (top, settingsSupplied) => {
   traverseModuleChildren(top, configsByPath, settingsByPath)
 
   traverseModulesDepthFirst(top, state => {
-    const { replays, modulePath } = state
+    const { modulePath } = state
+    if (modulePath === 'replayTools') return
+
+    const mp = replayModulePath
+      ? modulePath ? `${replayModulePath}.${modulePath}` : replayModulePath
+      : modulePath
+
+    const mod = sliceByModulePath(topModule, mp)
+
+    const { replays } = mod
     if (!replays) return
 
     const {

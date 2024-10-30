@@ -7,15 +7,16 @@ import Radio from '../widgets/Radio.js'
 import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
 import configDefault from '../../../replays/config.default.js'
-import sliceByModulePath from '../../../utils/sliceByModulePath.js'
 
 
 export default (props, events) => {
   const { replays } = useStore()
 
-  const config = sliceByModulePath(replays.config, replays.settings.module)
-  const settings = createSettings(events.edit, config)
+  const settings = createSettings(events.edit, replays.config)
 
+  // const config = sliceByModulePath(replays.config, replays.settings.module)
+  // const settings = createSettings(events.edit, config)
+  
   return (
     <View style={s.c}>
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>

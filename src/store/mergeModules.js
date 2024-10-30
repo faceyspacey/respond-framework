@@ -3,6 +3,7 @@ import reduce from './plugins/reduce.js'
 
 
 export async function hydrateModules(state, replays) {
+  await replays.finalize(state)
   const { token } = replays
 
   state.token = token

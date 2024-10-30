@@ -26,7 +26,7 @@ export default (top, state, replays) => {
 
   const ctx = window.store?.ctx ?? {}
 
-  const { cookies, modulePath: replayModulePath } = replays
+  const { cookies, replayModulePath } = replays
   state.replays = replays
 
   return {
