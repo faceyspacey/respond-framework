@@ -10,7 +10,7 @@ export default function (state, e) {
   const { replays, devtools } = state.respond
 
   if (!e.meta.trigger) return
-  if (replays.status === 'session') return replays.status = 'ready' && false
+  if (replays.status === 'session') return (replays.status = 'ready') && false
 
   const top = state.getStore()
 

@@ -7,6 +7,14 @@ export default function sliceByModulePath(obj, modulePath) {
 }
 
 
+export const findByModulePath = (obj, modulePath) => {
+  if (!modulePath) return obj
+  if (!obj) return
+  
+  const modules = modulePath.split('.')
+  return modules.reduce((slice, k) => slice?.[k], obj)
+}
+
 
 export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
   if (!modulePath) return e

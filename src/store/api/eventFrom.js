@@ -10,8 +10,7 @@ export default function eventFrom(url, additionalArg) {
   if (event) return createEvent(event, loc, additionalArg)
 
   const paths = Object.keys(eventsByPath)
-  const isMatch = createIsMatch(loc.pathname)
-  const { path, arg } = paths.find(isMatch) ?? {}
+  const { path, arg } = find(paths, loc.pathname) ?? {}
   
   return path && createEvent(eventsByPath[path], loc, additionalArg, arg)
 }
@@ -34,8 +33,15 @@ const createEvent = (event, loc, additionalArg, arg) => {
 }
 
 
+const find = (paths, pathname) => {
+  for (const path of paths) {
+    const match = isMatch(pathname, path)
+    if (match) return match
+  }
+}
 
-const createIsMatch = pathname => path => {
+
+const isMatch = (pathname, path) => {
   const { re, keys } = cache[path] ?? compilePath(path)
   const match = re.exec(pathname)
 

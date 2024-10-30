@@ -267,7 +267,7 @@ export default {
 
   insertSeed(docsObject = {}) {
     if (!isServer && window.opener) {
-      return this.docs ??= window.opener.store.replays.seed[this._name] // child window shares db/seed with parent
+      return this.docs ??= window.opener.state.replays.db[this._name].docs ?? {} // child window shares db/seed with parent
     }
 
     this.docs ??= {}
