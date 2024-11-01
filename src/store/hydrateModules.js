@@ -1,14 +1,12 @@
+import createReplays from '../replays/index.js'
 import revive  from '../utils/revive.js'
 import reduce from './plugins/reduce.js'
 
 
-export async function hydrateModules(state, replays) {
-  await replays.finalize(state)
-  const { token } = replays
+export default (state, session) => {
+  createReplays(state, session)
 
-  state.token = token
-
-  const hydration = revive(state)(replays.hydration)
+  const hydration = revive(state)(session)
 
   mergeModules(state, hydration)
 

@@ -1,24 +1,25 @@
+import getSessionState from '../utils/getSessionState.js'
+
 import createProxy from '../proxy/createProxy.js'
-import createReplays from '../replays/index.js'
 import createRespond from './api/index.js'
 
 import sliceByModulePath from '../utils/sliceByModulePath.js'
+
 import addModule from './addModules.js'
-
-import { hydrateModules } from './mergeModules.js'
-import loadPlugins from '../utils/loadPlugins.js'
+import hydrateModules from './hydrateModules.js'
 
 
-export default async (top, opts = {}) => {
+export default (top, opts = {}) => {
+  const session = getSessionState(opts)
+  const focusedModulePath = session.replaySettings.module ?? ''
+
   const state = createProxy(Object.create({}))
-  const replays = await createReplays(top, opts, state)
-  const respond = createRespond(top, state, replays)
+  const respond = createRespond(top, state, focusedModulePath)
 
-  const mod = sliceByModulePath(top, replays.replayModulePath)
+  const mod = sliceByModulePath(top, focusedModulePath)
 
-  await addModule(mod, respond, state)
-  await hydrateModules(state, replays)
-  await loadPlugins(state)
+  addModule(mod, respond, state, session)
+  hydrateModules(state, session)
 
   return window.store = window.state = state
 }

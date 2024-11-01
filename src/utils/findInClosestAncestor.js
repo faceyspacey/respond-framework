@@ -18,8 +18,9 @@ export const findClosestAncestorWith = (key, modulePath, top) => {
 
   let mod = top
 
-  return modulePath                 // 'admin.foo'
-    .split('.')                     // ['admin', 'foo'] 
+  return modulePath                 // 'admin.foo.bar'
+    .split('.')                     // ['admin', 'foo', 'bar]
+    .slice(0, -1)                   // ['admin', 'foo']   
     .map(k => mod = mod[k])         // [admin, foo]
     .reverse()                      // [foo, admin]
     .find(p => p[key])              // admin.db

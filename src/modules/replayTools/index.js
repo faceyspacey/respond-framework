@@ -14,18 +14,11 @@ export const plugins = [error, loadTests, ...defaultPlugins]
 
 export const ignoreParents = true
 
-export const initialState = state => ({
-  form: state.replays.settings,
-  evsIndex: -1,
-  evs: [],
-  divergentIndex: undefined,
-})
+export const evsIndex = -1
+
+export const evs = []
+
 
 export function findLastEvent() {
   return this.evs[this.evsIndex]
-}
-
-
-export function playing() {
-  return this[_parent].replays.playing
 }

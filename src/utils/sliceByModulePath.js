@@ -32,14 +32,14 @@ export const stripModulePath = (type, modulePath) =>
   modulePath ? type.slice(modulePath.length + 1) : type
 
 
-export const prependModulePath = (typeOrNamespace, modulePath) =>
+export const prependPath = (modulePath = '', segment = '') =>
   modulePath
-    ? typeOrNamespace ? `${modulePath}.${typeOrNamespace}` : modulePath // type could be an empty string namespace
-    : typeOrNamespace
+    ? segment ? `${modulePath}.${segment}` : segment
+    : segment
 
 
 export const prependModulePathToE = e => {
-  const namespace = prependModulePath(e._namespace, e.modulePath)
+  const namespace = prependPath(e.modulePath, e._namespace)
   const type = namespace ? `${namespace}.${e._type}` : e._type
 
   return { ...e, type, namespace }
@@ -47,7 +47,7 @@ export const prependModulePathToE = e => {
 
 
 export const recreateFullType = (e, modulePath = e.modulePath) => {
-  const namespace = prependModulePath(e._namespace, modulePath)
+  const namespace = prependPath(modulePath, e._namespace)
   return namespace ? `${namespace}.${e._type}` : e._type
 }
 

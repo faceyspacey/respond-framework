@@ -1,4 +1,4 @@
-const replays = Object.create({}) // proto will be used to prevent keys from being stored in sessionStorage
+const replays = Object.create({}) // proto used to prevent some keys from being stored in sessionStorage
 replays.settings = {}
 
 export default replays // singleton for for import into controllers/db/models -- assigned in replays/index.js

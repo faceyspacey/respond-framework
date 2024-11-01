@@ -10,6 +10,8 @@ import configDefault from '../../../replays/config.default.js'
 
 
 export default (props, events) => {
+  return
+  
   const { replays } = useStore()
 
   const settings = createSettings(events.edit, replays.config)

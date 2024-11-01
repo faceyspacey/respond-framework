@@ -402,6 +402,47 @@ apply prefixPath function in createEvents
 #createSeed needs to run per module, and also have access to previous module's underlying db
 #seed isn't preserved across dev refreshes
 
+how to allow for collections with the same name, without sharing docs?
+make Settings component display settings for all modules, and of course edit and populate them accordingly
+
+#pass module-specific replays object into each module (this.replays in controllers/db/models, respond.replays in client code)
+
+#inheriting db
+#inheriting settings
+
+#assign state.replays.settings
+#assign state.replays.db
+#assign db/controllers/models.replays 
+
+
+how to inject replays server-side in production?
+is it possible to not need to inject it using some sort of handle?
+
+
+replay settings shouldn't be nested when the user accesses it
+rather, we are simply assigning modules their own replays now, which includes db
+Settings will need to recurse this[parent].replays...
+
+replayEvents/reload will need to be able to receive a tree of settings, and merge em
+we probably need to save settings in its own sessionStorage
+
+change displayed settings based on selected module
+
+
+automation to inherit settings like userId top-down, option to not inherit
+
+
+models/db need consistent way to access this.db
+
+
+remember to handle hmr + conf caching
+
+
+
+maybe reducers dont receive a 3rd arg, but instead use `this` like selectors!
+
+
+
 #make all tools replacable by user (including reviver)
 #re-organize files
 

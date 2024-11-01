@@ -3,26 +3,21 @@ import revive from '../utils/revive.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = this.settings) {
-  const top = this.getTopState()
-
-  const setts = preserveBuiltInSettings(settings, top)
-  const store = await createState(top.top, { settings: setts, status: 'replay' })
-
-  await run(revive(store)(events), delay, store.respond)
-
-  return store
+export default async function(events, delay = 0, settings = window.state.respond.replays.settings) {
+  const state = createState(window.state.respond.top, { settings, status: 'replay' })
+  await run(revive(store)(events), delay, state.respond)
+  return state
 }
 
 
 
 const run = async (events, delay, respond) => {           // keep in mind store and store.replays will now be in the context of the next next store
   const { ctx, replays } = respond
-
-  window.store.replays.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
+  
+  window.state.replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
   ctx.isFastReplay = !delay                    // turn animations + timeouts off
 
-  for (let i = 0; i < events.length && replays.playing; i++) {
+  for (let i = 0; i < events.length && window.state.replayTools.playing; i++) {
     const { event, arg, meta } = events[i]
     await event.dispatch(arg,  { ...meta, trigger: true })
 
@@ -35,7 +30,7 @@ const run = async (events, delay, respond) => {           // keep in mind store 
     await timeout(delay, replays.settings, meta, last)
   }
 
-  window.store.replays.playing = false
+  window.state.replayTools.playing = false
   ctx.isFastReplay = false
 
   respond.queueSaveSession()                                                      // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
@@ -50,17 +45,4 @@ const timeout = (delay, settings, meta, last) => {
   if (isTest || !delay || meta?.skipped || last) return
   const ms = delay !== true ? delay : settings.testDelay || 1500
   return new Promise(res => setTimeout(res, ms))
-}
-
-
-const preserveBuiltInSettings = (settings, store) => {
-  const { config, settings: sets } = store.replays
-
-  return Object.keys(config).reduce((acc, k) => {
-    if (config[k].builtIn) {
-      acc[k] = sets[k] // preserve builtIn settings
-    }
-
-    return acc
-  }, { ...settings })
 }

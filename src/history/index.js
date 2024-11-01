@@ -5,8 +5,8 @@ import bs from './browserState.js'
 import { hasHistory } from '../utils/bools.js'
 
 
-export default {
+export default () => ({
   state: hasHistory ? Object.assign(bs, JSON.parse(sesh.getItem('browserState'))) : {},
   changePath: hasHistory ? changePath : function() {},
   linkOut,
-}
+})

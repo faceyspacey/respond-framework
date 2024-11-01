@@ -10,8 +10,8 @@ import { colors } from '../styles.js'
 import useSlide from '../hooks/useSlide.js'
 
 
-export default ({ open }, events, { tab, loading }, { replays }) => {
-  const p = replays.options.position
+export default ({ open }, events, { tab, loading, respond }) => {
+  const p = respond.getStore().respond.replays.options.position
 
   const x = p?.left ? 'left' : 'right'
   const y = p?.top ? 'top' : 'bottom'

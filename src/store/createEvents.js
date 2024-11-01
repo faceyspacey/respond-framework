@@ -9,7 +9,7 @@ export default function createEvents(store, state, events = {}, propEvents = {},
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
-  const keys = Object.keys({ ...allEvents, ...propEvents })
+  const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same path, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same path, and the primary one is matched on first load, but you can dispatch different events that will have the same path but different queries
 
   const isModule = !ns && !isBuiltIns
   const init = isModule && (store.eventsByType.init ?? createEvent(store, state, { kind: 'init' }, modulePath, '', 'init')) // same init event reference on all modules

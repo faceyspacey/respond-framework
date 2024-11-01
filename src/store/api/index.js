@@ -1,5 +1,3 @@
-import sessionStorage from '../../utils/sessionStorage.js'
-
 import dispatch from './dispatch.js'
 
 import fromEvent from './fromEvent.js'
@@ -8,31 +6,33 @@ import eventFrom from './eventFrom.js'
 import snapshot from '../../proxy/snapshot.js'
 import render from '../../react/render.js'
 
-import history from '../../history/index.js'
-import createDevtools from '../../devtools/index.mock.js'
-import createCache from '../plugins/fetch/createCache.js'
+import defaultCreateDevtools from '../../devtools/index.mock.js'
+import defaultCreateHistory from '../../history/index.js'
+import defaultCreateCookies from '../../cookies/index.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
-import { createStateReviver, replacer } from '../../utils/revive.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
+import { parseJsonState, saveSessionState } from '../../utils/getSessionState.js'
 
 
-export default (top, state, replays) => {
+export default (top, state, focusedModulePath) => {
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
 
   const ctx = window.store?.ctx ?? {}
 
-  const { cookies, replayModulePath } = replays
-  state.replays = replays
+  const {
+    createDevtools = defaultCreateDevtools,
+    createHistory = defaultCreateHistory,
+    createCookies = defaultCreateCookies,
+    ...options
+  } = top.options ?? {}
 
   return {
     top,
-    replays: state.replays,
-    cookies,
     ctx,
     state,
   
@@ -48,8 +48,9 @@ export default (top, state, replays) => {
     refs: {},
     eventsCache: new Map,
   
-    history,
     devtools: createDevtools(),
+    history: createHistory(),
+    cookies: createCookies(),
 
     kinds,
   
@@ -69,23 +70,11 @@ export default (top, state, replays) => {
     },
   
     saveSessionState() {
-      sessionStorage.setItem('sessionState', this.stringifyState())
+      return saveSessionState(state, this.options.replacer)
     },
-    stringifyState() {
-      let s = snapshot(state)
-      
-      if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
-        s = { ...s, replayTools: { ...s.replayTools, tests: {} } } // don't waste cycles on tons of tests with their events
-      }
 
-      if (s.prevState?.prevState) {
-        delete s.prevState.prevState // HMR requires/keeps 2 levels, but sessionState does not
-      }
-
-      return JSON.stringify(s, this.options.replacer ?? replacer)
-    },
     parseJsonState(json) {
-      return JSON.parse(json, createStateReviver(state))
+      return parseJsonState(json, state)
     },
   
     shouldAwait() {
@@ -103,7 +92,7 @@ export default (top, state, replays) => {
 
     queueSaveSession() {
       if (isProd || isTest) return
-      if (ctx.saveQueued || this.replays.playing) return
+      if (ctx.saveQueued || state.replayTools?.playing) return
       if (window.state !== state) return // new store created
 
       ctx.saveQueued = true
@@ -154,35 +143,42 @@ export default (top, state, replays) => {
     },
   
     findInClosestAncestor(key, modulePath) {
-      modulePath = replayModulePath
-        ? modulePath ? replayModulePath + '.' + modulePath : replayModulePath
+      modulePath = focusedModulePath
+        ? modulePath ? focusedModulePath + '.' + modulePath : focusedModulePath
         : modulePath
 
       return findInClosestAncestor(key, modulePath, this.respond.top)
     },
   
     subscribe(send) {
+      send.module = this.respond.state
       send.modulePath = this.respond.state.modulePath // modulePath of module attached to `respond` object unique to each module
-      listeners.push(send)
+      
+      const mp = send.modulePath
+      
+      const sendOuter = send.length < 2 || !mp
+        ? send
+        : (state, e) => send(state, sliceEventByModulePath(e, mp))
+
+      listeners.push(sendOuter)
     
       return () => {
-        const index = listeners.findIndex(l => l === send)
+        const index = listeners.findIndex(l => l === sendOuter)
         listeners.splice(index, 1)
       }
     },
     
     notify(e) {  
-      if (e.event.sync) return
-      if (e.event === state.events.init) return
+      this.respond.devtools.send(e)
+
+      const { event } = e
+
+      if (event.sync && !event.notify) return
+      if (event === state.events.init) return
 
       const sent = listeners
         .filter(send => e.modulePath.indexOf(send.modulePath) === 0) // event is child of subscribed module or the same module
-        .map(send => {
-          const p = send.modulePath
-          const mod = modulePaths[p]
-          const eMod = sliceEventByModulePath(e, p)
-          send(mod, eMod)
-        })
+        .map(send => send(send.module, e))
 
       if (sent.length === 0) return
     

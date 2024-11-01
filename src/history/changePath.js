@@ -3,12 +3,12 @@ import { createTrap } from './createTrap.js'
 
 
 export default async (e, redirect) => {
-  const { replays, respond, ctx } = window.store
+  const { replayTools, respond, ctx } = window.store
   if (e.changePath === false) return
   
   const { url } = respond.fromEvent(e)
 
-  change(url, ctx.changedPath || replays.playing || redirect)
+  change(url, ctx.changedPath || redirect || replayTools?.playing)
 
   ctx.changedPath = true
   ctx.prevUrl = url

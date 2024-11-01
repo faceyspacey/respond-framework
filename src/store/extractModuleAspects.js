@@ -50,9 +50,9 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state, mo
 
 
 
-const mergeInitialState = async (state, initialState, currState) => {
+const mergeInitialState = (state, initialState, currState) => {
   const initial = typeof initialState === 'function'
-    ? await initialState(currState) 
+    ? initialState(currState) 
     : initialState
 
   if (initial) {

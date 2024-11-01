@@ -2,7 +2,8 @@ import jwt from '../../utils/jwt.js'
 import secret from '../../db/secret.mock.js'
 
 
-export default (settings, db, options) => {
+export default topReplays => {
+  const { settings, db } = topReplays
   if (!settings.userId) return
   
   const id = settings.userId

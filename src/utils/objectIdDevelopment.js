@@ -1,20 +1,12 @@
-const ref = {}
-
-ref.idCounter = 10000
-
-if (typeof window !== 'undefined') {
-  window.__respondContext = ref
-}
-
-
-
 export const suffix = 'abcdefghijklmnopqrs' // 24 digit ID like MongoIDs
 
-
 export default () => {
-  if (typeof widndow !== 'undefined' && window.opener) {
-    return window.opener.__respondContext.idCounter++ + suffix
-  }
+  return idCounter++ + suffix
+  if (typeof window === 'undefined') return idCounter++ + suffix
 
-  return ref.idCounter++ + suffix
+  const { replays } = window.opener?.state.respond ?? window.state.respond
+  return replays.idCounter++ + suffix
 }
+
+
+let idCounter = 10000

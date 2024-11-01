@@ -2,17 +2,22 @@ import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
-import { mergeModulesPrevState } from '../store/mergeModules.js'
+import { mergeModulesPrevState } from '../store/hydrateModules.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
 
 export default function (state, e) {
-  const { replays, devtools } = state.respond
-
   if (!e.meta.trigger) return
-  if (replays.status === 'session') return (replays.status = 'ready') && false
 
   const top = state.getStore()
+
+  const { respond } = top
+  const { replays, devtools } = respond
+
+  if (top.replaySettings.status === 'session') {
+    top.replaySettings.status = 'ready'
+    if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
+  }
 
   if (e.modulePath === 'replayTools' && !replays.options.log) {
     mergeModulesPrevState(top.replayTools, snapDeepClone(top.replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
@@ -25,7 +30,7 @@ export default function (state, e) {
 
   if (!top.replayTools) return
 
-  sendTrigger(fullPath(e), top.replayTools, top, replays.playing)
+  sendTrigger(fullPath(e), top.replayTools, top)
 
   if (e.meta.skipped) {
     // devtools.forceNotification({ ...fullPath(e), __prefix: '-- ' })
@@ -35,12 +40,12 @@ export default function (state, e) {
 
 
 
-const sendTrigger = (e, state, top, playing) => {
+const sendTrigger = (e, state, top) => {
   const index = ++state.evsIndex
 
-  if (playing) {
+  if (state.playing) {
     state.evs[index] = e // event from tests isn't fully created yet, so we need to manually add it to the events array
-    if (playing) return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
+    return // during replays we preserve the events array, but move through it by index only, so you can see completed events in green, and yet to be dispatched rows in white (or purple)
   }
   
   const events = state.evs

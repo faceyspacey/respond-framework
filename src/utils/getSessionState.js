@@ -1,24 +1,52 @@
 import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkSettings } from '../modules/replayTools/helpers/createPermalink.js'
+import snapshot from '../proxy/snapshot.js'
 import { isProd } from './bools.js'
+import { createStateReviver, replacer as defaultReplacer } from './revive.js'
 
 
-export default async ({ status, settings, hydration } = {}) => {
-  const { prevState, replayTools: { form, ...rt } = {} } = window.store ?? {}
+export default ({ status, settings, hydration } = {}) => {
+  const { prevState, replaySettings, replayTools: { form: _, ...rt } = {} } = window.store ?? {}
 
   switch (status) {
-    case 'reload':  return { ...hydration, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }, replays: { settings } }
-    case 'replay':  return { ...hydration, replayTools: { ...rt, evsIndex: -1 }, replays: { settings } }
-    case 'hmr':     return { ...prevState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
+    case 'reload':  return { ...hydration, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }, replaySettings: settings }
+    case 'replay':  return { ...hydration, replayTools: { ...rt, evsIndex: -1 }, replaySettings: settings }
+    case 'hmr':     return { ...prevState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex], replaySettings }
   }
 
   const perm = !isProd && permalinkSettings()
-  if (perm) return { ...hydration, replays: { settings: perm } }
+  if (perm) return { ...hydration, replaySettings: perm }
 
-  const session = await sessionStorage.getItem('sessionState')
-  if (!session) return hydration
+  const session = sessionStorage.getItem('sessionState')
+  if (session) return JSON.parse(session)
 
-  const state = JSON.parse(session)
-  if (state.replays) Object.assign(state.replays, { status: 'session' })
-  return state
+  return { ...hydration, replaySettings: {} }
+}
+
+
+
+export const parseJsonState = (json, state = {}) => {
+  return JSON.parse(json, createStateReviver(state))
+}
+
+export const saveSessionState = (state, replacer) => {
+  sessionStorage.setItem('sessionState', stringifyState(state, replacer))
+}
+
+
+
+const stringifyState = (state, replacer = defaultReplacer) => {
+  let s = { ...snapshot(state)}
+      
+  if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
+    s.replayTools = { ...s.replayTools, tests: undefined } // don't waste cycles on tons of tests with their events
+  }
+
+  if (s.prevState?.prevState) {
+    s.prevState = { ...s.prevState, prevState: undefined }
+  }
+
+  s.replaySettings = { ...s.replaySettings, status: 'session' }
+
+  return JSON.stringify(s, replacer)
 }

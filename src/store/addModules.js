@@ -10,23 +10,23 @@ import extractModuleAspects from './extractModuleAspects.js'
 import findOne from '../selectors/findOne.js'
 import { _module, _parent } from './reserved.js'
 import { isProd } from '../utils.js'
-import defaultPluginsSync from './plugins/edit/index.js'
 
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default async function addModule(
+export default function addModule(
   mod,
   r,
   state = Object.create({}),
+  hydration = {},
   parent = {},
   props = {},
   path = '',
-  name, hydration = r.replays.hydration ?? {},
+  name,
   ancestorPlugins,
   parentModulePath
 ) {
-  const { id, ignoreParents, initialState, components, replays, reduce, options = {} } = mod
+  const { id, ignoreParents, initialState, components, reduce, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   const respond = { ...options.merge, ...r, options, modulePath: path, overridenReducers: new Map }
@@ -60,17 +60,17 @@ export default async function addModule(
 
   for (const k of moduleKeys) {
     const p = path ? `${path}.${k}` : k
-    state[k] = await addModule(mod[k], r, undefined, state, mod[k].props, p, k, hydration[k], propPlugins, path)
+    state[k] = addModule(mod[k], r, undefined, hydration[k], state, mod[k].props, p, k, propPlugins, path)
     state[k].respond.state = state[k]
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
     //   const p = path ? `${path}.${k2}` : k2
-    //   state[k][k2] = await addModule(mod, respond, k2, p, state, mod.props)
+    //   state[k][k2] = addModule(mod, respond, k2, p, state, mod.props)
     // }
   }
 
   if (!path && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
-    state[k] = await addModule(replayToolsModule, r, undefined, state, undefined, k, k, hydration[k], propPlugins, path)
+    state[k] = addModule(replayToolsModule, r, undefined, hydration[k], state, undefined, k, k, propPlugins, path)
     state[k].respond.state = state[k]
     moduleKeys.push(k)
   }

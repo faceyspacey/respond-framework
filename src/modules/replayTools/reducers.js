@@ -40,7 +40,7 @@ export const loading = (_, e, { state }) => {
 }
 
 
-export const form = (state = {}, e, store) => e.form ? { ...state, ...e.form } : state
+export const form = (state = {}, e) => e.form ? { ...state, ...e.form } : state
 
 
 export const tests = (state = {}, e, { events, replays }) => {
@@ -54,7 +54,7 @@ export const tests = (state = {}, e, { events, replays }) => {
   if (e.tests) {
     const tests = e.tests.map(t => ({
       ...t,
-      events: t.events.map(e => resolveModulePath(e, t.modulePath, replays.settings.modulePath))
+      events: t.events.map(e => resolveModulePath(e, t.modulePath, replays.settings.module))
     }))
 
     return addToCache(state, tests)

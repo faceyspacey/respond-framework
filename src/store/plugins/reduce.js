@@ -3,15 +3,16 @@ import { prependModulePathToE } from '../../utils/sliceByModulePath.js'
 
 
 export default wrapInActForTests((state, e) => {
-  e.event.mutate?.(state, e)
-  if (e.event.reduce === false) return
-  
   const { respond } = state
-  const { ctx, devtools, modulePath } = respond
+  const { ctx, modulePath } = respond
 
   const top = respond.getStore()
   const eTop = prependModulePathToE(e)
 
+  e.event.mutate?.(state, e)
+
+  if (e.event.reduce === false) return respond.notify(eTop)
+    
   try {
     if (e.event === top.events.init) {
       reduceAllModules(eTop, top)
@@ -26,7 +27,7 @@ export default wrapInActForTests((state, e) => {
   }
 
   delete ctx.modulePathReduced    // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)  
-  devtools.send(eTop)
+  
   return respond.notify(eTop)
 })
 

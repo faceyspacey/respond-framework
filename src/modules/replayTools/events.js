@@ -3,7 +3,7 @@ import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
-import revive from '../../utils/revive.js'
+import { kinds } from '../../utils.js'
 
 
 export default {
@@ -11,17 +11,17 @@ export default {
 
   settings: {
     namespace: false,
-    navigation: true,
+    kind: kinds.navigation,
   },
 
   events: {
     namespace: false,
-    navigation: true,
+    kind: kinds.navigation,
   },
 
   tests: {
     namespace: false,
-    navigation: true,
+    kind: kinds.navigation,
     cache: false,
     fetch: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter),
   },
@@ -55,7 +55,7 @@ export default {
   },
 
   test: {
-    navigation: true,
+    kind: kinds.navigation,
     submit: async (state, { id, index, delay }) => {
       const { settings, events: evs } = state.tests[id]
 
@@ -111,7 +111,7 @@ export default {
   },
 
   stopReplay: {
-    before: ({ replays }) => window.store.replays.playing = false
+    before: state => state.playing = false
   },
 
   replayEventsToIndex: {
@@ -187,7 +187,7 @@ export default {
       window.history.replaceState(history.state, '', settings.path)
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
-      const store = await createState(top, { settings, status: 'reload' })
+      const store = createState(top, { settings, status: 'reload' })
       const e = store.eventFrom(settings.path)
 
       if (!e) throw new Error(`no event found for path "${settings.path}" in module "${settings.module}"`)

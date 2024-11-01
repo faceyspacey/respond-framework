@@ -6,8 +6,8 @@ import { colors } from '../styles.js'
 import ErrorBoundary from '../components/ErrorBoundary.js'
 
 
-export default (props, { toggle }, { open }, { replays }) => {
-  const { hide, position } = replays.options
+export default (props, { toggle }, { open, respond }) => {
+  const { hide, position } = respond.getStore().respond.replays.options
   if (hide) return
 
   const horizontal = position?.left ? 'left' : 'right'
