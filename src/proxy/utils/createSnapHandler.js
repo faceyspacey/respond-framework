@@ -22,13 +22,13 @@ export default (snap, state) => {
     get(snap, k, proxy) {
       if (k === _parent) return state.parentProxy
 
-      if (protoDescriptors[k] && !snap.hasOwnProperty(k)) {
+      if (protoDescriptors[k] && !snap.hasOwnProperty(k)) { // check hasOwnProperty to allow for model protos to supply default values which can get overriden on concrete instances
         const { get, value } = protoDescriptors[k]
         
-        if (get) return get.call(proxy)               // need to set `this` to proxy, as otherwise `this` within the getter will be the original object, lacking the proxy magic
-        if (typeof value === func) return value       // will be called as method with proxy as `this` automatically
+        if (get) return get.call(proxy)                     // getter
+        if (typeof value === func) return value             // will be called as method with proxy as `this` automatically
 
-        recordUsage(state.affected, g, snap, k)     // record usage, as value may be assigned to state, overriding proto, in the future
+        recordUsage(state.affected, g, snap, k)             // record usage, as value may be assigned to state, overriding proto, in the future
         return value
       }
 

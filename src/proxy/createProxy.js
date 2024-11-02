@@ -15,7 +15,7 @@ export default function createProxy(o, notifyParent = function() {}, cache =  ne
 
   sub.listeners.add(notifyParent)
 
-  keys(o).forEach(k => {
+  Object.keys(o).forEach(k => {
     const v = o[k]
     o[k] = canProxy(v) ? createProxy(v, sub.notify, cache, snapCache) : v
   })
@@ -53,14 +53,14 @@ class Subscription {
 
 
 const handleExistingProxy = (o, notifyParent, cache) => {
-  const sub = ps.get(o)       // object that exists as a proxy
+  const sub = ps.get(o)       // proxy assigned that exists elsewhere
 
   if (sub) {
     sub.listeners.add(notifyParent)
     return o
   }
 
-  const proxy = cache.get(o)  // object that exists somewhere else as a proxy
+  const proxy = cache.get(o)  // object assigned that exists somewhere else as a proxy
 
   if (proxy) {
     const sub = ps.get(proxy)
@@ -68,7 +68,3 @@ const handleExistingProxy = (o, notifyParent, cache) => {
     return proxy
   }
 }
-
-
-
-const keys = Object.keys
