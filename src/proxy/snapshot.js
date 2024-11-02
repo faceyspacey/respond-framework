@@ -1,20 +1,18 @@
-import { proxyStates, snapsToProxyCache, canProxy } from './utils/helpers.js'
+import { proxyStates, canProxy } from './utils/helpers.js'
 
 
 export default function snapshot(proxy) {
-  const state = proxyStates.get(proxy)
-  return state ? createSnapshot(proxy, state) : proxy // proxy : not proxy yet (lazy or primitive)
+  const sub = proxyStates.get(proxy)
+  return sub ? createSnapshot(sub) : proxy // proxy : primitive value
 }
 
 
-function createSnapshot(proxy, { orig: o, version, cache, listeners, notify }) {
-  const { version: v, snap: s } = cache.snap.get(o) ?? {}
+function createSnapshot({ orig: o, version, cache }) {
+  const { version: v, snap: s } = cache.get(o) ?? {}
   if (v === version) return s
 
   const snap = isArray(o) ? [] : create(getProto(o)) // computed methods/selectors on prototype
-
-  cache.snap.set(o, { snap, version })
-  snapsToProxyCache.set(snap, { orig: o, proxy, listeners, notify, cache })
+  cache.set(o, { snap, version })
 
   keys(o).forEach(k => snap[k] = snapshot(o[k]))
 

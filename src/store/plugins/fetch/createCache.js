@@ -3,7 +3,6 @@ export default (state, k = 'navigationCache') => {
   const cache = state[k] // reactive proxy
 
   const { respond } = state
-  const { modulePaths } = respond
 
   return {
     urls: cache,
@@ -29,7 +28,7 @@ export default (state, k = 'navigationCache') => {
     has(e) {
       const { event } = e
       if (!event.path) return false
-      if (typeof event.cache === 'function') return event.cache(modulePaths[e.modulePath], e, this.get(e))
+      if (typeof event.cache === 'function') return event.cache(event.module, e, this.get(e))
       if (event.cache !== undefined) return !!event.cache
       return !!(!event.fetch || e.meta.cached || this.get(e))
     },

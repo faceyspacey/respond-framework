@@ -6,7 +6,7 @@ import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
 
 export default async function(ev, meta) {
   const e = sliceEventByModulePath(mergeMeta(ev, meta))
-  const state = this.respond.modulePaths[e.modulePath]
+  const state = e.event.module
 
   await loadPluginsOnce(this.respond.getStore())
 

@@ -1,11 +1,12 @@
-import { proxyStates } from './helpers.js'
+import { canProxy, proxyStates as ps } from './helpers.js'
+import createProxy from '../createProxy.js'
 
 
-export default (notify, cache) => ({
+export default (notify, cache, snapCache) => ({
   deleteProperty(o, k) {
     const prev = o[k]
 
-    proxyStates.get(prev)?.remove(notify)
+    ps.get(prev)?.remove(notify)
     delete o[k]
 
     notify()
@@ -16,10 +17,10 @@ export default (notify, cache) => ({
   set(o, k, v) {
     if (o[k] === v || cache.has(v) && cache.get(v) === o[k]) return true
 
-    proxyStates.get(o[k])?.remove(notify)
+    ps.get(o[k])?.remove(notify)
 
-    o[k] = v
-    // o[k] = canProxy(v) ? createProxy(v, notify, cache) : v // note: will need to simple add listener if assigning existing proxy
+    o[k] = canProxy(v) ? createProxy(v, notify, cache, snapCache) : v // note: will need to simply add listener if assigning existing proxy
+
     notify()
 
     return true

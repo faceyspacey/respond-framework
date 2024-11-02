@@ -32,7 +32,7 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, state, resp
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // delete potential child reducer mock, so selector takes precedence
-    delete state[k]                                                     // delete potential hydrated state too
+    // delete state[k]                                                     // delete potential hydrated state too
   })
 }
 

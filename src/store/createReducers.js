@@ -22,6 +22,6 @@ export default (proto, state, moduleName, reducers, propReducers, parentReducers
     Object.defineProperty(proto, k, { get, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // delete potential child reducer mock, so selector takes precedence
-    delete state[k]                                                     // delete potential initialState too (note: this would be a mistake if provided in userland; instead the corresponding parent state should be hydrated)
+    // delete state[k]                                                     // delete potential initialState too (note: this would be a mistake if provided in userland; instead the corresponding parent state should be hydrated)
   })
 }

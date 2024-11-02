@@ -438,19 +438,20 @@ apply prefixPath function in createEvents
 #builtIn settings should be moved somewhere else and be global, not modular
 
 
-??automation to inherit settings like userId top-down, option to not inherit
+#??automation to inherit settings like userId top-down, option to not inherit
 
 
-need process/handle for accessing replays outside of controllers/db/models, such as for the config
-how to inject replays server-side in production?
-is it possible to not need to inject it using some sort of handle?
+#need process/handle for accessing replays outside of controllers/db/models, such as for the config
+#how to inject replays server-side in production?
+#is it possible to not need to inject it using some sort of handle?
 
-models/db need consistent way to access this.db
-how to allow for collections with the same name, without sharing docs?
-
-
+#models/db need consistent way to access this.db
+#how to allow for collections with the same name, without sharing docs?
 
 
+
+
+inherit setting, dont share docs, global replays handle for config, assign replays to db/etc in production
 bring back proper saving of idCounter
 remember to handle hmr + conf caching
 

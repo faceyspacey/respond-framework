@@ -1,9 +1,9 @@
-export default (plugins, propPlugins, ancestorPlugins, respond, parentModulePath) => {
+export default (plugins, propPlugins, ancestorPlugins, parent) => {
   plugins = plugins.map(createPluginObject)
 
   if (!propPlugins && !ancestorPlugins) return [plugins]
 
-  const descriptor = { get: () => respond.modulePaths[parentModulePath], enumerable: false, configurable: true }
+  const descriptor = { value: parent, enumerable: false, configurable: true }
   
   propPlugins = propPlugins?.map(createPluginObject).map(p => { 
     Object.defineProperty(p, 'state', descriptor)           // propPlugins/ancestors will be run in multiple child dispatch pipelines, but will need access to their own module's state -- also note: we create each one once, so the plugin instance object will be shared across possibly multiple modules
