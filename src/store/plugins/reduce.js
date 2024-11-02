@@ -92,7 +92,7 @@ const reduceModule = (state, e, mod, reducers, ignore) => {
       reduceModule(state[k], e, mod, reduce)
     }
     else {
-      state[k] = reduce(state[k], e, mod, state) // 4th arg is reducer group
+      state[k] = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
     }
   }
 }

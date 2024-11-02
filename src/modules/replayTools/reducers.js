@@ -1,4 +1,5 @@
 import { addToCache } from '../../utils/addToCache.js'
+import events from './events.js'
 import resolveModulePath from './helpers/resolveModulePath.js'
 
 
@@ -40,7 +41,43 @@ export const loading = (_, e, { state }) => {
 }
 
 
-export const form = (state = {}, e) => e.form ? { ...state, ...e.form } : state
+export const form = (state = {}, e, { events, topState, formRespond }) => {
+  if (e.event === events.init) {
+    const settingsTree = (s, form, k) => {
+      if (k === 'replayTools') return
+      Object.assign(form, s.respond.replays.settings)
+      s.moduleKeys.forEach(k => settingsTree(s[k], form[k] = {}, k))
+    }
+  
+    settingsTree(topState, state)
+
+    return state
+  }
+
+  if (e.event !== events.edit) return state
+
+  const path = formRespond.module
+
+  if (!path) {
+    Object.assign(state, e.form)
+  }
+  else {
+    let mod = state
+    path.split('.').forEach(k => mod = mod[k] ??= {})
+    Object.assign(mod, e.form)
+  }
+
+  return state
+}
+
+export const formRespond = (state = {}, e, { events, topState }) => {
+  if (e.event === events.init) {
+    return { ...state, module: '' }
+  }
+
+  if (e.event !== events.editRespond) return state
+  return { ...state, ...e.form }
+}
 
 
 export const tests = (state = {}, e, { events, replays }) => {

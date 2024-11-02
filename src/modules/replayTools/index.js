@@ -18,7 +18,10 @@ export const evsIndex = -1
 
 export const evs = []
 
-
 export function findLastEvent() {
   return this.evs[this.evsIndex]
+}
+
+export function topState() {
+  return this[_parent]
 }

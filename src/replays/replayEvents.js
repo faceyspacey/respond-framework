@@ -12,7 +12,7 @@ export default async function(events, delay = 0, settings = window.state.respond
 
 
 const run = async (events, delay, respond) => {           // keep in mind store and store.replays will now be in the context of the next next store
-  const { ctx, replays } = respond
+  const { ctx, options } = respond
   
   window.state.replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
   ctx.isFastReplay = !delay                    // turn animations + timeouts off
@@ -27,7 +27,7 @@ const run = async (events, delay, respond) => {           // keep in mind store 
     if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
     if (delay ? first : last) respond.render()                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
-    await timeout(delay, replays.settings, meta, last)
+    await timeout(delay, meta, last, options.testDelay)
   }
 
   window.state.replayTools.playing = false
@@ -41,8 +41,8 @@ const run = async (events, delay, respond) => {           // keep in mind store 
 
 
 
-const timeout = (delay, settings, meta, last) => {
+const timeout = (delay, meta, last, testDelay = 1500) => {
   if (isTest || !delay || meta?.skipped || last) return
-  const ms = delay !== true ? delay : settings.testDelay || 1500
+  const ms = delay !== true ? delay : testDelay
   return new Promise(res => setTimeout(res, ms))
 }

@@ -12,7 +12,15 @@ export const findByModulePath = (obj, modulePath) => {
   if (!obj) return
   
   const modules = modulePath.split('.')
-  return modules.reduce((slice, k) => slice?.[k], obj)
+
+  let slice = obj
+
+  for (const k of modules) {
+    slice = slice[k]
+    if (!slice) return
+  }
+
+  return slice
 }
 
 

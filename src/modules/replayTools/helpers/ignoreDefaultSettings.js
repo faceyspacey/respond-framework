@@ -1,15 +1,18 @@
 import findSelectedOption from './findSelectedOption.js'
 
 
-export default (config, settings) =>
+export default (config, settings, modulePath) =>
   Object.keys(settings).reduce((acc, k) => {
     const setting = settings[k]
     const conf = config[k]
 
+    if (!conf) {
+      acc[k] = setting // setting for which there is no config that developers wants to pass for whatever reason
+      return acc
+    }
+
     const ignored =
-      !conf ||
       conf.ignoreInTestSettings ||
-      conf.builtIn ||
       setting === conf.defaultValueDevelopment ||
       conf.available?.(settings) === false ||
       isDefaultOption(conf, setting, settings) ||
@@ -20,7 +23,7 @@ export default (config, settings) =>
     }
 
     return acc
-  }, {})
+  }, { modulePath})
 
 
 

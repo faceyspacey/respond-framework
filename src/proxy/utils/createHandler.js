@@ -13,16 +13,13 @@ export default (notify, cache) => ({
     return true
   },
 
-  set(o, k, v, proxy) {
-    const prev = o[k]
+  set(o, k, v) {
+    if (o[k] === v || cache.has(v) && cache.get(v) === o[k]) return true
 
-    const equal = prev === v || cache.has(v) && Object.is(prev, cache.get(v))
-    if (equal) return true
-
-    proxyStates.get(prev)?.remove(notify)
+    proxyStates.get(o[k])?.remove(notify)
 
     o[k] = v
-    // o[k] = canProxy(v) ? createProxy(v, proxy, cache) : v
+    // o[k] = canProxy(v) ? createProxy(v, notify, cache) : v // note: will need to simple add listener if assigning existing proxy
     notify()
 
     return true

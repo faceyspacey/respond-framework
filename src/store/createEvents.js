@@ -143,8 +143,8 @@ const applyTransform = (state, e, dispatch, trigger) => {
 
 
 const edit = {
-  transform: ({}, form) => ({ form }),
   sync: true,
+  transform: ({}, form) => ({ form }),
 }
 
 

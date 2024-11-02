@@ -1,27 +1,26 @@
 import * as React from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
-import { useStore } from '../respond.js'
 import Button from '../widgets/Button.js'
 import Input from '../widgets/Input.js'
 import Radio from '../widgets/Radio.js'
 import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
-import configDefault from '../../../replays/config.default.js'
+import respondConfig from '../../../replays/config.default.js'
+import sliceByModulePath, { findByModulePath } from '../../../utils/sliceByModulePath.js'
 
 
-export default (props, events) => {
-  return
-  
-  const { replays } = useStore()
+export default (props, events, { topState, formRespond }) => {
+  const respondSettings = createSettings(events.editRespond, respondConfig, RespondSetting, -1)
 
-  const settings = createSettings(events.edit, replays.config)
+  const { replays } = sliceByModulePath(topState, formRespond.module).respond
+  const settings = createSettings(events.edit, replays.config, UserSetting)
 
-  // const config = sliceByModulePath(replays.config, replays.settings.module)
-  // const settings = createSettings(events.edit, config)
   
   return (
     <View style={s.c}>
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
+        {respondSettings}
+        <View style={s.divider} />
         {settings}
         <Link style={s.link} event={events.openPermalink}>share settings permalink</Link>
       </ScrollView>
@@ -32,32 +31,45 @@ export default (props, events) => {
 }
 
 
-const createSettings = (event, config) => {
-  const fields = orderSettings(config)
+const createSettings = (event, config, FormComponent, z = 1) => {
+  const fields = Object.keys(config)
 
   return fields.map((name, i) => {
     const s = config[name]
 
-    const zIndex = fields.length - i // so Dropdown menus are above subsequent dropdowns
+    const zIndex = -i * z // so Dropdown menus are above subsequent dropdowns
 
     const Component = s.boolean ? Radio : s.options ? Dropdown : Input
-    const props = { ...s, event, name, label: name, key: name, zIndex, Component }
+    const props = { ...s, event, name, label: s.label ?? name, key: name, zIndex, Component }
 
     return React.createElement(FormComponent, props)
   })
 }
 
 
-const FormComponent = ({ Component, name, available, options }, events, { form }, store) => {
-  if (available && !available(form)) return
+const RespondSetting = ({ Component, name, options }, events, state) => {
+  const { formRespond: form } = state
 
   return React.createElement(Component, {
     ...props,
     value: form[name],
-    options: typeof options === 'function' ? options(form, store) : options || bools
+    options: typeof options === 'function' ? options(form, state) : options || bools
   })
 }
 
+
+const UserSetting = ({ Component, name, available, options }, events, state) => {
+  const { form, formRespond } = state
+  const mod = findByModulePath(form, formRespond.module) ?? {}
+
+  if (available && !available(mod)) return
+
+  return React.createElement(Component, {
+    ...props,
+    value: mod[name],
+    options: typeof options === 'function' ? options(mod, state) : options || bools
+  })
+}
 
 
 const bools = [{ value: true, text: 'True' }, { value: false, text: 'False' }]
@@ -75,26 +87,12 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10
   },
+
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(149, 150, 153, .27)',
+    marginHorizontal: 3,
+    marginTop: 12,
+    marginBottom: 4
+  }
 })
-
-
-
-
-
-// helpers
-
-const orderSettings = config => {
-  const builtIns = Object.keys(configDefault)
-  const keys = Object.keys(config).filter(k => !builtIns.includes(k))
-
-  const radios = keys.filter(k => config[k].boolean)
-  const radiosBuiltin = builtIns.filter(k => config[k].boolean)
-
-  const dropdowns = keys.filter(k => config[k].options)
-  const dropdownsBuiltin = builtIns.filter(k => config[k].options)
-
-  const inputs = keys.filter(k => !config[k].boolean && !config[k].options)
-  const inputsBuiltin = builtIns.filter(k => !config[k].boolean && !config[k].options && k !== 'path')
-
-  return [...radios, ...radiosBuiltin, 'path', ...dropdownsBuiltin, ...dropdowns, ...inputs, ...inputsBuiltin]
-}

@@ -6,6 +6,7 @@ import createRespond from './api/index.js'
 import sliceByModulePath from '../utils/sliceByModulePath.js'
 
 import addModule from './addModules.js'
+import createReplays from '../replays/index.js'
 import hydrateModules from './hydrateModules.js'
 
 
@@ -19,6 +20,7 @@ export default (top, opts = {}) => {
   const mod = sliceByModulePath(top, focusedModulePath)
 
   addModule(mod, respond, state, session)
+  createReplays(state, session)
   hydrateModules(state, session)
 
   return window.store = window.state = state

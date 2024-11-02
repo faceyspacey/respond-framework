@@ -6,21 +6,21 @@ import { createStateReviver, replacer as defaultReplacer } from './revive.js'
 
 
 export default ({ status, settings, hydration } = {}) => {
-  const { prevState, replaySettings, replayTools: { form: _, ...rt } = {} } = window.store ?? {}
+  const { prevState, replaySettings: currSets, replayTools: { form: _, tests: __, ...rt } = {} } = window.store ?? {}
 
   switch (status) {
-    case 'reload':  return { ...hydration, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }, replaySettings: settings }
-    case 'replay':  return { ...hydration, replayTools: { ...rt, evsIndex: -1 }, replaySettings: settings }
-    case 'hmr':     return { ...prevState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex], replaySettings }
+    case 'reload':  return { ...hydration, replaySettings: settings, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
+    case 'replay':  return { ...hydration, replaySettings: settings, replayTools: { ...rt, evsIndex: -1 } }
+    case 'hmr':     return { ...prevState, replaySettings: currSets, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
   }
 
   const perm = !isProd && permalinkSettings()
-  if (perm) return { ...hydration, replaySettings: perm }
+  if (perm) return { ...hydration, replaySettings: perm, replayTools: {} }
 
   const session = sessionStorage.getItem('sessionState')
   if (session) return JSON.parse(session)
 
-  return { ...hydration, replaySettings: {} }
+  return { ...hydration, replaySettings: {}, replayTools: {} }
 }
 
 
@@ -36,7 +36,7 @@ export const saveSessionState = (state, replacer) => {
 
 
 const stringifyState = (state, replacer = defaultReplacer) => {
-  let s = { ...snapshot(state)}
+  let s = { ...snapshot(state) }
       
   if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
     s.replayTools = { ...s.replayTools, tests: undefined } // don't waste cycles on tons of tests with their events

@@ -395,6 +395,9 @@ apply prefixPath function in createEvents
 #make history + isCached their own plugins
 
 
+#maybe reducers dont receive a 3rd arg, but instead use `this` like selectors!
+# when reducing if the same state is returned, dont assign it
+
 #always called parent plugins (parallel option)(especially on initial load), parents can listen in, leave route event callback (with blocking)
 #reduce needs way to dynamically toggle deepth-first vs breadth-first
 
@@ -402,10 +405,10 @@ apply prefixPath function in createEvents
 #createSeed needs to run per module, and also have access to previous module's underlying db
 #seed isn't preserved across dev refreshes
 
-how to allow for collections with the same name, without sharing docs?
-make Settings component display settings for all modules, and of course edit and populate them accordingly
-
 #pass module-specific replays object into each module (this.replays in controllers/db/models, respond.replays in client code)
+
+#replace createProxyHandler
+
 
 #inheriting db
 #inheriting settings
@@ -415,37 +418,48 @@ make Settings component display settings for all modules, and of course edit and
 #assign db/controllers/models.replays 
 
 
+#replay settings shouldn't be nested when the user accesses it
+#rather, we are simply assigning modules their own replays now, which includes db
+
+#we probably need to save settings in its own sessionStorage
+
+
+
+
+#!make Settings component display settings for all modules, and of course edit and populate them accordingly
+#!Settings will need to recurse this[parent].replays...
+#!change displayed settings based on selected module
+
+#!replayEvents/reload will need to be able to receive a tree of settings, and merge em
+#replaySettings needs to absorb settings of all modules
+#reload needs to use reduced settings of all modules via form
+
+#replays.settings.module needs to be accessible from all modules' replay objects
+#builtIn settings should be moved somewhere else and be global, not modular
+
+
+??automation to inherit settings like userId top-down, option to not inherit
+
+
+need process/handle for accessing replays outside of controllers/db/models, such as for the config
 how to inject replays server-side in production?
 is it possible to not need to inject it using some sort of handle?
 
-
-replay settings shouldn't be nested when the user accesses it
-rather, we are simply assigning modules their own replays now, which includes db
-Settings will need to recurse this[parent].replays...
-
-replayEvents/reload will need to be able to receive a tree of settings, and merge em
-we probably need to save settings in its own sessionStorage
-
-change displayed settings based on selected module
-
-
-automation to inherit settings like userId top-down, option to not inherit
-
-
 models/db need consistent way to access this.db
+how to allow for collections with the same name, without sharing docs?
 
 
+
+
+bring back proper saving of idCounter
 remember to handle hmr + conf caching
 
 
 
-maybe reducers dont receive a 3rd arg, but instead use `this` like selectors!
 
 
 
 #make all tools replacable by user (including reviver)
 #re-organize files
-
-#replace createProxyHandler
 
 finalize implementation of respond object etc

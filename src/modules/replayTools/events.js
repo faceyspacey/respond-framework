@@ -9,6 +9,11 @@ import { kinds } from '../../utils.js'
 export default {
   toggle: {},
 
+  editRespond: {
+    sync: true,
+    transform: ({}, form) => ({ form }),
+  },
+
   settings: {
     namespace: false,
     kind: kinds.navigation,
@@ -23,15 +28,15 @@ export default {
     namespace: false,
     kind: kinds.navigation,
     cache: false,
-    fetch: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter),
+    fetch: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter),
   },
   
   sortTests: {
-    submit: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter)
+    submit: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter)
   },
 
   includeChildModuleTests: {
-    submit: ({ db, replays, state }) => db.developer.findTests(replays.settings.module, state.includeChildren, state.searched, state.filter)
+    submit: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter)
   },
 
   toggleFilter: {
@@ -40,14 +45,14 @@ export default {
 
   filterTests: {
     sync: true,
-    debounce: ({ db, replays, state }, e) => db.developer.findTests(replays.settings.module, state.includeChildren, e.searched, state.filter),
+    debounce: ({ db, state }, e) => db.developer.findTests(state.formRespond.module, state.includeChildren, e.searched, state.filter),
   },
 
   testFromWallaby: {
     before: async ({ replays, state, events }, { test, index, delay }) => {
       if (test.modulePath.indexOf(replays.settings.module) !== 0) { // ensure test will run in its original module or a parent module
         replays.settings.module = test.modulePath
-        state.form.module = test.modulePath
+        state.formRespond.module = test.modulePath
       }
       
       return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
@@ -82,7 +87,7 @@ export default {
 
       if (name) {
         const modulePath = replays.settings.module
-        const settings = ignoreDefaultSettings(replays.config, { ...replays.settings })
+        const settings = ignoreDefaultSettings(replays.config, replays.settings, modulePath)
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
@@ -183,14 +188,17 @@ export default {
   },
 
   reload: {
-    before: async ({ form: settings, top }) => {
-      window.history.replaceState(history.state, '', settings.path)
+    before: async ({ form, formRespond: respondSettings, top }) => {
+      const { path, module } = respondSettings
+      const settings = { ...form, module }
+      
+      window.history?.replaceState(history.state, '', path)
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const store = createState(top, { settings, status: 'reload' })
-      const e = store.eventFrom(settings.path)
+      const e = store.eventFrom(path)
 
-      if (!e) throw new Error(`no event found for path "${settings.path}" in module "${settings.module}"`)
+      if (!e) throw new Error(`no event found for path "${path}" in module "${module}"`)
         
       await e.trigger()
       store.render()

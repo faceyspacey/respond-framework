@@ -2,12 +2,8 @@ import { isTest } from './bools.js'
 import timeout from './timeout.js'
 
 
-export default async store => {
-  const { replays, ctx } = store.respond
-  const { latency } = replays.settings
-
-  const dontAwait = !latency || ctx.isFastReplay || isTest
-  if (dontAwait) return
-
-  await timeout(latency)
+export default store => {
+  const { options, ctx } = store.respond
+  if (ctx.isFastReplay || isTest || !options.simulatedApiLatency) return
+  return timeout(options.simulatedApiLatency)
 }

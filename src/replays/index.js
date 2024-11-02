@@ -11,23 +11,17 @@ import replayEvents from './replayEvents.js'
 
 export default (state, session) => {
   const { top, cookies } = state.respond
-
   const replays = createReplaysForModules(top, state, session.replaySettings)
 
-  Object.assign(replays, { replayEvents })
-  Object.assign(replaysRef, replays)
+  Object.getPrototypeOf(state.replayTools).replays = Object.getPrototypeOf(state).replays = Object.assign(replaysRef, replays)
 
-  Object.defineProperty(state, 'replays', { value: replaysRef, enumerable: false, configurable: true })
-  Object.defineProperty(state.replayTools, 'replays', { value: replaysRef, enumerable: false, configurable: true })
-
-  const createToken = top.replays.createToken ?? defaultCreateToken 
-  state.token = isProd ? cookies.get('token') : createToken(replays)
+  session.token = isProd ? cookies.get('token') : (top.replays.createToken ?? defaultCreateToken)(replays)
 }
 
 
 const createReplaysForModules = (topModule, top, settings) => {
   const db = {}
-
+  
   traverseModulesDepthFirst(top, state => {
     const { modulePath } = state
     if (modulePath === 'replayTools') return
@@ -37,7 +31,7 @@ const createReplaysForModules = (topModule, top, settings) => {
     
     state.respond.replays = mod.replays
       ? createReplays(modulePath, settings, db, mod.replays)
-      : { config: {}, settings: {}, db: {}, options: {} }
+      : { config: {}, settings: {}, db: {}, options: {}, replayEvents }
   })
 
   return top.respond.replays
@@ -61,7 +55,7 @@ const createReplays = (modulePath, settingsSupplied, sharedDb, {
 
   Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: { settings } })
 
-  return { settings, config, db, options: {} }
+  return { settings, config, db, options: {}, replayEvents }
 }
 
 

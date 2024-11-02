@@ -1,11 +1,8 @@
-import createReplays from '../replays/index.js'
 import revive  from '../utils/revive.js'
 import reduce from './plugins/reduce.js'
 
 
 export default (state, session) => {
-  createReplays(state, session)
-
   const hydration = revive(state)(session)
 
   mergeModules(state, hydration)
