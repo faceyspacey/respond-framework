@@ -25,7 +25,7 @@ export default function addModule(
   name,
   ancestorPlugins,
 ) {
-  const { id, ignoreParents, initialState, components, reduce, options = {} } = mod
+  const { id, ignoreParents, components, reduce, options = {} } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   r.modulePathsById[id] = path
@@ -46,16 +46,16 @@ export default function addModule(
   const proto = Object.getPrototypeOf(state)
   Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, reduce })
 
-  const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, initialState, state, [])
-  const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, props.initialState, parent)
+  const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, state, [])
+  const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
   
   const events = createEvents(respond, state, evs, propEvents, path)
 
   Object.assign(proto, { moduleKeys, events })
 
-  createReducers(proto, state, name, reducers, propReducers, parent.reducers, respond)
+  createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
 
-  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, state, respond)
+  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {
     const p = path ? `${path}.${k}` : k

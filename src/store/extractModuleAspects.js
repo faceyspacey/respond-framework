@@ -3,7 +3,7 @@ import { isProd } from '../utils.js'
 import { moduleApi } from './reserved.js'
 
 
-export default (mod, state, initialState, currState, moduleKeys) => {
+export default (mod, state, currState, moduleKeys) => {
   const events = mod.events ?? {}
   const reducers = mod.reducers ?? {}
 
@@ -17,7 +17,7 @@ export default (mod, state, initialState, currState, moduleKeys) => {
     extract(k, descriptors[k], selectorDescriptors, events, reducers, state, moduleKeys)
   })
 
-  mergeInitialState(state, initialState, currState)
+  mergeInitialState(state, mod.initialState, currState)
 
   return [events, reducers, selectorDescriptors, moduleKeys]
 }

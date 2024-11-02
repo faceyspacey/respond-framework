@@ -40,10 +40,10 @@ export const stripModulePath = (type, modulePath) =>
   modulePath ? type.slice(modulePath.length + 1) : type
 
 
-export const prependPath = (modulePath = '', segment = '') =>
-  modulePath
-    ? segment ? `${modulePath}.${segment}` : segment
-    : segment
+export const prependPath = (a = '', b = '') =>
+  a
+    ? b ? `${a}.${b}` : a
+    : b
 
 
 export const prependModulePathToE = e => {

@@ -1,8 +1,9 @@
 import { _parent } from './reserved.js'
 import curr from './reducers/curr.js'
+import { proxyStates } from '../proxy/utils/helpers.js'
 
 
-export default (proto, state, moduleName, reducers, propReducers, parentReducers = {}, respond) => {
+export default (proto, moduleName, reducers, propReducers, parentReducers = {}, respond, state) => {
   const parentKeys = Object.keys(parentReducers)
 
   const uniqueCurr = curr.bind(null)
@@ -21,7 +22,7 @@ export default (proto, state, moduleName, reducers, propReducers, parentReducers
     const get = function() { return this[_parent][k2] }                 // the magic: simply select parent state
     Object.defineProperty(proto, k, { get, configurable: true })
 
-    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // delete potential child reducer mock, so selector takes precedence
-    // delete state[k]                                                     // delete potential initialState too (note: this would be a mistake if provided in userland; instead the corresponding parent state should be hydrated)
+    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // disable possible child reducer mock, so reduce prop's selector takes precedence
+    if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k]  // delete possible selector or initialState
   })
 }
