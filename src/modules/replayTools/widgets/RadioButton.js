@@ -8,6 +8,7 @@ export default ({ event, name, value, text, active, style, styleActive, styleTex
   <Pressable
     event={event}
     arg={{ [name]: value }}
+    name={name}
     disabled={active}
     style={[s.c, style, active && s.active, active && styleActive]}
   >

@@ -9,12 +9,13 @@ import respondConfig from '../../../replays/config.default.js'
 import sliceByModulePath, { findByModulePath } from '../../../utils/sliceByModulePath.js'
 
 
-export default (props, events, { topState, formRespond }) => {
+export default (props, events, { topState, formRespond, respond }) => {
   const respondSettings = createSettings(events.editRespond, respondConfig, RespondSetting, -1)
 
-  const { replays } = sliceByModulePath(topState, formRespond.module).respond
-  const settings = createSettings(events.edit, replays.config, UserSetting)
+  const modulePath = formRespond.module
+  const config = respond.replayConfigs[modulePath] // sliceByModulePath(topState.respond.top, modulePath).replays.config
 
+  const settings = createSettings(events.edit, config, UserSetting)
   
   return (
     <View style={s.c}>
@@ -31,7 +32,7 @@ export default (props, events, { topState, formRespond }) => {
 }
 
 
-const createSettings = (event, config, FormComponent, z = 1) => {
+const createSettings = (event, config = {}, FormComponent, z = 1) => {
   const fields = Object.keys(config)
 
   return fields.map((name, i) => {
@@ -52,6 +53,7 @@ const RespondSetting = ({ Component, name, options, ...props }, events, state) =
 
   return React.createElement(Component, {
     ...props,
+    name,
     value: form[name],
     options: typeof options === 'function' ? options(form, state) : options || bools
   })
@@ -60,12 +62,13 @@ const RespondSetting = ({ Component, name, options, ...props }, events, state) =
 
 const UserSetting = ({ Component, name, available, options, ...props }, events, state) => {
   const { form, formRespond } = state
-  const mod = findByModulePath(form, formRespond.module) ?? {}
+  const mod = form[formRespond.module] ?? {}
 
   if (available && !available(mod)) return
 
   return React.createElement(Component, {
     ...props,
+    name,
     value: mod[name],
     options: typeof options === 'function' ? options(mod, state) : options || bools
   })

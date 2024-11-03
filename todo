@@ -448,19 +448,30 @@ apply prefixPath function in createEvents
 #models/db need consistent way to access this.db
 #how to allow for collections with the same name, without sharing docs?
 
+#inherit setting, dont share docs, global replays handle for config, assign replays to db/etc in production
 
 
 
-inherit setting, dont share docs, global replays handle for config, assign replays to db/etc in production
+
+#transfer form from old to new form more efficiently (without recreating)
+#when sharing a parent replays, link forms
+
+#for saving tests, convert to old style
+#when not sharing a parent replays, use inherit option
+
+createReplays handle like createDatabase handle
+
+
+
+
 bring back proper saving of idCounter
 remember to handle hmr + conf caching
+save seed in sessionStorage
 
 
-
-
-
-
-#make all tools replacable by user (including reviver)
-#re-organize files
-
+make all tools replacable by user (including reviver)
+re-organize files
 finalize implementation of respond object etc
+
+
+should tests just save all settings always? (that way if configs change, they still work)

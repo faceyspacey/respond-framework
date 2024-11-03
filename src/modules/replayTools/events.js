@@ -189,9 +189,23 @@ export default {
 
   reload: {
     before: async ({ form, formRespond: respondSettings, top }) => {
-      const { path, module } = respondSettings
+      const { path = '', module } = respondSettings
+
+      // const setts = form['']
+
+      // Object.keys(form).forEach(k => {
+      //   if (k === '') return
+
+      //   let slice = setts
+      //   k.split('.').forEach(k => slice = slice[k] ??= {})
+
+      //   Object.assign(slice, form[k])
+      // })
+
+      // const settings = { ...setts, module }
+
       const settings = { ...form, module }
-      
+
       window.history?.replaceState(history.state, '', path)
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 

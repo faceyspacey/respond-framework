@@ -272,7 +272,7 @@ export default {
 
     this.docs ??= {}
 
-    const docs = Object.values(docsObject)
+    const docs = Array.isArray(docsObject) ? docsObject : Object.values(docsObject)
     const now = new Date().getTime() - (docs.length * 1000) // set clock back in time
 
     docs.forEach((doc, i) => {

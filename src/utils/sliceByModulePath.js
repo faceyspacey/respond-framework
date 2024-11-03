@@ -70,11 +70,11 @@ export const traverseModuleChildren = (state, callback) => {
 }
 
 
-export const traverseModules = (state, callback, parent) => {
-  callback(state, parent)
+export const traverseModules = (state, callback, parent, p = '') => {
+  callback(state, parent, p)
 
   for (const k of state.moduleKeys) {
-    traverseModules(state[k], callback, state)
+    traverseModules(state[k], callback, state, p ? `${p}.${k}` : k)
   }
 }
 

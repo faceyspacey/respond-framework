@@ -1,4 +1,6 @@
+import createSettings from '../../replays/utils/createSettings.js'
 import { addToCache } from '../../utils/addToCache.js'
+import sliceByModulePath from '../../utils/sliceByModulePath.js'
 import events from './events.js'
 import resolveModulePath from './helpers/resolveModulePath.js'
 
@@ -41,41 +43,92 @@ export const loading = (_, e, { state }) => {
 }
 
 
-export const form = (state = {}, e, { events, topState, formRespond }) => {
-  if (e.event === events.init) {
-    const settingsTree = (s, form, k) => {
-      if (k === 'replayTools') return
-      Object.assign(form, s.respond.replays.settings)
-      s.moduleKeys.forEach(k => settingsTree(s[k], form[k] = {}, k))
-    }
+// export const form = (state = {}, e, { events, topState, formRespond }) => {
+//   if (e.event === events.init) {
+//     const settingsTree = (s, form, k) => {
+//       if (k === 'replayTools') return
+//       Object.assign(form, s.respond.replays.settings)
+//       s.moduleKeys.forEach(k => settingsTree(s[k], form[k] = {}, k))
+//     }
   
-    settingsTree(topState, state)
+//     settingsTree(topState, state)
 
-    return state
+//     return state
+//   }
+
+//   if (e.event !== events.edit) return state
+
+//   const path = formRespond.module
+
+//   if (!path) {
+//     Object.assign(state, e.form)
+//   }
+//   else {
+//     let mod = state
+//     path.split('.').forEach(k => mod = mod[k] ??= {})
+//     Object.assign(mod, e.form)
+//   }
+
+//   return state
+// }
+
+export const form = (state = {}, e, { events, formRespond, respond }) => {
+  // if (e.event === events.init) {
+  //   const settingsTree = (mod, k) => {
+  //     if (k === 'replayTools') return
+  //     state[mod.modulePath] = mod.replays.settings
+  //     s.moduleKeys.forEach(k => settingsTree(mod[k], k))
+  //   }
+  
+  //   settingsTree(topModule)
+
+  //   return state
+  // }
+
+  // if (e.event === events.editRespond && !state[formRespond.module]) {
+  //   const path = formRespond.module
+
+  //   const mod = sliceByModulePath(topModule, path)
+  //   const settings = createSettings(mod.replays.config)
+
+  //   Object.assign(state[path] = {}, settings)
+  // }
+
+  if (e.event === events.edit) {
+    const path = formRespond.module
+
+    Object.assign(state[path] ??= {}, e.form)
+
+    const config = respond.replayConfigs[path]
+    const setting = config[e.meta.name]
+
+    if (setting.grant) {
+      Object.keys(state).forEach(path2 => {
+        const isDescendent = path2.indexOf(path) === 0 && path2 !== path
+        if (!isDescendent) return
+
+        const config = respond.replayConfigs[path2]
+        const setting = config[e.meta.name]
+
+        if (setting && !setting.deny) {
+          Object.assign(state[path2] ??= {}, e.form)
+        }
+      })
+    }
   }
 
-  if (e.event !== events.edit) return state
-
-  const path = formRespond.module
-
-  if (!path) {
-    Object.assign(state, e.form)
-  }
-  else {
-    let mod = state
-    path.split('.').forEach(k => mod = mod[k] ??= {})
-    Object.assign(mod, e.form)
-  }
 
   return state
 }
 
+
 export const formRespond = (state = {}, e, { events, topState }) => {
   if (e.event === events.init) {
-    return { ...state, module: '' }
+    return { ...state, module: topState.replaySettings.module ?? '' }
   }
 
   if (e.event !== events.editRespond) return state
+
   return { ...state, ...e.form }
 }
 

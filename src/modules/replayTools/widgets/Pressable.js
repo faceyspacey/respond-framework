@@ -4,10 +4,10 @@ import { isNative } from '../../../utils/bools.js'
 import { memo } from '../../../utils/isEqual.js'
 
 
-export default memo(forwardRef(({ event, arg, children, disabled, styleHover, onPress, testKey, ...props }, ref) => {
+export default memo(forwardRef(({ event, arg, children, disabled, styleHover, onPress, testKey, name, ...props }, ref) => {
   const callback = event
     ? () => {
-        event.dispatch(arg, { trigger: true, testKey })
+        event.dispatch(arg, { trigger: true, testKey, name })
         onPress?.()
       }
     : onPress

@@ -15,9 +15,39 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 import { parseJsonState, saveSessionState } from '../../utils/getSessionState.js'
+import { createReplaySettings } from '../../replays/index.js'
 
 
-export default (top, state, focusedModulePath) => {
+const createAllModulePaths = (mod, paths, p = '') => {
+  mod.moduleKeys ??= []
+  mod.modulePath = p
+
+  Object.keys(mod).forEach(k => {
+    const v = mod[k]
+    const isMod = v?.plugins && v.components && v.id
+
+    if (!isMod) return
+
+    v.__module = true
+
+    const path = p ? `${p}.${k}` : k
+
+    mod.moduleKeys.push(k)
+
+    paths.push(path)
+    createAllModulePaths(v, paths, path)
+  })
+
+  return paths
+}
+
+
+
+
+export default (top, state, session, focusedModulePath) => {
+  const modulePathsAll = createAllModulePaths(top, [''])
+  const { replayConfigs, replayToolsForm } = createReplaySettings(top, session)
+
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
@@ -36,6 +66,11 @@ export default (top, state, focusedModulePath) => {
     ctx,
     state,
   
+    modulePathsAll,
+
+    replayConfigs,
+    replayToolsForm,
+
     modulePaths,
     modulePathsById: {},
     modelsByModulePath: {},

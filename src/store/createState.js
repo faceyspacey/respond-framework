@@ -15,7 +15,7 @@ export default (top, opts = {}) => {
   const focusedModulePath = session.replaySettings.module ?? ''
 
   const state = createProxy(Object.create({}))
-  const respond = createRespond(top, state, focusedModulePath)
+  const respond = createRespond(top, state, session, focusedModulePath)
 
   const mod = sliceByModulePath(top, focusedModulePath)
 

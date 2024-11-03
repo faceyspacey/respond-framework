@@ -74,7 +74,7 @@ const Option = ({ name, value, label = value, onPress, event, last, styleOption,
   const arg = { [name]: value }
 
   return (
-    <Pressable style={styles} event={event} arg={arg} onPress={onPress}>
+    <Pressable style={styles} event={event} arg={arg} onPress={onPress} name={name}>
       <Text style={stylesLabel}>{label}</Text>
     </Pressable>
   )

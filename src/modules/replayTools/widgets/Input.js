@@ -11,6 +11,7 @@ export default memo(forwardRef(({
   formatIn = v => v,
   format = v => v,
   formatOut = format,
+  zIndex,
   style,
   placeholder,
   placeholderStyle,
@@ -25,12 +26,12 @@ export default memo(forwardRef(({
     const next = formatOut(v)
     if (next === value) return
 
-    event.dispatch({ [name]: next }, { input: true, trigger: true })
+    event.dispatch({ [name]: next }, { name, input: true, trigger: true })
   }
 
   return React.createElement(TextInput, {
     ref,
-    style: [s.input, style, !value && s.placeholder, !value && placeholderStyle, disabled && s.disabled],
+    style: [s.input, style, !value && s.placeholder, !value && placeholderStyle, disabled && s.disabled, { zIndex }],
     placeholder: placeholder || name,
     placeholderTextColor: placeholderStyle?.color || s.placeholder.color,
     value,

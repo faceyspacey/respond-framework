@@ -7,6 +7,8 @@ export default (state, session) => {
 
   mergeModules(state, hydration)
 
+  state.replayTools.form = state.respond.replayToolsForm
+
   if (state.prevState) return // hmr + session have prevState + state already populated
 
   mergeModulesPrevState(state, state.respond.snapshot(state))

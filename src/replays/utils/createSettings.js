@@ -1,7 +1,7 @@
 import { isProd } from '../../utils/bools.js'
 
 
-export default (config, settings = {}) => {
+export default (config = {}, settings = {}) => {
   const defaults = applyDefaultValues(config, settings)
   return { ...settings, ...defaults } // allow opts.settings not in config.replays.js
 }
