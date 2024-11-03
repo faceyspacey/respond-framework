@@ -18,7 +18,6 @@ export default (notify, cache, snapCache) => ({
     if (o[k] === v || cache.has(v) && cache.get(v) === o[k]) return true
 
     ps.get(o[k])?.remove(notify)
-
     o[k] = canProxy(v) ? createProxy(v, notify, cache, snapCache) : v // note: will need to simply add listener if assigning existing proxy
 
     notify()

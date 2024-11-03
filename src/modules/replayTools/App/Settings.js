@@ -47,7 +47,7 @@ const createSettings = (event, config, FormComponent, z = 1) => {
 }
 
 
-const RespondSetting = ({ Component, name, options }, events, state) => {
+const RespondSetting = ({ Component, name, options, ...props }, events, state) => {
   const { formRespond: form } = state
 
   return React.createElement(Component, {
@@ -58,7 +58,7 @@ const RespondSetting = ({ Component, name, options }, events, state) => {
 }
 
 
-const UserSetting = ({ Component, name, available, options }, events, state) => {
+const UserSetting = ({ Component, name, available, options, ...props }, events, state) => {
   const { form, formRespond } = state
   const mod = findByModulePath(form, formRespond.module) ?? {}
 

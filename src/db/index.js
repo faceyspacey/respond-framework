@@ -328,10 +328,11 @@ export default !isProd ? mock : {
   mongo() {
     if (this._mongoCollection) return this._mongoCollection
 
-    const connectionString = typeof this.config.connectionString === 'function' ? this.config.connectionString() : this.config.connectionString
+    const str = typeof this.config.connectionString === 'function' ? this.config.connectionString() : this.config.connectionString
+    const dbName = this.config.dbName ?? str.slice(str.lastIndexOf('/') + 1).split('?')[0] ?? 'app'
 
-    const client = new MongoClient(connectionString)
-    const db = client.db('skins')
+    const client = new MongoClient(str)
+    const db = client.db(dbName)
 
     return this._mongoCollection = db.collection(this._name)
   },

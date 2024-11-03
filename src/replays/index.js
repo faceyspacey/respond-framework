@@ -69,7 +69,12 @@ const createReplays = (modulePath, settingsSupplied, sharedDb, {
 
 const mergeDb = (db, sharedDb) => {
   Object.keys(db).forEach(k => {
-    db[k].docs = sharedDb[k]?.docs ?? {}
-    sharedDb[k] ??= db[k]
+    const collection = db[k]
+    if (collection.share === false) return
+
+    const k2 = collection.shareKey ?? k
+
+    collection.docs = sharedDb[k2]?.docs ?? {}
+    sharedDb[k2] = collection
   })
 }
