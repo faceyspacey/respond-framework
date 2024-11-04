@@ -14,9 +14,13 @@ export const plugins = [error, loadTests, ...defaultPlugins]
 
 export const ignoreParents = true
 
+export const evs = []
+
 export const evsIndex = -1
 
-export const evs = []
+export const divergentIndex = undefined
+
+export const errors = {}
 
 export function findLastEvent() {
   return this.evs[this.evsIndex]

@@ -1,5 +1,5 @@
 import isNamespace from '../utils/isNamespace.js'
-import { stripModulePath } from '../utils/sliceByModulePath.js'
+import { stripPath } from '../utils/sliceByModulePath.js'
 
 
 export const kinds = { init: 'init', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
@@ -123,8 +123,8 @@ const applyTransform = (respond, e, dispatch, trigger) => {
   let payload = { ...e.arg }
 
   if (modulePathReduced) {
-    e.type = stripModulePath(e.type, modulePathReduced)             // remove path prefix so e objects created in reducers are unaware of parent modules
-    e.namespace = stripModulePath(e.namespace, modulePathReduced)   // eg: stripModulePath('parent.child', 'parent'): 'child'
+    e.type = stripPath(modulePathReduced, e.type)             // remove path prefix so e objects created in reducers are unaware of parent modules
+    e.namespace = stripPath(modulePathReduced, e.namespace)   // eg: stripPath('parent', 'parent.child'): 'child'
   }
 
   if (e.event.transform) {

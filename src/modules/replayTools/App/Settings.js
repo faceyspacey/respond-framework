@@ -49,7 +49,12 @@ const createSettings = (event, config = {}, FormComponent, z = 1) => {
 
 
 const RespondSetting = ({ Component, name, options, ...props }, events, state) => {
-  const { formRespond: form } = state
+  const { formRespond: form, errors } = state
+
+  if (errors[name]) {
+    const props = { event: events.removeError, name, message: errors[name] }
+    return React.createElement(ErrorField, props)
+  }
 
   return React.createElement(Component, {
     ...props,

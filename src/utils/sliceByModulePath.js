@@ -27,8 +27,8 @@ export const findByModulePath = (obj, modulePath) => {
 export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
   if (!modulePath) return e
 
-  const type = stripModulePath(e.type, modulePath)
-  const namespace = stripModulePath(e.namespace, modulePath)
+  const type = stripPath(modulePath, e.type)
+  const namespace = stripPath(modulePath, e.namespace)
 
   return { ...e, type, namespace }
 }
@@ -36,8 +36,9 @@ export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
 
 
 
-export const stripModulePath = (type, modulePath) =>
-  modulePath ? type.slice(modulePath.length + 1) : type
+export const stripPath = (a, b) =>
+  a ? b.replace(a, '').replace(/^\./, '') : b
+
 
 
 export const prependPath = (a = '', b = '') =>

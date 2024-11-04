@@ -1,6 +1,6 @@
 export default {
-  path: {
-    placeholder: 'path: eg /',
+  url: {
+    placeholder: 'url: eg /',
   },
 
   module: {

@@ -475,3 +475,10 @@ finalize implementation of respond object etc
 
 
 should tests just save all settings always? (that way if configs change, they still work)
+
+
+
+
+// state.respond.replays = mod.replays
+  //   ? createReplays(modulePath, settings, db, mod.replays)
+  //   : { config: {}, settings: {}, db: {}, options: {}, replayEvents }

@@ -5,99 +5,75 @@ import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
 
-import sliceByModulePath, { prependPath, findByModulePath, traverseModulesDepthFirst, traverseModuleChildren, traverseModules } from '../utils/sliceByModulePath.js'
 import replayEvents from './replayEvents.js'
-import findInClosestAncestor, { findClosestAncestorWith } from '../utils/findInClosestAncestor.js'
+import { stripPath } from '../utils/sliceByModulePath.js'
 
 
-export default (state, session) => {
+export default (state, session, focusedPath) => {
   const { top, cookies } = state.respond
-  const replays = createReplaysForModules(top, state, session.replaySettings)
+  const { replayConfigs, replayToolsForm } = createReplaySettings(top, state, session.replaySettings, focusedPath)
 
+  state.replayTools.respond.replayConfigs = replayConfigs
+  state.replayTools.form = replayToolsForm
+
+  const replays = state.respond.replays
   Object.getPrototypeOf(state.replayTools).replays = Object.getPrototypeOf(state).replays = Object.assign(replaysRef, replays)
 
   session.token = isProd ? cookies.get('token') : (top.replays.createToken ?? defaultCreateToken)(replays)
 }
 
 
-export const createReplaySettings = (topModule, session) => {
-  const { replayTools, replaySettings: settings } = session
-
+export const createReplaySettings = (topModule, topState, replaySettings, focusedPath) => {
   const replayToolsForm = {}
   const replayConfigs = {}
 
-  const traverseModules = (mod, lastReplays = { config: {}, settings: {} }, p = '') => {
+  const callbacks = []
+  const db = {}
+  
+  const traverseModules = (mod, lastReplays, p = '') => {
     if (mod.replays) {
-      lastReplays = {
-        ...mod.replays,
-        settings: defaultCreateSettings(mod.replays.config, settings[p])
-      }
+      const settings = defaultCreateSettings(mod.replays.config, replaySettings[p])
+      lastReplays = { ...mod.replays, settings }
     }
 
     replayConfigs[p] = lastReplays.config
     replayToolsForm[p] = lastReplays.settings
 
-    replaysByPath.set(p, lastReplays)
+    callbacks.unshift(createReplay(mod, lastReplays, focusedPath, p, db))
   
     for (const k of mod.moduleKeys) {
       traverseModules(mod[k], lastReplays, p ? `${p}.${k}` : k)
     }
   }
 
-  traverseModules(topModule)
+  traverseModules(topModule, { config: {}, settings: {} })
 
-  return { replayConfigs, replayToolsForm}
-}
+  callbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-
-const replaysByPath = new Map
-
-const createReplaysForModules = (topModule, topState, settings) => {
-  const sharedDb = {}
-
-  traverseModulesDepthFirst(topModule, mod => { // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
-    const { modulePath: path } = mod
-    if (path === 'replayTools') return
-
-    // const path = prependPath(settings.module, modulePath)
-    // const mod = sliceByModulePath(topModule, path) // find matching original module out of original module tree, even though focused module state may be lower
-
-    const replays = replaysByPath.get(path)
-
-    if (mod.replays) { // only call for modules that have actual replays and therefore db/seed data
-      const seedData = createReplaySeed(sharedDb, replays) // pass in replays containing pre-created settings with top-down inherited settings
-      Object.assign(replays, seedData) // assign to a shared replays reference that will contain inherited settings
-    }
-
-    const isDescendentOrFocusedTop = path.indexOf(settings.module ?? '') === 0
-    if (!isDescendentOrFocusedTop) return // mod is ancestor of focused module (we needed only to traverse all the way back up to gather all settings, but there will be no state to assign state.respond.replays)
-
-    const normalizedPath = path.replace(settings.module ?? '', '').replace(/^\./, '')
-    const state = sliceByModulePath(topState, normalizedPath)
-
-    state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
-  })
-
-  replaysByPath.clear()
-  
-  return topState.respond.replays
+  return { replayConfigs, replayToolsForm }
 }
 
 
 
 
-const createReplaySeed = (sharedDb, {
-  settings = {},
-  createSeed = defaultCreateSeed,
-  db = {},
-  ...options
-}) => {
+const createReplay = (mod, lastReplays, focusedPath, p, sharedDb) => topState => { 
+  if (mod.replays) { // only call for modules that have actual replays and therefore db/seed data
+    const seedData = createReplaySeed(sharedDb, lastReplays) // pass in replays containing pre-created settings with top-down inherited settings
+    Object.assign(lastReplays, seedData) // assign to a shared replays reference that will contain inherited settings
+  }
+
+  const state = stateForNormalizedPath(topState, focusedPath, p)
+  if (state) state.respond.replays = lastReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+}
+
+
+const createReplaySeed = (sharedDb, { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options }) => {
   mergeDb(db, sharedDb)
   createSeed(settings, options, db)
 
   Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: { settings } })
 
-  return { db, options: options, replayEvents }
+  return { db, options, replayEvents }
 }
 
 
@@ -119,4 +95,35 @@ const mergeDb = (db, sharedDb) => {
     collection.docs = sharedDb[k2]?.docs ?? {}
     sharedDb[k2] = collection
   })
+}
+
+
+const stateForNormalizedPath = (topState, focusedPath = '', p) => {
+  const isDescendentOrFocusedTop = p.indexOf(focusedPath) === 0
+  if (!isDescendentOrFocusedTop) return // mod is ancestor of focused module (we needed only to traverse all the way back up to gather all settings, but there will be no state to assign state.respond.replays)
+
+  const normalizedPath = stripPath(focusedPath, p)
+  return topState.modulePaths[normalizedPath]
+}
+
+
+
+
+export const createAllModulePaths = (mod, paths, p = '') => {
+  mod.moduleKeys = []
+  mod.modulePath = p
+
+  Object.keys(mod).forEach(k => {
+    const v = mod[k]
+    const isMod = v?.plugins && v.components && v.id
+
+    if (isMod) {
+      const path = p ? `${p}.${k}` : k
+      mod.moduleKeys.push(k)
+      paths.push(path)
+      createAllModulePaths(v, paths, path)
+    }
+  })
+
+  return paths
 }

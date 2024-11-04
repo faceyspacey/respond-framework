@@ -188,36 +188,35 @@ export default {
   },
 
   reload: {
-    before: async ({ form, formRespond: respondSettings, top }) => {
-      const { path = '', module } = respondSettings
-
-      // const setts = form['']
-
-      // Object.keys(form).forEach(k => {
-      //   if (k === '') return
-
-      //   let slice = setts
-      //   k.split('.').forEach(k => slice = slice[k] ??= {})
-
-      //   Object.assign(slice, form[k])
-      // })
-
-      // const settings = { ...setts, module }
+    before: async ({ form, formRespond: respondSettings, top, errors }) => {
+      const { url = '', module } = respondSettings
 
       const settings = { ...form, module }
 
-      window.history?.replaceState(history.state, '', path)
+      window.history?.replaceState(history.state, '', url)
       window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const store = createState(top, { settings, status: 'reload' })
-      const e = store.eventFrom(path)
+      const e = store.eventFrom(url)
 
-      if (!e) throw new Error(`no event found for path "${path}" in module "${module}"`)
-        
-      await e.trigger()
-      store.render()
+      if (!e) {
+        errors[url] = `no event found for url "${url}" in module "${module}"`
+      }
+      else {
+        await e.trigger()
+        store.render()
+      }
 
       return false
+    }
+  },
+
+
+  removeError: {
+    sync: true,
+    reduce: false,
+    mutate: ({ errors }, { name }) => {
+      delete errors[name]
     }
   },
 
