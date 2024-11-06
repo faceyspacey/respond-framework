@@ -459,7 +459,7 @@ apply prefixPath function in createEvents
 #for saving tests, convert to old style
 #when not sharing a parent replays, use inherit option
 
-createReplays handle like createDatabase handle
+#createReplays handle like createDatabase handle
 
 
 
@@ -476,9 +476,19 @@ finalize implementation of respond object etc
 
 should tests just save all settings always? (that way if configs change, they still work)
 
+replayEvents from settings
+loadTest
+saveTest
+permalink
+
+createModel
+
+createControllersTree
+createDatabase (with replays)
+
+basenameFull stored in its own sessionStorage
+lazy event function creation
 
 
-
-// state.respond.replays = mod.replays
-  //   ? createReplays(modulePath, settings, db, mod.replays)
-  //   : { config: {}, settings: {}, db: {}, options: {}, replayEvents }
+how to allow tests for modules to run as top module? how to store modulePath when it won't mean the same thing
+depending on when run as top or nested? 

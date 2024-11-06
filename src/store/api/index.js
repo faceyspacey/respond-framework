@@ -12,15 +12,14 @@ import defaultCreateCookies from '../../cookies/index.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
+import { createModulePathsAll } from '../../replays/index.js'
 import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 import { parseJsonState, saveSessionState } from '../../utils/getSessionState.js'
-import { createAllModulePaths } from '../../replays/index.js'
 
 
 export default (top, state, focusedModulePath) => {
-  const modulePathsAll = createAllModulePaths(top, [''])
-
+  const modulePathsAll = createModulePathsAll(top)
   const modulePaths = { ['']: state, undefined: state }
   const listeners = []
   const promises = []

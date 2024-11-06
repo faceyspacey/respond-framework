@@ -23,7 +23,7 @@ export default (config, settings, modulePath) =>
     }
 
     return acc
-  }, { modulePath})
+  }, { modulePath })
 
 
 

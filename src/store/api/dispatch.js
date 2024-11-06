@@ -8,7 +8,8 @@ export default async function(ev, meta) {
   const e = sliceEventByModulePath(mergeMeta(ev, meta))
   const state = e.event.module
 
-  await loadPluginsOnce(this.respond.getStore())
+  const prom = loadPluginsOnce(this.respond.getStore())
+  if (prom instanceof Promise) await prom
 
   try {
     await dispatchPlugins([trigger, ...state.plugins], state, e)

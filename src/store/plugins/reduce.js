@@ -39,6 +39,28 @@ const reduceAllModules = (e, mod) => {
 
 
 
+const reduceModule = (state, e, mod, reducers) => {
+  mod.ctx.modulePathReduced = mod.modulePath
+  
+  for (const k in reducers) {
+    const reduce = reducers[k]
+
+    if (mod.overridenReducers.get(reduce)) {
+      continue
+    }
+    else if (typeof reduce === 'object') {
+      if (!state[k]) state[k] = {}
+      reduceModule(state[k], e, mod, reduce)
+    }
+    else {
+      state[k] = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
+    }
+  }
+}
+
+
+
+
 
 const reduceBranch = (e, mod, [...remainingPaths]) => {
   const k = remainingPaths.shift()
@@ -78,26 +100,12 @@ const reduceBranch = (e, mod, [...remainingPaths]) => {
 
 
 
-const reduceModule = (state, e, mod, reducers, ignore) => {
-  mod.ctx.modulePathReduced = mod.modulePath
-  
-  for (const k in reducers) {
-    const reduce = reducers[k]
 
-    if (mod.overridenReducers.get(reduce)) {
-      continue
-    }
-    else if (typeof reduce === 'object') {
-      if (!state[k]) state[k] = {}
-      reduceModule(state[k], e, mod, reduce)
-    }
-    else {
-      state[k] = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
-    }
-  }
-}
 
-// const reduceBranch = (e, mod, remainingPaths) => {
+// here for reference in understanding the above reduceBranch function
+
+
+// const reduceBranchBreadthFirst = (e, mod, remainingPaths) => {
 //   const k = remainingPaths.shift()
 //   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
 //   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreParents)
@@ -111,38 +119,7 @@ const reduceModule = (state, e, mod, reducers, ignore) => {
 
 
 
-// const reduceBranch = (e, mod, remainingPaths) => {
-//   const k = remainingPaths.shift()
-//   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
-
-//   const breadth = e.breadthFirst ?? mod.breadthFirst ?? mod[k]?.breadthFirst
-
-//   if (breadth) {
-//     reduceModule(mod, e, mod, mod.reducers)
-//   }
-//   else if (mod.beforeReduce) {
-//     mod.beforeReduce(mod, e)
-//   }
-
-//   if (k) {
-//     const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
-//     const type = namespace ? `${namespace}.${e._type}` : e._type
-
-//     const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingPaths)
-//     if (ignoreParents || mod[k].ignoreParents) return true
-//   }
-
-//   if (!breadth) {
-//     reduceModule(mod, e, mod, mod.reducers)
-//   }
-//   else if (mod.afterReduce) {
-//     mod.afterReduce(mod, e)
-//   }
-// }
-
-
-
-// const reduceBranch = (e, mod, remainingPaths) => {
+// const reduceBranchDepthFirst = (e, mod, remainingPaths) => {
 //   const k = remainingPaths.shift()
 //   const p = remainingPaths.join('.') // make reducers unaware of their module by removing its segment from path
 

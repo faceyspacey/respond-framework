@@ -1,4 +1,4 @@
-export default async (store, e) => {
+export default (state, e) => {
   if (e.error) {
     alert(e.error)
   }

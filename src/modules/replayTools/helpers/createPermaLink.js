@@ -4,7 +4,7 @@ import { defaultOrigin } from '../../../utils/constants.js'
 
 
 
-export default (state, replays) => {
+export default state => {
   const { path = '/', module } = state.formRespond
   const hash = settingsToHash(state.form, replays.config, module)
 

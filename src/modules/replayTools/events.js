@@ -79,15 +79,15 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ state, replays, db, events }) => {
+    submit: async ({ state, db, events }) => {
       const first = state.evs[0]
       const possibleName = state.selectedTestId || first.type.replace(/\./g, '/') + '.js'
       
       const name = prompt('Name of your test?', possibleName)
 
       if (name) {
-        const modulePath = replays.settings.module
-        const settings = ignoreDefaultSettings(replays.config, replays.settings, modulePath)
+        const settings = state.form
+        const modulePath = state.formRespond.module
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
@@ -188,23 +188,25 @@ export default {
   },
 
   reload: {
-    before: async ({ form, formRespond: respondSettings, top, errors }) => {
-      const { url = '', module } = respondSettings
-
+    before: async ({ form, formRespond, top, errors }) => {
+      const { url = '', module } = formRespond
       const settings = { ...form, module }
 
-      window.history?.replaceState(history.state, '', url)
-      window.store.eventsByType = {} // since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+      const prev = window.state
+      const { eventsByType } = prev
+      prev.eventsByType = {} // eventsByType is reused from previous store -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
-      const store = createState(top, { settings, status: 'reload' })
-      const e = store.eventFrom(url)
+      const state = createState(top, { settings, status: 'reload' })
+      const e = state.eventFrom(url)
 
-      if (!e) {
-        errors[url] = `no event found for url "${url}" in module "${module}"`
+      if (e) {
+        await e.trigger()
+        state.render()
       }
       else {
-        await e.trigger()
-        store.render()
+        window.state = prev
+        window.state.eventsByType = eventsByType
+        errors.url = `no event for url "${url}" in module`
       }
 
       return false
@@ -215,14 +217,12 @@ export default {
   removeError: {
     sync: true,
     reduce: false,
-    mutate: ({ errors }, { name }) => {
-      delete errors[name]
-    }
+    mutate: ({ errors }, { name }) => delete errors[name]
   },
 
   openPermalink: {
-    before: async ({ state, replays }) => {
-      const { url, relativeUrl } = createPermalink(state, replays)
+    before: async state => {
+      const { url, relativeUrl } = createPermalink(state)
 
       console.log('Your permalink is:\n', url)
       alert(`Your permalink is:\n\n${relativeUrl}\n\nYou can copy paste it from the console.You will be redirected now.`)

@@ -2,7 +2,7 @@ import { traverseModulesAsyncParallel } from './sliceByModulePath.js'
 
 const loaded = Symbol('pluginsLoaded') // preserve through HMR, but not replays nor sessionStorage.getItem('sessionState')
 
-export default async top => {
+export default top => {
   if (top[loaded]) return
   top[loaded] = true
 

@@ -1,5 +1,6 @@
 export const colors = {
   red: 'rgb(254, 13, 60)',
+  redLight: 'rgb(202, 59, 59)',
   pink: 'rgb(255, 0, 233)',
   purple: 'rgb(251, 159, 177)',
   blue: 'rgb(111, 179, 210)',

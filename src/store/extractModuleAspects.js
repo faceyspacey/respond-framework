@@ -1,9 +1,9 @@
 import { snapDeepClone } from '../proxy/snapshot.js'
 import { isProd } from '../utils.js'
-import { moduleApi } from './reserved.js'
+import { isModule, moduleApi } from './reserved.js'
 
 
-export default (mod, state, currState, moduleKeys) => {
+export default (mod, state, currState) => {
   const events = mod.events ?? {}
   const reducers = mod.reducers ?? {}
 
@@ -14,24 +14,19 @@ export default (mod, state, currState, moduleKeys) => {
 
   Object.keys(descriptors).forEach(k => {
     if (moduleApi[k]) return
-    extract(k, descriptors[k], selectorDescriptors, events, reducers, state, moduleKeys)
+    extract(k, descriptors[k], selectorDescriptors, events, reducers, state)
   })
 
   mergeInitialState(state, mod.initialState, currState)
 
-  return [events, reducers, selectorDescriptors, moduleKeys]
+  return [events, reducers, selectorDescriptors]
 }
 
 
-
-
-const extract = (k, descriptor, selectorDescriptors, events, reducers, state, moduleKeys) => {
+const extract = (k, descriptor, selectorDescriptors, events, reducers, state) => {
   const { get, value: v } = descriptor
-  const isModule = moduleKeys && v?.plugins && v.components && v.id
 
-  if (isModule) {
-    moduleKeys.push(k)
-  }
+  if (v?.[isModule]) return
   else if (v?.event === true) {
     events[k] = { ...v, __stateKey: k }
     delete events[k].event

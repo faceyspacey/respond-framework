@@ -25,13 +25,13 @@ export default function addModule(
   name,
   ancestorPlugins,
 ) {
-  const { id, ignoreParents, components, reduce, options = {} } = mod
+  const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
   if (!id) throw new Error('respond: missing id on module: ' + path)
 
   r.modulePathsById[id] = path
   r.modulePaths[path] = state
   
-  const respond = { ...options.merge, ...r, options, modulePath: path, overridenReducers: new Map }
+  const respond = { ...options.merge, ...r, options, modulePath: path, moduleKeys, overridenReducers: new Map }
   respond.respond = respond
   Object.defineProperty(respond, 'state', { value: state, enumerable: false, configurable: true })
 
@@ -46,15 +46,11 @@ export default function addModule(
   const proto = Object.getPrototypeOf(state)
   Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, reduce })
 
-  const [evs, reducers, selectorDescriptors, moduleKeys] = extractModuleAspects(mod, state, state, [])
+  const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
   
-  const events = createEvents(respond, state, evs, propEvents, path)
-
-  Object.assign(proto, { moduleKeys, events })
-
+  createEvents(proto, respond, state, evs, propEvents, path)
   createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
-
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {

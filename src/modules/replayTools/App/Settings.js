@@ -6,16 +6,16 @@ import Radio from '../widgets/Radio.js'
 import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
 import respondConfig from '../../../replays/config.default.js'
-import sliceByModulePath, { findByModulePath } from '../../../utils/sliceByModulePath.js'
+import ErrorField from '../widgets/ErrorField.js'
 
 
-export default (props, events, { topState, formRespond, respond }) => {
-  const respondSettings = createSettings(events.editRespond, respondConfig, RespondSetting, -1)
+export default (props, events, { formRespond, respond }) => {
+  const respondSettings = createSettings(events.editRespond, respondConfig, RespondSettingForm, -1)
 
   const modulePath = formRespond.module
-  const config = respond.replayConfigs[modulePath] // sliceByModulePath(topState.respond.top, modulePath).replays.config
+  const config = respond.replayConfigs[modulePath]
 
-  const settings = createSettings(events.edit, config, UserSetting)
+  const settings = createSettings(events.edit, config, UserSettingForm)
   
   return (
     <View style={s.c}>
@@ -48,7 +48,7 @@ const createSettings = (event, config = {}, FormComponent, z = 1) => {
 }
 
 
-const RespondSetting = ({ Component, name, options, ...props }, events, state) => {
+const RespondSettingForm = ({ Component, name, options, ...props }, events, state) => {
   const { formRespond: form, errors } = state
 
   if (errors[name]) {
@@ -65,7 +65,7 @@ const RespondSetting = ({ Component, name, options, ...props }, events, state) =
 }
 
 
-const UserSetting = ({ Component, name, available, options, ...props }, events, state) => {
+const UserSettingForm = ({ Component, name, available, options, ...props }, events, state) => {
   const { form, formRespond } = state
   const mod = form[formRespond.module] ?? {}
 

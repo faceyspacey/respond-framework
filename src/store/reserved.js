@@ -1,10 +1,10 @@
 export const _module = Symbol('_module')
 export const _parent = Symbol('_parent')
+export const isModule = Symbol('isModule')
 
 export const moduleApi = {
   __esModule: true,
   id: true,
-  module: true,
   modulePath: true,
   moduleKeys: true,
   ignoreParents: true,

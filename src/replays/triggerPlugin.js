@@ -11,16 +11,15 @@ export default function (state, e) {
 
   const top = state.getStore()
 
-  const { respond } = top
-  const { replays, devtools } = respond
+  const { respond, replayTools } = top
 
   if (top.replaySettings.status === 'session') {
     top.replaySettings.status = 'ready'
     if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
-  if (e.modulePath === 'replayTools' && !replays.options.log) {
-    mergeModulesPrevState(top.replayTools, snapDeepClone(top.replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
+  if (e.modulePath === 'replayTools' && !replayTools.formRespond.log) {
+    mergeModulesPrevState(replayTools, snapDeepClone(replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
     return
   }
 
@@ -28,9 +27,9 @@ export default function (state, e) {
     mergeModulesPrevState(top, snapDeepClone(top)) // mergeModulesPrevState(top, top.respond.snapshot(top))
   }
 
-  if (!top.replayTools) return
+  if (!replayTools) return
 
-  sendTrigger(fullPath(e), top.replayTools, top)
+  sendTrigger(fullPath(e), replayTools, top)
 
   if (e.meta.skipped) {
     // devtools.forceNotification({ ...fullPath(e), __prefix: '-- ' })

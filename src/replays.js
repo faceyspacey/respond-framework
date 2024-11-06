@@ -1,6 +1,4 @@
-const replays = Object.create({}) // proto used to prevent some keys from being stored in sessionStorage
-replays.settings = {}
-
-export default replays // singleton for for import into controllers/db/models -- assigned in replays/index.js
 export { default as findSelectedOption } from './modules/replayTools/helpers/findSelectedOption.js'
 export { default as patchAnimatedForReplays } from './modules/replayTools/helpers/patchAnimatedForReplays.js'
+
+export const createReplays = options => Object.assign(options, { handleRef: options })

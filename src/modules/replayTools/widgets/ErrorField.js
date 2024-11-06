@@ -6,14 +6,12 @@ import Pressable from './Pressable.js'
 
 export default ({ event, name, message }) =>
   <View style={s.c}>
-    <Text style={s.error}>{message}</Text>
+    <Text style={s.error} numberOfLines={1}>{message}</Text>
 
     <Pressable event={event} arg={{ name }}>
       <Text style={s.hide}>hide</Text>
     </Pressable>
   </View>
-
-
 
 
 
@@ -25,9 +23,10 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 12,
+    paddingLeft: 10,
+    paddingRight: 8,
     color: colors.tan,
-    backgroundColor: colors.red,
+    backgroundColor: colors.redLight,
     borderRadius: 3,
   },
   error: {

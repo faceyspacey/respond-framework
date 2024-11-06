@@ -43,88 +43,56 @@ export const loading = (_, e, { state }) => {
 }
 
 
-// export const form = (state = {}, e, { events, topState, formRespond }) => {
-//   if (e.event === events.init) {
-//     const settingsTree = (s, form, k) => {
-//       if (k === 'replayTools') return
-//       Object.assign(form, s.respond.replays.settings)
-//       s.moduleKeys.forEach(k => settingsTree(s[k], form[k] = {}, k))
-//     }
-  
-//     settingsTree(topState, state)
 
-//     return state
-//   }
-
-//   if (e.event !== events.edit) return state
-
-//   const path = formRespond.module
-
-//   if (!path) {
-//     Object.assign(state, e.form)
-//   }
-//   else {
-//     let mod = state
-//     path.split('.').forEach(k => mod = mod[k] ??= {})
-//     Object.assign(mod, e.form)
-//   }
-
-//   return state
-// }
 
 export const form = (state = {}, e, { events, formRespond, respond }) => {
-  // if (e.event === events.init) {
-  //   const settingsTree = (mod, k) => {
-  //     if (k === 'replayTools') return
-  //     state[mod.modulePath] = mod.replays.settings
-  //     s.moduleKeys.forEach(k => settingsTree(mod[k], k))
-  //   }
-  
-  //   settingsTree(topModule)
+  if (e.event !== events.edit) return state
 
-  //   return state
-  // }
+  Object.assign(state[formRespond.module], e.form)
 
-  // if (e.event === events.editRespond && !state[formRespond.module]) {
-  //   const path = formRespond.module
-
-  //   const mod = sliceByModulePath(topModule, path)
-  //   const settings = createSettings(mod.replays.config)
-
-  //   Object.assign(state[path] = {}, settings)
-  // }
-
-  if (e.event === events.edit) {
-    const path = formRespond.module
-
-    Object.assign(state[path] ??= {}, e.form)
-
-    const config = respond.replayConfigs[path]
-    const setting = config[e.meta.name]
-
-    if (setting.grant) {
-      Object.keys(state).forEach(path2 => {
-        const isDescendent = path2.indexOf(path) === 0 && path2 !== path
-        if (!isDescendent) return
-
-        const config = respond.replayConfigs[path2]
-        const setting = config[e.meta.name]
-
-        if (setting && !setting.deny) {
-          Object.assign(state[path2] ??= {}, e.form)
-        }
-      })
-    }
-  }
-
+  cascadeSetting(state, e, formRespond.module, respond)
 
   return state
 }
 
 
-export const formRespond = (state = {}, e, { events, topState }) => {
+const cascadeSetting = (state, e, path, respond) => {
+  const config = respond.replayConfigs[path]
+  const setting = config[e.meta.name]
+
+  if (setting.grant === false) return
+
+  const denied = []
+
+  Object.keys(state)
+    .sort((a, b) => a.split('.').length - b.split('.').length) // sort by ancestors first
+    .forEach(p => {
+      const isDescendent = p.indexOf(path) === 0 && p !== path
+      if (!isDescendent) return
+
+      const config = respond.replayConfigs[p]
+      const setting = config[e.meta.name]
+
+      if (!setting) return
+
+      if (setting.accept === false) return denied.push(p)
+      if (denied.find(p2 => p2.indexOf(p) === 0)) return
+
+      Object.assign(state[p], e.form)
+    })
+}
+
+
+
+
+export const formRespond = (state = {}, e, { events, topState, tests }) => {
   if (e.event === events.init) {
     return { ...state, module: topState.replaySettings.module ?? '' }
+  }
+
+  if (e.event === events.test) {
+    const { module } = tests[e.id].settings
+    return { ...state, module }
   }
 
   if (e.event !== events.editRespond) return state

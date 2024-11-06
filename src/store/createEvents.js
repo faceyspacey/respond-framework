@@ -5,7 +5,11 @@ import { stripPath } from '../utils/sliceByModulePath.js'
 export const kinds = { init: 'init', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
 
 
-export default function createEvents(respond, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
+export default function(proto, ...args) {
+  proto.events = createEvents(...args)
+}
+
+function createEvents(respond, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }

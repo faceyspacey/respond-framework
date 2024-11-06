@@ -1,4 +1,3 @@
-import replaysRef from '../replays.js'
 import { isProd } from '../utils/bools.js'
 
 import defaultCreateSettings from './utils/createSettings.js'
@@ -7,6 +6,7 @@ import defaultCreateToken from './utils/createToken.js'
 
 import replayEvents from './replayEvents.js'
 import { stripPath } from '../utils/sliceByModulePath.js'
+import { isModule } from '../store/reserved.js'
 
 
 export default (state, session, focusedPath) => {
@@ -17,7 +17,7 @@ export default (state, session, focusedPath) => {
   state.replayTools.form = replayToolsForm
 
   const replays = state.respond.replays
-  Object.getPrototypeOf(state.replayTools).replays = Object.getPrototypeOf(state).replays = Object.assign(replaysRef, replays)
+  Object.getPrototypeOf(state.replayTools).replays = Object.getPrototypeOf(state).replays = replays
 
   session.token = isProd ? cookies.get('token') : (top.replays.createToken ?? defaultCreateToken)(replays)
 }
@@ -27,53 +27,60 @@ export const createReplaySettings = (topModule, topState, replaySettings, focuse
   const replayToolsForm = {}
   const replayConfigs = {}
 
-  const callbacks = []
+  const depthFirstCallbacks = []
   const db = {}
   
-  const traverseModules = (mod, lastReplays, p = '') => {
+  const traverseAllModulesBreadthFirst = (mod, lastReplays, p) => {
     if (mod.replays) {
-      const settings = defaultCreateSettings(mod.replays.config, replaySettings[p])
-      lastReplays = { ...mod.replays, settings }
+      const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
+      replays.db = mod.replays.db ?? lastReplays.db // inherit db from parent module's replays if child has replays but no db
+      delete mod.replays.handleRef
+
+      replays.settings = defaultCreateSettings(replays.config, replaySettings[p])
+      replays.replayEvents = replayEvents
+
+      lastReplays = replays // inherit entire replays from parent if child doesn't have it
     }
 
     replayConfigs[p] = lastReplays.config
     replayToolsForm[p] = lastReplays.settings
 
-    callbacks.unshift(createReplay(mod, lastReplays, focusedPath, p, db))
+    depthFirstCallbacks.unshift(finalizeReplay(mod, lastReplays, focusedPath, p, db))
   
     for (const k of mod.moduleKeys) {
-      traverseModules(mod[k], lastReplays, p ? `${p}.${k}` : k)
+      if (k === 'replayTools') continue
+      traverseAllModulesBreadthFirst(mod[k], lastReplays, p ? `${p}.${k}` : k)
     }
   }
 
-  traverseModules(topModule, { config: {}, settings: {} })
+  traverseAllModulesBreadthFirst(topModule, { config: {}, settings: {} }, '')
 
-  callbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
+  depthFirstCallbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
   return { replayConfigs, replayToolsForm }
 }
 
 
-
-
-const createReplay = (mod, lastReplays, focusedPath, p, sharedDb) => topState => { 
-  if (mod.replays) { // only call for modules that have actual replays and therefore db/seed data
-    const seedData = createReplaySeed(sharedDb, lastReplays) // pass in replays containing pre-created settings with top-down inherited settings
-    Object.assign(lastReplays, seedData) // assign to a shared replays reference that will contain inherited settings
+const finalizeReplay = (mod, lastReplays, focusedPath, p, sharedDb) => topState => { 
+  if (mod.replays?.db) { // only call for modules that have actual replays and therefore db/seed data
+    lastReplays.db = createDbWithSeed(sharedDb, lastReplays) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
   }
 
   const state = stateForNormalizedPath(topState, focusedPath, p)
-  if (state) state.respond.replays = lastReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  if (!state) return // state is a module above the currently focused module
+
+  state.respond.replays = lastReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  Object.getPrototypeOf(state).replays = lastReplays
 }
 
 
-const createReplaySeed = (sharedDb, { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options }) => {
+const createDbWithSeed = (sharedDb, { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options }) => {
   mergeDb(db, sharedDb)
   createSeed(settings, options, db)
 
   Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: { settings } })
 
-  return { db, options, replayEvents }
+  return db
 }
 
 
@@ -109,19 +116,20 @@ const stateForNormalizedPath = (topState, focusedPath = '', p) => {
 
 
 
-export const createAllModulePaths = (mod, paths, p = '') => {
+export const createModulePathsAll = (mod, paths = [], p = '') => {
+  mod[isModule] = true
   mod.moduleKeys = []
   mod.modulePath = p
+
+  paths.push(p)
 
   Object.keys(mod).forEach(k => {
     const v = mod[k]
     const isMod = v?.plugins && v.components && v.id
 
     if (isMod) {
-      const path = p ? `${p}.${k}` : k
       mod.moduleKeys.push(k)
-      paths.push(path)
-      createAllModulePaths(v, paths, path)
+      createModulePathsAll(v, paths, p ? `${p}.${k}` : k)
     }
   })
 
