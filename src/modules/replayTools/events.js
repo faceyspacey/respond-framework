@@ -14,6 +14,8 @@ export default {
     transform: ({}, form) => ({ form }),
   },
 
+  changeModulePath: {},
+
   settings: {
     namespace: false,
     kind: kinds.navigation,
@@ -28,15 +30,15 @@ export default {
     namespace: false,
     kind: kinds.navigation,
     cache: false,
-    fetch: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter),
+    fetch: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter),
   },
   
   sortTests: {
-    submit: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter)
+    submit: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
   },
 
   includeChildModuleTests: {
-    submit: ({ db, state }) => db.developer.findTests(state.formRespond.module, state.includeChildren, state.searched, state.filter)
+    submit: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
   },
 
   toggleFilter: {
@@ -45,14 +47,14 @@ export default {
 
   filterTests: {
     sync: true,
-    debounce: ({ db, state }, e) => db.developer.findTests(state.formRespond.module, state.includeChildren, e.searched, state.filter),
+    debounce: ({ db, state }, e) => db.developer.findTests(state.focusedModulePath, state.includeChildren, e.searched, state.filter),
   },
 
   testFromWallaby: {
     before: async ({ replays, state, events }, { test, index, delay }) => {
       if (test.modulePath.indexOf(replays.settings.module) !== 0) { // ensure test will run in its original module or a parent module
         replays.settings.module = test.modulePath
-        state.formRespond.module = test.modulePath
+        state.focusedModulePath = test.modulePath
       }
       
       return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
@@ -87,7 +89,7 @@ export default {
 
       if (name) {
         const settings = state.form
-        const modulePath = state.formRespond.module
+        const modulePath = state.focusedModulePath
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
@@ -188,15 +190,14 @@ export default {
   },
 
   reload: {
-    before: async ({ form, formRespond, top, errors }) => {
-      const { url = '', module } = formRespond
-      const settings = { ...form, module }
+    before: async ({ form: settings, formRespond, focusedModulePath, top, errors }) => {
+      const { url = '' } = formRespond
 
       const prev = window.state
       const { eventsByType } = prev
       prev.eventsByType = {} // eventsByType is reused from previous store -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
-      const state = createState(top, { settings, status: 'reload' })
+      const state = createState(top, { settings, focusedModulePath, status: 'reload' })
       const e = state.eventFrom(url)
 
       if (e) {

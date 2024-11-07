@@ -80,7 +80,7 @@ const createId = filename => {
   const id = name.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/test.js -> child/test.js
 
   const parts = name.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'foo/namespace/some-test.js']
-  const [top, ...moduleParts] = parts.map(a => a.split('/')[0])       // eg: ['', 'admin', 'foo']
+  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])       // eg: ['', 'admin', 'foo']
   const modulePath = moduleParts.join('.')                            // eg: 'admin.foo'
 
   return { id, modulePath }

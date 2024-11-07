@@ -462,11 +462,46 @@ apply prefixPath function in createEvents
 #createReplays handle like createDatabase handle
 
 
+#should tests just save all settings always? (that way if configs change, they still work)
+
+#replayEvents from settings
+#loadTest
+#saveTest
 
 
+
+#how to allow tests for modules to run as top module? how to store modulePath when it won't mean the same thing
+#depending on when run as top or nested? 
+
+
+#tests run from the top
+#tests run from somewhere else
+#tests run with a module path
+
+#tests loaded with a module path
+#tests loaded without one, using inferrence
+
+#hmr keep curr module path, reload/replay can use formRespond
+#settings has to be passed as is
+#modulePath should be passed separately
+
+#use ctx.sync for subscribe.js instead of sync argument
+
+
+
+permalink
 bring back proper saving of idCounter
 remember to handle hmr + conf caching
 save seed in sessionStorage
+
+
+createModel
+createControllersTree
+createDatabase (with replays)
+
+resolveModulePath for tests loaded while not in top module
+same object stored multiple times in state get lost in sessionStorage
+
 
 
 make all tools replacable by user (including reviver)
@@ -474,21 +509,6 @@ re-organize files
 finalize implementation of respond object etc
 
 
-should tests just save all settings always? (that way if configs change, they still work)
-
-replayEvents from settings
-loadTest
-saveTest
-permalink
-
-createModel
-
-createControllersTree
-createDatabase (with replays)
-
+maybe remove e.type + e.namespace
 basenameFull stored in its own sessionStorage
 lazy event function creation
-
-
-how to allow tests for modules to run as top module? how to store modulePath when it won't mean the same thing
-depending on when run as top or nested? 

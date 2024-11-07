@@ -5,8 +5,8 @@ import { defaultOrigin } from '../../../utils/constants.js'
 
 
 export default state => {
-  const { path = '/', module } = state.formRespond
-  const hash = settingsToHash(state.form, replays.config, module)
+  const { path = '/' } = state.formRespond
+  const hash = settingsToHash(state.form, replays.config, state.focusedModulePath)
 
   return {
     relativeUrl: path + hash,
@@ -15,7 +15,7 @@ export default state => {
 }
 
 
-const settingsToHash = (settings, config, module) => {
+const settingsToHash = (settings, config, focusedModulePath) => {
   const query = {}
 
   Object.keys(settings).forEach(k => {
@@ -24,7 +24,7 @@ const settingsToHash = (settings, config, module) => {
     query[k] = out ? out(v) : v
   })
 
-  if (module) query.module = module
+  if (focusedModulePath) query.module = focusedModulePath
 
   return prefix + qs.stringify(query) 
 }

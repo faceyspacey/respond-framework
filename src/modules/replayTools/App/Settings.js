@@ -7,15 +7,14 @@ import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
 import respondConfig from '../../../replays/config.default.js'
 import ErrorField from '../widgets/ErrorField.js'
+import sliceByModulePath from '../../../utils/sliceByModulePath.js'
 
 
-export default (props, events, { formRespond, respond }) => {
-  const respondSettings = createSettings(events.editRespond, respondConfig, RespondSettingForm, -1)
+export default (props, events, { focusedModulePath, respond }) => {
+  const respondSettings = createSettings(respondConfig, RespondSettingForm)
 
-  const modulePath = formRespond.module
-  const config = respond.replayConfigs[modulePath]
-
-  const settings = createSettings(events.edit, config, UserSettingForm)
+  const config = respond.replayConfigsByPaths[focusedModulePath]
+  const settings = createSettings(config, UserSettingForm, events.edit, 1)
   
   return (
     <View style={s.c}>
@@ -32,7 +31,9 @@ export default (props, events, { formRespond, respond }) => {
 }
 
 
-const createSettings = (event, config = {}, FormComponent, z = 1) => {
+
+
+const createSettings = (config = {}, FormComponent, event, z = -1) => {
   const fields = Object.keys(config)
 
   return fields.map((name, i) => {
@@ -48,8 +49,9 @@ const createSettings = (event, config = {}, FormComponent, z = 1) => {
 }
 
 
+
 const RespondSettingForm = ({ Component, name, options, ...props }, events, state) => {
-  const { formRespond: form, errors } = state
+  const { errors } = state
 
   if (errors[name]) {
     const props = { event: events.removeError, name, message: errors[name] }
@@ -59,23 +61,24 @@ const RespondSettingForm = ({ Component, name, options, ...props }, events, stat
   return React.createElement(Component, {
     ...props,
     name,
-    value: form[name],
-    options: typeof options === 'function' ? options(form, state) : options || bools
+    event: name === 'focusedModulePath' ? events.changeModulePath : events.editRespond,
+    value: name === 'focusedModulePath' ? state.focusedModulePath : state.formRespond[name],
+    options: typeof options === 'function' ? options(state.formRespond, state) : options || bools
   })
 }
 
 
-const UserSettingForm = ({ Component, name, available, options, ...props }, events, state) => {
-  const { form, formRespond } = state
-  const mod = form[formRespond.module] ?? {}
 
-  if (available && !available(mod)) return
+const UserSettingForm = ({ Component, name, available, options, ...props }, events, { form, focusedModulePath }) => {
+  const modSettings = sliceByModulePath(form, focusedModulePath)
+
+  if (available && !available(modSettings)) return
 
   return React.createElement(Component, {
     ...props,
     name,
-    value: mod[name],
-    options: typeof options === 'function' ? options(mod, state) : options || bools
+    value: modSettings[name],
+    options: typeof options === 'function' ? options(modSettings) : options || bools
   })
 }
 

@@ -12,28 +12,44 @@ export default (name, modulePath, settings, events) => {
 
 
 const createTest = (name, modulePath, settings, events) => {
-  const filename = createFilename(name, modulePath)
-  const content = createTestFile(settings, cleanAndNumberEvents(events))
+  const moduleDir = createModuleDir(modulePath)
+  const filename = createFilename(moduleDir, name)
+  const levels = name.split('/').length + 1
+  const content = createTestFile(moduleDir, levels, settings, cleanAndNumberEvents(events))
   return { filename, content }
 }
 
 
-const createFilename = (name, modulePath) => {
+const createModuleDir = modulePath => {
   const projectDir = path.resolve()
 
-  const moduleDir = modulePath
+  return modulePath
     ? modulePath.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir)
     : projectDir
-
-  const currentModuleTestsDir = moduleDir + '/__tests__/'
-  const cleanName = name.replace(/ /g, '-').replace('.js', '')
-
-  return currentModuleTestsDir + cleanName + '.js'
 }
 
 
-const createTestFile = (settings, events) =>
-`import setupTest from 'testing/setupTest.js'
+const createFilename = (moduleDir, name) => {
+  const testDir = moduleDir + '/__tests__'
+  const cleanName = name.replace(/ /g, '-').replace('.js', '')
+
+  return testDir + '/' + cleanName + '.js'
+}
+
+
+const createTestFile = (moduleDir, length, settings, events) => {
+  const setupTestFile = moduleDir + '/setupTest.js'
+  const exists = fs.existsSync(setupTestFile)
+
+  const dotdots = Array.from({ length }).map(_ => '..').join('/')
+
+  const imports = exists
+    ? `import setupTest from '${dotdots}/setupTest.js'`
+    : `import { setupTest } from 'respond-framework/testing'\nimport top from '${dotdots}/index.js'`
+
+  const opts = exists ? `{ settings }` : `{ settings, top }`
+
+  return `${imports}'
 
 const settings = ${JSON.stringify(settings, null, 2)}
 
@@ -42,10 +58,11 @@ const events = ${JSON.stringify(events, null, 2)}
 let t
 
 beforeAll(async () => {
-  t = await setupTest({ settings })
+  t = await setupTest(${opts})
 })
 
 ${events.map(createIndividualTest).join('\n\n')}`
+}
 
 
 

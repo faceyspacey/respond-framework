@@ -6,12 +6,21 @@ import end from '../end.js'
 import dispatchPlugins from '../../../utils/dispatchPlugins.js'
 
 
-const plugins = [before, reduce, debounce, end]
-
 export default async function edit(store, e) {
   if (!e.event.sync) return
+  syncRef.sync = true
   await dispatchPlugins(plugins, store, e)
   return false
 }
 
 edit.sync = true
+
+const plugins = [
+  before,
+  reduce,
+  () => delete syncRef.sync,
+  debounce,
+  end
+]
+
+export const syncRef = {} // used so proxy/subscribe.js can render sync events syncronously so input cursors don't jump

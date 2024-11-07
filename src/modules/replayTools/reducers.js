@@ -1,7 +1,6 @@
-import createSettings from '../../replays/utils/createSettings.js'
 import { addToCache } from '../../utils/addToCache.js'
-import sliceByModulePath from '../../utils/sliceByModulePath.js'
-import events from './events.js'
+import { nestAtModulePath } from '../../utils/sliceByModulePath.js'
+import cascadeSetting from './helpers/cascadeSetting.js'
 import resolveModulePath from './helpers/resolveModulePath.js'
 
 
@@ -45,65 +44,32 @@ export const loading = (_, e, { state }) => {
 
 
 
-export const form = (state = {}, e, { events, formRespond, respond }) => {
+export const form = (state = {}, e, { events, focusedModulePath, respond }) => {
   if (e.event !== events.edit) return state
 
-  Object.assign(state[formRespond.module], e.form)
-
-  cascadeSetting(state, e, formRespond.module, respond)
+  nestAtModulePath(state, focusedModulePath, e.form)
+  cascadeSetting(state, e, focusedModulePath, respond)
 
   return state
 }
 
 
-const cascadeSetting = (state, e, path, respond) => {
-  const config = respond.replayConfigs[path]
-  const setting = config[e.meta.name]
 
-  if (setting.grant === false) return
-
-  const denied = []
-
-  Object.keys(state)
-    .sort((a, b) => a.split('.').length - b.split('.').length) // sort by ancestors first
-    .forEach(p => {
-      const isDescendent = p.indexOf(path) === 0 && p !== path
-      if (!isDescendent) return
-
-      const config = respond.replayConfigs[p]
-      const setting = config[e.meta.name]
-
-      if (!setting) return
-
-      if (setting.accept === false) return denied.push(p)
-      if (denied.find(p2 => p2.indexOf(p) === 0)) return
-
-      Object.assign(state[p], e.form)
-    })
-}
-
-
-
-
-export const formRespond = (state = {}, e, { events, topState, tests }) => {
-  if (e.event === events.init) {
-    return { ...state, module: topState.replaySettings.module ?? '' }
-  }
-
-  if (e.event === events.test) {
-    const { module } = tests[e.id].settings
-    return { ...state, module }
-  }
-
+export const formRespond = (state = {}, e, { events }) => {
   if (e.event !== events.editRespond) return state
-
   return { ...state, ...e.form }
 }
 
 
 
+export const focusedModulePath = (state = '', e, { events }) => {
+  if (e.event !== events.changeModulePath) return state
+  return e.focusedModulePath
+}
 
-export const tests = (state = {}, e, { events, replays }) => {
+
+
+export const tests = (state = {}, e, { events, focusedModulePath }) => {
   switch (e.event) {
     case events.deleteTest.done: {
       delete state[e.id]
@@ -114,7 +80,7 @@ export const tests = (state = {}, e, { events, replays }) => {
   if (e.tests) {
     const tests = e.tests.map(t => ({
       ...t,
-      events: t.events.map(e => resolveModulePath(e, t.modulePath, replays.settings.module))
+      events: t.events.map(e => resolveModulePath(e, t.modulePath, focusedModulePath))
     }))
 
     return addToCache(state, tests)

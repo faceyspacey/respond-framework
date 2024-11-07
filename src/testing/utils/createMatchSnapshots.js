@@ -3,7 +3,7 @@ import { findAllByPropsAndType, findByPropsAndType } from './finders.js'
 import logLongStrings from './logLongStrings.js'
 
 
-export default (store, renderer) => (e, o) => {
+export default (state, renderer) => (e, o) => {
   const suffix = o.suffix ? '-' + o.suffix : ''
   const shouldLog = process.env.WALLABY ? o.logInWallaby : o.logInTerminal
 
@@ -16,8 +16,8 @@ export default (store, renderer) => (e, o) => {
   }
   
   if (o.snapState || o.logState) {
-    const prev = store.prevState
-    const next = store.snapshot(store)
+    const prev = state.prevState
+    const next = state.snapshot(state)
 
     const label = 'state' + suffix
 

@@ -5,12 +5,12 @@ import { isProd } from './bools.js'
 import { createStateReviver, replacer as defaultReplacer } from './revive.js'
 
 
-export default ({ status, settings, hydration } = {}) => {
+export default ({ status, settings, focusedModulePath = '', hydration } = {}) => {
   const { prevState, replaySettings: currSets, replayTools: { form: _, tests: __, ...rt } = {} } = window.store ?? {}
 
   switch (status) {
-    case 'reload':  return { ...hydration, replaySettings: settings, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
-    case 'replay':  return { ...hydration, replaySettings: settings, replayTools: { ...rt, evsIndex: -1 } }
+    case 'reload':  return { ...hydration, replaySettings: settings, focusedModulePath, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
+    case 'replay':  return { ...hydration, replaySettings: settings, focusedModulePath, replayTools: { ...rt, evsIndex: -1 } }
     case 'hmr':     return { ...prevState, replaySettings: currSets, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
   }
 
@@ -38,7 +38,7 @@ export const saveSessionState = (state, replacer) => {
 const stringifyState = (state, replacer = defaultReplacer) => {
   let s = { ...snapshot(state) }
       
-  if (s.replayTools?.tests && s.replayTools.tab !== 'tests') {
+  if (s.replayTools) {
     s.replayTools = { ...s.replayTools, tests: undefined } // don't waste cycles on tons of tests with their events
   }
 
@@ -47,6 +47,6 @@ const stringifyState = (state, replacer = defaultReplacer) => {
   }
 
   s.replaySettings = { ...s.replaySettings, status: 'session' }
-
+  
   return JSON.stringify(s, replacer)
 }

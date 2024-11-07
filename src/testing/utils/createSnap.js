@@ -5,16 +5,16 @@ import ensureTrigger from './ensureTrigger.js'
 import defaultConfig from './defaultConfig.js'
 
 
-export default (store, renderer, dispatch, options) => {
-  const matchSnapshots = createMatchSnapshots(store, renderer)
+export default (state, renderer, dispatch, options) => {
+  const matchSnapshots = createMatchSnapshots(state, renderer)
   
   return async (e, options2) => {
-    const arg = revive(store)(e.arg)
+    const arg = revive(state)(e.arg)
     e = { ...e, arg, meta: { ...e.meta } }
     const o = { ...defaultConfig, ...options, ...options2 }
 
     if (o.ensureTrigger && e.index !== 0) {
-      ensureTrigger(store, renderer.getInternal(), e, o)
+      ensureTrigger(state, renderer.getInternal(), e, o)
     }
 
     const snapTrigger = !o.snapTrigger ? undefined : () => matchSnapshots(e, {  ...o, ...to })

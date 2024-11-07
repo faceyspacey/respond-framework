@@ -7,22 +7,6 @@ export default function sliceByModulePath(obj, modulePath) {
 }
 
 
-export const findByModulePath = (obj, modulePath) => {
-  if (!modulePath) return obj
-  if (!obj) return
-  
-  const modules = modulePath.split('.')
-
-  let slice = obj
-
-  for (const k of modules) {
-    slice = slice[k]
-    if (!slice) return
-  }
-
-  return slice
-}
-
 
 export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
   if (!modulePath) return e
@@ -37,7 +21,7 @@ export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
 
 
 export const stripPath = (a, b) =>
-  a ? b.replace(a, '').replace(/^\./, '') : b
+  a ? b.replace(new RegExp(`^${a}\.?`), '') : b
 
 
 
@@ -60,6 +44,19 @@ export const recreateFullType = (e, modulePath = e.modulePath) => {
   return namespace ? `${namespace}.${e._type}` : e._type
 }
 
+
+
+export const nestAtModulePath = (slice, modulePath, value) => {
+  if (modulePath) {
+    const modules = modulePath.split('.')
+
+    for (const k of modules) {
+      slice = slice[k] ?? (slice[k] = {})
+    }
+  }
+
+  return Object.assign(slice, value)
+}
 
 
 

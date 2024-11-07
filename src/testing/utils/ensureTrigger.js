@@ -3,21 +3,21 @@ import { findAllByProps} from './finders.js'
 import { isEqualDeepPartial } from '../../utils/isEqual.js'
 
 
-export default (store, renderer, e, tc) => {
+export default (state, renderer, e, tc) => {
   if (e.meta.ignoreEnsure) return
   if (tc.ignored.events?.find(name => name === e.type)) return
 
   const { testKey, testProps } = e.meta
 
-  const els = findTriggerElements(renderer, e, testKey, testProps, store)
+  const els = findTriggerElements(renderer, e, testKey, testProps, state)
   
   expect(els.length).toBeGreaterThan(0)
 }
 
 
 
-const findTriggerElements = (renderer, e, testKey, testProps, store) => {
-  const event = store.eventsByType[e.type]
+const findTriggerElements = (renderer, e, testKey, testProps, state) => {
+  const event = state.respond.eventsByType[e.type]
 
   if (testKey === false) {
     if (!testProps) throw new Error('testProps required when testKey === false')
