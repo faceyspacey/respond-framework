@@ -6,8 +6,8 @@ import { colors } from '../styles.js'
 import ErrorBoundary from '../components/ErrorBoundary.js'
 
 
-export default (props, { toggle }, { open, formRespond }) => {
-  const { hide, position } = formRespond
+export default (props, { toggle }, { open, config }) => {
+  const { hide, position } = config
   if (hide) return
 
   const horizontal = position?.left ? 'left' : 'right'

@@ -5,7 +5,7 @@ import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 
 export default state => {
-  const { path = '/' } = state.formRespond
+  const { path = '/' } = state.config
   const hash = settingsToHash(state.form, replays.config, state.focusedModulePath)
 
   return {

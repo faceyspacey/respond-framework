@@ -107,7 +107,7 @@ export default {
     projectJoin,
     sort = { updatedAt: -1, _id: 1 },
   } = {}) {
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -129,7 +129,7 @@ export default {
     limit = this.config.listLimit,
     skip = 0
   } = {}) {
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -167,7 +167,7 @@ export default {
 
     selectorJoin = { ...selectorJoin, [fk]: { $in } }
 
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     const children = await coll.find(selectorJoin, { project: projectJoin, sort: sortJoin, limit: limitJoin }) 
     
@@ -192,7 +192,7 @@ export default {
     limit = this.config.listLimit,
     skip = 0
   } = {}) {
-    const docs = await createAggregateStages(specs, { db: this.db(), collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
+    const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
     const page = await this._find(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
     return { count: docs.length, [this._namePlural]: page }

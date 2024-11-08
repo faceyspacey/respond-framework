@@ -33,7 +33,7 @@ export default {
   },
 
   async joinOneSafe(id, name, opts) {
-    const collection = this.db(name)
+    const collection = this.db[name]
 
     const project = excludeProjectFields(opts?.project, this.privateFields)
     const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)
@@ -42,7 +42,7 @@ export default {
   },
 
   async joinManySafe(id, name, opts) {
-    const collection = this.db(name)
+    const collection = this.db[name]
     
     const project = excludeProjectFields(opts?.project, this.privateFields)
     const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)
@@ -51,7 +51,7 @@ export default {
   },
 
   async joinSafe(name, opts) {
-    const collection = this.db(name)
+    const collection = this.db[name]
     
     const project = excludeProjectFields(opts?.project, this.privateFields)
     const projectJoin = excludeProjectFields(opts?.projectJoin, collection.privateFields)

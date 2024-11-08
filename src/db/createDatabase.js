@@ -10,6 +10,12 @@ export default (dbRaw, options = {}) => {
   const shared = models.shared ?? {}
   const server = models.server ?? (!models.shared ? models : {})
 
+  const descriptors = {
+    db: { enumerable: false, configurable: true, value: db },
+    replays: { enumerable: false, configurable: true, get: () => db.replays } // db.replays won't be defined until later by createReplays
+  }
+
+  const extra = Object.defineProperties({}, descriptors)
 
   for (const k in dbRaw) {
     const coll = dbRaw[k]
@@ -20,16 +26,13 @@ export default (dbRaw, options = {}) => {
     const parent = inherit ? collection : {}
     const parentModel = inherit ? model : {}
 
-    const Model = createModel(k, shared[k], server[k], parentModel, { db: getDb })
+    const Model = createModel(k, shared[k], server[k], parentModel, extra)
     const make = doc => new Model({ ...doc, __type: db[k]._name })
 
-    db[k] = { _name: k, _namePlural: k + 's', make, ...parent, ...coll, docs, Model, db: getDb, config }
+    db[k] = { _name: k, _namePlural: k + 's', make, ...parent, ...coll, docs, Model, db, config }
 
-    Object.defineProperty(db[k], 'replays', { enumerable: false, configurable: true, get: () => db.replays })
+    Object.defineProperties(db[k], descriptors)
   }
 
   return db
 }
-
-
-const getDb = name => name ? db[name] : db

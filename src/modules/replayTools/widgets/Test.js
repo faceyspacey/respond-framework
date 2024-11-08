@@ -6,10 +6,9 @@ import Remove from '../icons/Remove.js'
 import Chevron from '../icons/Chevron.js'
 import HoverButtons from './HoverButtons.js'
 import { colors } from '../styles.js'
-import sliceIdByModulePath from '../helpers/sliceIdByModulePath.js'
 
 
-export default memo(({ id, event, run, deleteTest, modulePath }) => {
+export default memo(({ id, name, event, run, deleteTest }) => {
   const [hover, set] = useState(false)
 
   const buttons = [
@@ -28,7 +27,7 @@ export default memo(({ id, event, run, deleteTest, modulePath }) => {
 
       <Pressable event={event} arg={{ id, delay: true }} style={s.textContainer}>
         <Text style={s.text} numberOfLines={1}>
-          {sliceIdByModulePath(id, modulePath)}
+          {name}
         </Text>  
       </Pressable>
       

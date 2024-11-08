@@ -23,6 +23,9 @@ export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
 export const stripPath = (a, b) =>
   a ? b.replace(new RegExp(`^${a}\.?`), '') : b
 
+export const stripPathDir = (a, b) =>
+  a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
+
 
 
 export const prependPath = (a = '', b = '') =>

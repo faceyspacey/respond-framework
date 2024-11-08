@@ -17,7 +17,6 @@ export default memo(({
   createLabel = o => name + ': ' + (o?.label || o?.value || 'none'),
   selectedOption = findSelectedOption,
   transformOptions = options => options,
-  zIndex = 1,
   style,
   styleLabel,
   styleMenu,
@@ -25,6 +24,7 @@ export default memo(({
   styleOptionLabel,
   styleDefaultOption,
   styleDisabled,
+  zIndex = style?.zIndex ?? 1,
 }) => {
   const [open, set] = useState(false)
   const toggle = useCallback(() => set(open => !open), [set])
@@ -92,7 +92,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderRadius: 5,
-    backgroundColor: colors.navy,
+    backgroundColor: 'rgb(34, 39, 47)',
   },
 
   menu: {

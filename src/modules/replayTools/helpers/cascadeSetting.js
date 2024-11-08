@@ -1,5 +1,5 @@
-export default (state, e, path, respond) => {
-  const config = respond.configsByPath[path]
+export default (state, e, path, configs) => {
+  const config = configs[path]
   const setting = config[e.meta.name]
   
   if (setting.cascade === false) return
@@ -12,7 +12,7 @@ export default (state, e, path, respond) => {
       const isDescendent = p.indexOf(path) === 0 && p !== path
       if (!isDescendent) return
 
-      const config = respond.configsByPath[p]
+      const config = configs[p]
       const setting = config[e.meta.name]
 
       if (!setting) return

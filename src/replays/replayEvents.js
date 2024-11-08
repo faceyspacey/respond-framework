@@ -3,21 +3,21 @@ import revive from '../utils/revive.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = window.state.replayState.settings, focusedModulePath = window.state.replayState.focusedModulePath) {
+export default async function(events, delay = 0, settings = this.replayState.settings, focusedModulePath = this.replayState.focusedModulePath) {
   const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
-  await run(revive(store)(events), delay, state.respond)
+  await run(revive(store)(events), delay, state.respond, state.replayTools)
   return state
 }
 
 
 
-const run = async (events, delay, respond) => {           // keep in mind store and store.replays will now be in the context of the next next store
+const run = async (events, delay, respond, replayTools) => {           // keep in mind store and store.replays will now be in the context of the next next store
   const { ctx, options } = respond
   
-  window.state.replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
+  replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
   ctx.isFastReplay = !delay                    // turn animations + timeouts off
 
-  for (let i = 0; i < events.length && window.state.replayTools.playing; i++) {
+  for (let i = 0; i < events.length && replayTools.playing; i++) {
     const { event, arg, meta } = events[i]
     await event.dispatch(arg,  { ...meta, trigger: true })
 
@@ -30,7 +30,7 @@ const run = async (events, delay, respond) => {           // keep in mind store 
     await timeout(delay, meta, last, options.testDelay)
   }
 
-  window.state.replayTools.playing = false
+  replayTools.playing = false
   ctx.isFastReplay = false
 
   respond.queueSaveSession()                                                      // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)

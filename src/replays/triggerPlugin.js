@@ -19,7 +19,7 @@ export default function (state, e) {
     if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
-  if (e.modulePath === 'replayTools' && !replayTools.formRespond.log) {
+  if (e.modulePath === 'replayTools' && !replayTools.config.log) {
     mergeModulesPrevState(replayTools, snapDeepClone(replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
     return
   }
@@ -94,13 +94,12 @@ const isEqual = (a, b, top) => {
 
 
 const inputConverged = (e, state, events) => {
-  const isPossibleConvergingInputEvent = e.meta.input && state.selectedTestId
-    && state.tests[state.selectedTestId]
-    && state.divergentIndex !== undefined
+  const { tests, selectedTestId, divergentIndex } = state
 
-  if (!isPossibleConvergingInputEvent) return
+  const possibleConvergingInputEvent = e.meta.input && divergentIndex !== undefined
+  const test = possibleConvergingInputEvent && tests[selectedTestId]
+  if (!test) return 
 
-  const test = state.tests[state.selectedTestId]
   const eventsCombined = combineInputEvents([...events, e])
   
   const eventsFromTestSoFar = test.events.slice(0, eventsCombined.length)

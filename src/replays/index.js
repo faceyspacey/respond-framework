@@ -5,41 +5,40 @@ import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
 
 import replayEvents from './replayEvents.js'
-import sliceByModulePath, { nestAtModulePath, stripPath } from '../utils/sliceByModulePath.js'
+import { stripPath } from '../utils/sliceByModulePath.js'
 import { isModule } from '../store/reserved.js'
 
 
 export default (state, session) => {
   const { top, cookies } = state.respond
-  const { settings, focusedModulePath = '' } = session.replayState
-  const { configsByPath, settingsByPath } = createReplaySettings(top, state, settings, focusedModulePath)
+  const { settings, focusedModulePath = '', status } = session.replayState
+  const replayTools = createReplaySettings(top, state, settings, focusedModulePath, status === 'hmr')
 
-  Object.assign(state.replayTools.respond, { configsByPath })
-  
-  state.replayTools.form = settingsByPath
-  state.replayTools.focusedModulePath = focusedModulePath
+  Object.assign(state.replayTools, { ...replayTools, focusedModulePath })
 
-  const replays = state.respond.replays
-  Object.getPrototypeOf(state.replayTools).replays = Object.getPrototypeOf(state).replays = replays
+  state.replayTools.respond.replays = Object.getPrototypeOf(state.replayTools).replays = state.respond.replays
 
-  session.token = isProd ? cookies.get('token') : (top.replays.createToken ?? defaultCreateToken)(replays)
+  const createToken = top.replays.createToken ?? defaultCreateToken
+  session.token = isProd ? cookies.get('token') : createToken(state.respond.replays)
 }
 
 
-export const createReplaySettings = (topModule, topState, settings, focusedModulePath) => {
+export const createReplaySettings = (topModule, topState, settings, focusedModulePath, hmr) => {
   const configsByPath = {}
   const settingsByPath = {}
 
   const depthFirstCallbacks = []
   const db = {}
   
+  const replayEventsBound = replayEvents.bind(topState)
+
   const traverseAllModulesBreadthFirst = (mod, settings, lastReplays, p) => {
     if (mod.replays) {
       const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
       replays.db = mod.replays.db ?? lastReplays.db // inherit db from parent module's replays if child has replays but no db
 
       replays.settings = defaultCreateSettings(replays.config, settings)
-      replays.replayEvents = replayEvents
+      replays.replayEvents = replayEventsBound
 
       lastReplays = replays // inherit entire replays from parent if child doesn't have it
     }
@@ -59,7 +58,7 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
 
   depthFirstCallbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  return { configsByPath, settingsByPath }
+  return { configs: configsByPath, settings: settingsByPath }
 }
 
 
@@ -78,11 +77,13 @@ const finalizeReplay = (mod, lastReplays, focusedModulePath, p, sharedDb) => top
 }
 
 
-const createDbWithSeed = (sharedDb, { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options }) => {
+const createDbWithSeed = (sharedDb, replays) => {
+  const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
+
   mergeDb(db, sharedDb)
   createSeed(settings, options, db)
 
-  Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: { settings } })
+  Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: replays })
 
   return db
 }

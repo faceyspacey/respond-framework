@@ -42,19 +42,19 @@ export const loading = (_, e, { state }) => {
 
 
 
-export const form = (state = {}, e, { events, focusedModulePath, respond }) => {
+export const settings = (state = {}, e, { events, focusedModulePath, configs }) => {
   if (e.event !== events.edit) return state
 
   Object.assign(state[focusedModulePath], e.form)
-  cascadeSetting(state, e, focusedModulePath, respond)
+  cascadeSetting(state, e, focusedModulePath, configs)
 
   return state
 }
 
 
 
-export const formRespond = (state = {}, e, { events }) => {
-  if (e.event !== events.editRespond) return state
+export const config = (state = {}, e, { events }) => {
+  if (e.event !== events.editConfig) return state
   return { ...state, ...e.form }
 }
 
@@ -83,6 +83,7 @@ export const tests = (state = {}, e, { events }) => {
 
 export const testsList = (state = [], e, { events, state: st }) => {
   switch (e.event) {
+    case events.changeModulePath.done:
     case events.sortTests.done:
     case events.includeChildModuleTests.done:
     case events.filterTests.done:

@@ -1,21 +1,17 @@
 import * as React from 'react'
 import { createElement, useEffect, useMemo, useRef } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { useStore } from '../respond.js'
 import { colors } from '../styles.js'
 import Radio from '../widgets/Radio.js'
 import Test from '../widgets/Test.js'
-import SearchInputForm from '../components/SearchInputForm.js'
-import createModuleOptions from '../helpers/createModuleOptions.js'
+import SearchInputForm, { s as rs } from '../components/SearchInputForm.js'
 import { isNative } from '../../../utils/bools.js'
+import { ModuleDropdown } from './Settings.js'
+import { stripPathDir } from '../../../utils/sliceByModulePath.js'
 
 
 export default (props, events, state) => {
-  const { testsList, sort, includeChildren } = state
-
-  const { replays } = useStore()
-  const modulePath = replays.settings.module || ''
-
+  const { testsList, sort, focusedModulePath } = state
   const ref = useRef()
 
   useEffect(() => {
@@ -26,20 +22,16 @@ export default (props, events, state) => {
   return (
     <View style={s.c}>
       <View style={s.row}>
-        <Radio
-          options={useMemo(() => createModuleOptions(modulePath), [])}
-          event={events.includeChildModuleTests}
-          name='includeChildren'
-          value={includeChildren}
-          styleRadio={s.radio}
-        />
+        <ModuleDropdown style={{ width: '65.8%', marginHorizontal: 0, marginTop: 0, zIndex: 0 }} />
 
         <Radio
           options={sortOptions}
           event={events.sortTests}
           name='sort'
           value={sort}
-          styleRadio={s.radio}
+          style={rs.radios}
+          styleLeft={rs.left}
+          styleRight={rs.right}
         />
       </View>
 
@@ -51,8 +43,8 @@ export default (props, events, state) => {
           run: events.runTestInTerminal,
           id,
           key: id,
-          modulePath,
           deleteTest: events.deleteTest,
+          name: stripPathDir(focusedModulePath, id),
         }))}
 
         {testsList.length === 0 && !state.loading && <Text style={s.none}>no tests found</Text>}
@@ -76,11 +68,11 @@ const s = StyleSheet.create({
 
   row: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: 12,
-    marginTop: 7,
-    marginBottom: 8
+    justifyContent: 'space-between',
+    marginHorizontal: 10,
+    marginTop: 9,
+    marginBottom: 8,
+    zIndex: 1,
   },
   radio: {
     height: 26,

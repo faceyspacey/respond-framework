@@ -76,14 +76,14 @@ export const findTest = filename => {
 
 
 const createId = filename => {
-  const relative = filename.replace(projDir(), '')                        // eg: /Users/me/app/modules/child/__tests__/test.js -> /modules/child/__tests__/test.js
-  const id = relative.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/test.js -> child/test.js
+  const relative = filename.replace(projDir(), '')                        // eg: /Users/me/app/modules/child/__tests__/dir/test.js -> /modules/child/__tests__/dir/test.js
+  const id = relative.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/dir/test.js -> child/dir/test.js
 
-  const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/namespace/some-test.js -> namespace/some-test.js
+  const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/dir/some-test.js -> dir/some-test.js
 
-  const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'foo/namespace/some-test.js']
-  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])          // eg: ['', 'admin', 'foo']
-  const modulePath = moduleParts.join('.')                                // eg: 'admin.foo'
+  const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'child/dir/some-test.js']
+  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])          // eg: ['', 'admin', 'child']
+  const modulePath = moduleParts.join('.')                                // eg: 'admin.child'
 
   return { id, name, modulePath }
 }

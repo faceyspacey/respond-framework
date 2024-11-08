@@ -162,7 +162,7 @@ export default !isProd ? mock : {
     projectJoin,
     sort = { updatedAt: -1, _id: 1 },
   } = {}) {
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -188,7 +188,7 @@ export default !isProd ? mock : {
     limit = this.config.listLimit,
     skip = 0
   } = {}) {
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     const parentName = this._name
     const fk = parentName + 'Id'
@@ -225,7 +225,7 @@ export default !isProd ? mock : {
     fk ??= this._name + 'Id'
 
     const localField = this._getIdName()
-    const coll = this.db(name)
+    const coll = this.db[name]
 
     project = this._toProject(project)
     selector = this._toObjectIdsSelector(selector)

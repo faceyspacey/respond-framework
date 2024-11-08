@@ -16,7 +16,7 @@ export default (specs = [], {
   if ($match) stages.push({ $match })
 
   specs.forEach(spec => {
-    const joinedCollection = collection.db()[spec.from]
+    const joinedCollection = collection.db[spec.from]
     const arr = joinInnerAndSum(spec, $match, joinedCollection)
     if ($match) delete $match[spec.name] // important: delete so only join collection is affected, as selector is applied within joinSum (if in fact passed from client)
     stages.push(...arr)

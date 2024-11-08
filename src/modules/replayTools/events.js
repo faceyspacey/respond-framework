@@ -11,12 +11,17 @@ import { stripPath } from '../../utils/sliceByModulePath.js'
 export default {
   toggle: {},
 
-  editRespond: {
+  editConfig: {
     sync: true,
     transform: ({}, form) => ({ form }),
   },
 
-  changeModulePath: {},
+  changeModulePath: {
+    submit: ({ db, state }) => {
+      if (state.tab !== 'tests') return false
+      return db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
+    }
+  },
 
   settings: {
     namespace: false,
@@ -53,9 +58,12 @@ export default {
   },
 
   testFromWallaby: {
-    before: async ({ replays, state, events }, { test, index, delay }) => {
-      if (test.modulePath.indexOf(replays.settings.module) !== 0) { // ensure test will run in its original module or a parent module
-        replays.settings.module = test.modulePath
+    before: async ({ respond, state, events }, { test, index, delay }) => {
+      const topState = respond.getStore()
+      const { focusedModulePath } = topState.replayState
+
+      if (test.modulePath.indexOf(focusedModulePath) !== 0) { // ensure test will run in its original module or a parent module
+        topState.replayState.focusedModulePath = test.modulePath
         state.focusedModulePath = test.modulePath
       }
       
@@ -94,7 +102,7 @@ export default {
       if (name) {
         name = name.replace(/^\//, '')
 
-        const settings = flatToNestedSettings(state.form)
+        const settings = flatToNestedSettings(state.settings)
         const modulePath = state.focusedModulePath
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
@@ -196,10 +204,10 @@ export default {
   },
 
   reload: {
-    before: async ({ form, formRespond, focusedModulePath, top, errors }) => {
-      const { url = '' } = formRespond
-      const settings = flatToNestedSettings(form)
-
+    before: async ({ settings, config, focusedModulePath, top, errors }) => {
+      settings = flatToNestedSettings(settings)
+      const { url = '' } = config
+      
       const prev = window.state
       const { eventsByType } = prev
       prev.eventsByType = {} // eventsByType is reused from previous store -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays

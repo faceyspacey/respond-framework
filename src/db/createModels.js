@@ -12,8 +12,13 @@ export default (models, db, parent, respond, modulePath) => {
 
   models = {}
 
+  const extra = Object.defineProperties({}, {
+    db: { enumerable: false, configurable: true, value: db },
+    replays: { enumerable: false, configurable: true, get: () => respond.replays } // respond.replays won't be defined until later by createReplays
+  })
+
   for (const k in { ...shared, ...client }) {
-    models[k] = createModel(k, shared[k], client[k], mixin, { db })
+    models[k] = createModel(k, shared[k], client[k], mixin, extra)
   }
 
   return respond.modelsByModulePath[modulePath] = models

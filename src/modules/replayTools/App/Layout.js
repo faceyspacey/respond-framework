@@ -10,8 +10,8 @@ import { colors } from '../styles.js'
 import useSlide from '../hooks/useSlide.js'
 
 
-export default ({ open }, events, { tab, loading, formRespond }) => {
-  const p = formRespond.position
+export default ({ open }, events, { tab, loading, config }) => {
+  const p = config.position
 
   const x = p?.left ? 'left' : 'right'
   const y = p?.top ? 'top' : 'bottom'

@@ -1,7 +1,6 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
 import defaultPlugins from '../../plugins.js'
-import { _parent } from '../../store/reserved.js'
 
 
 export { id } from './respond.js'
@@ -24,8 +23,4 @@ export const errors = {}
 
 export function findLastEvent() {
   return this.evs[this.evsIndex]
-}
-
-export function topState() {
-  return this[_parent]
 }

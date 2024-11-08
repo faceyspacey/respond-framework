@@ -8,14 +8,16 @@ import { idCounterRef } from '../utils/objectIdDevelopment.js'
 
 export default ({ status, settings, focusedModulePath = '', hydration } = {}) => {
   const { prevState, replayTools = {} } = window.state ?? {}
-  const { form: _, tests: __, ...rt } = replayTools
+  const { settings: _, tests: __, ...rt } = replayTools
   
-  const replayState = { settings, focusedModulePath, idCounterRef, status }
+  const replayState = status === 'hmr'
+    ? { ...prevState.replayState, status: 'hmr' }
+    : { settings, focusedModulePath, idCounterRef, status }
 
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
     case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState,              replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
+    case 'hmr':     return { ...prevState, replayState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
   }
 
   const prs = !isProd && permalinkReplayState()
@@ -50,7 +52,7 @@ const stringifyState = (state, replacer = defaultReplacer) => {
     s.replayTools = {
       ...s.replayTools,
       tests: t,                       // don't waste cycles on tons of tests with their events  
-      form: undefined,                // will be reset to last "checkpoint" by createReplays
+      settings: undefined,            // will be reset to last "checkpoint" by createReplays
       focusedModulePath: undefined,   // will be reset to last "checkpoint" by createReplays
     }
   }

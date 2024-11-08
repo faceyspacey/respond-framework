@@ -20,7 +20,6 @@ export default (props, { filterTests, toggleFilter }, { searched, filter }, _, r
       event={toggleFilter}
       name='filter'
       value={filter}
-      label={null}
       style={s.radios}
       styleLeft={s.left}
       styleRight={s.right}
@@ -36,9 +35,9 @@ const filterOptions = [{ value: 'tests', text: 'Tests' }, { value: 'snaps', text
 
 
 
-const s = StyleSheet.create({
+export const s = StyleSheet.create({
   c: {
-    marginHorizontal: 12,
+    marginHorizontal: 10,
     height: 35,
     marginBottom: 2,
   },
@@ -52,11 +51,10 @@ const s = StyleSheet.create({
     right: 0,
     top: 0,
     justifyContent: 'flex-end',
-    width: 65,
     height: '100%',
     marginTop: 0,
   },
 
-  left: { borderTopLeftRadius: 2, borderBottomLeftRadius: 2 },
-  right: { borderTopRightRadius: 3, borderBottomRightRadius: 3 }
+  left: { width: 56, borderTopLeftRadius: 2, borderBottomLeftRadius: 2 },
+  right: { width: 60, borderTopRightRadius: 3, borderBottomRightRadius: 3 }
 })
