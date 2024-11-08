@@ -6,10 +6,10 @@ import Remove from '../icons/Remove.js'
 import Pressable from '../widgets/Pressable.js'
 
 
-export default (props, { filterTests, toggleFilter }, { searched, filter }, _, ref) =>
+export default (props, { searchTests, toggleFilter }, { searched, filter }, _, ref) =>
   <View style={s.c}>
     <Input
-      event={filterTests}
+      event={searchTests}
       name='searched'
       value={searched}
       style={s.input}
@@ -17,11 +17,11 @@ export default (props, { filterTests, toggleFilter }, { searched, filter }, _, r
       ref={ref}
     />
 
-    {searched &&
-      <Pressable style={s.remove} event={filterTests} arg={{ value: '' }}>
+    {!!searched &&
+      <Pressable style={s.remove} event={searchTests} arg={{ value: '' }}>
         <Remove color='rgba(255, 255, 255, .65)' />
       </Pressable>
-      }
+    }
 
     <Radio
       options={filterOptions}

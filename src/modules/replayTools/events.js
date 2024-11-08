@@ -45,12 +45,12 @@ export default {
   },
 
   toggleFilter: {
-    submit: ({ events, state }) => events.filterTests({ searched: state.searched })
+    submit: ({ db, state }) => db.developer.findTests(state.testsParams)
   },
 
-  filterTests: {
+  searchTests: {
     sync: true,
-    debounce: ({ db, state }, e) => db.developer.findTests({ ...state.testsParams, searched: e.searched }),
+    debounce: ({ db, state }) => db.developer.findTests(state.testsParams),
   },
 
   testFromWallaby: {
