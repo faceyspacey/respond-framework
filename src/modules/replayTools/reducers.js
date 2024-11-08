@@ -85,7 +85,6 @@ export const testsList = (state = [], e, { events, state: st }) => {
   switch (e.event) {
     case events.changeModulePath.done:
     case events.sortTests.done:
-    case events.includeChildModuleTests.done:
     case events.filterTests.done:
     case events.tests.done: {
       const ids = e.tests.map(t => t.id)
@@ -116,15 +115,6 @@ export const sort = (state = 'az', e, { events }) => {
   return state
 }
 
-
-export const includeChildren = (state = false, e, { events }) => {
-  switch (e.event) {
-    case events.includeChildModuleTests:
-      return !state
-  }
-
-  return state
-}
 
 
 export const filter = (state = 'tests', e, { events }) => {

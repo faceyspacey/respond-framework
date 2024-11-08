@@ -13,9 +13,9 @@ export default {
     return this[body.method](...argsOut(body.args))
   },
 
-  findTests(modulePath, includeChildren, searched, filter) {
+  findTests(params) {
     try {
-      const tests = findTests(modulePath, includeChildren, searched, filter)
+      const tests = findTests(params)
       return { tests }
     }
     catch (e) {

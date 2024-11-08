@@ -24,3 +24,8 @@ export const errors = {}
 export function findLastEvent() {
   return this.evs[this.evsIndex]
 }
+
+export function testsParams() {
+  const { focusedModulePath, searched, filter } = this
+  return { focusedModulePath, searched, filter }
+}

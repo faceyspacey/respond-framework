@@ -4,8 +4,8 @@ import * as recursiveReadSync from 'recursive-readdir-sync'
 
 
 
-export default (modulePath = '', includeChildren = true, searched = '', filter) => {
-  const tests = findTests(modulePath, includeChildren)
+export default ({ focusedModulePath = '', searched = '', filter }) => {
+  const tests = findTests(focusedModulePath)
 
   if (!searched) return tests
 
@@ -21,11 +21,12 @@ export default (modulePath = '', includeChildren = true, searched = '', filter) 
 
 
 
-const findTests = (modulePath, includeChildren) => {
-  const dirs = createDirectoryPaths(modulePath, includeChildren)
-  const allTests = dirs.map(findTestsForModule)
-
-  return [].concat(...allTests)
+const findTests = modulePath => {
+  const dir = modulePath
+    ? modulePath.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projDir()) // eg: /Users/me/app/modules/child/modules/grandChild
+    : projDir()+ '/__tests__'                                                        // eg: /Users/me/app/__tests__
+  
+  return findTestsForModule(dir)
 }
 
 
@@ -158,45 +159,6 @@ const filterTestsBySnapSearch = (tests, searched) => {
   })
 }
 
-
-
-
-const createDirectoryPaths = (modulePath, includeChildren) => {
-  const moduleDir = modulePath
-    ? modulePath.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projDir()) // eg: /Users/me/app/modules/child/modules/grandChild
-    : projDir()                                                                      // eg: /Users/me/app
-  
-  const currentModuleTestsDir = moduleDir + '/__tests__'                              // eg: /Users/me/app/__tests__ || /Users/me/app/modules/child/modules/grandChild/__tests__
-
-  return includeChildren
-    ? [currentModuleTestsDir, ...collectChildModuleDirs(moduleDir)]                   // collect tests from posterity recursively
-    : [currentModuleTestsDir]                                                         // only tests in top module (or top of app)
-}
-
-
-const collectChildModuleDirs = dir => {
-  const modulesDir = dir + '/modules/'                      
-
-  const submodules = readDir(modulesDir)
-  const dirs = submodules.map(name => modulesDir + name)  // eg: ['/Users/me/app/modules/child', '/Users/me/app/modules/sibling']
-
-  const children = dirs.map(d => d + '/__tests__')        // eg: ['/Users/me/app/modules/child/__tests__', '/Users/me/app/modules/sibling/__tests__']
-  const grandChildren = dirs.map(collectChildModuleDirs)  // recurse
-
-  return [
-    ...children,
-    ...[].concat(...grandChildren)                        // flatten
-  ]
-}
-
-const readDir = dir => {
-  try {
-    return fs.readdirSync(dir).filter(d => d.indexOf('.') === -1)
-  }
-  catch {
-    return []
-  }
-}
 
 
 const projDir = () => path.resolve()

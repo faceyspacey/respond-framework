@@ -2,6 +2,8 @@ import * as React from 'react'
 import { View, StyleSheet } from 'react-native'
 import Radio from '../widgets/Radio.js'
 import Input from '../widgets/Input.js'
+import Remove from '../icons/Remove.js'
+import Pressable from '../widgets/Pressable.js'
 
 
 export default (props, { filterTests, toggleFilter }, { searched, filter }, _, ref) =>
@@ -14,6 +16,12 @@ export default (props, { filterTests, toggleFilter }, { searched, filter }, _, r
       placeholder={filter === 'tests' ? 'search tests' : 'search snaps /regex/'}
       ref={ref}
     />
+
+    {searched &&
+      <Pressable style={s.remove} event={filterTests} arg={{ value: '' }}>
+        <Remove color='rgba(255, 255, 255, .65)' />
+      </Pressable>
+      }
 
     <Radio
       options={filterOptions}
@@ -44,6 +52,15 @@ export const s = StyleSheet.create({
 
   input: {
     marginTop: 0,
+    paddingRight: 144,
+  },
+
+  remove: {
+    position: 'absolute',
+    top: 7,
+    right: 122,
+    width: 23,
+    height: 23,
   },
 
   radios: {

@@ -19,7 +19,7 @@ export default {
   changeModulePath: {
     submit: ({ db, state }) => {
       if (state.tab !== 'tests') return false
-      return db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
+      return db.developer.findTests(state.testsParams)
     }
   },
 
@@ -37,15 +37,11 @@ export default {
     namespace: false,
     kind: kinds.navigation,
     cache: false,
-    fetch: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter),
+    fetch: ({ db, state }) => db.developer.findTests(state.testsParams),
   },
   
   sortTests: {
-    submit: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
-  },
-
-  includeChildModuleTests: {
-    submit: ({ db, state }) => db.developer.findTests(state.focusedModulePath, state.includeChildren, state.searched, state.filter)
+    submit: ({ db, state }) => db.developer.findTests(state.testsParams)
   },
 
   toggleFilter: {
@@ -54,7 +50,7 @@ export default {
 
   filterTests: {
     sync: true,
-    debounce: ({ db, state }, e) => db.developer.findTests(state.focusedModulePath, state.includeChildren, e.searched, state.filter),
+    debounce: ({ db, state }, e) => db.developer.findTests({ ...state.testsParams, searched: e.searched }),
   },
 
   testFromWallaby: {
