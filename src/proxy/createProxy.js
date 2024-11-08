@@ -2,7 +2,7 @@
 import { canProxy, proxyStates as ps } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 
-window.ps =  ps
+
 export default function createProxy(o, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
   const found = handleExistingProxy(o, notifyParent, cache)
   if (found) return found

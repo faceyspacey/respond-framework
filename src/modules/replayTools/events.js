@@ -217,8 +217,7 @@ export default {
 
   removeError: {
     sync: true,
-    reduce: false,
-    mutate: ({ errors }, { name }) => delete errors[name]
+    reduce: ({ errors }, { name }) => delete errors[name]
   },
 
   openPermalink: {

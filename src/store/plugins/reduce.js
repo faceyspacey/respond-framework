@@ -9,9 +9,13 @@ export default wrapInActForTests((state, e) => {
   const top = respond.getStore()
   const eTop = prependModulePathToE(e)
 
-  e.event.mutate?.(state, e)
-
   if (e.event.reduce === false) return respond.notify(eTop)
+    
+  if (e.event.reduce) {
+    e.event.reduce(state, e)
+    e.event.afterReduce?.(state, e)
+    return respond.notify(eTop)
+  }
     
   try {
     if (e.event === top.events.init) {
@@ -19,7 +23,7 @@ export default wrapInActForTests((state, e) => {
     }
     else {
       reduceBranch(eTop, top, modulePath.split('.'))
-      e.event.mutateAfter?.(state, e)
+      e.event.afterReduce?.(state, e)
     }
   }
   catch (error) {

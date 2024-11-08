@@ -6,9 +6,7 @@ import { proxyStates } from '../proxy/utils/helpers.js'
 export default (proto, moduleName, reducers, propReducers, parentReducers = {}, respond, state) => {
   const parentKeys = Object.keys(parentReducers)
 
-  const uniqueCurr = curr.bind(null)
-  
-  reducers = { curr: uniqueCurr, ...reducers }
+  reducers = reducers.curr ? { ...reducers } : { curr: curr.bind(null), ...reducers }
   proto.reducers = reducers
   
   Object.keys(propReducers).forEach(k => {
