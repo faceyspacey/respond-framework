@@ -9,9 +9,10 @@ import sliceByModulePath, { nestAtModulePath, stripPath } from '../utils/sliceBy
 import { isModule } from '../store/reserved.js'
 
 
-export default (state, session, focusedModulePath) => {
+export default (state, session) => {
   const { top, cookies } = state.respond
-  const { replayConfigsByPaths, replaySettingsPaths, form } = createReplaySettings(top, state, session.replaySettings, focusedModulePath)
+  const { settings, focusedModulePath = '' } = session.replayState
+  const { replayConfigsByPaths, replaySettingsPaths, form } = createReplaySettings(top, state, settings, focusedModulePath)
 
   Object.assign(state.replayTools.respond, { replayConfigsByPaths, replaySettingsPaths })
   
@@ -25,7 +26,7 @@ export default (state, session, focusedModulePath) => {
 }
 
 
-export const createReplaySettings = (topModule, topState, replaySettings, focusedModulePath) => {
+export const createReplaySettings = (topModule, topState, settings, focusedModulePath) => {
   const replayConfigsByPaths = {}
   const replaySettingsPaths = []
 
@@ -34,12 +35,12 @@ export const createReplaySettings = (topModule, topState, replaySettings, focuse
   const depthFirstCallbacks = []
   const db = {}
   
-  const traverseAllModulesBreadthFirst = (mod, replaySettings, lastReplays, p) => {
+  const traverseAllModulesBreadthFirst = (mod, settings, lastReplays, p) => {
     if (mod.replays) {
       const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
       replays.db = mod.replays.db ?? lastReplays.db // inherit db from parent module's replays if child has replays but no db
 
-      replays.settings = defaultCreateSettings(replays.config, replaySettings)
+      replays.settings = defaultCreateSettings(replays.config, settings)
       replays.replayEvents = replayEvents
 
       lastReplays = replays // inherit entire replays from parent if child doesn't have it
@@ -53,11 +54,11 @@ export const createReplaySettings = (topModule, topState, replaySettings, focuse
   
     for (const k of mod.moduleKeys) {
       if (k === 'replayTools') continue
-      traverseAllModulesBreadthFirst(mod[k], replaySettings?.[k], lastReplays, p ? `${p}.${k}` : k)
+      traverseAllModulesBreadthFirst(mod[k], settings?.[k], lastReplays, p ? `${p}.${k}` : k)
     }
   }
 
-  traverseAllModulesBreadthFirst(topModule, replaySettings, { config: {}, settings: {} }, '')
+  traverseAllModulesBreadthFirst(topModule, settings, { config: {}, settings: {} }, '')
 
   depthFirstCallbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 

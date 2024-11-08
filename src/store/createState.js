@@ -12,7 +12,7 @@ import hydrateModules from './hydrateModules.js'
 
 export default (top, opts = {}) => {
   const session = getSessionState(opts)
-  const focusedModulePath = session.focusedModulePath ?? ''
+  const focusedModulePath = session.replayState.focusedModulePath ?? ''
 
   const state = createProxy(Object.create({}))
   const respond = createRespond(top, state, focusedModulePath)
@@ -20,7 +20,7 @@ export default (top, opts = {}) => {
   const mod = sliceByModulePath(top, focusedModulePath)
 
   addModule(mod, respond, state, session)
-  createReplays(state, session, focusedModulePath)
+  createReplays(state, session)
   hydrateModules(state, session)
 
   return window.store = window.state = state

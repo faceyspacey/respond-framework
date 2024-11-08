@@ -1,7 +1,7 @@
 import * as qs from 'qs'
 import { parseSearch } from '../../../utils/searchQuery.js'
 import { defaultOrigin } from '../../../utils/constants.js'
-
+import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 
 export default state => {
@@ -37,12 +37,14 @@ export const hashToSettings = () => {
   if (h && h.indexOf(prefix) > -1) {
     const index = h.indexOf(prefix)
     const search = h.slice(index + length)
-    return parseSearch(search) // use hash so search can still be used in userland
+    const { module, ...settings } = parseSearch(search) // use hash so search can still be used in userland
+    
+    return { settings, focusedModulePath: settings.module ?? '', idCounterRef, status: 'ready' }
   }
 }
 
 
-export const prefix = '#respond:'
+export const prefix = '#!'
 const length = prefix.length
 
 

@@ -13,8 +13,8 @@ export default function (state, e) {
 
   const { respond, replayTools } = top
 
-  if (top.replaySettings.status === 'session') {
-    top.replaySettings.status = 'ready'
+  if (top.replayState.status === 'session') {
+    top.replayState.status = 'ready'
     if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 

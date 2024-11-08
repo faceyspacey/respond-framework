@@ -487,11 +487,12 @@ apply prefixPath function in createEvents
 
 #use ctx.sync for subscribe.js instead of sync argument
 
+#permalink
 
 
-permalink
-bring back proper saving of idCounter
-remember to handle hmr + conf caching
+
+#bring back proper saving of idCounter
+remember to handle hmr + conf caching, cache settings an other aspects of createReplays?
 save seed in sessionStorage
 
 

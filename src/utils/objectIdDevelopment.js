@@ -1,12 +1,13 @@
 export const suffix = 'abcdefghijklmnopqrs' // 24 digit ID like MongoIDs
 
 export default () => {
-  return idCounter++ + suffix
-  if (typeof window === 'undefined') return idCounter++ + suffix
+  if (typeof window === 'undefined') return idCounterRef.value++ + suffix
 
-  const { replays } = window.opener?.state.respond ?? window.state.respond
-  return replays.idCounter++ + suffix
+  const { replayState } = window.opener?.state ?? window.state
+  const ref = replayState?.idCounterRef ?? idCounterRef
+
+  return ref.value++ + suffix
 }
 
 
-let idCounter = 10000
+export const idCounterRef = { value: 10000 }

@@ -74,7 +74,7 @@ export default {
       index = index === undefined ? evs.length - 1 : index
       const events = evs.slice(0, index + 1)
 
-      await state.replays.replayEvents(events, delay, settings)
+      await state.replays.replayEvents(events, delay, { settings, focusedModulePath: state.focusedModulePath })
 
       return false
     },

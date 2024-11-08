@@ -3,7 +3,7 @@ import revive from '../utils/revive.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = window.state.replayTools.form, focusedModulePath = window.state.replayTools.focusedModulePath) {
+export default async function(events, delay = 0, { settings, focusedModulePath } = window.state.replayState) {
   const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
   await run(revive(store)(events), delay, state.respond)
   return state
