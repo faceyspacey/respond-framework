@@ -14,7 +14,7 @@ export default (name, modulePath, settings, events) => {
 const createTest = (name, modulePath, settings, events) => {
   const moduleDir = createModuleDir(modulePath)
   const filename = createFilename(moduleDir, name)
-  const levels = name.split('/').length + 1
+  const levels = name.split('/').length
   const content = createTestFile(moduleDir, levels, settings, cleanAndNumberEvents(events))
   return { filename, content }
 }
@@ -49,7 +49,7 @@ const createTestFile = (moduleDir, length, settings, events) => {
 
   const opts = exists ? `{ settings }` : `{ settings, top }`
 
-  return `${imports}'
+  return `${imports}
 
 const settings = ${JSON.stringify(settings, null, 2)}
 

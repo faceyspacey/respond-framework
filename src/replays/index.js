@@ -12,11 +12,11 @@ import { isModule } from '../store/reserved.js'
 export default (state, session) => {
   const { top, cookies } = state.respond
   const { settings, focusedModulePath = '' } = session.replayState
-  const { replayConfigsByPaths, replaySettingsPaths, form } = createReplaySettings(top, state, settings, focusedModulePath)
+  const { configsByPath, settingsByPath } = createReplaySettings(top, state, settings, focusedModulePath)
 
-  Object.assign(state.replayTools.respond, { replayConfigsByPaths, replaySettingsPaths })
+  Object.assign(state.replayTools.respond, { configsByPath })
   
-  state.replayTools.form = form
+  state.replayTools.form = settingsByPath
   state.replayTools.focusedModulePath = focusedModulePath
 
   const replays = state.respond.replays
@@ -27,10 +27,8 @@ export default (state, session) => {
 
 
 export const createReplaySettings = (topModule, topState, settings, focusedModulePath) => {
-  const replayConfigsByPaths = {}
-  const replaySettingsPaths = []
-
-  const form = {}
+  const configsByPath = {}
+  const settingsByPath = {}
 
   const depthFirstCallbacks = []
   const db = {}
@@ -46,9 +44,8 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
       lastReplays = replays // inherit entire replays from parent if child doesn't have it
     }
 
-    replayConfigsByPaths[p] = lastReplays.config
-    replaySettingsPaths.push(p)
-    nestAtModulePath(form, p, lastReplays.settings)
+    configsByPath[p] = lastReplays.config
+    settingsByPath[p] = lastReplays.settings
     
     depthFirstCallbacks.unshift(finalizeReplay(mod, lastReplays, focusedModulePath, p, db))
   
@@ -62,7 +59,7 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
 
   depthFirstCallbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  return { replayConfigsByPaths, replaySettingsPaths, form }
+  return { configsByPath, settingsByPath }
 }
 
 

@@ -1,7 +1,5 @@
 import { addToCache } from '../../utils/addToCache.js'
-import { nestAtModulePath } from '../../utils/sliceByModulePath.js'
 import cascadeSetting from './helpers/cascadeSetting.js'
-import resolveModulePath from './helpers/resolveModulePath.js'
 
 
 export const open = (state = false, e, { events }) => {
@@ -47,7 +45,7 @@ export const loading = (_, e, { state }) => {
 export const form = (state = {}, e, { events, focusedModulePath, respond }) => {
   if (e.event !== events.edit) return state
 
-  nestAtModulePath(state, focusedModulePath, e.form)
+  Object.assign(state[focusedModulePath], e.form)
   cascadeSetting(state, e, focusedModulePath, respond)
 
   return state
@@ -69,7 +67,7 @@ export const focusedModulePath = (state = '', e, { events }) => {
 
 
 
-export const tests = (state = {}, e, { events, focusedModulePath }) => {
+export const tests = (state = {}, e, { events }) => {
   switch (e.event) {
     case events.deleteTest.done: {
       delete state[e.id]
@@ -77,14 +75,7 @@ export const tests = (state = {}, e, { events, focusedModulePath }) => {
     }
   }
 
-  if (e.tests) {
-    const tests = e.tests.map(t => ({
-      ...t,
-      events: t.events.map(e => resolveModulePath(e, t.modulePath, focusedModulePath))
-    }))
-
-    return addToCache(state, tests)
-  }
+  if (e.tests) return addToCache(state, e.tests)
 
   return state
 }

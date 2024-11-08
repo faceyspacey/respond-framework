@@ -13,7 +13,7 @@ import sliceByModulePath from '../../../utils/sliceByModulePath.js'
 export default (props, events, { focusedModulePath, respond }) => {
   const respondSettings = createSettings(respondConfig, RespondSettingForm)
 
-  const config = respond.replayConfigsByPaths[focusedModulePath]
+  const config = respond.configsByPath[focusedModulePath]
   const settings = createSettings(config, UserSettingForm, events.edit, 1)
   
   return (
@@ -70,7 +70,7 @@ const RespondSettingForm = ({ Component, name, options, ...props }, events, stat
 
 
 const UserSettingForm = ({ Component, name, available, options, ...props }, events, { form, focusedModulePath }) => {
-  const modSettings = sliceByModulePath(form, focusedModulePath)
+  const modSettings = form[focusedModulePath]
 
   if (available && !available(modSettings)) return
 

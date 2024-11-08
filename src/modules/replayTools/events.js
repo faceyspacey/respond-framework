@@ -1,9 +1,11 @@
 import { Linking } from 'react-native'
-import ignoreDefaultSettings from './helpers/ignoreDefaultSettings.js'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
 import { kinds } from '../../utils.js'
+
+import flatToNestedSettings from './helpers/flatToNestedSettings.js'
+import { stripPath } from '../../utils/sliceByModulePath.js'
 
 
 export default {
@@ -64,17 +66,19 @@ export default {
   test: {
     kind: kinds.navigation,
     submit: async (state, { id, index, delay }) => {
-      const { settings, events: evs } = state.tests[id]
+      const { settings, events: evs, name } = state.tests[id]
 
       state.evs = evs
 
       state.divergentIndex = evs.length // purple event rows will appear at end of event list if new events manually triggered by using app
+      
       state.selectedTestId = id
+      state.selectedTestName = name
 
       index = index === undefined ? evs.length - 1 : index
       const events = evs.slice(0, index + 1)
 
-      await state.replays.replayEvents(events, delay, { settings, focusedModulePath: state.focusedModulePath })
+      await state.replays.replayEvents(events, delay, settings, state.focusedModulePath)
 
       return false
     },
@@ -83,12 +87,14 @@ export default {
   saveTest: {
     submit: async ({ state, db, events }) => {
       const first = state.evs[0]
-      const possibleName = state.selectedTestId || first.type.replace(/\./g, '/') + '.js'
+      const possibleName = state.selectedTestName ?? first.type.replace(/\./g, '/') + '.js'
       
-      const name = prompt('Name of your test?', possibleName)
+      let name = prompt('Name of your test?', possibleName)
 
       if (name) {
-        const settings = state.form
+        name = name.replace(/^\//, '')
+
+        const settings = flatToNestedSettings(state.form)
         const modulePath = state.focusedModulePath
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
@@ -134,7 +140,7 @@ export default {
       const lastIndex = state.evs.length - 1
       const nextIndex = Math.max(0, Math.min(lastIndex, index + delta))
 
-      const events = state.evs.map(e => ({ ...e, dragId: uniqueId() })) // trigger react to re-render all event rows correctly
+      const events = state.evs.map(e => ({ ...e, dragId: uniqueDragId() })) // trigger react to re-render all event rows correctly
       const event = events[index]
 
       events.splice(index, 1)             // delete event in original position
@@ -190,12 +196,14 @@ export default {
   },
 
   reload: {
-    before: async ({ form: settings, formRespond, focusedModulePath, top, errors }) => {
+    before: async ({ form, formRespond, focusedModulePath, top, errors }) => {
       const { url = '' } = formRespond
+      const settings = flatToNestedSettings(form)
 
       const prev = window.state
       const { eventsByType } = prev
       prev.eventsByType = {} // eventsByType is reused from previous store -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+
 
       const state = createState(top, { settings, focusedModulePath, status: 'reload' })
       const e = state.eventFrom(url)
@@ -235,4 +243,4 @@ export default {
 }
 
 let id = 0
-const uniqueId = () => ++id + ''
+const uniqueDragId = () => ++id + ''

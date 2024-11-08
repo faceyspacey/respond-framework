@@ -47,9 +47,9 @@ export default {
     return { success: true }
   },
 
-  runTestInTerminal(testname) {
+  runTestInTerminal(id) {
     const dir = path.resolve()
-    const command = `osascript -e 'tell app "Terminal" to do script "cd ${dir} && npm test ${testname}"'`
+    const command = `osascript -e 'tell app "Terminal" to do script "cd ${dir} && npm test ${id}"'`
 
     const isMac = process.platform === 'darwin'
 

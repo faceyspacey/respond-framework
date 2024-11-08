@@ -65,9 +65,9 @@ export const findTest = filename => {
     
     const updatedAt = fs.statSync(filename).mtime.getTime()
 
-    const { id, modulePath } = createId(filename)
+    const { id, name, modulePath } = createId(filename)
 
-    return { id, filename, modulePath, updatedAt, settings, events }
+    return { id, name, modulePath, filename, updatedAt, settings, events }
   }
   catch (e) {
     throw new Error(filename + ' is in an invalid test file. You likely modified it manually and broke it. Test files must follow the specific format of other tests.')
@@ -76,14 +76,16 @@ export const findTest = filename => {
 
 
 const createId = filename => {
-  const name = filename.replace(projDir(), '')                        // eg: /Users/me/app/modules/child/__tests__/test.js -> /modules/child/__tests__/test.js
-  const id = name.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/test.js -> child/test.js
+  const relative = filename.replace(projDir(), '')                        // eg: /Users/me/app/modules/child/__tests__/test.js -> /modules/child/__tests__/test.js
+  const id = relative.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/test.js -> child/test.js
 
-  const parts = name.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'foo/namespace/some-test.js']
-  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])       // eg: ['', 'admin', 'foo']
-  const modulePath = moduleParts.join('.')                            // eg: 'admin.foo'
+  const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/namespace/some-test.js -> namespace/some-test.js
 
-  return { id, modulePath }
+  const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'foo/namespace/some-test.js']
+  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])          // eg: ['', 'admin', 'foo']
+  const modulePath = moduleParts.join('.')                                // eg: 'admin.foo'
+
+  return { id, name, modulePath }
 }
 
 

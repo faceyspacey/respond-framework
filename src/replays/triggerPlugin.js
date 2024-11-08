@@ -15,6 +15,7 @@ export default function (state, e) {
 
   if (top.replayState.status === 'session') {
     top.replayState.status = 'ready'
+    console.log('yo', respond.isEqualNavigations(e, state.curr), e, state.curr)
     if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
@@ -94,7 +95,7 @@ const isEqual = (a, b, top) => {
 
 const inputConverged = (e, state, events) => {
   const isPossibleConvergingInputEvent = e.meta.input && state.selectedTestId
-    && state.tests[state.selectedTestId] // test may not exist if sessionState revived after refresh, as tests aren't stringified for perf
+    && state.tests[state.selectedTestId]
     && state.divergentIndex !== undefined
 
   if (!isPossibleConvergingInputEvent) return

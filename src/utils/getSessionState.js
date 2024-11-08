@@ -44,7 +44,15 @@ const stringifyState = (state, replacer = defaultReplacer) => {
   const s = { ...snapshot(state) }
       
   if (s.replayTools) {
-    s.replayTools = { ...s.replayTools, tests: undefined } // don't waste cycles on tons of tests with their events
+    const { tests, selectedTestId } = s.replayTools
+    const t = selectedTestId ? { [selectedTestId]: tests[selectedTestId] } : undefined // preserve selected test, as it may be used without the Tests tab first visited
+
+    s.replayTools = {
+      ...s.replayTools,
+      tests: t,                       // don't waste cycles on tons of tests with their events  
+      form: undefined,                // will be reset to last "checkpoint" by createReplays
+      focusedModulePath: undefined,   // will be reset to last "checkpoint" by createReplays
+    }
   }
 
   if (s.prevState?.prevState) {
