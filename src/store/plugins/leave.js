@@ -15,16 +15,16 @@ export default ({
 
 
 const handleLeave = async (state, e, next, event) => {
-  const canLeave = await event.beforeLeave?.(state, e)
+  const canLeave = await event.beforeLeave?.call(state, state, e)
 
   if (canLeave === false) {
     state.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
     return false
   }
   
-  await event.leave?.(state, e)
+  await event.leave?.call(state, state, e)
   await next()
-  await event.afterLeave?.(state, e)
+  await event.afterLeave?.call(state, state, e)
 }
 
 

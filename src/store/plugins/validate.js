@@ -1,20 +1,20 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (!e.event.validate) return
 
-  const res = await e.event.validate(store, e)
+  const res = await e.event.validate.call(state, state, e)
 
   if (res === false) {
-    store.devtools.sendPrevented({ type: 'validate', returned: res }, e)
+    state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     return false
   }
 
   if (res?.error || res?.flash?.error) {
-    store.devtools.sendPrevented({ type: 'validate', returned: res }, e)
+    state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     await e.event.error.dispatch(res, { from: e })
     return false
   }
 
-  store.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)
+  state.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)
 
   return res
 }

@@ -1,13 +1,13 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (!e.event.tap) return
 
-  await store.awaitInReplaysOnly(async () => {
+  await state.awaitInReplaysOnly(async () => {
     try {
-      store.devtools.sendPluginNotification({ type: 'tap' }, e)
-      await e.event.tap(store, e)
+      state.devtools.sendPluginNotification({ type: 'tap' }, e)
+      await e.event.tap.call(state, state, e)
     }
     catch (error) {
-      store.onError({ error, kind: 'tap', e })
+      state.onError({ error, kind: 'tap', e })
     }
   })
 }

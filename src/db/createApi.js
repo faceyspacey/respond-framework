@@ -52,7 +52,7 @@ const createHandler = ({
     return
   }
 
-  let response = await new Controller(request, secret)._callFilteredByRole(body)
+  let response = await new Controller(secret, request)._callFilteredByRole(body)
   response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned
 
   if (logResponse !== false) {

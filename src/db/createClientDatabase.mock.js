@@ -15,7 +15,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
 
   if (props?.db) mergeProps(db, props.db)
 
-  const controllers = createControllers(db)
+  const controllers = createControllers(db, respond)
   const cache = createApiCache(state)
 
   return createDbProxy({

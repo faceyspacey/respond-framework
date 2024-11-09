@@ -12,7 +12,7 @@ export default function(e) {
   const bn = state.basenameFull
 
   if (event.locationFrom) {
-    const loc = event.locationFrom(state, e)              // user can customize search serialization
+    const loc = event.locationFrom.call(state, state, e)  // user can customize search serialization
     const pathname = bn + loc.pathname                    // developer also responsible for providing pathname, but not applying basename
     const { search, hash } = cleanSearchHash(loc)
     const url = createRelativeUrl(pathname, search, hash)

@@ -3,11 +3,16 @@ import createControllerDefault from './utils/createControllerDefault.js'
 import mergeProps from './utils/mergeProps.js'
 
 
-export default function createControllers({ options, ...controllers }, hash = {}) {
+export default function createControllers({ options, ...controllers }, respond, hash = {}) {
   const create = options?.createController ?? createControllerDefault
 
+  const descriptors = {
+    replays:  { enumerable: false, configurable: true, get: () => respond.replays    }, // db.replays won't be defined until later by createReplays
+    db:       { enumerable: false, configurable: true, get: () => respond.replays.db }
+  }
+
   for (const _name in controllers) {
-    const Child = { _name, _namePlural: _name + 's', ...controllers[_name] }
+    const Child = Object.defineProperties({ _name, _namePlural: _name + 's', ...controllers[_name] }, descriptors)
     function Controller(secret, request = {}) { this.secret = secret, this.request = request }
     Controller.prototype = create(Child, Parent)
     hash[_name] = Controller

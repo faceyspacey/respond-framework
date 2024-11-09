@@ -12,8 +12,8 @@ export default wrapInActForTests((state, e) => {
   if (e.event.reduce === false) return respond.notify(eTop)
     
   if (e.event.reduce) {
-    e.event.reduce(state, e)
-    e.event.afterReduce?.(state, e)
+    e.event.reduce.call(state, state, e)
+    e.event.afterReduce?.call(state, state, e)
     return respond.notify(eTop)
   }
     
@@ -23,7 +23,7 @@ export default wrapInActForTests((state, e) => {
     }
     else {
       reduceBranch(eTop, top, modulePath.split('.'))
-      e.event.afterReduce?.(state, e)
+      e.event.afterReduce?.call(state, state, e)
     }
   }
   catch (error) {

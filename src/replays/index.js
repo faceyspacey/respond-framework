@@ -32,25 +32,25 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
   
   const replayEventsBound = replayEvents.bind(topState)
 
-  const traverseAllModulesBreadthFirst = (mod, settings, lastReplays, p) => {
+  const traverseAllModulesBreadthFirst = (mod, settings, ancestorReplays, p) => {
     if (mod.replays) {
       const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
-      replays.db = mod.replays.db ?? lastReplays.db // inherit db from parent module's replays if child has replays but no db
+      replays.db = mod.replays.db ?? ancestorReplays.db // inherit db from parent module's replays if child has replays but no db
 
       replays.settings = defaultCreateSettings(replays.config, settings)
       replays.replayEvents = replayEventsBound
 
-      lastReplays = replays // inherit entire replays from parent if child doesn't have it
+      ancestorReplays = replays // inherit entire replays from parent if child doesn't have it
     }
 
-    configsByPath[p] = lastReplays.config
-    settingsByPath[p] = lastReplays.settings
+    configsByPath[p] = ancestorReplays.config
+    settingsByPath[p] = ancestorReplays.settings
     
-    depthFirstCallbacks.unshift(finalizeReplay(mod, lastReplays, focusedModulePath, p, db))
+    depthFirstCallbacks.unshift(finalizeReplay(mod, ancestorReplays, focusedModulePath, p, db))
   
     for (const k of mod.moduleKeys) {
       if (k === 'replayTools') continue
-      traverseAllModulesBreadthFirst(mod[k], settings?.[k], lastReplays, p ? `${p}.${k}` : k)
+      traverseAllModulesBreadthFirst(mod[k], settings?.[k], ancestorReplays, p ? `${p}.${k}` : k)
     }
   }
 
@@ -64,16 +64,16 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
 
 
 
-const finalizeReplay = (mod, lastReplays, focusedModulePath, p, sharedDb) => topState => { 
+const finalizeReplay = (mod, ancestorReplays, focusedModulePath, p, sharedDb) => topState => { 
   if (mod.replays?.db) { // only call for modules that have actual replays and therefore db/seed data
-    lastReplays.db = createDbWithSeed(sharedDb, lastReplays) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
+    ancestorReplays.db = createDbWithSeed(sharedDb, ancestorReplays) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
   }
 
   const state = stateForNormalizedPath(topState, focusedModulePath, p)
   if (!state) return // state is a module above the currently focused module
 
-  state.respond.replays = lastReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
-  Object.getPrototypeOf(state).replays = lastReplays
+  state.respond.replays = ancestorReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  Object.getPrototypeOf(state).replays = ancestorReplays
 }
 
 

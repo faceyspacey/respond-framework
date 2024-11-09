@@ -1,20 +1,20 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (!e.event.before) return
 
-  const res = await e.event.before(store, e)
+  const res = await e.event.before.call(state, state, e)
 
   if (res === false) {
-    store.devtools.sendPrevented({ type: 'before', returned: res }, e)
+    state.devtools.sendPrevented({ type: 'before', returned: res }, e)
     return false
   }
 
   if (res?.type) {
-    store.devtools.sendRedirect({ type: 'before', returned: res }, e)
-    await store.dispatch(res, { from: e, trigger: false }) // redirect
+    state.devtools.sendRedirect({ type: 'before', returned: res }, e)
+    await state.dispatch(res, { from: e, trigger: false }) // redirect
     return false
   }
 
-  store.devtools.sendPluginNotification({ type: 'before', returned: res }, e)
+  state.devtools.sendPluginNotification({ type: 'before', returned: res }, e)
 
   return res
 }

@@ -5,7 +5,7 @@ import createState from '../../store/createState.js'
 import { kinds } from '../../utils.js'
 
 import flatToNestedSettings from './helpers/flatToNestedSettings.js'
-import { stripPath } from '../../utils/sliceByModulePath.js'
+import sliceByModulePath, { stripPath } from '../../utils/sliceByModulePath.js'
 
 
 export default {
@@ -98,8 +98,8 @@ export default {
       if (name) {
         name = name.replace(/^\//, '')
 
-        const settings = flatToNestedSettings(state.settings)
         const modulePath = state.focusedModulePath
+        const settings = sliceByModulePath(flatToNestedSettings(state.settings), modulePath)
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 

@@ -496,29 +496,50 @@ apply prefixPath function in createEvents
 #createModel
 #createDatabase
 
+#call event callbacks with module state as `this` and switch e + state arguments
 
 
 #bring back proper saving of idCounter
+#settings need to save relative to focusedModulePath, then be transformed correctly when loaded
+
+
 #remember to handle hmr + conf caching, cache settings and other aspects of createReplays?
 #save seed in sessionStorage
 
-settings need to save relative to focusedModulePath, then be transformed correctly when loaded
+#dont return auomatic controller method responses as nested
+#how to easily allow tests to play in a parent module
+
+
+if (isObject(response) && shouldNestByModelName(response)) {
+  const value = keyNames[controller][method]
+  Object.defineProperty(response, modelNameSymbol, { value, enumerable: false, configurable: true })
+}
+
+const modelName = res?.[modelNameSymbol]
+if (modelName) res = { [modelName]: res }
+await e.event.done.dispatch(res, { from: e })
+
+
 
 createControllersTree
+
+
+
+
+
+maybe remove e.type + e.namespace
+
+basenameFull stored in its own sessionStorage
+lazy event function creation
+
+same object stored multiple times in state get lost in sessionStorage
+strategy to use models for methods on arbitrary nested objects
+
+
+
+
 
 
 make all tools replacable by user (including reviver)
 re-organize files
 finalize implementation of respond object etc
-
-
-
-
-same object stored multiple times in state get lost in sessionStorage
-dont return auomatic controller methods as nested
-
-maybe remove e.type + e.namespace
-basenameFull stored in its own sessionStorage
-lazy event function creation
-
-how to easily allow tests to play in a parent module

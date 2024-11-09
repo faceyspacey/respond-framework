@@ -1,9 +1,9 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (!e.event.submit) return
 
-  const res = await e.event.submit(store, e)
+  const res = await e.event.submit.call(state, state, e)
 
-  store.devtools.sendPluginNotification({ type: 'submit', returned: res }, e)
+  state.devtools.sendPluginNotification({ type: 'submit', returned: res }, e)
 
   if (res === false) {
     return false // manual short-circuit

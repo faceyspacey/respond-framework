@@ -1,12 +1,12 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (!e.event.redirect) return
 
-  const res = await e.event.redirect(store, e)
+  const res = await e.event.redirect.call(state, state, e)
 
-  store.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
+  state.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
 
   if (res?.type) {
-    await store.dispatch(res, { from: e })
+    await state.dispatch(res, { from: e })
   }
   else {
     return res

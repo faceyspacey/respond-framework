@@ -11,7 +11,7 @@ import ErrorField from '../widgets/ErrorField.js'
 
 
 export default (props, events, { focusedModulePath, configs }) => {
-  const respondSettings = createSettings(respondConfig, RespondSettingForm)
+  const urlInput = createSettings({ url: respondConfig.url }, RespondSettingForm)
 
   const config = configs[focusedModulePath]
   const settings = createSettings(config, UserSettingForm, events.edit, 1)
@@ -20,7 +20,7 @@ export default (props, events, { focusedModulePath, configs }) => {
     <View style={s.c}>
       <View style={s.config}>
         <ModuleDropdown />
-        {respondSettings}
+        {urlInput}
       </View>
       
       <View style={s.divider} />

@@ -87,7 +87,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
   const prefetch = config.fetch && (async (arg, meta) => {
     const e = event(arg, meta)
     const fetch = e.event.prefetch ?? e.event.fetch
-    await fetch.call(e.event, state, e)
+    await fetch.call(state, state, e)
   })
   
   Object.assign(event, config, info, { dispatch, prefetch, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
@@ -95,7 +95,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
   Object.defineProperty(event, 'module', { value: state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 
   if (respond.eventsByType[type]) {
-    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`)
+    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`) // the reason is because when you switch modules, it's possible that an event will have the same type string as an event in a parent module if it uses a namespace with the same name as another module
   }
 
   respond.eventsByType[type] = event
@@ -132,7 +132,8 @@ const applyTransform = (respond, e, dispatch, trigger) => {
   }
 
   if (e.event.transform) {
-    payload = e.event.transform(e.event.module, e.arg, e) ?? {}
+    const state = e.event.module
+    payload = e.event.transform.call(state, state, e.arg, e) ?? {}
   }
 
   return { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience 

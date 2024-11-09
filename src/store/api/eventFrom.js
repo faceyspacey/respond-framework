@@ -23,7 +23,7 @@ const createEvent = (event, loc, additionalArg, arg) => {
   let argFromLoc
 
   if (event.fromLocation) {
-    argFromLoc = event.fromLocation(state, { ...additionalArg, ...arg, ...loc, ...cleanSearchHash(loc) })
+    argFromLoc = event.fromLocation.call(state, state, { ...additionalArg, ...arg, ...loc, ...cleanSearchHash(loc) })
   }
   else if (loc.search || loc.hash) {
     argFromLoc = searchHashToQueryHash(loc, state)

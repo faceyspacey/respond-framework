@@ -31,7 +31,7 @@ const fetchWithConsistentFollowup = {
 
 
 const fetch = async (state, e) => {
-  const res = await e.event.fetch(state, e)
+  const res = await e.event.fetch.call(state, state, e)
 
   state.respond.devtools.sendPluginNotification({ type: 'fetch', returned: res }, e)
 

@@ -1,11 +1,11 @@
-export default async (store, e) => {
+export default async (state, e) => {
   if (e.meta.parallel && !e.meta.changePath) return
 
   if (e.event.changePath) {
-    const other = e.event.changePath(store, e)
-    other && store.history.changePath(other)
+    const other = e.event.changePath.call(state, state, e)
+    other && state.respond.history.changePath(other)
   }
   else if (e.event.path) {
-    store.history.changePath(e)
+    state.respond.history.changePath(e)
   }
 }

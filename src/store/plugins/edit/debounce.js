@@ -1,14 +1,14 @@
-export default async (store, e) => {
+export default async (state, e) => {
   const func = e.event.debounce
   if (!func) return
 
   const debounced = weakMap.get(func) ?? create(func, e.event.debounceDuration)
 
-  const res = await debounced.call(e.event, store, e)
+  const res = await debounced.call(state, state, e)
   
   if (res !== false) {
-    store.devtools.forceNotification({ ...e, __prefix: '>> ' })
-    store.devtools.sendPluginNotification({ ...e.arg, type: 'debounce', returned: res }, e)
+    state.devtools.forceNotification({ ...e, __prefix: '>> ' })
+    state.devtools.sendPluginNotification({ ...e.arg, type: 'debounce', returned: res }, e)
   }
 
   if (res?.error) {
