@@ -1,10 +1,11 @@
 import { snapDeepClone } from '../proxy/snapshot.js'
 import { isProd } from '../utils.js'
 import { isModule, moduleApi } from './reserved.js'
+import { extractedEvents } from './createEvents.js'
 
 
 export default (mod, state, currState) => {
-  const events = mod.events ?? {}
+  const events = mod.events ? mod.events : {}
   const reducers = mod.reducers ?? {}
 
   const descriptors = Object.getOwnPropertyDescriptors(mod)
@@ -28,8 +29,8 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
 
   if (v?.[isModule]) return
   else if (v?.event === true) {
-    events[k] = { ...v, __stateKey: k }
-    delete events[k].event
+    events[k] = v
+    extractedEvents.set(v, k)
   }
   else if (get) {
     selectorDescriptors[k] = descriptor

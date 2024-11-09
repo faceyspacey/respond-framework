@@ -1,6 +1,6 @@
 import orderEventKeys from './orderEventKeys.js'
 
-function callback(store, e) {}
+function callback(state, e) {}
 
 const symbol = Symbol.for('respondEvent')
 

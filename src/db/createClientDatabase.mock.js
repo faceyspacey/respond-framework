@@ -66,7 +66,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
 
         const res = await new Controller(secret)._callFilteredByRole(body)
 
-        await simulateLatency(store)
+        await simulateLatency(state)
         const response = clean(res, state, modulePath)
 
         if (useCache) cache.set(body, response)

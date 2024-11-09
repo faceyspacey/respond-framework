@@ -14,9 +14,9 @@ export default (state, session) => {
 }
 
 
-export function mergeModulesPrevState(state, prevState = {}, store) {
+export function mergeModulesPrevState(state, prevState = {}) {
   state.moduleKeys.forEach(k => {
-    mergeModulesPrevState(state[k], prevState[k], store)
+    mergeModulesPrevState(state[k], prevState[k])
   })
 
   const prev = Object.create(Object.getPrototypeOf(prevState))

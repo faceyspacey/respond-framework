@@ -1,7 +1,7 @@
 export default {
-  load: async store => {
-    if (store.state.tab === 'tests') {
-      await store.events.tests.dispatch()
+  load: async state => {
+    if (state.tab === 'tests') {
+      await state.events.tests.dispatch()
     }
   }
 }

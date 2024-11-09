@@ -53,12 +53,12 @@ export default (id = createUniqueModuleId()) => {
 
 
   const useStoreSubscribe = (listener, deps) => {
-    const store = useStore()
+    const state = useStore()
   
     useEffect(() => {
-      listener(store)
-      return store.respond.subscribe(listener)
-    }, [store, ...deps])
+      listener(state)
+      return state.respond.subscribe(listener)
+    }, [state, ...deps])
   }
 
 
@@ -77,125 +77,3 @@ let idCounter = 0
 function createUniqueModuleId() {
   return (idCounter++).toString()
 }
-
-
-
-
-
-// const ModuleId = createContext()
-// ModuleId.displayName = 'ModuleId'
-
-
-// const useModuleId = () => useContext(ModuleId)
-
-
-
-// fully dynamic RespondWidget:
-
-// export const createUseRespondWithDynamicWidgets = (id = createUniqueModuleId()) => {
-//   const useRespond = sync => {
-//     const store = useContext(RespondContext)
-
-//     const { selectors, modulePathsById, modulePaths } = store
-//     const modulePath = modulePathsById[useModuleId() || id] // useModuleId()
-  
-//     const events = sliceByModulePath(store.events, modulePath)
-
-//     const snap = useSnapshot(store.state, { sync, selectors, modulePaths })
-//     const state = sliceByModulePath(snap, modulePath)
-
-//     return { events, state, store }
-//   }
-
-//   return { 
-//     id,
-//     useRespond,
-//     respond,
-//   }
-// }
-
-// const createWidget = (Widget, mod) => {
-//   return function Component(props) {
-//     const store = useContext(RespondContext)
-//     const id = useMemo(() => createUniqueModuleId(Widget.displayName), [])
-
-//     useEffect(() => {
-//       store.addModule(id, mod)
-//       return () => store.removeModule(id, mod)
-//     }, [store, id])
-
-//     return (
-//       <ModuleId.Provider value={id}>
-//         <Widget {...props} />
-//       </ModuleId.Provider>
-//     )
-//   }
-// }
-
-// // usage: 
-
-// export const { id, respond } = createUseRespondWithDynamicWidgets() // same as regular createUseRespond function, but with useModuleId to get id from context
-
-// export const MyWidget = createWidget(respond((props, events, state) => state.foo), {
-//   // id, // parentId optional (otherwise, it will just appear in the top level state namespace)
-//   events,
-//   reducers,
-//   etc
-// })
-
-
-
-
-// export const createUseRespondWidgetPartiallyDynamic = () => {
-//   const createWidget = Widget => {
-//     Widget = respond(Widget)
-//     const id = createUniqueModuleId()
-//     return { id, Component }
-
-//     function Component(props) {
-//       return (
-//         <ModuleId.Provider value={id}>
-//           <Widget {...props} />
-//         </ModuleId.Provider>
-//       )
-//     }
-//   }
-
-//   const useRespond = sync => {
-//     const store = useContext(RespondContext)
-//     const id = useModuleId()
-
-//     const { selectors, modulePathsById, modulePaths } = store
-//     const modulePath = modulePathsById[id]
-  
-//     const events = sliceByModulePath(store.events, modulePath)
-
-//     const snap = useSnapshot(store.state, { sync, selectors, modulePaths })
-//     const state = sliceByModulePath(snap, modulePath)
-
-//     return { events, state, store }
-//   }
-
-//   return {
-//     createWidget,
-//     useRespond,
-//     respond,
-//   }
-// }
-
-
-// // usage: 
-
-// // const { createWidget, respond } = createUseRespondWidgetPartiallyDynamic()
-
-// // const Child = respond((props, events, state) => null)
-
-// // const MyComponent = (props, events, state) =>
-// //   <View>
-// //     <Text>{state.foo}</Text>
-// //     <Child />
-// //   </View>
-
-// // export const { id, Component } = createWidget(MyComponent)
-// // export const { id: id2, Component: Component2 } = createWidget(MyComponent)
-

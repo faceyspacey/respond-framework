@@ -43,7 +43,7 @@ const forwardOut = async () => {
 
 
 export const linkOut = (url, e) => {
-  e = typeof url === 'object' ? url : e                       // convenience: <a href={url} onClick={store.history.linkOut}
+  e = typeof url === 'object' ? url : e                       // convenience: <a href={url} onClick={state.respond.history.linkOut}
   url = typeof url === 'string' ? url : e?.currentTarget.href
   
   e?.preventDefault()

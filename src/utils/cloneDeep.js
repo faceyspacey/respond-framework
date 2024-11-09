@@ -1,3 +1,3 @@
 import { createReviver } from './revive.js'
 
-export default (obj, store) => obj && JSON.parse(JSON.stringify(obj), createReviver(store))
+export default (obj, state) => obj && JSON.parse(JSON.stringify(obj), createReviver(state))

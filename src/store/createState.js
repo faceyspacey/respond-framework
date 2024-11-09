@@ -23,5 +23,5 @@ export default (top, opts = {}) => {
   createReplays(state, session)
   hydrateModules(state, session)
 
-  return window.store = window.state = state
+  return window.state = state
 }

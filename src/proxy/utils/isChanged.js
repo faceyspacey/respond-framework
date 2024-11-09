@@ -1,9 +1,9 @@
-import { isObject, isOwnKeysChanged } from './helpers.js'
+import { isObject, isOwnKeysChanged, equal } from './helpers.js'
 
 
 export default function isChanged(prev, next, affected, cache = new WeakMap, path) {
-  if (Object.is(prev, next)) return false
-  if (!isObject(prev) || !isObject(next)) return true
+  if (equal(prev, next)) return false
+  if (!isObject(prev) || !isObject(next)) return true // heuristic: if one isn't an object, and already not equal from line above, we know they are not equal without recursive checking
 
   const used = affected.get(prev)
   if (!used) return true

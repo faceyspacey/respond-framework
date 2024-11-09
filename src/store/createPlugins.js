@@ -46,13 +46,13 @@ export default () => {
 
   return {
     start: {
-      enter(store, e) {
+      enter(state, e) {
         ctx.startTime = new Date
       },
     },
 
     end: { 
-      enter(store, e) {
+      enter(state, e) {
         const duration = new Date - ctx.startTime
         console.log(duration)
       },

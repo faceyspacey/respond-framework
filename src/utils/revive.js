@@ -2,28 +2,25 @@ import { canProxy } from '../proxy/utils/helpers.js'
 
 
 export default ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => function rev(v, k) {
-  if (dateKeyReg.test(k)) {
-    return v ? new Date(v) : v
-  }
+  if (dateKeyReg.test(k)) return v ? new Date(v) : v
+  if (!canProxy(v))       return v
+  if (v.__event)          return eventsByType[v.type] ?? v
 
-  if (v?.__event) {
-    return eventsByType[v.type] ?? v
-  }
+  let snap
 
-  if (v?.__type) {
+  if (v.__type) {
     const p = v.__modulePath ?? modulePath
     const Model = modelsByModulePath[p]?.[v.__type] ?? modelsByModulePath['']?.[v.__type]
 
-    const snap = {}
+    snap = {}
     keys(v).forEach(k => snap[k] = rev(v[k], k))
 
-    return Model ? new Model(snap, p) : snap
+    snap = Model ? new Model(snap, p) : snap
   }
-
-  if (!canProxy(v)) return v
-  
-  const snap = isArray(v) ? [] : create(getProto(v))
-  keys(v).forEach(k => snap[k] = rev(v[k], k))
+  else {
+    snap = isArray(v) ? [] : create(getProto(v))
+    keys(v).forEach(k => snap[k] = rev(v[k], k))
+  }
 
   return snap
 }
@@ -83,8 +80,8 @@ export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } 
 
 
 
-export const createServerReviver = store => {
-  if (!store) {
+export const createServerReviver = state => {
+  if (!state) {
     return (k, v) => {
       if (dateKeyReg.test(k)) {
         return v ? new Date(v) : v
@@ -94,9 +91,9 @@ export const createServerReviver = store => {
     }
   }
 
-  if (store.modelsByModulePath) return createStateReviver(store)
+  if (state.modelsByModulePath) return createStateReviver(state)
   
-  const db = store
+  const db = state
 
   return (k, v) => {
     if (dateKeyReg.test(k)) {

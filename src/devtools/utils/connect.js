@@ -3,14 +3,14 @@ import createActionCreators from './createActionCreators.js'
 import replacer from './replacer.js'
 
 
-export default store => {
+export default storeOld => {
   if (devtools) return devtools
   const extension = window.__REDUX_DEVTOOLS_EXTENSION__
   
   return devtools = extension.connect({
-    name: store.options.devtools?.name || 'Respond Framework',
-    actionCreators: createActionCreators(store.events),
-    stateSanitizer: state => orderState(state, store),
+    name: storeOld.options.devtools?.name || 'Respond Framework',
+    actionCreators: createActionCreators(storeOld.events),
+    stateSanitizer: state => orderState(state, storeOld),
     shouldCatchErrors: true,
     trace: false,
     traceLimit: 0,

@@ -6,30 +6,30 @@ import orderState from './utils/orderState.js'
 import order from './utils/orderEventKeys.js'
 
 
-export default store => {
-  const { prevStore } = store
-  const _devtools = connect(store)
+export default storeOld => {
+  const { prevStore } = storeOld
+  const _devtools = connect(storeOld)
 
-  const isHMR = prevStore && !store.replays?.replay
+  const isHMR = prevStore && !storeOld.replays?.replay
 
   if (!prevStore || !isHMR) {
-    _devtools.init(orderState(store.state, store))
+    _devtools.init(orderState(storeOld.state, storeOld))
   }
 
   prevStore?.devtools.unsubscribe()
   
   const triggerIndexes = {}
 
-  const send = (e, state = store.state) => _devtools.send(order(e), state)
+  const send = (e, state = storeOld.state) => _devtools.send(order(e), state)
 
   return {
     index: isHMR ? prevStore.devtools.index : 0,
-    unsubscribe: _devtools.subscribe(subscribe(store, triggerIndexes)),
+    unsubscribe: _devtools.subscribe(subscribe(storeOld, triggerIndexes)),
 
     send(e) {
-      if (silent(store, e)) return
+      if (silent(storeOld, e)) return
 
-      const { evsIndex, evs = {} } = store.state.replayTools || {} // replayTools not available in production
+      const { evsIndex, evs = {} } = storeOld.state.replayTools || {} // replayTools not available in production
       const isTrigger = evs[evsIndex]?.event === e.event // works as long as you don't send the same event in a loop, which is very unlikely
 
       triggerIndexes[++this.index] = evsIndex
@@ -41,10 +41,10 @@ export default store => {
     },
   
     sendPluginNotification(n, origin) {
-      if (silent(store, origin, true)) return
+      if (silent(storeOld, origin, true)) return
       if (!origin) return this.sendNotification(n)
 
-      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
+      triggerIndexes[++this.index] = storeOld.state.replayTools?.evsIndex
 
       const arrow = n.returned === false ? '<- ' : '-> '
 
@@ -58,13 +58,13 @@ export default store => {
       send(e)
     },
 
-    sendNotification(n, state = store.state) {
-      if (silent(store, origin, true)) return
+    sendNotification(n, state = storeOld.state) {
+      if (silent(storeOld, origin, true)) return
       this.forceNotification(n, state)
     },
 
-    forceNotification(n, state = store.state) {
-      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
+    forceNotification(n, state = storeOld.state) {
+      triggerIndexes[++this.index] = storeOld.state.replayTools?.evsIndex
 
       const isEvent = typeof n.event === 'function'
 
@@ -80,9 +80,9 @@ export default store => {
     },
 
     sendPrevented(n, e) {
-      if (silent(store, e)) return
+      if (silent(storeOld, e)) return
 
-      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
+      triggerIndexes[++this.index] = storeOld.state.replayTools?.evsIndex
 
       e = fullPath(e)
 
@@ -93,9 +93,9 @@ export default store => {
     },
 
     sendRedirect(n, e) {
-      if (silent(store, e)) return
+      if (silent(storeOld, e)) return
 
-      triggerIndexes[++this.index] = store.state.replayTools?.evsIndex
+      triggerIndexes[++this.index] = storeOld.state.replayTools?.evsIndex
 
       e = fullPath(e)
       const redirect = fullPath(n.returned)
@@ -109,6 +109,6 @@ export default store => {
 }
 
 
-const silent = (store, e, advanced = false) =>
-  (e?.modulePath === 'replayTools' && !store.replays.options.log) ||
-  (advanced && !store.replays?.settings.advanced)
+const silent = (storeOld, e, advanced = false) =>
+  (e?.modulePath === 'replayTools' && !storeOld.replays.options.log) ||
+  (advanced && !storeOld.replays?.settings.advanced)

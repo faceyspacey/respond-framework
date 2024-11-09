@@ -1,4 +1,4 @@
-import { canProxy, proxyStates as ps } from './helpers.js'
+import { canProxy, equal, proxyStates as ps } from './helpers.js'
 import createProxy from '../createProxy.js'
 
 
@@ -15,7 +15,7 @@ export default (notify, cache, snapCache) => ({
   },
 
   set(o, k, v) {
-    if (o[k] === v || cache.has(v) && cache.get(v) === o[k]) return true
+    if (equal(o[k], v) || cache.has(v) && equal(cache.get(v), o[k])) return true
 
     ps.get(o[k])?.remove(notify)
     o[k] = canProxy(v) ? createProxy(v, notify, cache, snapCache) : v // note: will need to simply add listener if assigning existing proxy

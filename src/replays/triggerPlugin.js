@@ -3,7 +3,6 @@ import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
 import { mergeModulesPrevState } from '../store/hydrateModules.js'
-import { snapDeepClone } from '../proxy/snapshot.js'
 
 
 export default function (state, e) {
@@ -20,12 +19,12 @@ export default function (state, e) {
   }
 
   if (e.modulePath === 'replayTools' && !replayTools.config.log) {
-    mergeModulesPrevState(replayTools, snapDeepClone(replayTools)) // mergeModulesPrevState(top.replayTools, tops.respond.snapshot(top.replayTools))
+    mergeModulesPrevState(replayTools, respond.snapshot(replayTools))
     return
   }
 
   if (!e.meta.skipped) {
-    mergeModulesPrevState(top, snapDeepClone(top)) // mergeModulesPrevState(top, top.respond.snapshot(top))
+    mergeModulesPrevState(top, respond.snapshot(top))
   }
 
   if (!replayTools) return

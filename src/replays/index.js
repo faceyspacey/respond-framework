@@ -99,7 +99,7 @@ const createDbWithSeed = (sharedDb, replays) => {
 // will receive collections created in child modules even if they don't themselves have it.
 
 // This is to ensure docs sharing will jump over intermediary modules that don't require
-// the given collection, and so by the end `store.replays.db` will contain all collections.
+// the given collection, and so by the end `state.replays.db` will contain all collections.
 
 
 const mergeDb = (db, sharedDb) => {

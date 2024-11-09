@@ -519,25 +519,33 @@ const modelName = res?.[modelNameSymbol]
 if (modelName) res = { [modelName]: res }
 await e.event.done.dispatch(res, { from: e })
 
+#strategy to use models for methods on arbitrary nested objects
+
+#same object stored multiple times in state get lost in sessionStorage
+
+const possibleDuplicate = v?.__id
+
+if (possibleDuplicate) {
+  const obj = duplicate.get(v.__id)
+  if (obj) return obj
+}
+
 
 
 createControllersTree
 
 
 
-
-
+basenameFull stored in its own sessionStorage, along with replayState
+lazy event function creation
 maybe remove e.type + e.namespace
 
-basenameFull stored in its own sessionStorage
-lazy event function creation
-
-same object stored multiple times in state get lost in sessionStorage
-strategy to use models for methods on arbitrary nested objects
 
 
 
-
+auth plugin assigns to prevState
+replay to index doesn't need to revive
+if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k] -- snapshot will be broken, ideally aspects are not in proxy yet
 
 
 make all tools replacable by user (including reviver)

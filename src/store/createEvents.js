@@ -7,6 +7,7 @@ export const kinds = { init: 'init', navigation: 'navigation', submission: 'subm
 
 export default function(proto, ...args) {
   proto.events = createEvents(...args)
+  extractedEvents.clear()
 }
 
 function createEvents(respond, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
@@ -63,7 +64,9 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
   const kind = config.kind ?? (config.path ? kinds.navigation : kinds.submission)
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  const event = window.store?.eventsByType[type] ?? function event(arg = {}, meta = {}) { // preserve ref thru hmr/replays ?? note: event itself is a function
+  let event = window.state?.eventsByType?.[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
+
+  event ??= function event(arg = {}, meta = {}) { // event itself is a function
     if (arg.meta) {
       const { meta: m, ...rest } = arg
       meta = { ...m, ...meta }
@@ -78,7 +81,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     return applyTransform(respond, e, dispatch, trigger)
   }
 
-  Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted
+  Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
 
   const children = !isBuiltIn && createEvents(respond, state, createBuiltIns(config), undefined, modulePath, _namespace, nsObj, _type)
 
@@ -94,10 +97,6 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
   Object.defineProperty(event, 'module', { value: state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 
-  if (respond.eventsByType[type]) {
-    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`) // the reason is because when you switch modules, it's possible that an event will have the same type string as an event in a parent module if it uses a namespace with the same name as another module
-  }
-
   respond.eventsByType[type] = event
 
   if (config.path) {
@@ -105,15 +104,16 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     respond.eventsByPath[path] = event
   }
 
-  if (config.__stateKey) {
-    state[config.__stateKey] = event
-    delete config.__stateKey
+  if (extractedEvents.has(config)) {
+    const key = extractedEvents.get(config)
+    state[key] = event
   }
 
   return event
 }
 
 
+export const extractedEvents = new Map
 
 const createBuiltIns = ({ done, error, data }) => ({
   done:  assign({ kind: 'done'  }, done),

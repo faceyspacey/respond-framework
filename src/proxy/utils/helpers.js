@@ -3,14 +3,17 @@ import { Namespace } from '../../store/createEvents.js'
 
 export const proxyStates = new WeakMap // shared state
 
-export const isObject = x => typeof x === 'object' && x
+export const equal = Object.is
 
-// export const canProxy = x => typeof x === 'object' && x &&
-//   (getProto(x) === objProto || getProto(x) === arrayProto)
-export const canProxy = x => typeof x === 'object' && x &&
-  !(x instanceof Date) &&
-  !(x instanceof RegExp) &&
-  !(x instanceof Namespace)
+export const isObject = x => typeof x === object && x
+
+export const canProxy = x => typeof x === object && x && !x.____cantProxy
+
+Date.prototype.____cantProxy = true
+RegExp.prototype.____cantProxy = true
+Namespace.prototype.____cantProxy = true
+
+const object = 'object'
 
 export const isOwnKeysChanged = (prev, next) => {
   const p = Reflect.ownKeys(prev)
@@ -37,9 +40,3 @@ export const recordUsage = (affected, trap, snap, k) => {
 
   set.add(k)
 }
-
-
-
-const getProto = Object.getPrototypeOf
-const objProto = Object.prototype
-const arrayProto = Array.prototype

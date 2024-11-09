@@ -26,8 +26,8 @@ export default (curr, e, { events }) => {
 
 // tag events with .firstNavigation (note: place before reduce plugin)
 
-// const firstNavigationPlugin = (store, e) => {
+// const firstNavigationPlugin = (state, e) => {
 //   if (e.kind !== kinds.navigation) return
-//   if (store.curr?.event !== store.events.init) return
+//   if (state.curr?.event !== state.events.init) return
 //   e.meta.firstNavigation = true
 // }

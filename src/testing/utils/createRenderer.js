@@ -2,7 +2,7 @@ import { create, act, } from 'react-test-renderer'
 import createNodeMockDefault from './createNodeMock.js'
 
 
-export default (store, options = {}) => {
+export default (state, options = {}) => {
   const {
     createNodeMock = createNodeMockDefault,
   } = options
@@ -14,7 +14,7 @@ export default (store, options = {}) => {
     if (rendererInternal) return rendererInternal
     
     act(() => {
-      const app = store.render()
+      const app = state.render()
       rendererInternal = create(app, { createNodeMock })
     })
 

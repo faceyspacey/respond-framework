@@ -5,13 +5,13 @@ import { isTest } from '../utils/bools.js'
 
 export default async function(events, delay = 0, settings = this.replayState.settings, focusedModulePath = this.replayState.focusedModulePath) {
   const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
-  await run(revive(store)(events), delay, state.respond, state.replayTools)
+  await run(revive(state)(events), delay, state)
   return state
 }
 
 
 
-const run = async (events, delay, respond, replayTools) => {           // keep in mind store and store.replays will now be in the context of the next next store
+const run = async (events, delay, { respond, replayTools }) => {           // keep in mind we will now be in the context of a new state
   const { ctx, options } = respond
   
   replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of

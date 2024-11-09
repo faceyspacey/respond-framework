@@ -74,14 +74,12 @@ export default {
       const { settings, events: evs, name } = state.tests[id]
 
       state.evs = evs
-
       state.divergentIndex = evs.length // purple event rows will appear at end of event list if new events manually triggered by using app
-      
+    
       state.selectedTestId = id
       state.selectedTestName = name
 
-      index = index === undefined ? evs.length - 1 : index
-      const events = evs.slice(0, index + 1)
+      const events = index === undefined ? evs : evs.slice(0, index + 1)
 
       await state.replays.replayEvents(events, delay, settings, state.focusedModulePath)
 
@@ -90,25 +88,21 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ state, db, events, focusedModulePath, topState }) => {
+    submit: async ({ state, db, events, topState }) => {
       const first = state.evs[0]
       const possibleName = state.selectedTestName ?? first.type.replace(/\./g, '/') + '.js'
       
-      let name = prompt('Name of your test?', possibleName)
+      const name = prompt('Name of your test?', possibleName)?.replace(/^\//, '')
+      if (!name) return
 
-      if (name) {
-        name = name.replace(/^\//, '')
+      const { settings, focusedModulePath: modulePath } = topState.replayState
 
-        const modulePath = focusedModulePath
-        const { settings } = topState.replayState
+      const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
-        const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
+      const res = await db.developer.writeTestFile({ name, modulePath, settings, events: evs })
+      await events.tests.dispatch({ sort: 'recent' })
 
-        const res = await db.developer.writeTestFile({ name, modulePath, settings, events: evs })
-        await events.tests.dispatch({ sort: 'recent' })
-
-        return res
-      }
+      return res
     }
   },
 
@@ -207,8 +201,7 @@ export default {
       
       const prev = window.state
       const { eventsByType } = prev
-      prev.eventsByType = {} // eventsByType is reused from previous store -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
-
+      prev.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const state = createState(top, { settings, focusedModulePath, status: 'reload' })
       const e = state.eventFrom(url)

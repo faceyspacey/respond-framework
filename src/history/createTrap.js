@@ -22,7 +22,7 @@ export const popListener = async () => {
   const i = history.state?.index
   const back = i < bs.prevIndex
 
-  const { events, ctx, respond } = window.store
+  const { events, ctx, respond } = window.state
 
   if (i === undefined) {
     return await handleHashChange(respond) // reloading current first page, because eg simply the hash was changed -- this probably covers other caching related extraneous browser pops
@@ -36,7 +36,7 @@ export const popListener = async () => {
     return
   }
   else if (i === bs.prevIndex) {
-    console.warn(`store.history: pop back/next cannot be determined as the current history index is equal to the previous one.${isDev ? ' This is likely a development/HMR-only problem' : ' Please test all browsers and submit a repro with a very precise set of instructions.'}`)
+    console.warn(`respond.history: pop back/next cannot be determined as the current history index is equal to the previous one.${isDev ? ' This is likely a development/HMR-only problem' : ' Please test all browsers and submit a repro with a very precise set of instructions.'}`)
     return
   }
 

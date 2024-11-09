@@ -10,6 +10,6 @@ export default () => {
 
   socket.on('wallaby', ({ test, index, delay }) => {
     console.log('respond: running test from Wallaby', { test, index, delay })
-    window.store?.events.replayTools.testFromWallaby.dispatch({ test, index, delay })
+    window.state?.events?.replayTools.testFromWallaby.dispatch({ test, index, delay })
   })
 }

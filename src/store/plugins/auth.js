@@ -1,32 +1,30 @@
-const standard = ({ onLogin, onLogout }) => async (store, e) => {
-  const { state, prevState } = store.getStore() // escape hatch: token always assumed to be in top level store
-  
-  if (state.token !== prevState.token) {
-    prevState.token = state.token // prevent being called again in redirects, as prevState is constant for a single trigger
+const standard = ({ onLogin, onLogout }) => async (state, e) => {  
+  if (state.token !== state.prevState.token) {
+    state.prevState.token = state.token // prevent being called again in redirects, as prevState is constant for a single trigger
 
-    if (state.token) await onLogin(store, e)
-    else await onLogout(store, e)
+    if (state.token) await onLogin(state, e)
+    else await onLogout(state, e)
   }
 }
 
 
-const custom = ({ getToken, onLogin, onLogout }) => async (store, e) => {
-  const token = getToken(store.state)
-  const prevToken = getToken(store.prevState)
+const custom = ({ getToken, onLogin, onLogout }) => async (state, e) => {
+  const token = getToken(state)
+  const prevToken = getToken(state.prevState)
 
   if (token !== prevToken) {
-    prevState.token = token
+    state.prevState.token = token
 
-    if (token) await onLogin(store, e)
-    else await onLogout(store, e)
+    if (token) await onLogin(state, e)
+    else await onLogout(state, e)
   }
 }
 
 
 export default options => {
   const opts = {
-    onLogout: ({ cookies }) => cookies?.remove('token'),
-    onLogin: ({ cookies, state }) => cookies?.set('token', state.token),
+    onLogout: ({ respond }) => respond.cookies?.remove('token'),
+    onLogin: ({ respond, token }) => respond.cookies?.set('token', token),
     ...options
   }
 

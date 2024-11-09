@@ -4,7 +4,7 @@ import createHandler from './utils/createHandler.js'
 
 
 export default function createProxy(o, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
-  const found = handleExistingProxy(o, notifyParent, cache)
+  const found = findExistingProxy(o, notifyParent, cache)
   if (found) return found
 
   const sub = new Subscription(o, snapCache)
@@ -43,7 +43,7 @@ class Subscription {
     this.listeners.forEach(listener => listener(this.version))
   }
 
-  remove = (notifyParent) => {
+  remove = notifyParent => {
     this.listeners.delete(notifyParent)
     if (this.listeners.size) return // proxy is assigned elsewhere and therefore has other listeners
     Object.values(this.orig).forEach(v => ps.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
@@ -52,7 +52,7 @@ class Subscription {
 
 
 
-const handleExistingProxy = (o, notifyParent, cache) => {
+const findExistingProxy = (o, notifyParent, cache) => {
   const sub = ps.get(o)       // proxy assigned that exists elsewhere
 
   if (sub) {

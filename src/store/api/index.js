@@ -24,7 +24,7 @@ export default (top, state, focusedModulePath) => {
   const listeners = []
   const promises = []
 
-  const ctx = window.store?.ctx ?? {}
+  const ctx = window.state?.ctx ?? {}
 
   const {
     createDevtools = defaultCreateDevtools,
@@ -97,7 +97,7 @@ export default (top, state, focusedModulePath) => {
     queueSaveSession() {
       if (isProd || isTest) return
       if (ctx.saveQueued || state.replayTools?.playing) return
-      if (window.state !== state) return // new store created
+      if (window.state !== state) return // new state created
 
       ctx.saveQueued = true
 
@@ -203,7 +203,7 @@ export default (top, state, focusedModulePath) => {
     
       const onError = this.respond.state.options.onError ?? state.options.onError
 
-      return onError?.({ ...err, store: state })
+      return onError?.({ ...err, state })
     }
   }
 }

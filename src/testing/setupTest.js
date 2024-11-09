@@ -13,7 +13,7 @@ export default async ({ top, config, settings, rendererOptions } = {}) => {
   const replayEventsToIndex = createReplayEventsToIndex(dispatch)
 
   return {
-    store,
+    state,
     renderer,
     dispatch,
     snap,

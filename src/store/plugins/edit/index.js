@@ -6,10 +6,10 @@ import end from '../end.js'
 import dispatchPlugins from '../../../utils/dispatchPlugins.js'
 
 
-export default async function edit(store, e) {
+export default async function edit(state, e) {
   if (!e.event.sync) return
   syncRef.sync = true
-  await dispatchPlugins(plugins, store, e)
+  await dispatchPlugins(plugins, state, e)
   return false
 }
 
