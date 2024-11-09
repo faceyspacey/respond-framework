@@ -3,7 +3,7 @@ import { createTrap } from './createTrap.js'
 
 
 export default async (e, redirect) => {
-  const { replayTools, respond, ctx } = window.store
+  const { replayTools, respond, ctx } = window.state
   if (e.changePath === false) return
   
   const { url } = respond.fromEvent(e)
@@ -11,7 +11,7 @@ export default async (e, redirect) => {
   change(url, ctx.changedPath || redirect || replayTools?.playing)
 
   ctx.changedPath = true
-  ctx.prevUrl = url
+  window.state.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
 
   createTrap()
 }

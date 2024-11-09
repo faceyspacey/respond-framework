@@ -1,6 +1,7 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
 import defaultPlugins from '../../plugins.js'
+import { _parent } from '../../store/reserved.js'
 
 
 export { id } from './respond.js'
@@ -28,4 +29,8 @@ export function findLastEvent() {
 export function testsParams() {
   const { focusedModulePath, searched, filter } = this
   return { focusedModulePath, searched, filter }
+}
+
+export function topState() {
+  return this[_parent]
 }

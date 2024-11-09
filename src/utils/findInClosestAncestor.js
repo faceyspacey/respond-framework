@@ -26,3 +26,18 @@ export const findClosestAncestorWith = (key, modulePath, top) => {
     .find(p => p[key])              // admin.db
     ?? top                          // admin ?? top
 }
+
+
+export const findClosestAncestorWithObjectContaining = (key, key2, modulePath, top) => {
+  if (!modulePath) return top       // top
+
+  let mod = top
+
+  return modulePath                 // 'admin.foo.bar'
+    .split('.')                     // ['admin', 'foo', 'bar]
+    .slice(0, -1)                   // ['admin', 'foo']   
+    .map(k => mod = mod[k])         // [admin, foo]
+    .reverse()                      // [foo, admin]
+    .find(p => p[key]?.[key2])      // admin.replays.db
+    ?? top                          // admin ?? top
+}

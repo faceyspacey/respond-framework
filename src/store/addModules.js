@@ -44,7 +44,7 @@ export default function addModule(
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
   const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, ignoreParents, findOne, components, state, db, models, plugins, reduce })
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, mod, ignoreParents, findOne, components, state, db, models, plugins, reduce })
 
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)

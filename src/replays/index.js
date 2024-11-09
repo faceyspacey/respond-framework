@@ -5,7 +5,7 @@ import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
 
 import replayEvents from './replayEvents.js'
-import { stripPath } from '../utils/sliceByModulePath.js'
+import { nestAtModulePath, stripPath } from '../utils/sliceByModulePath.js'
 import { isModule } from '../store/reserved.js'
 
 
@@ -23,7 +23,7 @@ export default (state, session) => {
 }
 
 
-export const createReplaySettings = (topModule, topState, settings, focusedModulePath, hmr) => {
+export const createReplaySettings = (topModule, topState, settingsModule, focusedModulePath, hmr) => {
   const configsByPath = {}
   const settingsByPath = {}
 
@@ -32,9 +32,14 @@ export const createReplaySettings = (topModule, topState, settings, focusedModul
   
   const replayEventsBound = replayEvents.bind(topState)
 
+  const settings = {}
+  const nestingPath = settingsModule.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
+  nestAtModulePath(settings, nestingPath, settingsModule) // settingsModule is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
+
   const traverseAllModulesBreadthFirst = (mod, settings, ancestorReplays, p) => {
     if (mod.replays) {
       const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
+      mod.replays.hasDb ??= !!mod.replays.db
       replays.db = mod.replays.db ?? ancestorReplays.db // inherit db from parent module's replays if child has replays but no db
 
       replays.settings = defaultCreateSettings(replays.config, settings)

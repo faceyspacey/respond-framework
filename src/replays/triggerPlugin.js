@@ -15,8 +15,8 @@ export default function (state, e) {
 
   if (top.replayState.status === 'session') {
     top.replayState.status = 'ready'
-    console.log('yo', respond.isEqualNavigations(e, state.curr), e, state.curr)
-    if (respond.isEqualNavigations(e, state.curr)) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
+    const refresh = window.state.prevUrl === respond.fromEvent(e).url
+    if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
   if (e.modulePath === 'replayTools' && !replayTools.config.log) {

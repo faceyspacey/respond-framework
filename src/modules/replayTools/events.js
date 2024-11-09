@@ -5,7 +5,8 @@ import createState from '../../store/createState.js'
 import { kinds } from '../../utils.js'
 
 import flatToNestedSettings from './helpers/flatToNestedSettings.js'
-import sliceByModulePath, { stripPath } from '../../utils/sliceByModulePath.js'
+import sliceByModulePath from '../../utils/sliceByModulePath.js'
+import { findClosestAncestorWithObjectContaining } from '../../utils/findInClosestAncestor.js'
 
 
 export default {
@@ -89,7 +90,7 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ state, db, events }) => {
+    submit: async ({ state, db, events, focusedModulePath, topState }) => {
       const first = state.evs[0]
       const possibleName = state.selectedTestName ?? first.type.replace(/\./g, '/') + '.js'
       
@@ -98,8 +99,8 @@ export default {
       if (name) {
         name = name.replace(/^\//, '')
 
-        const modulePath = state.focusedModulePath
-        const settings = sliceByModulePath(flatToNestedSettings(state.settings), modulePath)
+        const modulePath = focusedModulePath
+        const { settings } = topState.replayState
 
         const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
@@ -201,7 +202,7 @@ export default {
 
   reload: {
     before: async ({ settings, config, focusedModulePath, top, errors }) => {
-      settings = flatToNestedSettings(settings)
+      settings = nestSettings(settings, focusedModulePath, top)
       const { url = '' } = config
       
       const prev = window.state
@@ -248,3 +249,21 @@ export default {
 
 let id = 0
 const uniqueDragId = () => ++id + ''
+
+
+
+const nestSettings = (settings, modulePath, top) => {
+  const hasReplaysAndDb = !!sliceByModulePath(top, modulePath).replays?.hasDb
+  const nestedSettings = flatToNestedSettings(settings)
+
+  if (hasReplaysAndDb) {
+    settings = sliceByModulePath(nestedSettings, modulePath)
+  }
+  else {
+    modulePath = findClosestAncestorWithObjectContaining('replays', 'hasDb', modulePath, top)?.modulePath ?? ''
+    settings = sliceByModulePath(nestedSettings, modulePath)
+    settings.module = modulePath
+  }
+
+  return settings
+}
