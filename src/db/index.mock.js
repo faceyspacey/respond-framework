@@ -275,10 +275,14 @@ export default {
     const docs = Array.isArray(docsObject) ? docsObject : Object.values(docsObject)
     const now = new Date().getTime() - (docs.length * 1000) // set clock back in time
 
+    const { modulePath } = this.db
+    
     docs.forEach((doc, i) => {
       doc.createdAt ??= new Date(now - (i * 1000)) // put first docs in seed at top of lists (when sorted by updatedAt: -1)
       doc.updatedAt ??= doc.createdAt
       
+      doc.__modulePath = modulePath
+
       const model = this._create(doc)
       this.docs[model.id] = model
     })

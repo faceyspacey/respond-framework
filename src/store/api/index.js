@@ -15,7 +15,7 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { createModulePathsAll } from '../../replays/index.js'
 import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
 import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
-import { parseJsonState, saveSessionState } from '../../utils/getSessionState.js'
+import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
 
 
 export default (top, state, focusedModulePath) => {
@@ -43,7 +43,7 @@ export default (top, state, focusedModulePath) => {
     modulePaths,
     modulePathsById: {},
     modelsByModulePath: {},
-  
+
     eventsByPath: {},
     eventsByType: {},
   

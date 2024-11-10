@@ -3,7 +3,8 @@ import revive from '../utils/revive.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = this.replayState.settings, focusedModulePath = this.replayState.focusedModulePath) {
+export default async function(events, delay = 0, settings = this.topState.replayState.settings, focusedModulePath = this.topState.replayState.focusedModulePath) {
+  this.playing = false // stop possible previous running replay
   const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
   await run(revive(state)(events), delay, state)
   return state

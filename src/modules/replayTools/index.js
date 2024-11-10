@@ -3,7 +3,6 @@ import loadTests from './plugins/loadTests.js'
 import defaultPlugins from '../../plugins.js'
 import { _parent } from '../../store/reserved.js'
 
-
 export { id } from './respond.js'
 
 export { default as events } from './events.js'
@@ -21,6 +20,8 @@ export const evsIndex = -1
 export const divergentIndex = undefined
 
 export const errors = {}
+
+export { default as replayEvents } from '../../replays/replayEvents.js'
 
 export function findLastEvent() {
   return this.evs[this.evsIndex]

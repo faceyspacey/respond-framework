@@ -3,13 +3,14 @@ import { hashToSettings as permalinkReplayState } from '../modules/replayTools/h
 import snapshot from '../proxy/snapshot.js'
 import { isProd } from './bools.js'
 import { createStateReviver, replacer as defaultReplacer } from './revive.js'
-import { idCounterRef } from '../utils/objectIdDevelopment.js'
+import { idCounterRef } from './objectIdDevelopment.js'
 
 
 export default ({ status, settings, focusedModulePath = '', hydration } = {}) => {
   const { prevState, replayTools = {} } = window.state ?? {}
   const { settings: _, tests: __, ...rt } = replayTools
-  
+  const prt = prevState?.replayTools ?? {}
+
   const replayState = status === 'hmr'
     ? { ...prevState.replayState, status: 'hmr' }
     : { settings, focusedModulePath, idCounterRef, status }
@@ -17,7 +18,7 @@ export default ({ status, settings, focusedModulePath = '', hydration } = {}) =>
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
     case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState, replayState, replayTools: { ...prevState.replayTools, tab: rt.tab, open: rt.open }, lastEvent: rt.evs[rt.evsIndex] }
+    case 'hmr':     return { ...prevState, replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }, lastEvent: rt.evs[rt.evsIndex] }
   }
 
   const prs = !isProd && permalinkReplayState()

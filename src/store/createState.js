@@ -1,4 +1,4 @@
-import getSessionState from '../utils/getSessionState.js'
+import sessionState from '../utils/sessionState.js'
 
 import createProxy from '../proxy/createProxy.js'
 import createRespond from './api/index.js'
@@ -11,7 +11,7 @@ import hydrateModules from './hydrateModules.js'
 
 
 export default (top, opts = {}) => {
-  const session = getSessionState(opts)
+  const session = sessionState(opts)
   const focusedModulePath = session.replayState.focusedModulePath ?? ''
 
   const state = createProxy(Object.create({}))

@@ -1,7 +1,7 @@
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
-export default ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => function rev(v, k) {
+export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath = '') => function rev(v, k) {
   if (dateKeyReg.test(k)) return v ? new Date(v) : v
   if (!canProxy(v))       return v
   if (v.__event)          return eventsByType[v.type] ?? v
@@ -16,6 +16,28 @@ export default ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath 
     keys(v).forEach(k => snap[k] = rev(v[k], k))
 
     snap = Model ? new Model(snap, p) : snap
+  }
+  else {
+    snap = isArray(v) ? [] : create(getProto(v))
+    keys(v).forEach(k => snap[k] = rev(v[k], k))
+  }
+
+  return snap
+}
+
+
+
+export const reviveSeedDb = (Model, p = '') => function rev(v, k) {
+  if (dateKeyReg.test(k)) return v ? new Date(v) : v
+  if (!canProxy(v))       return v
+
+  let snap
+
+  if (v.__type) {
+    snap = {}
+    keys(v).forEach(k => snap[k] = rev(v[k], k))
+
+    snap = new Model(snap, p)
   }
   else {
     snap = isArray(v) ? [] : create(getProto(v))

@@ -551,6 +551,12 @@ prevNavigationState AND prevState
 the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
 should redirect return false?
 return undefined from reducers
+selectors using event.module and such don't work when compared to eg state.website, not using event protos
+for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
+make history work on reload with only 1 click by counting that click towards the history push
+revive needs to be passed respond, not state
+nested models inside stored db rows??
+
 
 
 make all tools replacable by user (including reviver)

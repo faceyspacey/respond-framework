@@ -81,7 +81,7 @@ export default {
 
       const events = index === undefined ? evs : evs.slice(0, index + 1)
 
-      await state.replays.replayEvents(events, delay, settings, state.focusedModulePath)
+      await state.replayEvents(events, delay, settings, state.focusedModulePath)
 
       return false
     },
@@ -129,7 +129,7 @@ export default {
   replayEventsToIndex: {
     before: async (state, { index, delay }) => {
       const events = state.evs.slice(0, index + 1)
-      await state.replays.replayEvents(events, delay)
+      await state.replayEvents(events, delay)
       return false
     }
   },
@@ -150,7 +150,7 @@ export default {
 
       const eventsToIndex = events.slice(0, state.evsIndex + 1)
       
-      await state.replays.replayEvents(eventsToIndex)
+      await state.replayEvents(eventsToIndex)
 
       return false
     }
@@ -166,7 +166,7 @@ export default {
       const end = state.evsIndex + 1
       const events = state.evs.slice(0, end)
 
-      await state.replays.replayEvents(events)
+      await state.replayEvents(events)
 
       return false
     }
@@ -181,7 +181,7 @@ export default {
       }
 
       const events = state.evs.slice(0, i)
-      await state.replays.replayEvents(events)
+      await state.replayEvents(events)
 
       return false
     }
