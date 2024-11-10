@@ -1,27 +1,42 @@
-export default async (state, e) => {
+import trySync from '../../utils/trySync.js'
+
+
+export default (state, e) => {
   if (!e.event.after) return
 
-  // don't await, as the intention of this plugin is to not delay subsequent events that might be run sequentially
-  // otherwise use the end plugin as is more common
+  const onError = error => state.onError({ error, kind: 'after', e })
 
-  await state.awaitInReplaysOnly(async () => {
-    try {
-      const res = await e.event.after.call(state, state, e)
-  
-      state.devtools.sendPluginNotification({ type: 'after', returned: res }, e)
-  
-      if (res?.error && !res.type) {
-        await e.event.error.dispatch(res, { from: e })
-      }
-      else if (res?.type) {
-        await state.dispatch(res, { from: e })
-      }
-      else if (res) {
-        await e.event.data.dispatch(res, { from: e })
-      }
-    }
-    catch(error) {
-      state.onError({ error, kind: 'after', e })
-    }
-  })
+  return state.awaitInReplaysOnly(() => { // <-- see here "await in replays only"
+    const res = e.event.after.call(state, state, e)
+    return trySync(res, r => after(state, e, r))
+  }, onError)
 }
+
+
+// condtionally await only in replays, as the intention of this plugin is to not delay subsequent events dispatched immediately after
+// eg:
+
+// await events.first.dispatch()
+// await events.next.dispatch()
+
+// `next` will be dispatched while `first.after` is still running
+// (except replays which rely on the previous trigger cycle completing)
+
+const after = (state, e, res) => {
+  state.devtools.sendPluginNotification({ type: 'after', returned: res }, e)
+
+  const meta = { from: e }
+
+  if (res?.error && !res.dispatch) {
+    return e.event.error.dispatch(res, meta)
+  }
+  else if (res?.dispatch) {
+    return res.dispatch({ meta})
+  }
+  else if (res) {
+    return e.event.data.dispatch(res, meta)
+  }
+}
+
+
+// NOTE: if not needed, use the end plugin which is more common

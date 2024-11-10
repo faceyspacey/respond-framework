@@ -9,22 +9,21 @@ export default wrapInActForTests((state, e) => {
   const top = respond.getStore()
   const eTop = prependModulePathToE(e)
 
-  if (e.event.reduce === false) return respond.notify(eTop)
-    
-  if (e.event.reduce) {
-    e.event.reduce.call(state, state, e)
-    e.event.afterReduce?.call(state, state, e)
-    return respond.notify(eTop)
-  }
-    
   try {
-    if (e.event === top.events.init) {
+    if (e.event.reduce === false) {
+      
+    }
+    else if (e.event.reduce) {
+      e.event.reduce.call(state, state, e)
+    }
+    else if (e.event === top.events.init) {
       reduceAllModules(eTop, top)
     }
     else {
       reduceBranch(eTop, top, modulePath.split('.'))
-      e.event.afterReduce?.call(state, state, e)
     }
+
+    e.event.afterReduce?.call(state, state, e)
   }
   catch (error) {
     respond.onError({ error, kind: 'reduce', e })

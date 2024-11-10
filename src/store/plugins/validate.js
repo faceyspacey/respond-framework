@@ -1,8 +1,16 @@
-export default async (state, e) => {
+import trySync from '../../utils/trySync.js'
+
+
+export default (state, e) => {
   if (!e.event.validate) return
 
-  const res = await e.event.validate.call(state, state, e)
+  const res = e.event.validate.call(state, state, e)
+  return trySync(res, r => validate(state, e, r))
+}
 
+
+
+const validate = (state, e, res) => {
   if (res === false) {
     state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     return false
@@ -10,8 +18,7 @@ export default async (state, e) => {
 
   if (res?.error || res?.flash?.error) {
     state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
-    await e.event.error.dispatch(res, { from: e })
-    return false
+    return e.event.error.dispatch(res, { from: e }).then(_ => false)
   }
 
   state.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)

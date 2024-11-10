@@ -1,14 +1,14 @@
-export default async (state, e) => {
+import trySync from '../../utils/trySync.js'
+
+
+export default (state, e) => {
   if (!e.event.redirect) return
 
-  const res = await e.event.redirect.call(state, state, e)
-
+  const res = e.event.redirect.call(state, state, e)
   state.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
-
-  if (res?.type) {
-    await state.dispatch(res, { from: e })
-  }
-  else {
-    return res
-  }
+  return trySync(res, r => redirect(e, r))
 }
+
+
+const redirect = (from, res) =>
+  res?.dispatch?.({ meta: { from } }) ?? res

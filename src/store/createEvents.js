@@ -20,7 +20,7 @@ function createEvents(respond, state, events = {}, propEvents = {}, modulePath, 
   const init = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: 'init' }, modulePath, '', 'init')) // same init event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
-  Object.assign(acc, init ? { init } : {})
+  if (init) Object.assign(acc, { init })
   
   const cache = respond.eventsCache
 
@@ -66,6 +66,10 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
 
   let event = window.state?.eventsByType?.[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
+  if (event) {
+    Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
+  }
+
   event ??= function event(arg = {}, meta = {}) { // event itself is a function
     if (arg.meta) {
       const { meta: m, ...rest } = arg
@@ -81,11 +85,9 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     return applyTransform(respond, e, dispatch, trigger)
   }
 
-  Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
-
   const children = !isBuiltIn && createEvents(respond, state, createBuiltIns(config), undefined, modulePath, _namespace, nsObj, _type)
 
-  const dispatch = (arg, meta) => respond.dispatch(event(arg, meta), meta)
+  const dispatch = (arg, meta) => respond.dispatch(event(arg, meta))
 
   const prefetch = config.fetch && (async (arg, meta) => {
     const e = event(arg, meta)

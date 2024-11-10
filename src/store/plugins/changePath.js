@@ -1,4 +1,4 @@
-export default async (state, e) => {
+export default (state, e) => {
   if (e.meta.parallel && !e.meta.changePath) return
 
   if (e.event.changePath) {

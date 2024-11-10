@@ -546,6 +546,11 @@ maybe remove e.type + e.namespace
 auth plugin assigns to prevState
 replay to index doesn't need to revive
 if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k] -- snapshot will be broken, ideally aspects are not in proxy yet
+rename modulePath to path and path to pattern
+prevNavigationState AND prevState
+the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
+should redirect return false?
+return undefined from reducers
 
 
 make all tools replacable by user (including reviver)

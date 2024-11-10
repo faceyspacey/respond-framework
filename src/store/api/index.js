@@ -84,8 +84,16 @@ export default (top, state, focusedModulePath) => {
     shouldAwait() {
       return this.ctx.isFastReplay || isTest
     },
-    awaitInReplaysOnly(f) {
-      return this.shouldAwait() ? f() : promises.push(f()) // f is async
+    awaitInReplaysOnly(f, onError) {           
+      const promise = typeof f === 'function' ? f() : f   // can be function
+      if (!(promise instanceof Promise)) return
+
+      if (this.shouldAwait()) {
+        return promise.then(_ => undefined).catch(onError) // ensure consistent undefined return, as we dont want `false` to stop dispatch pipeline if accidentally returned, as the expectation is to continue to the next plugin in production without stopping
+      }
+      else {
+        promises.push(promise.catch(onError))
+      }
     },
     async promisesCompleted(e) {
       await Promise.all(promises)
