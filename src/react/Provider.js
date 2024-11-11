@@ -5,7 +5,7 @@ import ReplayTools from '../modules/replayTools/App/index.js'
 import { isProd, isTest } from '../utils/bools.js'
 
 export default ({ state, Error = state.components?.Error, App = state.components?.App }) => {
-  const hide = isTest || (isProd && !state.respond.options.productionReplayTools) || state.respond.options.disableReplayTools
+  const hide = isTest || isProd && !state.respond.options.productionReplayTools
 
   return (
     <RespondContext.Provider value={state}>

@@ -27,26 +27,6 @@ export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath 
 
 
 
-export const reviveSeedDb = (Model, p = '') => function rev(v, k) {
-  if (dateKeyReg.test(k)) return v ? new Date(v) : v
-  if (!canProxy(v))       return v
-
-  let snap
-
-  if (v.__type) {
-    snap = {}
-    keys(v).forEach(k => snap[k] = rev(v[k], k))
-
-    snap = new Model(snap, p)
-  }
-  else {
-    snap = isArray(v) ? [] : create(getProto(v))
-    keys(v).forEach(k => snap[k] = rev(v[k], k))
-  }
-
-  return snap
-}
-
 
 
 export const createReviver = (state = {}, modulePath) => {
@@ -80,13 +60,8 @@ export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} 
 
 
 export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => (k, v) => {
-  if (dateKeyReg.test(k)) {
-    return v ? new Date(v) : v
-  }
-
-  if (v?.__event) {
-    return eventsByType[v.type] ?? v
-  }
+  if (dateKeyReg.test(k)) return v ? new Date(v) : v
+  if (v?.__event) return eventsByType[v.type] ?? v
   
   if (v?.__type) {
     const p = v.__modulePath ?? modulePath // usually __modulePath won't exist when coming from an API response, and the whole purpose of this reviver is for module-specified db to assign the modulePath via its argument to the outer function, but it's possible that a model (from a different module) passed from the client to the server can be returned from the server, in which case we preserve its __modulePath

@@ -9,7 +9,6 @@ export default function (state, e) {
   if (!e.meta.trigger) return
 
   const top = state.getStore()
-
   const { respond, replayTools } = top
 
   if (top.replayState.status === 'session') {
@@ -86,7 +85,7 @@ const clipTail = (e, state, events, index, top) => {
 
 const isEqual = (a, b, top) => {
   if (a.type !== b.type) return false
-  const arg = revive(top)(a.arg || {})   // revive possible event function references in test arg
+  const arg = revive(top.respond)(a.arg || {})   // revive possible event function references in test arg
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
 

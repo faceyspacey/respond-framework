@@ -12,6 +12,7 @@ export const defaultSyncPlugins = [
 export const defaultAsyncPlugins = [
   plugins.before,
   plugins.validate,
+  plugins.auth,
   plugins.reduce,
   plugins.changePath,
   plugins.optimistic,
@@ -21,7 +22,6 @@ export const defaultAsyncPlugins = [
   plugins.redirect,
   plugins.end,
   plugins.after,
-  plugins.auth()
 ]
 
 export const defaultPlugins = [...defaultSyncPlugins, ...defaultAsyncPlugins]

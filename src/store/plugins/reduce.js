@@ -56,7 +56,8 @@ const reduceModule = (state, e, mod, reducers) => {
       reduceModule(state[k], e, mod, reduce)
     }
     else {
-      state[k] = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
+      const next = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
+      if (next !== undefined) state[k] = next
     }
   }
 }

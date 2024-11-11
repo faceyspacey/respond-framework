@@ -9,7 +9,7 @@ export default (state, renderer, dispatch, options) => {
   const matchSnapshots = createMatchSnapshots(state, renderer)
   
   return async (e, options2) => {
-    const arg = revive(state)(e.arg)
+    const arg = revive(state.respond)(e.arg)
     e = { ...e, arg, meta: { ...e.meta } }
     const o = { ...defaultConfig, ...options, ...options2 }
 

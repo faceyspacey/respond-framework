@@ -18,7 +18,7 @@ export default (id = createUniqueModuleId()) => {
 
     const snap = useSnapshot(top, sync)
     const state = sliceByModulePath(snap, modulePath) // selector props require slicing top.state to crawl to top of state tree
-    
+
     const store = top.modulePaths[modulePath]
 
     return { state, events: state.events, store }

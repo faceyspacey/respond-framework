@@ -3,7 +3,7 @@ import reduce from './plugins/reduce.js'
 
 
 export default (state, session) => {
-  const hydration = revive(state)(session)
+  const hydration = revive(state.respond)(session)
 
   mergeModules(state, hydration)
 

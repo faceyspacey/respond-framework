@@ -200,8 +200,8 @@ export default {
       const { url = '' } = config
       
       const prev = window.state
-      const { eventsByType } = prev
-      prev.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+      const { eventsByType } = prev.respond
+      prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const state = createState(top, { settings, focusedModulePath, status: 'reload' })
       const e = state.eventFrom(url)
@@ -212,7 +212,7 @@ export default {
       }
       else {
         window.state = prev
-        window.state.eventsByType = eventsByType
+        prev.respond.eventsByType = eventsByType
         errors.url = `no event for url "${url}" in module`
       }
 

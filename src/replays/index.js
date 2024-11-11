@@ -6,7 +6,6 @@ import defaultCreateToken from './utils/createToken.js'
 
 import { nestAtModulePath, stripPath } from '../utils/sliceByModulePath.js'
 import { isModule } from '../store/reserved.js'
-import { reviveSeedDb } from '../utils/revive.js'
 
 
 export default (state, session) => {
@@ -17,7 +16,7 @@ export default (state, session) => {
   const replayTools = createReplaySettings(top, state, settings, focusedModulePath, status === 'hmr', session.__db)
 
   delete session.__db
-  console.log('replayTools', new Date - start)
+  console.log('createReplaySettings', new Date - start)
   
   Object.assign(state.replayTools, { ...replayTools, focusedModulePath })
 
@@ -85,14 +84,13 @@ const createDbWithSeed = (sharedDb, replays, hmr, mod, dbSession, topState) => {
   const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
 
   Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: replays })
-  Object.defineProperty(db, 'modulePath', { enumerable: false, configurable: true, value: mod.modulePath })
 
   if (!dbSession) {
     mergeDb(db, sharedDb, mod, topState)
     createSeed(settings, options, db)
   }
   else {
-    mergeDbSession(db, mod, topState, dbSession, hmr)
+    mergeDbSession(db, sharedDb, mod, topState, dbSession)
   }
 
   return db
@@ -100,9 +98,9 @@ const createDbWithSeed = (sharedDb, replays, hmr, mod, dbSession, topState) => {
 
 
 
-const mergeDbSession = (db, mod, topState, dbSession, hmr) => {
+const mergeDbSession = (db, sharedDb, mod, topState, dbSession) => {
   const { modulePath } = mod
-  const dbSessionModule = dbSession[modulePath]
+  const d = dbSession[modulePath]
   
   topState.__db ??= {}
   topState.__db[modulePath] ??= {}
@@ -110,11 +108,15 @@ const mergeDbSession = (db, mod, topState, dbSession, hmr) => {
   Object.keys(db).forEach(k => {
     const collection = db[k]
 
-    topState.__db[modulePath][k] = hmr
-      ? dbSessionModule[k] // prevState
-      : reviveSeedDb(collection.Model, modulePath)(dbSessionModule[k])
+    const k2 = collection.shareKey ?? k
 
+    const sharedDocs = sharedDb[k2]?.docs
+    const docs = sharedDocs ? Object.assign(sharedDocs, d[k]) : d[k] // d[k] will contain the same docs, but we must link the object reference so they continue to update together
+    
+    topState.__db[modulePath][k] = docs
     collection.docs = topState.__db[modulePath][k] // now docs is a proxy, that will update in the client proxy whenever the server db changes
+
+    sharedDb[k2] = collection
   })
 }
 
@@ -131,9 +133,10 @@ const mergeDb = (db, sharedDb, mod, topState) => {
 
     const k2 = collection.shareKey ?? k
 
-    collection.docs ??= sharedDb[k2]?.docs ?? {}
-    topState.__db[modulePath][k2] = collection.docs
+    const sharedDocs = sharedDb[k2]?.docs
+    const docs = sharedDocs ?? {}
 
+    topState.__db[modulePath][k2] = docs
     collection.docs = topState.__db[modulePath][k2]
 
     sharedDb[k2] = collection

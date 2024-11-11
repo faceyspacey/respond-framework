@@ -4,9 +4,18 @@ import { isTest } from '../utils/bools.js'
 
 
 export default async function(events, delay = 0, settings = this.topState.replayState.settings, focusedModulePath = this.topState.replayState.focusedModulePath) {
+  const start = new Date
+
   this.playing = false // stop possible previous running replay
+
   const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
-  await run(revive(state)(events), delay, state)
+  console.log('replayEvents.createModule', new Date - start)
+
+  const last = new Date
+  await run(events, delay, state)
+  console.log('replayEvents.run', new Date - last)
+
+  console.log('replayEvents', new Date - start)
   return state
 }
 

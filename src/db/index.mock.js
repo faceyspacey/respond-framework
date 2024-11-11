@@ -266,8 +266,10 @@ export default {
   },
 
   insertSeed(docsObject = {}) {
+    const name = this._name
+
     if (!isServer && window.opener) {
-      return this.docs = window.opener.state.respond.replays.db[this._name].docs ?? {} // child window shares db/seed with parent
+      return this.docs = window.opener.state.respond.replays.db[name].docs ?? {} // child window shares db/seed with parent
     }
 
     this.docs ??= {}
@@ -275,16 +277,14 @@ export default {
     const docs = Array.isArray(docsObject) ? docsObject : Object.values(docsObject)
     const now = new Date().getTime() - (docs.length * 1000) // set clock back in time
 
-    const { modulePath } = this.db
-    
     docs.forEach((doc, i) => {
+      doc.id ??= ObjectId()
+      doc.__type = name
+
       doc.createdAt ??= new Date(now - (i * 1000)) // put first docs in seed at top of lists (when sorted by updatedAt: -1)
       doc.updatedAt ??= doc.createdAt
-      
-      doc.__modulePath = modulePath
 
-      const model = this._create(doc)
-      this.docs[model.id] = model
+      this.docs[doc.id] = doc
     })
 
     return this.docs

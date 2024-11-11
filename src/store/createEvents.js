@@ -64,7 +64,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
   const kind = config.kind ?? (config.path ? kinds.navigation : kinds.submission)
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
-  let event = window.state?.eventsByType?.[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
+  let event = window.state?.respond?.eventsByType[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
   if (event) {
     Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
