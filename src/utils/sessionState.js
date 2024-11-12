@@ -27,7 +27,7 @@ export default ({ status, settings, focusedModulePath = '', hydration } = {}) =>
   const session = sessionStorage.getItem('sessionState')
   if (session) return JSON.parse(session)
 
-  const defaultState = { settings: {}, focusedModulePath: '', idCounterRef, status: 'ready' }
+  const defaultState = { settings: undefined, focusedModulePath: '', idCounterRef, status: 'ready' }
   return { ...hydration, replayState: defaultState, replayTools: {} }
 }
 

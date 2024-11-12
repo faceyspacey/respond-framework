@@ -1,7 +1,7 @@
 import { isObject, isOwnKeysChanged, equal } from './helpers.js'
 
 
-export default function isChanged(prev, next, affected, cache = new WeakMap, path) {
+export default function isChanged(prev, next, affected, cache = new WeakMap) {
   if (equal(prev, next)) return false
   if (!isObject(prev) || !isObject(next)) return true // heuristic: if one isn't an object, and already not equal from line above, we know they are not equal without recursive checking
 
@@ -36,11 +36,11 @@ export default function isChanged(prev, next, affected, cache = new WeakMap, pat
     }
 
     for (const k of used.get || []) {
-      changed = isChanged(prev[k], next[k], affected, cache, path ? `${path}.${k}` : k)
+      changed = isChanged(prev[k], next[k], affected, cache)
       if (changed) return changed
     }
 
-    if (changed === null) changed = true
+    if (changed === null) changed = true // object wasn't explicitly accessed, but might have been used another way, eg: !!snap.obj
     return changed
   }
   finally {

@@ -7,6 +7,7 @@ import { kinds } from '../../utils.js'
 import flatToNestedSettings from './helpers/flatToNestedSettings.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
 import { findClosestAncestorWithObjectContaining } from '../../utils/findInClosestAncestor.js'
+import { defaultOrigin } from '../../utils/constants.js'
 
 
 export default {
@@ -95,7 +96,7 @@ export default {
       const name = prompt('Name of your test?', possibleName)?.replace(/^\//, '')
       if (!name) return
 
-      const { settings, focusedModulePath: modulePath } = topState.replayState
+      const { settings, focusedModulePath: modulePath } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
 
       const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
@@ -197,18 +198,25 @@ export default {
   reload: {
     before: async ({ settings, config, focusedModulePath, top, errors }) => {
       settings = nestSettings(settings, focusedModulePath, top)
-      const { url = '' } = config
+      const { url = '/' } = config
       
       const prev = window.state
       const { eventsByType } = prev.respond
       prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
+      const start = new Date
       const state = createState(top, { settings, focusedModulePath, status: 'reload' })
+      console.log('reload.createModule', new Date - start)
+
       const e = state.eventFrom(url)
 
       if (e) {
+        const start = new Date
+        state.replayTools.playing = true // trigger timeouts not to work like replayEvents
         await e.trigger()
+        state.replayTools.playing = false
         state.render()
+        console.log('reload.trigger/render!', new Date - start)
       }
       else {
         window.state = prev
@@ -227,8 +235,14 @@ export default {
   },
 
   openPermalink: {
-    before: async state => {
-      const { url, relativeUrl } = createPermalink(state)
+    before: async ({ settings, focusedModulePath, top, config }) => {
+      settings = nestSettings(settings, focusedModulePath, top)
+      const hash = createPermalink(settings, focusedModulePath)
+
+      const baseUrl = config.url || '/'
+      
+      const relativeUrl = baseUrl + hash
+      const url = defaultOrigin + relativeUrl
 
       console.log('Your permalink is:\n', url)
       alert(`Your permalink is:\n\n${relativeUrl}\n\nYou can copy paste it from the console.You will be redirected now.`)
@@ -246,15 +260,15 @@ const uniqueDragId = () => ++id + ''
 
 
 const nestSettings = (settings, modulePath, top) => {
-  const hasReplaysAndDb = !!sliceByModulePath(top, modulePath).replays?.hasDb
   const nestedSettings = flatToNestedSettings(settings)
+  const hasReplaysAndDb = !!sliceByModulePath(top, modulePath).replays?.hasDb
 
   if (hasReplaysAndDb) {
-    settings = sliceByModulePath(nestedSettings, modulePath)
+    settings = sliceByModulePath(nestedSettings, modulePath) ?? {} // undefined could happen if all settings undefined
   }
   else {
     modulePath = findClosestAncestorWithObjectContaining('replays', 'hasDb', modulePath, top)?.modulePath ?? ''
-    settings = sliceByModulePath(nestedSettings, modulePath)
+    settings = sliceByModulePath(nestedSettings, modulePath) ?? {} // undefined could happen if all settings undefined
     settings.module = modulePath
   }
 

@@ -6,6 +6,7 @@ import defaultCreateToken from './utils/createToken.js'
 
 import { nestAtModulePath, stripPath } from '../utils/sliceByModulePath.js'
 import { isModule } from '../store/reserved.js'
+import flatToNestedSettings from '../modules/replayTools/helpers/flatToNestedSettings.js'
 
 
 export default (state, session) => {
@@ -15,8 +16,11 @@ export default (state, session) => {
   const start = new Date
   const replayTools = createReplaySettings(top, state, settings, focusedModulePath, status === 'hmr', session.__db)
 
+  if (!settings) {
+    session.replayState.settings = flatToNestedSettings(replayTools.settings) // tapping reload creates this, but on first opening, we need to create it so you can save tests without having to tap reload
+  }
+
   delete session.__db
-  console.log('createReplaySettings', new Date - start)
   
   Object.assign(state.replayTools, { ...replayTools, focusedModulePath })
 
@@ -24,6 +28,8 @@ export default (state, session) => {
 
   const createToken = top.replays.createToken ?? defaultCreateToken
   session.token = isProd ? cookies.get('token') : createToken(state.respond.replays)
+
+  console.log('createReplaySettings', new Date - start)
 }
 
 
@@ -35,13 +41,13 @@ export const createReplaySettings = (topModule, topState, settingsModule, focuse
   const db = {}
 
   const settings = {}
-  const nestingPath = settingsModule.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
+  const nestingPath = settingsModule?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
   nestAtModulePath(settings, nestingPath, settingsModule) // settingsModule is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
 
   const traverseAllModulesBreadthFirst = (mod, settings, ancestorReplays, p) => {
     if (mod.replays) {
-      const replays = mod.replays.handleRef ?? mod.replays // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
-      mod.replays.hasDb ??= !!mod.replays.db
+      const hasDb = mod.replays.hasDb ??= !!mod.replays.db // since we're mutably opterating on the raw module tree, we need to know if it originally had a db
+      const replays = mod.replays.handleRef ?? (hasDb && mod.replays.db?.replays || mod.replays) // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
       replays.db = mod.replays.db ?? ancestorReplays.db // inherit db from parent module's replays if child has replays but no db
       replays.settings = defaultCreateSettings(replays.config, settings)
       ancestorReplays = replays // inherit entire replays from parent if child doesn't have it

@@ -6,7 +6,7 @@ export default (state, e) => {
 
   const onError = error => state.onError({ error, kind: 'after', e })
 
-  return state.awaitInReplaysOnly(() => { // <-- see here "await in replays only"
+  return state.respond.awaitInReplaysOnly(() => { // <-- see here "await in replays only"
     const res = e.event.after.call(state, state, e)
     return trySync(res, r => after(state, e, r))
   }, onError)

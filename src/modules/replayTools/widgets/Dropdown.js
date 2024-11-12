@@ -16,7 +16,6 @@ export default memo(({
   disabled,
   createLabel = o => name + ': ' + (o?.label || o?.value || 'none'),
   selectedOption = findSelectedOption,
-  transformOptions = options => options,
   style,
   styleLabel,
   styleMenu,
@@ -29,9 +28,7 @@ export default memo(({
   const [open, set] = useState(false)
   const toggle = useCallback(() => set(open => !open), [set])
 
-  const opts = transformOptions(options, value)
-
-  const selected = selectedOption(opts, value)
+  const selected = selectedOption(options, value)
   const label = createLabel(selected)
 
   const styles = [s.c, style, disabled && s.disabled, disabled && styleDisabled, { zIndex }]
@@ -46,11 +43,11 @@ export default memo(({
 
       {open &&
         <ScrollView style={[s.menu, styleMenu]}>
-          {opts.map((o, i) => (
+          {options.map((o, i) => (
             <Option
               {...o}
               key={i}
-              last={i === opts.length - 1}
+              last={i === options.length - 1}
               name={name}
               onPress={toggle}
               event={event}

@@ -18,12 +18,14 @@ export default memo(forwardRef(({
   disabled,
   returnKeyType = 'done',
 }, ref) => {
-  const value = String(formatIn(v) || '')
+  const value = typeof v === 'object' // replayed from saved test, where strings/json transformed to objects
+    ? Object.keys(v).length === 0 ? '' : JSON.stringify(v, null, 2)
+    : String(formatIn(v) || '')
 
   const onChangeText = v => {
     if (disabled) return
 
-    const next = formatOut(v)
+    const next = formatOut(v) || undefined
     if (next === value) return
 
     event.dispatch({ [name]: next }, { name, input: true, trigger: true })

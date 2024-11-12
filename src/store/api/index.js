@@ -81,19 +81,10 @@ export default (top, state, focusedModulePath) => {
       return parseJsonState(json, state)
     },
   
-    shouldAwait() {
-      return this.ctx.isFastReplay || isTest
-    },
     awaitInReplaysOnly(f, onError) {           
       const promise = typeof f === 'function' ? f() : f   // can be function
       if (!(promise instanceof Promise)) return
-
-      if (this.shouldAwait()) {
-        return promise.then(_ => undefined).catch(onError) // ensure consistent undefined return, as we dont want `false` to stop dispatch pipeline if accidentally returned, as the expectation is to continue to the next plugin in production without stopping
-      }
-      else {
-        promises.push(promise.catch(onError))
-      }
+      promises.push(promise.catch(onError))
     },
     async promisesCompleted(e) {
       await Promise.all(promises)
@@ -192,13 +183,7 @@ export default (top, state, focusedModulePath) => {
         .filter(send => e.modulePath.indexOf(send.modulePath) === 0) // event is child of subscribed module or the same module
         .map(send => send(send.module, e))
 
-      if (sent.length === 0) return
-    
-      const promise = Promise.all(sent).catch(error => {
-        state.onError({ error, kind: 'subscriptions', e })
-      })
-    
-      if (state.shouldAwait()) return promise
+      if (sent.length > 0) promises.push(sent)
     },
   
     onError(err)  {

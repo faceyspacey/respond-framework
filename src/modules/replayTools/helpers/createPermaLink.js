@@ -1,32 +1,10 @@
-import * as qs from 'qs'
-import { parseSearch } from '../../../utils/searchQuery.js'
-import { defaultOrigin } from '../../../utils/constants.js'
+import { parseSearch, stringifyQuery } from '../../../utils/searchQuery.js'
 import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 
-export default state => {
-  const { path = '/' } = state.config
-  const hash = settingsToHash(state.form, replays.config, state.focusedModulePath)
-
-  return {
-    relativeUrl: path + hash,
-    url: defaultOrigin + path + hash
-  }
-}
-
-
-const settingsToHash = (settings, config, focusedModulePath) => {
-  const query = {}
-
-  Object.keys(settings).forEach(k => {
-    const v = settings[k]
-    const out = config[k]?.transformOut
-    query[k] = out ? out(v) : v
-  })
-
-  if (focusedModulePath) query.module = focusedModulePath
-
-  return prefix + qs.stringify(query) 
+export default function settingsToHash({ ...query }, focusedModulePath) {
+  if (focusedModulePath) query.mod = focusedModulePath
+  return prefix + stringifyQuery(query) 
 }
 
 
@@ -39,7 +17,10 @@ export const hashToSettings = () => {
     const search = h.slice(index + length)
     const { module, ...settings } = parseSearch(search) // use hash so search can still be used in userland
     
-    return { settings, focusedModulePath: settings.module ?? '', idCounterRef, status: 'ready' }
+    const focusedModulePath = settings.mod ?? ''
+    const status = 'ready'
+
+    return { settings, focusedModulePath, idCounterRef, status }
   }
 }
 

@@ -4,7 +4,7 @@ export const db = {}
 
 
 export default (dbRaw, options = {}) => {
-  const { collection, model, models = {} } = options
+  const { collection, model, replays, models = {} } = options
   const config = { listLimit: 10, ...options.config }
 
   const shared = models.shared ?? {}
@@ -12,11 +12,13 @@ export default (dbRaw, options = {}) => {
 
   const descriptors = {
     db: { enumerable: false, configurable: true, value: db },
-    replays: { enumerable: false, configurable: true, get: () => db.replays } // db.replays won't be defined until later by createReplays
+    replays: { enumerable: false, configurable: true, get: () => replays ?? db.replays } // db.replays won't be defined until later by createReplays
   }
 
   const extra = Object.defineProperties({}, descriptors)
 
+  db.replays = replays
+  
   for (const k in dbRaw) {
     const coll = dbRaw[k]
     const docs = db[k]?.docs // preserve docs through HMR

@@ -539,6 +539,16 @@ if (possibleDuplicate) {
 #should redirect return false?
 #replay to index doesn't need to revive
 
+#if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k] -- snapshot will be broken, ideally aspects are not in proxy yet
+
+#selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
+
+#the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
+#multiple references in sessionStorage come out as different objects
+
+#for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
+#eventsByType -> eventsById
+
 
 #createControllersTree
 
@@ -547,17 +557,13 @@ if (possibleDuplicate) {
 
 rename modulePath to path and path to pattern
 prevNavigationState AND prevState
-if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k] -- snapshot will be broken, ideally aspects are not in proxy yet
-
-the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
-selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
-
-for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
-eventsByType -> eventsById
+assign to orig rather than proxy until end of createModule
 
 make history work on reload with only 1 click by counting that click towards the history push
 
-same object stored multiple times in state get lost in sessionStorage
+basename, unify state
+
+
 
 
 

@@ -16,7 +16,7 @@ export const stringifyQuery = (query, state) => {
 
 
 const ps = (search, state) => {
-  const rev = revive(state.respond)
+  const rev = revive(state?.respond)
   let k
 
   const decoder = (v, defaultDecoder, charset, type) => {
