@@ -3,12 +3,18 @@ import { createTrap } from './createTrap.js'
 
 
 export default async (e, redirect) => {
-  const { replayTools, respond, ctx } = window.state
   if (e.changePath === false) return
-  
+
+  if (!window.state.replayTools?.playing) changePath(e, redirect)
+  else debounce(() => changePath(e, true))
+}
+
+
+const changePath = (e, redirect) => {
+  const { respond, ctx } = window.state
   const { url } = respond.fromEvent(e)
 
-  change(url, ctx.changedPath || redirect || replayTools?.playing)
+  change(url, ctx.changedPath || redirect)
 
   ctx.changedPath = true
   window.state.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
@@ -33,9 +39,15 @@ const replace = async (url, i = 1) => {
   history.replaceState({ index: i }, '', url)
 }
 
-const push = (url, i = 1) => {
+export const push = (url, i = 1) => {
   bs.prevIndex = i
   bs.maxIndex = i
   bs.linkedOut = false
   history.pushState({ index: i }, '', url)
+}
+
+let timer
+const debounce = func => {
+  clearTimeout(timer)
+  timer = setTimeout(func, 50)
 }

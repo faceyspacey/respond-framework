@@ -49,7 +49,9 @@ export const recreateFullType = (e, modulePath = e.modulePath) => {
 
 
 
-export const nestAtModulePath = (slice, modulePath, value) => {
+export const nestAtModulePath = (modulePath, value, top = {}) => {
+  let slice = top
+  
   if (modulePath) {
     const modules = modulePath.split('.')
 
@@ -58,7 +60,9 @@ export const nestAtModulePath = (slice, modulePath, value) => {
     }
   }
 
-  return Object.assign(slice, value)
+  Object.assign(slice, value)
+
+  return top
 }
 
 
@@ -106,4 +110,11 @@ export const traverseModulesAsyncParallel = (top, callback) => {
   })
 
   return Promise.all(promises)
+}
+
+
+export const stateForNormalizedPath = (state, p) => {
+  const { modulePaths, focusedModulePath: fmp } = state.respond
+  const isDescendentOrFocusedTop = p.indexOf(fmp) === 0
+  return isDescendentOrFocusedTop && modulePaths[stripPath(fmp, p)] // there might be no state to assign state.respond.replays, as traversal to top was only required to gather all settings
 }

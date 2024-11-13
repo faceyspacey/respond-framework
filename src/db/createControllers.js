@@ -1,20 +1,26 @@
 import Parent from './Controller.js'
 import createControllerDefault from './utils/createControllerDefault.js'
 import mergeProps from './utils/mergeProps.js'
+import secretMock from '../db/secret.mock.js'
 
 
-export default function createControllers({ options, ...controllers }, respond, hash = {}) {
-  const create = options?.createController ?? createControllerDefault
+export default function createControllers(controllers, db, replays, options = {}) {
+  const hash = {}
+  
+  const {
+    secret = secretMock,
+    createController = createControllerDefault
+  } = options
 
   const descriptors = {
-    replays:  { enumerable: false, configurable: true, get: () => respond.replays    }, // db.replays won't be defined until later by createReplays
-    db:       { enumerable: false, configurable: true, get: () => respond.replays.db }
+    db:       { enumerable: false, configurable: true, value: db      },
+    replays:  { enumerable: false, configurable: true, value: replays },
   }
 
   for (const _name in controllers) {
-    const Child = Object.defineProperties({ _name, _namePlural: _name + 's', ...controllers[_name] }, descriptors)
-    function Controller(secret, request = {}) { this.secret = secret, this.request = request }
-    Controller.prototype = create(Child, Parent)
+    const Child = { _name, _namePlural: _name + 's', secret, ...controllers[_name] }
+    function Controller(request = {}) { this.request = request }
+    Controller.prototype = Object.defineProperties(createController(Child, Parent), descriptors)
     hash[_name] = Controller
   }
 
@@ -28,7 +34,7 @@ export const createControllersTree = ({ modules = {}, props = {}, ...db }, hash 
   createControllers(db, hash[p])
   
   Object.keys(modules).forEach(k => {
-    createControllersTree(modules[k], hash, p ? `${p}.${k}` : k)
+    createControllersTree(modules[k], undefined, hash, p ? `${p}.${k}` : k)
   })
 
   return hash

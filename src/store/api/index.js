@@ -10,11 +10,12 @@ import defaultCreateDevtools from '../../devtools/index.mock.js'
 import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
+import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
+import createModulePathsAll from '../../replays/createModulePathsAll.js'
+
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { createModulePathsAll } from '../../replays/index.js'
 import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
-import findInClosestAncestor from '../../utils/findInClosestAncestor.js'
 import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
 
 
@@ -39,6 +40,7 @@ export default (top, state, focusedModulePath) => {
     state, 
 
     modulePathsAll,
+    focusedModulePath,
     
     modulePaths,
     modulePathsById: {},
@@ -151,6 +153,14 @@ export default (top, state, focusedModulePath) => {
         : modulePath
 
       return findInClosestAncestor(key, modulePath, this.respond.top)
+    },
+
+    findClosestAncestorWith(key, modulePath) {
+      modulePath = focusedModulePath
+        ? modulePath ? focusedModulePath + '.' + modulePath : focusedModulePath
+        : modulePath
+
+      return findClosestAncestorWith(key, modulePath, this.respond.top)
     },
   
     subscribe(send) {

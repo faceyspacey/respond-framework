@@ -1,5 +1,3 @@
-export { db as default } from './db/createDatabase.js'
-
 export { default as createDatabase } from './db/createDatabase.js'
 export { createControllersTree } from './db/createControllers.js'
 

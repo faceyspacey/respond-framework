@@ -4,9 +4,9 @@ import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
 import { kinds } from '../../utils.js'
 
-import flatToNestedSettings from './helpers/flatToNestedSettings.js'
+import nestSettings from './helpers/nestSettings.js'
 import sliceByModulePath from '../../utils/sliceByModulePath.js'
-import { findClosestAncestorWithObjectContaining } from '../../utils/findInClosestAncestor.js'
+import { findClosestAncestorWithObjectContaining, findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
 import { defaultOrigin } from '../../utils/constants.js'
 
 
@@ -89,21 +89,17 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ state, db, events, topState }) => {
-      const first = state.evs[0]
-      const possibleName = state.selectedTestName ?? first.type.replace(/\./g, '/') + '.js'
+    submit: async ({ state, db, topState, events: { tests } }) => {
+      state.selectedTestName ??= state.evs[0].type.replace(/\./g, '/') + '.js'
       
-      const name = prompt('Name of your test?', possibleName)?.replace(/^\//, '')
+      const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
       if (!name) return
 
       const { settings, focusedModulePath: modulePath } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
+      const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
-      const evs = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
-
-      const res = await db.developer.writeTestFile({ name, modulePath, settings, events: evs })
-      await events.tests.dispatch({ sort: 'recent' })
-
-      return res
+      await db.developer.writeTestFile({ name, modulePath, settings, events })
+      await tests.dispatch({ sort: 'recent' })
     }
   },
 
@@ -197,7 +193,7 @@ export default {
 
   reload: {
     before: async ({ settings, config, focusedModulePath, top, errors }) => {
-      settings = nestSettings(settings, focusedModulePath, top)
+      settings = gatherAllSettings(settings, focusedModulePath, top)
       const { url = '/' } = config
       
       const prev = window.state
@@ -236,7 +232,7 @@ export default {
 
   openPermalink: {
     before: async ({ settings, focusedModulePath, top, config }) => {
-      settings = nestSettings(settings, focusedModulePath, top)
+      settings = gatherAllSettings(settings, focusedModulePath, top)
       const hash = createPermalink(settings, focusedModulePath)
 
       const baseUrl = config.url || '/'
@@ -259,16 +255,18 @@ const uniqueDragId = () => ++id + ''
 
 
 
-const nestSettings = (settings, modulePath, top) => {
-  const nestedSettings = flatToNestedSettings(settings)
-  const hasReplaysAndDb = !!sliceByModulePath(top, modulePath).replays?.hasDb
+const gatherAllSettings = (settings, modulePath, top) => {
+  const nestedSettings = nestSettings(settings)
 
-  if (hasReplaysAndDb) {
+  const mod = sliceByModulePath(top, modulePath)
+  const hasDb = mod.db || mod.replays?.standalone
+
+  if (hasDb) {
     settings = sliceByModulePath(nestedSettings, modulePath) ?? {} // undefined could happen if all settings undefined
   }
   else {
-    modulePath = findClosestAncestorWithObjectContaining('replays', 'hasDb', modulePath, top)?.modulePath ?? ''
-    settings = sliceByModulePath(nestedSettings, modulePath) ?? {} // undefined could happen if all settings undefined
+    modulePath = findClosestAncestorWith('db', modulePath, top)?.modulePath ?? ''
+    settings = sliceByModulePath(nestedSettings, modulePath) ?? {}
     settings.module = modulePath
   }
 

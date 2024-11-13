@@ -1,190 +1,110 @@
-import { isProd } from '../utils/bools.js'
-
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
 
-import { nestAtModulePath, stripPath } from '../utils/sliceByModulePath.js'
-import { isModule } from '../store/reserved.js'
-import flatToNestedSettings from '../modules/replayTools/helpers/flatToNestedSettings.js'
+import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
+import { nestAtModulePath, stateForNormalizedPath } from '../utils/sliceByModulePath.js'
+import { isProd } from '../utils/bools.js'
 
 
-export default (state, session) => {
-  const { top, cookies } = state.respond
-  const { settings, focusedModulePath = '', status } = session.replayState
+export default (state, session, start = new Date) => {
+  const { respond, replayTools } = state
+  const { top, cookies } = respond
+  const { replayState, __db: seed } = session
 
-  const start = new Date
-  const replayTools = createReplaySettings(top, state, settings, focusedModulePath, status === 'hmr', session.__db)
+  const depth = []
+  
+  Object.assign(replayTools, createState(top, depth, replayState))
+  replayState.settings ??= nestSettings(replayTools.settings) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
+  
+  state.__db ??= {}
+  depth.forEach(finalize(state, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  if (!settings) {
-    session.replayState.settings = flatToNestedSettings(replayTools.settings) // tapping reload creates this, but on first opening, we need to create it so you can save tests without having to tap reload
-  }
-
+  session.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   delete session.__db
   
-  Object.assign(state.replayTools, { ...replayTools, focusedModulePath })
-
-  state.replayTools.respond.replays = Object.getPrototypeOf(state.replayTools).replays = state.respond.replays
-
-  const createToken = top.replays.createToken ?? defaultCreateToken
-  session.token = isProd ? cookies.get('token') : createToken(state.respond.replays)
-
   console.log('createReplaySettings', new Date - start)
 }
 
 
-export const createReplaySettings = (topModule, topState, settingsModule, focusedModulePath, hmr, dbSession) => {
-  const configsByPath = {}
-  const settingsByPath = {}
 
-  const depthFirstCallbacks = []
-  const db = {}
-
+const createState = (top, depth, { focusedModulePath, settings: input }) => {
+  const configs = {}
   const settings = {}
-  const nestingPath = settingsModule?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
-  nestAtModulePath(settings, nestingPath, settingsModule) // settingsModule is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
 
-  const traverseAllModulesBreadthFirst = (mod, settings, ancestorReplays, p) => {
-    if (mod.replays) {
-      const hasDb = mod.replays.hasDb ??= !!mod.replays.db // since we're mutably opterating on the raw module tree, we need to know if it originally had a db
-      const replays = mod.replays.handleRef ?? (hasDb && mod.replays.db?.replays || mod.replays) // preserve reference -- which might not be equal to mod.replays if db is merged in module file -- this way files that import from a userland replays.js file will be the correct populated one after replayEvents, reload and hmr; also note: it's possible that the user defines replays directly on the module, in which case there will be no handleRef, but the user isn't counting on importing from replays.js since he didn't create one
-      replays.db = mod.replays.db ?? ancestorReplays.db // inherit db from parent module's replays if child has replays but no db
-      replays.settings = defaultCreateSettings(replays.config, settings)
-      ancestorReplays = replays // inherit entire replays from parent if child doesn't have it
-    }
-
-    configsByPath[p] = ancestorReplays.config
-    settingsByPath[p] = ancestorReplays.settings
-    
-    depthFirstCallbacks.unshift(finalizeReplay(mod, ancestorReplays, focusedModulePath, p, db, hmr, dbSession))
+  const path = input?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
+  const nested = nestAtModulePath(path, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
   
-    for (const k of mod.moduleKeys) {
-      if (k === 'replayTools') continue
-      traverseAllModulesBreadthFirst(mod[k], settings?.[k], ancestorReplays, p ? `${p}.${k}` : k)
-    }
+  createAllSettingsBreadth(top, nested, depth, configs, settings)
+
+  return { configs, settings, focusedModulePath }
+}
+
+
+const createAllSettingsBreadth = (mod, input, depth, configs, settings, replays = { config: {}, settings: {} }) => {
+  if (mod.db) {
+    replays = mod.db.replays
+    replays.db = mod.db
+    replays.settings = defaultCreateSettings(replays.config, input)
+  }
+  else if (mod.replays) {
+    mod.replays.db = replays.db // db inherited (but not replays)
+    replays = mod.replays
+    mod.replays.settings = defaultCreateSettings(mod.replays.config, input)
   }
 
-  traverseAllModulesBreadthFirst(topModule, settings, { config: {}, settings: {} }, '')
-  depthFirstCallbacks.forEach(c => c(topState)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
+  configs[mod.modulePath] = replays.config
+  settings[mod.modulePath] = replays.settings // replays + db inherited if no mod.db/replays
+  
+  depth.unshift([mod, replays])
 
-  return { configs: configsByPath, settings: settingsByPath }
+  for (const k of mod.moduleKeysUser) {
+    createAllSettingsBreadth(mod[k], input?.[k], depth, configs, settings, replays)
+  }
 }
 
 
 
-
-const finalizeReplay = (mod, ancestorReplays, focusedModulePath, p, sharedDb, hmr, dbSession) => topState => { 
-  if (mod.replays?.hasDb) { // only call for modules that have actual replays and therefore db/seed data
-    ancestorReplays.db = createDbWithSeed(sharedDb, ancestorReplays, hmr, mod, dbSession, topState) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
+const finalize = (state, seed, shared = {}) => ([mod, replays]) => { 
+  if (mod.db) { // only call for modules that have actual replays and therefore db/seed data
+    replays.db = createDbWithSeed(state, seed, shared, replays, mod.modulePath) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
   }
 
-  const state = stateForNormalizedPath(topState, focusedModulePath, p)
-  if (!state) return // state is a module above the currently focused module
+  const s = stateForNormalizedPath(state, mod.modulePath)
 
-  state.respond.replays = ancestorReplays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
-  Object.getPrototypeOf(state).replays = ancestorReplays
+  if (s) { // if no state, then module is above currently focused one
+    Object.getPrototypeOf(s).replays = s.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  }
 }
 
 
-const createDbWithSeed = (sharedDb, replays, hmr, mod, dbSession, topState) => {
+const createDbWithSeed = (state, seed, shared, replays, p) => {
   const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
 
-  Object.defineProperty(db, 'replays', { enumerable: false, configurable: true, value: replays })
+  state.__db[p] ??= {}
 
-  if (!dbSession) {
-    mergeDb(db, sharedDb, mod, topState)
-    createSeed(settings, options, db)
-  }
-  else {
-    mergeDbSession(db, sharedDb, mod, topState, dbSession)
-  }
+  Object.keys(db).forEach(k => mergeTable(state.__db[p], seed?.[p], shared, k, db[k], ))
+  if (!seed) createSeed(settings, options, db)
 
   return db
 }
 
+const mergeTable = (state, seed, shared, key, table) => {
+  if (table.share === false) return
 
+  const k = table.shareKey ?? key
+  const docs = shared[k]?.docs
 
-const mergeDbSession = (db, sharedDb, mod, topState, dbSession) => {
-  const { modulePath } = mod
-  const d = dbSession[modulePath]
-  
-  topState.__db ??= {}
-  topState.__db[modulePath] ??= {}
+  state[k] = seed
+    ? docs ? Object.assign(docs, seed[k]) : seed[k] // seed[k] will contain the same docs, but we must link the object reference so they continue to update together
+    : docs ?? {}
 
-  Object.keys(db).forEach(k => {
-    const collection = db[k]
-
-    const k2 = collection.shareKey ?? k
-
-    const sharedDocs = sharedDb[k2]?.docs
-    const docs = sharedDocs ? Object.assign(sharedDocs, d[k]) : d[k] // d[k] will contain the same docs, but we must link the object reference so they continue to update together
-    
-    topState.__db[modulePath][k] = docs
-    collection.docs = topState.__db[modulePath][k] // now docs is a proxy, that will update in the client proxy whenever the server db changes
-
-    sharedDb[k2] = collection
-  })
-}
-
-
-const mergeDb = (db, sharedDb, mod, topState) => {
-  const { modulePath } = mod
-
-  topState.__db ??= {}
-  topState.__db[modulePath] ??= {}
-
-  Object.keys(db).forEach(k => {
-    const collection = db[k]
-    if (collection.share === false) return
-
-    const k2 = collection.shareKey ?? k
-
-    const sharedDocs = sharedDb[k2]?.docs
-    const docs = sharedDocs ?? {}
-
-    topState.__db[modulePath][k2] = docs
-    collection.docs = topState.__db[modulePath][k2]
-
-    sharedDb[k2] = collection
-  })
+  table.docs = state[k] // now docs is a proxy, that will update in the client proxy whenever the server db changes
+  shared[k] = table
 }
 
 // Collections with the same name will share `docs` object, and ancestor modules
 // will receive collections created in child modules even if they don't themselves have it.
 
 // This is to ensure docs sharing will jump over intermediary modules that don't require
-// the given collection, and so by the end `state.replays.db` will contain all collections.
-
-
-
-
-const stateForNormalizedPath = (topState, focusedModulePath = '', p) => {
-  const isDescendentOrFocusedTop = p.indexOf(focusedModulePath) === 0
-  if (!isDescendentOrFocusedTop) return // mod is ancestor of focused module (we needed only to traverse all the way back up to gather all settings, but there will be no state to assign state.respond.replays)
-
-  const normalizedPath = stripPath(focusedModulePath, p)
-  return topState.modulePaths[normalizedPath]
-}
-
-
-
-
-export const createModulePathsAll = (mod, paths = [], p = '') => {
-  mod[isModule] = true
-  mod.moduleKeys = []
-  mod.modulePath = p
-
-  paths.push(p)
-
-  Object.keys(mod).forEach(k => {
-    const v = mod[k]
-    const isMod = v?.plugins && v.components && v.id
-
-    if (isMod) {
-      mod.moduleKeys.push(k)
-      createModulePathsAll(v, paths, p ? `${p}.${k}` : k)
-    }
-  })
-
-  return paths
-}
+// the given table, and so by the end `state.replays.db` will contain all collections.

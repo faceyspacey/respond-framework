@@ -539,43 +539,32 @@ if (possibleDuplicate) {
 #should redirect return false?
 #replay to index doesn't need to revive
 
+#secret shouldnt be first arg to controller constructor
 #if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k] -- snapshot will be broken, ideally aspects are not in proxy yet
-
-#selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
-
-#the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
-#multiple references in sessionStorage come out as different objects
-
-#for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
-#eventsByType -> eventsById
-
+#maybe remove e.type + e.namespace
 
 #createControllersTree
 
+#make history work on reload with only 1 click by counting that click towards the history push
+
+?selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
+?the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
+?tables for virtual models shouldn't have to be created
+?prevNavigationState AND prevState
 
 
 
+
+multiple references in sessionStorage come out as different objects
 rename modulePath to path and path to pattern
-prevNavigationState AND prevState
+
 assign to orig rather than proxy until end of createModule
 
-make history work on reload with only 1 click by counting that click towards the history push
-
-basename, unify state
-
-
-
-
-
-
-
-
-
-
 basenameFull stored in its own sessionStorage, along with replayState
-lazy event function creation
-maybe remove e.type + e.namespace
 
+for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
+eventsByType -> eventsById
+lazy event function creation
 
 
 
@@ -583,3 +572,8 @@ maybe remove e.type + e.namespace
 make all tools replacable by user (including reviver)
 re-organize files
 finalize implementation of respond object etc
+
+replays without db
+replays with inherited db
+
+db with different replays

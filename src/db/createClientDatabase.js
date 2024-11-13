@@ -7,13 +7,14 @@ import createApiCache from './utils/createApiCache.js'
 import { ObjectId } from 'bson'
 
 
-export default !isProd ? mock : (db, parentDb, props, state) => {
+export default !isProd ? mock : (db, parentDb, props, state, respond) => {
   if (!db && !parentDb) db = {}
   else if (!db) return parentDb
     
   if (props?.db) mergeProps(db, props.db)
 
   const cache = createApiCache(state)
+  const { apiUrl, getContext } = respond.options
 
   return createDbProxy({
     cache,
@@ -29,10 +30,7 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
     _call(controller, method) {
       const { options, state } = this
       const { models, modulePath } = state
-
-      const { apiUrl } = options
-      const url = typeof apiUrl === 'function' ? apiUrl(state) : apiUrl
-    
+   
       if (method === 'make') {
         return d => models[controller]({ ...d, __type: controller }, modulePath)
       }
@@ -48,11 +46,11 @@ export default !isProd ? mock : (db, parentDb, props, state) => {
 
       async function meth(...args) {
         const { token, userId, adminUserId, basename, basenameFull } = state
-        const context = { token, userId, adminUserId, basename, basenameFull, ...options.getContext(state, controller, method, args) }
+        const context = { token, userId, adminUserId, basename, basenameFull, ...getContext(state, controller, method, args) }
     
         try {
           const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }
-          const response = await fetch(url, body, state, useCache && cache)
+          const response = await fetch(apiUrl, body, state, useCache && cache)
     
           state.__dbFirstCall = true
         

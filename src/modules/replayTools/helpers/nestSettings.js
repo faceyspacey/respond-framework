@@ -16,7 +16,7 @@ export default settings => {
 
     if (k === '') return { ...clean } // top module's settings becomes the root object, and it will be first, as settings form is pre-sorted ancestors first
 
-    nestAtModulePath(acc, k, clean) // if a parent reference is ignored because it shares the same replay settings as the grand parent, a grand child with its own replays will be nested in an empty parent object by this function
+    nestAtModulePath(k, clean, acc) // if a parent reference is ignored because it shares the same replay settings as the grand parent, a grand child with its own replays will be nested in an empty parent object by this function
     return acc
   }, {})
 }

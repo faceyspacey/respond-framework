@@ -1,24 +1,28 @@
+import createControllers from './createControllers.js'
 import { createModel } from './createModels.js'
-
-export const db = {}
 
 
 export default (dbRaw, options = {}) => {
-  const { collection, model, replays, models = {} } = options
+  const db = {}
+
+  const { collection, model, controllers: conts = {}, replays = {}, models = {} } = options
   const config = { listLimit: 10, ...options.config }
 
   const shared = models.shared ?? {}
   const server = models.server ?? (!models.shared ? models : {})
 
+  const controllers = createControllers(conts, db, replays, options)
+
   const descriptors = {
-    db: { enumerable: false, configurable: true, value: db },
-    replays: { enumerable: false, configurable: true, get: () => replays ?? db.replays } // db.replays won't be defined until later by createReplays
+    db: { enumerable: false, value: db },
+    controllers: { enumerable: false, value: controllers },
+    replays: { enumerable: false, value: replays },
   }
+
+  Object.defineProperties(db, descriptors)
 
   const extra = Object.defineProperties({}, descriptors)
 
-  db.replays = replays
-  
   for (const k in dbRaw) {
     const coll = dbRaw[k]
     const docs = db[k]?.docs // preserve docs through HMR

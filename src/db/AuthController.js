@@ -1,5 +1,4 @@
 import jwt from '../utils/jwt.js'
-import db from '../db.js'
 import { argsOut } from './fetch.js'
 
 
@@ -67,10 +66,10 @@ export default {
 
     if (safe) {
       if (this._currUserSafe) return this._currUserSafe // cache for request
-      return this._currUserSafe = await db.user.findOneSafe(this.user.id)
+      return this._currUserSafe = await this.db.user.findOneSafe(this.user.id)
     }
 
     if (this._currUser) return this._currUser // cache for request
-    return this._currUser = await db.user.findOne(this.user.id)
+    return this._currUser = await this.db.user.findOne(this.user.id)
   },
 }

@@ -40,9 +40,11 @@ export const popListener = async () => {
     return
   }
 
-  // The Trap -- user must reach the 2nd index (from either end) to be trapped, i.e. delegate control to the events.pop handler.
-  // This means everything behaves as you would expect on index 0 and 2nd index onward, but on the 1st index, if you tap back 2x, the trap won't prevent the user from leaving.
-  // Not trapping the user until the 2nd index is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
+  // The Trap -- user must reach index 2 to be "trapped." The same applies from the end of the history stack.
+  // This means everything behaves as you would expect on index 0 and 2+, but on the index 1, if you tap back 2x, the trap won't prevent the user from leaving.
+
+  // Not trapping the user until index 2 is necessary so a pop in the opposite direction doesn't reverse you off the site prematurely.
+  // This typically matches user expectation early on, but to optimize and since browsers track if pushes come from user events, triggerPlugin pushes the first 2 non navigations using the same URL.
 
   if (back) {
     if (bs.maxIndex - i > 1) await bf.forward()       // trap user by reversing

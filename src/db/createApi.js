@@ -32,7 +32,6 @@ export default opts => {
 const createHandler = ({
   controllers: controllersByModulePath = {},
   findController,
-  secret = secretMock,
   logRequest = true,
   logResponse = false
 }) => async (req, res) => {
@@ -52,7 +51,7 @@ const createHandler = ({
     return
   }
 
-  let response = await new Controller(secret, request)._callFilteredByRole(body)
+  let response = await new Controller(request)._callFilteredByRole(body)
   response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned
 
   if (logResponse !== false) {
@@ -75,7 +74,7 @@ const createHandler = ({
 const createHandlerDev = opts => {
   const io = opts.server && createWallabySocketsServer(opts.server)
 
-  function Controller(io, request = {}) { this.io = io, this.request = request }
+  function Controller(request = {}, io) { this.request = request; this.io = io; }
   Controller.prototype = Developer
 
   return async (req, res) => {
@@ -89,7 +88,7 @@ const createHandlerDev = opts => {
   
     console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath: '', ...body })
   
-    let response = await new Controller(io, req)._callFilteredByRole(body)
+    let response = await new Controller(req, io)._callFilteredByRole(body)
     response = response === undefined ? {} : response
   
     console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath: '', ...body, response })

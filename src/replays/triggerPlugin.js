@@ -3,10 +3,16 @@ import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
 import { mergeModulesPrevState } from '../store/hydrateModules.js'
+import { kinds } from '../utils.js'
+import { push } from '../history/changePath.js'
 
 
 export default function (state, e) {
   if (!e.meta.trigger) return
+
+  if (state.respond.history.state.maxIndex < 2 && (e.kind !== kinds.navigation || e.modulePath === 'replayTools')) {
+    push(window.location.href, state.respond.history.state.maxIndex + 1)
+  }
 
   const top = state.getStore()
   const { respond, replayTools } = top

@@ -1,6 +1,5 @@
 import stringToRegex, { isRegexString } from './utils/stringToRegex.js'
 import dateStringToDate from './utils/dateStringToDate.js'
-import db from '../db.js'
 
 
 export default {
@@ -18,7 +17,7 @@ export default {
       ...sel
     } = query
 
-    const collection = db[this._name]
+    const collection = this.db[this._name]
     const selector = this._createQuerySelector(collection._toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
 
     const sort = { [sortKey]: sortValue, _id: sortValue, location }

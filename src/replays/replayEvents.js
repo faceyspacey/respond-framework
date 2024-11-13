@@ -1,5 +1,4 @@
 import createState from '../store/createState.js'
-import revive from '../utils/revive.js'
 import { isTest } from '../utils/bools.js'
 
 
@@ -28,11 +27,11 @@ const run = async (events, delay, { respond, replayTools }) => {           // ke
   ctx.isFastReplay = !delay                    // turn animations + timeouts off
 
   for (let i = 0; i < events.length && replayTools.playing; i++) {
-    const { event, arg, meta } = events[i]
-    await event.dispatch(arg,  { ...meta, trigger: true })
-
     const first = i === 0
     const last =  i === events.length - 1
+
+    const { event, arg, meta } = events[i]
+    await event.dispatch(arg,  { ...meta, trigger: true })
 
     if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
     if (delay ? first : last) respond.render()                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed

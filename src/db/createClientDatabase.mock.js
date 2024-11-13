@@ -2,7 +2,6 @@ import fetch, { argsIn } from './fetch.js'
 import simulateLatency from '../utils/simulateLatency.js'
 import secret from './secret.mock.js'
 import clean from './utils/cleanLikeProduction.js'
-import createControllers from './createControllers.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
@@ -10,28 +9,29 @@ import obId from '../utils/objectIdDevelopment.js'
 
 
 export default (db, parentDb, props, state, respond, modulePath) => {
-  if (!db && !parentDb) db = respond.findInClosestAncestor('db', modulePath) ?? {}
+  let { options } = respond
+
+  if (!db && !parentDb) {
+    ({ db, options } = respond.findClosestAncestorWith('db', modulePath) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db
+  }
   else if (!db) return parentDb
 
   if (props?.db) mergeProps(db, props.db)
 
-  const controllers = createControllers(db, respond)
   const cache = createApiCache(state)
 
   return createDbProxy({
     cache,
-    options: { getContext() {}, ...db.options },
     developer: new Proxy({}, {
       get(_, method) {
         return async (...args) => {
           const body = { controller: 'developer', method, args }
-          const response = await fetch(db.options?.apiUrl, body, state)
+          const response = await fetch(options.apiUrl, body, state)
           return handleResponse(state, { ...body, response })
         }
       }
     }),
     _call(controller, method) {
-      const { options } = this
       const { models, modulePath } = state
     
       const Model = models[controller]
@@ -50,7 +50,7 @@ export default (db, parentDb, props, state, respond, modulePath) => {
       return meth
 
       async function meth(...args) {
-        const Controller = controllers[controller]
+        const Controller = db.controllers[controller]
         if (!Controller) throw new Error(`controller "${controller}" does not exist in ${modulePath ?? 'top'} module`)
     
         const { token, userId, adminUserId, basename, basenameFull } = state.getStore()
