@@ -14,7 +14,7 @@ function createEvents(respond, state, events = {}, propEvents = {}, modulePath, 
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
-  const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same path, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same path, and the primary one is matched on first load, but you can dispatch different events that will have the same path but different queries
+  const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same pattern, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same pattern, and the primary one is matched on first load, but you can dispatch different events that will have the same pattern but different queries
 
   const isModule = !ns && !isBuiltIns
   const init = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: 'init' }, modulePath, '', 'init')) // same init event reference on all modules
@@ -61,7 +61,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
 
   const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
 
-  const kind = config.kind ?? (config.path ? kinds.navigation : kinds.submission)
+  const kind = config.kind ?? (config.pattern ? kinds.navigation : kinds.submission)
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
 
   let event = window.state?.respond?.eventsByType[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
@@ -103,9 +103,9 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
 
   respond.eventsByType[type] = event
 
-  if (config.path) {
-    const path = state.basenameFull ? `${state.basenameFull}${config.path}` : config.path
-    respond.eventsByPath[path] = event
+  if (config.pattern) {
+    const pattern = state.basenameFull ? `${state.basenameFull}${config.pattern}` : config.pattern
+    respond.eventsByPattern[pattern] = event
   }
 
   if (extractedEvents.has(config)) {
@@ -131,7 +131,7 @@ const applyTransform = (respond, e, dispatch, trigger) => {
   let payload = { ...e.arg }
 
   if (modulePathReduced) {
-    e.type = stripPath(modulePathReduced, e.type)             // remove path prefix so e objects created in reducers are unaware of parent modules
+    e.type = stripPath(modulePathReduced, e.type)             // remove pattern prefix so e objects created in reducers are unaware of parent modules
     e.namespace = stripPath(modulePathReduced, e.namespace)   // eg: stripPath('parent', 'parent.child'): 'child'
   }
 

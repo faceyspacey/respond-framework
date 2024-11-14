@@ -5,7 +5,7 @@ export default (state, e) => {
     const other = e.event.changePath.call(state, state, e)
     other && state.respond.history.changePath(other)
   }
-  else if (e.event.path) {
+  else if (e.event.pattern) {
     state.respond.history.changePath(e)
   }
 }

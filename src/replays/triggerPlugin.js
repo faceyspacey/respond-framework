@@ -14,7 +14,7 @@ export default function (state, e) {
   const top = state.getStore()
   const { respond, replayTools } = top
 
-  if (hasHistory && bs.maxIndex < 2 && !e.event.path && !respond.history.state.pop) {
+  if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
     push(window.location.href)
   }
 

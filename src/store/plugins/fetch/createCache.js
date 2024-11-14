@@ -27,7 +27,7 @@ export default (state, k = 'navigationCache') => {
   
     has(e) {
       const { event } = e
-      if (!event.path) return false
+      if (!event.pattern) return false
       if (typeof event.cache === 'function') return event.cache.call(event.module, event.module, e, this.get(e))
       if (event.cache !== undefined) return !!event.cache
       return !!(!event.fetch || e.meta.cached || this.get(e))

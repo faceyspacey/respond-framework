@@ -4,15 +4,15 @@ import { cleanSearchHash, searchHashToQueryHash, urlToLocation } from '../../uti
 
 export default function eventFrom(url, additionalArg) {
   const loc = urlToLocation(url)
-  const { eventsByPath } = this.respond
+  const { eventsByPattern } = this.respond
 
-  const event = eventsByPath[loc.pathname] // basic match, eg '/about', '/admin/users' etc
+  const event = eventsByPattern[loc.pathname] // basic match, eg '/about', '/admin/users' etc
   if (event) return createEvent(event, loc, additionalArg)
 
-  const paths = Object.keys(eventsByPath)
-  const { path, arg } = find(paths, loc.pathname) ?? {}
+  const patterns = Object.keys(eventsByPattern)
+  const { pattern, arg } = find(patterns, loc.pathname) ?? {}
   
-  return path && createEvent(eventsByPath[path], loc, additionalArg, arg)
+  return pattern && createEvent(eventsByPattern[pattern], loc, additionalArg, arg)
 }
 
 
@@ -33,16 +33,16 @@ const createEvent = (event, loc, additionalArg, arg) => {
 }
 
 
-const find = (paths, pathname) => {
-  for (const path of paths) {
-    const match = isMatch(pathname, path)
+const find = (patterns, pathname) => {
+  for (const pattern of patterns) {
+    const match = isMatch(pathname, pattern)
     if (match) return match
   }
 }
 
 
-const isMatch = (pathname, path) => {
-  const { re, keys } = cache[path] ?? compilePath(path)
+const isMatch = (pathname, pattern) => {
+  const { re, keys } = cache[pattern] ?? compilePath(pattern)
   const match = re.exec(pathname)
 
   if (!match) return
@@ -52,7 +52,7 @@ const isMatch = (pathname, path) => {
 
   keys.forEach((key, i) => arg[key.name] = values[i])
   
-  return { path, arg }
+  return { pattern, arg }
 }
 
 

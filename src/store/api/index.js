@@ -46,7 +46,7 @@ export default (top, state, focusedModulePath) => {
     modulePathsById: {},
     modelsByModulePath: {},
 
-    eventsByPath: {},
+    eventsByPattern: {},
     eventsByType: {},
   
     listeners,
@@ -131,17 +131,17 @@ export default (top, state, focusedModulePath) => {
         state.basenameFull = parent.basenameFull + state.basename
       })
 
-      const { eventsByPath } = this.respond
+      const { eventsByPattern } = this.respond
       const next = {}
 
-      Object.keys(eventsByPath).forEach(prev => {
-        const event = eventsByPath[prev]
-        const path = event.module.basenameFull + event.path
-        next[path] = event
-        delete eventsByPath[prev]
+      Object.keys(eventsByPattern).forEach(prev => {
+        const event = eventsByPattern[prev]
+        const pattern = event.module.basenameFull + event.pattern
+        next[pattern] = event
+        delete eventsByPattern[prev]
       })
 
-      Object.assign(eventsByPath, next)
+      Object.assign(eventsByPattern, next)
 
       this.respond.history.changePath(e, true)
       this.respond.queueSaveSession()

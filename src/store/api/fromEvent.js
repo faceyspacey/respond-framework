@@ -4,9 +4,9 @@ import { cleanSearchHash, createRelativeUrl, queryHashToSearchHash } from '../..
 
 export default function(e) {
   const { event } = e
-  const { path } = event
+  const { pattern } = event
 
-  if (!path) return null
+  if (!pattern) return null
 
   const state = event.module
   const bn = state.basenameFull
@@ -19,13 +19,13 @@ export default function(e) {
     return { url, pathname, search, hash }
   }
   else if (e.query || e.hash) {                   
-    const pathname = bn + createPathname(path, e)  
+    const pathname = bn + createPathname(pattern, e)  
     const { search, hash } = queryHashToSearchHash(e, state)
     const url = createRelativeUrl(pathname, search, hash)
     return { url, pathname, search, hash }
   }
   else {
-    const pathname = bn + createPathname(path, e)
+    const pathname = bn + createPathname(pattern, e)
     return { url: pathname, pathname, search: '', hash: '' }
   }
 }
@@ -36,12 +36,12 @@ const cache = {}
 
 const opts = { encode: x => x } // just pathname by default, eg: '/foo'
 
-const createPathname = (path, e) => {
+const createPathname = (pattern, e) => {
   try {
-    const argsToPathName = cache[path] ??= compile(path)
+    const argsToPathName = cache[pattern] ??= compile(pattern)
     return argsToPathName(e, opts)
   }
   catch (error) {
-    throw new Error(`event.path "${path}" for event "${e.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)
+    throw new Error(`event.pattern "${pattern}" for event "${e.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)
   }
 }

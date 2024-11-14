@@ -551,6 +551,9 @@ if (possibleDuplicate) {
 #make history work on reload with only 1 click by counting that click towards the history push
 #multiple references in sessionStorage come out as different objects
 
+#rename modulePath to path and path to pattern
+#assign to orig rather than proxy until end of createModule
+
 
 ?selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
 ?the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
@@ -560,8 +563,6 @@ if (possibleDuplicate) {
 
 
 
-assign to orig rather than proxy until end of createModule
-rename modulePath to path and path to pattern
 
 
 
