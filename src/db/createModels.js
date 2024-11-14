@@ -1,10 +1,10 @@
 import mixin from './model.client.js'
 
 
-export default (models, db, parent, respond, modulePath) => {
+export default (models, db, parent, respond, branch) => {
   if (!models) {
     if (parent.models) return parent.models
-    models = respond.findInClosestAncestor('models', modulePath) ?? {}
+    models = respond.findInClosestAncestor('models', branch) ?? {}
   }
 
   const shared = models.shared ?? {}
@@ -21,7 +21,7 @@ export default (models, db, parent, respond, modulePath) => {
     models[k] = createModel(k, shared[k], client[k], mixin, extra)
   }
 
-  return respond.modelsByModulePath[modulePath] = models
+  return respond.modelsByModulePath[branch] = models
 }
 
 
@@ -33,8 +33,8 @@ export const createModel = (k, shared, serverOrClient, mixin, extra) => {
   Object.defineProperty(Model, 'name', { value: k })
   Object.defineProperties(Model.prototype, descriptors)
 
-  function Model(doc, modulePath) {
-    if (modulePath !== undefined) this.__modulePath = modulePath
+  function Model(doc, branch) {
+    if (branch !== undefined) this.__modulePath = branch
     if (!doc) return
     Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instant properties of the same name as prototype getters without error
   }

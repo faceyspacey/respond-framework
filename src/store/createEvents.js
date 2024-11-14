@@ -10,14 +10,14 @@ export default function(proto, ...args) {
   extractedEvents.clear()
 }
 
-function createEvents(respond, state, events = {}, propEvents = {}, modulePath, ns = '', nsObj, parentType) {
+function createEvents(respond, state, events = {}, propEvents = {}, branch, ns = '', nsObj, parentType) {
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same pattern, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same pattern, and the primary one is matched on first load, but you can dispatch different events that will have the same pattern but different queries
 
   const isModule = !ns && !isBuiltIns
-  const init = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: 'init' }, modulePath, '', 'init')) // same init event reference on all modules
+  const init = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: 'init' }, branch, '', 'init')) // same init event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
   if (init) Object.assign(acc, { init })
@@ -34,13 +34,13 @@ function createEvents(respond, state, events = {}, propEvents = {}, modulePath, 
       acc[k] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(propConfig ?? config, isBuiltIns)) {
-      acc[k] = createEvents(respond, state, config, propConfig, modulePath, ns ? `${ns}.${k}` : k)
+      acc[k] = createEvents(respond, state, config, propConfig, branch, ns ? `${ns}.${k}` : k)
     }
     else if (propConfig) {
-      acc[k] = createEvent(respond, state, propConfig, modulePath, ns, k, acc) // fresh event passed as prop
+      acc[k] = createEvent(respond, state, propConfig, branch, ns, k, acc) // fresh event passed as prop
     }
     else if (config) {
-      acc[k] = createEvent(respond, state, config, modulePath, ns, k, nsObj || acc, parentType)
+      acc[k] = createEvent(respond, state, config, branch, ns, k, nsObj || acc, parentType)
     }
 
     if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
@@ -51,18 +51,18 @@ function createEvents(respond, state, events = {}, propEvents = {}, modulePath, 
 
 
 
-const createEvent = (respond, state, config, modulePath, _namespace, _type, nsObj, parentType) => {
+const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, parentType) => {
   const isBuiltIn = !!parentType
   const _typeResolved = isBuiltIn ? `${parentType}.${_type}` : _type 
     
-  const namespace = modulePath
-    ? _namespace ? `${modulePath}.${_namespace}` : modulePath
+  const namespace = branch
+    ? _namespace ? `${branch}.${_namespace}` : branch
     : _namespace
 
   const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
 
   const kind = config.kind ?? (config.pattern ? kinds.navigation : kinds.submission)
-  const info = { type, namespace, kind, _type: _typeResolved, _namespace, modulePath }
+  const info = { type, namespace, kind, _type: _typeResolved, _namespace, branch }
 
   let event = window.state?.respond?.eventsByType[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
@@ -85,7 +85,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     return applyTransform(respond, e, dispatch, trigger)
   }
 
-  const children = !isBuiltIn && createEvents(respond, state, createBuiltIns(config), undefined, modulePath, _namespace, nsObj, _type)
+  const children = !isBuiltIn && createEvents(respond, state, createBuiltIns(config), undefined, branch, _namespace, nsObj, _type)
 
   const dispatch = (arg, meta) => respond.dispatch(event(arg, meta))
 

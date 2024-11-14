@@ -24,7 +24,7 @@ export default function (state, e) {
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
-  if (e.modulePath === 'replayTools' && !replayTools.config.log) {
+  if (e.branch === 'replayTools' && !replayTools.config.log) {
     mergeModulesPrevState(replayTools, respond.snapshot(replayTools))
     return
   }

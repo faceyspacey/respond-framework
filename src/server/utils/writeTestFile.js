@@ -2,8 +2,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 
-export default (name, modulePath, settings, events) => {
-	const { filename, content } = createTest(name, modulePath, settings, events)
+export default (name, branch, settings, events) => {
+	const { filename, content } = createTest(name, branch, settings, events)
   writeTestFile(filename, content)
   return filename
 }
@@ -11,8 +11,8 @@ export default (name, modulePath, settings, events) => {
 
 
 
-const createTest = (name, modulePath, settings, events) => {
-  const moduleDir = createModuleDir(modulePath)
+const createTest = (name, branch, settings, events) => {
+  const moduleDir = createModuleDir(branch)
   const filename = createFilename(moduleDir, name)
   const levels = name.split('/').length
   const content = createTestFile(moduleDir, levels, settings, cleanAndNumberEvents(events))
@@ -20,11 +20,11 @@ const createTest = (name, modulePath, settings, events) => {
 }
 
 
-const createModuleDir = modulePath => {
+const createModuleDir = branch => {
   const projectDir = path.resolve()
 
-  return modulePath
-    ? modulePath.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir)
+  return branch
+    ? branch.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir)
     : projectDir
 }
 

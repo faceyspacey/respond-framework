@@ -7,19 +7,19 @@ import RespondContext from './context.js'
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const top = useContext(RespondContext)
-    const modulePath = top.modulePathsById[id]
-    return top.modulePaths[modulePath]
+    const branch = top.modulePathsById[id]
+    return top.modulePaths[branch]
   }
 
 
   const useRespond = sync => {
     const top = useContext(RespondContext)
-    const modulePath = top.modulePathsById[id]
+    const branch = top.modulePathsById[id]
 
     const snap = useSnapshot(top, sync)
-    const state = sliceByModulePath(snap, modulePath) // selector props require slicing top.state to crawl to top of state tree
+    const state = sliceByModulePath(snap, branch) // selector props require slicing top.state to crawl to top of state tree
 
-    const store = top.modulePaths[modulePath]
+    const store = top.modulePaths[branch]
 
     return { state, events: state.events, store }
   }

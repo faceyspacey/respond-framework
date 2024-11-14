@@ -1,5 +1,5 @@
-export default (state, e, path, configs) => {
-  const config = configs[path]
+export default (state, e, branch, configs) => {
+  const config = configs[branch]
   const setting = config[e.meta.name]
   
   if (setting.cascade === false) return
@@ -9,7 +9,7 @@ export default (state, e, path, configs) => {
   // pre-sorted by ancestors first in replays/index.js.createReplaySettings.traverseAllModulesBreadthFirst
   Object.keys(state) // eg: ['', 'admin', 'website', 'admin.foo', 'admin.foo.etc']
     .forEach(p => {
-      const isDescendent = p.indexOf(path) === 0 && p !== path
+      const isDescendent = p.indexOf(branch) === 0 && p !== branch
       if (!isDescendent) return
 
       const config = configs[p]

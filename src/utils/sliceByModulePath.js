@@ -1,18 +1,18 @@
-export default function sliceByModulePath(obj, modulePath) {
-  if (!modulePath) return obj
+export default function sliceByModulePath(obj, branch) {
+  if (!branch) return obj
   if (!obj) return
   
-  const modules = modulePath.split('.')
+  const modules = branch.split('.')
   return modules.reduce((slice, k) => slice[k], obj)
 }
 
 
 
-export const sliceEventByModulePath = (e, modulePath = e.modulePath) => {
-  if (!modulePath) return e
+export const sliceEventByModulePath = (e, branch = e.branch) => {
+  if (!branch) return e
 
-  const type = stripPath(modulePath, e.type)
-  const namespace = stripPath(modulePath, e.namespace)
+  const type = stripPath(branch, e.type)
+  const namespace = stripPath(branch, e.namespace)
 
   return { ...e, type, namespace }
 }
@@ -35,25 +35,25 @@ export const prependPath = (a = '', b = '') =>
 
 
 export const prependModulePathToE = e => {
-  const namespace = prependPath(e.modulePath, e._namespace)
+  const namespace = prependPath(e.branch, e._namespace)
   const type = namespace ? `${namespace}.${e._type}` : e._type
 
   return { ...e, type, namespace }
 }
 
 
-export const recreateFullType = (e, modulePath = e.modulePath) => {
-  const namespace = prependPath(modulePath, e._namespace)
+export const recreateFullType = (e, branch = e.branch) => {
+  const namespace = prependPath(branch, e._namespace)
   return namespace ? `${namespace}.${e._type}` : e._type
 }
 
 
 
-export const nestAtModulePath = (modulePath, value, top = {}) => {
+export const nestAtModulePath = (branch, value, top = {}) => {
   let slice = top
   
-  if (modulePath) {
-    const modules = modulePath.split('.')
+  if (branch) {
+    const modules = branch.split('.')
 
     for (const k of modules) {
       slice = slice[k] ?? (slice[k] = {})

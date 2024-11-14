@@ -8,11 +8,11 @@ import createApiCache from './utils/createApiCache.js'
 import obId from '../utils/objectIdDevelopment.js'
 
 
-export default (db, parentDb, props, state, respond, modulePath) => {
+export default (db, parentDb, props, state, respond, branch) => {
   let { options } = respond
 
   if (!db && !parentDb) {
-    ({ db, options } = respond.findClosestAncestorWith('db', modulePath) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db
+    ({ db, options } = respond.findClosestAncestorWith('db', branch) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db
   }
   else if (!db) return parentDb
 
@@ -32,16 +32,16 @@ export default (db, parentDb, props, state, respond, modulePath) => {
       }
     }),
     _call(controller, method) {
-      const { models, modulePath } = state
+      const { models, branch } = state
     
       const Model = models[controller]
 
       if (method === 'make') {
-        return d => new Model({ ...d, __type: controller }, modulePath)
+        return d => new Model({ ...d, __type: controller }, branch)
       }
 
       if (method === 'create') {
-        return d => new Model({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
+        return d => new Model({ ...d, __type: controller, id: d?.id || obId() }, branch)
       }
     
       let useCache
@@ -51,27 +51,27 @@ export default (db, parentDb, props, state, respond, modulePath) => {
 
       async function meth(...args) {
         const Controller = db.controllers[controller]
-        if (!Controller) throw new Error(`controller "${controller}" does not exist in ${modulePath ?? 'top'} module`)
+        if (!Controller) throw new Error(`controller "${controller}" does not exist in ${branch ?? 'top'} module`)
     
         const { token, userId, adminUserId, basename, basenameFull } = state.getStore()
         const context = { token, userId, adminUserId, basename, basenameFull, ...options.getContext(state, controller, method, args) }
-        const body = { ...context, modulePath, controller, method, args: clean(argsIn(args), state), first: !state.__dbFirstCall  }
+        const body = { ...context, branch, controller, method, args: clean(argsIn(args), state), first: !state.__dbFirstCall  }
     
         const cached = useCache && cache.get(body)
 
         if (cached) {
           const response = Object.assign({}, cached, { meta: { dbCached: true } })
-          return handleResponse(state, { modulePath, controller, method, args, response })
+          return handleResponse(state, { branch, controller, method, args, response })
         }
 
         const res = await new Controller(secret)._callFilteredByRole(body)
 
         await simulateLatency(state)
-        const response = clean(res, state, modulePath)
+        const response = clean(res, state, branch)
 
         if (useCache) cache.set(body, response)
 
-        return handleResponse(state, { modulePath, controller, method, args, response })
+        return handleResponse(state, { branch, controller, method, args, response })
       }
     }
   })

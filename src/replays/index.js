@@ -32,8 +32,8 @@ const createState = (top, depth, { focusedModulePath, settings: input }) => {
   const configs = {}
   const settings = {}
 
-  const path = input?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
-  const nested = nestAtModulePath(path, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
+  const branch = input?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
+  const nested = nestAtModulePath(branch, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
   
   createAllSettingsBreadth(top, nested, depth, configs, settings)
 
@@ -53,8 +53,8 @@ const createAllSettingsBreadth = (mod, input, depth, configs, settings, replays 
     mod.replays.settings = defaultCreateSettings(mod.replays.config, input)
   }
 
-  configs[mod.modulePath] = replays.config
-  settings[mod.modulePath] = replays.settings // replays + db inherited if no mod.db/replays
+  configs[mod.branch] = replays.config
+  settings[mod.branch] = replays.settings // replays + db inherited if no mod.db/replays
   
   depth.unshift([mod, replays])
 
@@ -67,10 +67,10 @@ const createAllSettingsBreadth = (mod, input, depth, configs, settings, replays 
 
 const finalize = (state, seed, shared = {}) => ([mod, replays]) => { 
   if (mod.db) { // only call for modules that have actual replays and therefore db/seed data
-    replays.db = createDbWithSeed(state, seed, shared, replays, mod.modulePath) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
+    replays.db = createDbWithSeed(state, seed, shared, replays, mod.branch) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
   }
 
-  const s = stateForNormalizedPath(state, mod.modulePath)
+  const s = stateForNormalizedPath(state, mod.branch)
 
   if (s) { // if no state, then module is above currently focused one
     Object.getPrototypeOf(s).replays = s.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed

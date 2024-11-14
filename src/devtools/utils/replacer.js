@@ -9,7 +9,7 @@ const isEventFunction = v => v._symbol === symbol
 export default function(k, v) {
   if (k === '_type') return
   if (k === '_namespace') return
-  if (k === 'modulePath') return
+  if (k === 'branch') return
 
   if (k === '__prefix') return
 

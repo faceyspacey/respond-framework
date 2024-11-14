@@ -1,9 +1,9 @@
-export default (key, modulePath, top) => {
-  if (!modulePath) return top[key]  // top.db
+export default (key, branch, top) => {
+  if (!branch) return top[key]  // top.db
 
   let mod = top
 
-  return modulePath                 // 'admin.foo.bar'
+  return branch                 // 'admin.foo.bar'
     .split('.')                     // ['admin', 'foo', 'bar]
     .slice(0, -1)                   // ['admin', 'foo']   
     .map(k => mod = mod[k])         // [admin, foo]
@@ -13,12 +13,12 @@ export default (key, modulePath, top) => {
 }
 
 
-export const findClosestAncestorWith = (key, modulePath, top) => {
-  if (!modulePath) return top       // top
+export const findClosestAncestorWith = (key, branch, top) => {
+  if (!branch) return top       // top
 
   let mod = top
 
-  return modulePath                 // 'admin.foo.bar'
+  return branch                 // 'admin.foo.bar'
     .split('.')                     // ['admin', 'foo', 'bar]
     .slice(0, -1)                   // ['admin', 'foo']   
     .map(k => mod = mod[k])         // [admin, foo]
@@ -28,12 +28,12 @@ export const findClosestAncestorWith = (key, modulePath, top) => {
 }
 
 
-export const findClosestAncestorWithObjectContaining = (key, key2, modulePath, top) => {
-  if (!modulePath) return top       // top
+export const findClosestAncestorWithObjectContaining = (key, key2, branch, top) => {
+  if (!branch) return top       // top
 
   let mod = top
 
-  return modulePath                 // 'admin.foo.bar'
+  return branch                 // 'admin.foo.bar'
     .split('.')                     // ['admin', 'foo', 'bar]
     .slice(0, -1)                   // ['admin', 'foo']   
     .map(k => mod = mod[k])         // [admin, foo]

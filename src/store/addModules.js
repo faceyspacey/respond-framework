@@ -21,25 +21,25 @@ export default function addModule(
   hydration = {},
   parent = {},
   props = {},
-  path = '',
+  branch = '',
   name,
   ancestorPlugins,
 ) {
   const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
-  if (!id) throw new Error('respond: missing id on module: ' + path)
+  if (!id) throw new Error('respond: missing id on module: ' + branch)
 
-  r.modulePathsById[id] = path
-  r.modulePaths[path] = state
+  r.modulePathsById[id] = branch
+  r.modulePaths[branch] = state
   
-  const respond = { ...options.merge, ...r, options, modulePath: path, moduleKeys, overridenReducers: new Map }
+  const respond = { ...options.merge, ...r, options, branch, moduleKeys, overridenReducers: new Map }
   respond.respond = respond
   Object.defineProperty(respond, 'state', { value: state, enumerable: false, configurable: true })
 
   state.basename = hydration.basename ?? props.basename ?? mod.basename ?? ''
   state.basenameFull = (parent.basenameFull ?? '') + state.basename
 
-  const db = createClientDatabase(mod.db, parent.db, props, state, respond, path)
-  const models = createModels(mod.models, db, parent, respond, path)
+  const db = createClientDatabase(mod.db, parent.db, props, state, respond, branch)
+  const models = createModels(mod.models, db, parent, respond, branch)
 
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
@@ -49,22 +49,22 @@ export default function addModule(
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
   
-  createEvents(proto, respond, state, evs, propEvents, path)
+  createEvents(proto, respond, state, evs, propEvents, branch)
   createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {
-    const p = path ? `${path}.${k}` : k
+    const p = branch ? `${branch}.${k}` : k
     state[k] = Object.create({})
     addModule(mod[k], r, state[k], hydration[k], state, mod[k].props, p, k, propPlugins)
 
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
-    //   const p = path ? `${path}.${k2}` : k2
+    //   const p = branch ? `${branch}.${k2}` : k2
     //   state[k][k2] = addModule(mod, respond, k2, p, state, mod.props)
     // }
   }
 
-  if (!path && !isProd) { // add replayTools to top module only
+  if (!branch && !isProd) { // add replayTools to top module only
     const k = 'replayTools'
     state[k] = Object.create({})
     addModule(replayToolsModule, r, state[k], hydration[k], state, undefined, k, k, propPlugins)

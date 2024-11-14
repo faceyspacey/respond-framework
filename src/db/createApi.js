@@ -36,18 +36,18 @@ const createHandler = ({
   logResponse = false
 }) => async (req, res) => {
   const { body } = req
-  const { modulePath, controller, method } = body
+  const { branch, controller, method } = body
 
   const Controller = findController
-    ? findController(controllersByModulePath, modulePath, controller)
-    : controllersByModulePath[modulePath][controller] // eg: controllers['admin.foo'].user
+    ? findController(controllersByModulePath, branch, controller)
+    : controllersByModulePath[branch][controller] // eg: controllers['admin.foo'].user
 
   if (logRequest !== false) {
     console.log(`Respond (REQUEST): db.${controller}.${method}`, body)
   }
 
   if (!Controller) {
-    res.json({ error: 'controller-not-permitted', params: { modulePath, controller, method } })
+    res.json({ error: 'controller-not-permitted', params: { branch, controller, method } })
     return
   }
 
@@ -86,12 +86,12 @@ const createHandlerDev = opts => {
       return
     }
   
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, { modulePath: '', ...body })
+    console.log(`Respond (REQUEST): db.${controller}.${method}`, { branch: '', ...body })
   
     let response = await new Controller(req, io)._callFilteredByRole(body)
     response = response === undefined ? {} : response
   
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { modulePath: '', ...body, response })
+    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { branch: '', ...body, response })
     
     res.json(response)
   }

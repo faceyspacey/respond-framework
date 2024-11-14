@@ -58,7 +58,7 @@ const findExistingProxyOrObject = (po, notifyParent, cache) => {
 
   if (sub) {
     sub.listeners.add(notifyParent)
-    sub.orig.__refId ??= new ObjectId().toString()
+    // sub.orig.__refId ??= new ObjectId().toString()
     return po
   }
 
@@ -67,7 +67,7 @@ const findExistingProxyOrObject = (po, notifyParent, cache) => {
   if (proxy) {
     const sub = ps.get(proxy)
     sub.listeners.add(notifyParent)
-    po.__refId ??= new ObjectId().toString()
+    // po.__refId ??= new ObjectId().toString()
     return proxy
   }
 }

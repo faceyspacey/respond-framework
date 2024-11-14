@@ -11,10 +11,10 @@ export default (dir, tc) => {
 
   files.forEach(filename => {
     const ComponentName = filename.replace('.js', '')
-    const modulePath = path.resolve(dir, filename)
+    const branch = path.resolve(dir, filename)
 
-    jest.doMock(modulePath, () => {
-      const mod = jest.requireActual(modulePath)
+    jest.doMock(branch, () => {
+      const mod = jest.requireActual(branch)
 
       const mock = {}
 

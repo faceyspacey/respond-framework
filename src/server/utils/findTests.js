@@ -21,9 +21,9 @@ export default ({ focusedModulePath = '', searched = '', filter }) => {
 
 
 
-const findTests = modulePath => {
-  const dir = modulePath
-    ? modulePath.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projDir()) // eg: /Users/me/app/modules/child/modules/grandChild
+const findTests = branch => {
+  const dir = branch
+    ? branch.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projDir()) // eg: /Users/me/app/modules/child/modules/grandChild
     : projDir()+ '/__tests__'                                                        // eg: /Users/me/app/__tests__
   
   return findTestsForModule(dir)
@@ -66,9 +66,9 @@ export const findTest = filename => {
     
     const updatedAt = fs.statSync(filename).mtime.getTime()
 
-    const { id, name, modulePath } = createId(filename)
+    const { id, name, branch } = createId(filename)
 
-    return { id, name, modulePath, filename, updatedAt, settings, events }
+    return { id, name, branch, filename, updatedAt, settings, events }
   }
   catch (e) {
     throw new Error(filename + ' is in an invalid test file. You likely modified it manually and broke it. Test files must follow the specific format of other tests.')
@@ -84,9 +84,9 @@ const createId = filename => {
 
   const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'child/dir/some-test.js']
   const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])          // eg: ['', 'admin', 'child']
-  const modulePath = moduleParts.join('.')                                // eg: 'admin.child'
+  const branch = moduleParts.join('.')                                // eg: 'admin.child'
 
-  return { id, name, modulePath }
+  return { id, name, branch }
 }
 
 

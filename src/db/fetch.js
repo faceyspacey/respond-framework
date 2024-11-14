@@ -4,7 +4,7 @@ import fetchWithTimeout from './fetchWithTimeout.js'
 
 
 export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => { 
-  const { controller, method, modulePath } = body
+  const { controller, method, branch } = body
   
   const url = `${apiUrl}/${controller}/${method}`
   const args = argsIn(body.args)
@@ -22,7 +22,7 @@ export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => {
   })
 
   const text = await res.text()
-  const response = JSON.parse(text, createReviver(state, modulePath))
+  const response = JSON.parse(text, createReviver(state, branch))
 
   if (cache) cache.set(body, response)
 

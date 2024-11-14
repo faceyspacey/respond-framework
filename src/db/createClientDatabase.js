@@ -29,14 +29,14 @@ export default !isProd ? mock : (db, parentDb, props, state, respond) => {
     },
     _call(controller, method) {
       const { options, state } = this
-      const { models, modulePath } = state
+      const { models, branch } = state
    
       if (method === 'make') {
-        return d => models[controller]({ ...d, __type: controller }, modulePath)
+        return d => models[controller]({ ...d, __type: controller }, branch)
       }
       
       if (method === 'create') {
-        return d => models[controller]({ ...d, __type: controller, id: d?.id || obId() }, modulePath)
+        return d => models[controller]({ ...d, __type: controller, id: d?.id || obId() }, branch)
       }
     
       let useCache
@@ -49,7 +49,7 @@ export default !isProd ? mock : (db, parentDb, props, state, respond) => {
         const context = { token, userId, adminUserId, basename, basenameFull, ...getContext(state, controller, method, args) }
     
         try {
-          const body = { ...context, modulePath, controller, method, args, first: !state.__dbFirstCall }
+          const body = { ...context, branch, controller, method, args, first: !state.__dbFirstCall }
           const response = await fetch(apiUrl, body, state, useCache && cache)
     
           state.__dbFirstCall = true

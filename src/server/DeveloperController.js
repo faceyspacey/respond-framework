@@ -24,10 +24,10 @@ export default {
     }
   },
 
-  writeTestFile({ name, modulePath = '', settings, events }) {
+  writeTestFile({ name, branch = '', settings, events }) {
     if (this.disableTestSaving) return { error: `You can't save tests on the development server` }
     
-    const filename = writeTestFile(name, modulePath, settings, events)
+    const filename = writeTestFile(name, branch, settings, events)
     openFile(filename)
     return { filename, success: true }
   },

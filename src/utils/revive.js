@@ -1,7 +1,7 @@
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
-export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath = '', refs = {}) => function rev(v, k) {
+export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, branch = '', refs = {}) => function rev(v, k) {
   if (dateKeyReg.test(k))   return v ? new Date(v) : v
   if (!canProxy(v))         return v
   if (v.__event)            return eventsByType[v.type] ?? v
@@ -10,7 +10,7 @@ export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath 
   let snap
 
   if (v.__type) {
-    const p = v.__modulePath ?? modulePath
+    const p = v.__modulePath ?? branch
     const Model = modelsByModulePath[p]?.[v.__type] ?? modelsByModulePath['']?.[v.__type]
 
     snap = {}
@@ -30,9 +30,9 @@ export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath 
 
 
 
-export const createReviver = (state = {}, modulePath) => {
-  const isApiResponse = modulePath !== undefined
-  return isApiResponse ? createApiReviver(state, modulePath) : createStateReviver(state) 
+export const createReviver = (state = {}, branch) => {
+  const isApiResponse = branch !== undefined
+  return isApiResponse ? createApiReviver(state, branch) : createStateReviver(state) 
 }
 
 
@@ -57,14 +57,14 @@ export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} 
 
 
 
-export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '', refs = {}) => (k, v) => {
+export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, branch = '', refs = {}) => (k, v) => {
   if (dateKeyReg.test(k))  return v ? new Date(v) : v
   if (!canProxy(v))        return v
   if (v.__event)           return eventsByType[v.type] ?? v
   if (v.__refId)           return refs[v.__refId] ??= v
 
   if (v.__type) {
-    const p = v.__modulePath ?? modulePath // usually __modulePath won't exist when coming from an API response, and the whole purpose of this reviver is for module-specified db to assign the modulePath via its argument to the outer function, but it's possible that a model (from a different module) passed from the client to the server can be returned from the server, in which case we preserve its __modulePath
+    const p = v.__modulePath ?? branch // usually __modulePath won't exist when coming from an API response, and the whole purpose of this reviver is for module-specified db to assign the branch via its argument to the outer function, but it's possible that a model (from a different module) passed from the client to the server can be returned from the server, in which case we preserve its __modulePath
     const Model = modelsByModulePath[p][v.__type] ?? modelsByModulePath['']?.[v.__type] // fallback to models from top module in case models not supplied in child module 
     if (!Model) return v
     return new Model(v, p)

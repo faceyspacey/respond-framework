@@ -6,7 +6,7 @@ export default function createModulePathsAll(mod, paths = [], p = '') {
   mod[isModule] = true
   mod.moduleKeys = []
   mod.moduleKeysUser = []
-  mod.modulePath = p
+  mod.branch = p
 
   paths.push(p)
 

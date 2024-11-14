@@ -110,5 +110,5 @@ export default storeOld => {
 
 
 const silent = (storeOld, e, advanced = false) =>
-  (e?.modulePath === 'replayTools' && !storeOld.replays.options.log) ||
+  (e?.branch === 'replayTools' && !storeOld.replays.options.log) ||
   (advanced && !storeOld.replays?.settings.advanced)

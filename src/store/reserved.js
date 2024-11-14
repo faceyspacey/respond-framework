@@ -5,7 +5,7 @@ export const isModule = Symbol('isModule')
 export const moduleApi = {
   __esModule: true,
   id: true,
-  modulePath: true,
+  branch: true,
   moduleKeys: true,
   ignoreParents: true,
   initialState: true,

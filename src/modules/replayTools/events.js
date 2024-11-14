@@ -60,9 +60,9 @@ export default {
       const topState = respond.getStore()
       const { focusedModulePath } = topState.replayState
 
-      if (test.modulePath.indexOf(focusedModulePath) !== 0) { // ensure test will run in its original module or a parent module
-        topState.replayState.focusedModulePath = test.modulePath
-        state.focusedModulePath = test.modulePath
+      if (test.branch.indexOf(focusedModulePath) !== 0) { // ensure test will run in its original module or a parent module
+        topState.replayState.focusedModulePath = test.branch
+        state.focusedModulePath = test.branch
       }
       
       return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
@@ -95,10 +95,10 @@ export default {
       const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
       if (!name) return
 
-      const { settings, focusedModulePath: modulePath } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
+      const { settings, focusedModulePath: branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
       const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
-      await db.developer.writeTestFile({ name, modulePath, settings, events })
+      await db.developer.writeTestFile({ name, branch, settings, events })
       await tests.dispatch({ sort: 'recent' })
     }
   },
@@ -255,19 +255,19 @@ const uniqueDragId = () => ++id + ''
 
 
 
-const gatherAllSettings = (settings, modulePath, top) => {
+const gatherAllSettings = (settings, branch, top) => {
   const nestedSettings = nestSettings(settings)
 
-  const mod = sliceByModulePath(top, modulePath)
+  const mod = sliceByModulePath(top, branch)
   const hasDb = mod.db || mod.replays?.standalone
 
   if (hasDb) {
-    settings = sliceByModulePath(nestedSettings, modulePath) ?? {} // undefined could happen if all settings undefined
+    settings = sliceByModulePath(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
   }
   else {
-    modulePath = findClosestAncestorWith('db', modulePath, top)?.modulePath ?? ''
-    settings = sliceByModulePath(nestedSettings, modulePath) ?? {}
-    settings.module = modulePath
+    branch = findClosestAncestorWith('db', branch, top)?.branch ?? ''
+    settings = sliceByModulePath(nestedSettings, branch) ?? {}
+    settings.module = branch
   }
 
   return settings

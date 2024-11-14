@@ -147,27 +147,27 @@ export default (top, state, focusedModulePath) => {
       this.respond.queueSaveSession()
     },
   
-    findInClosestAncestor(key, modulePath) {
-      modulePath = focusedModulePath
-        ? modulePath ? focusedModulePath + '.' + modulePath : focusedModulePath
-        : modulePath
+    findInClosestAncestor(key, branch) {
+      branch = focusedModulePath
+        ? branch ? focusedModulePath + '.' + branch : focusedModulePath
+        : branch
 
-      return findInClosestAncestor(key, modulePath, this.respond.top)
+      return findInClosestAncestor(key, branch, this.respond.top)
     },
 
-    findClosestAncestorWith(key, modulePath) {
-      modulePath = focusedModulePath
-        ? modulePath ? focusedModulePath + '.' + modulePath : focusedModulePath
-        : modulePath
+    findClosestAncestorWith(key, branch) {
+      branch = focusedModulePath
+        ? branch ? focusedModulePath + '.' + branch : focusedModulePath
+        : branch
 
-      return findClosestAncestorWith(key, modulePath, this.respond.top)
+      return findClosestAncestorWith(key, branch, this.respond.top)
     },
   
     subscribe(send) {
       send.module = this.respond.state
-      send.modulePath = this.respond.state.modulePath // modulePath of module attached to `respond` object unique to each module
+      send.branch = this.respond.state.branch // branch of module attached to `respond` object unique to each module
       
-      const mp = send.modulePath
+      const mp = send.branch
       
       const sendOuter = send.length < 2 || !mp
         ? send
@@ -190,7 +190,7 @@ export default (top, state, focusedModulePath) => {
       if (event === state.events.init) return
 
       const sent = listeners
-        .filter(send => e.modulePath.indexOf(send.modulePath) === 0) // event is child of subscribed module or the same module
+        .filter(send => e.branch.indexOf(send.branch) === 0) // event is child of subscribed module or the same module
         .map(send => send(send.module, e))
 
       if (sent.length > 0) promises.push(sent)
