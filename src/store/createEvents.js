@@ -94,8 +94,10 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     const fetch = e.event.prefetch ?? e.event.fetch
     await fetch.call(state, state, e)
   })
+
+  const toJSON = () => ({ __event: true, type })
   
-  Object.assign(event, config, info, { dispatch, prefetch, is, in: includesThis, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+  Object.assign(event, config, info, { dispatch, prefetch, is, in: includesThis, toJSON, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
   Object.defineProperty(event, 'module', { value: state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 
@@ -160,6 +162,7 @@ function is(namespaceOrEvent) {
 function includesThis(...namespacesOrEvents) {
   return namespacesOrEvents.includes(this)
 }
+
 
 
 const assign = Object.assign

@@ -510,6 +510,9 @@ apply prefixPath function in createEvents
 #how to easily allow tests to play in a parent module
 
 
+#strategy to use models for methods on arbitrary nested objects
+
+
 if (isObject(response) && shouldNestByModelName(response)) {
   const value = keyNames[controller][method]
   Object.defineProperty(response, modelNameSymbol, { value, enumerable: false, configurable: true })
@@ -519,7 +522,7 @@ const modelName = res?.[modelNameSymbol]
 if (modelName) res = { [modelName]: res }
 await e.event.done.dispatch(res, { from: e })
 
-#strategy to use models for methods on arbitrary nested objects
+
 
 const possibleDuplicate = v?.__id
 
@@ -546,6 +549,8 @@ if (possibleDuplicate) {
 #createControllersTree
 
 #make history work on reload with only 1 click by counting that click towards the history push
+#multiple references in sessionStorage come out as different objects
+
 
 ?selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
 ?the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
@@ -555,10 +560,10 @@ if (possibleDuplicate) {
 
 
 
-multiple references in sessionStorage come out as different objects
+assign to orig rather than proxy until end of createModule
 rename modulePath to path and path to pattern
 
-assign to orig rather than proxy until end of createModule
+
 
 basenameFull stored in its own sessionStorage, along with replayState
 
@@ -572,8 +577,3 @@ lazy event function creation
 make all tools replacable by user (including reviver)
 re-organize files
 finalize implementation of respond object etc
-
-replays without db
-replays with inherited db
-
-db with different replays

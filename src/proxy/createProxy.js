@@ -1,10 +1,11 @@
 
 import { canProxy, proxyStates as ps } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
+import { ObjectId } from 'bson'
 
 
 export default function createProxy(o, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
-  const found = findExistingProxy(o, notifyParent, cache)
+  const found = findExistingProxyOrObject(o, notifyParent, cache)
   if (found) return found
 
   const sub = new Subscription(o, snapCache)
@@ -52,19 +53,21 @@ class Subscription {
 
 
 
-const findExistingProxy = (o, notifyParent, cache) => {
-  const sub = ps.get(o)       // proxy assigned that exists elsewhere
+const findExistingProxyOrObject = (po, notifyParent, cache) => {
+  const sub = ps.get(po)       // proxy assigned that exists elsewhere
 
   if (sub) {
     sub.listeners.add(notifyParent)
-    return o
+    sub.orig.__refId ??= new ObjectId().toString()
+    return po
   }
 
-  const proxy = cache.get(o)  // object assigned that exists somewhere else as a proxy
+  const proxy = cache.get(po)  // object assigned that exists somewhere else as a proxy
 
   if (proxy) {
     const sub = ps.get(proxy)
     sub.listeners.add(notifyParent)
+    po.__refId ??= new ObjectId().toString()
     return proxy
   }
 }

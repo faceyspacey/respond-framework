@@ -2,7 +2,7 @@ import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'
 import snapshot from '../proxy/snapshot.js'
 import { isProd } from './bools.js'
-import { createStateReviver, replacer as defaultReplacer } from './revive.js'
+import { createStateReviver } from './revive.js'
 import { idCounterRef } from './objectIdDevelopment.js'
 
 
@@ -37,13 +37,13 @@ export const parseJsonState = (json, state = {}) => {
   return JSON.parse(json, createStateReviver(state))
 }
 
-export const saveSessionState = (state, replacer) => {
-  sessionStorage.setItem('sessionState', stringifyState(state, replacer))
+export const saveSessionState = state => {
+  sessionStorage.setItem('sessionState', stringifyState(state))
 }
 
 
 
-const stringifyState = (state, replacer = defaultReplacer) => {
+const stringifyState = state => {
   const s = { ...snapshot(state) }
       
   if (s.replayTools) {
@@ -64,5 +64,5 @@ const stringifyState = (state, replacer = defaultReplacer) => {
 
   s.replayState = { ...s.replayState, status: 'session' }
   
-  return JSON.stringify(s, replacer)
+  return JSON.stringify(s)
 }

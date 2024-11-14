@@ -1,10 +1,11 @@
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
-export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath = '') => function rev(v, k) {
-  if (dateKeyReg.test(k)) return v ? new Date(v) : v
-  if (!canProxy(v))       return v
-  if (v.__event)          return eventsByType[v.type] ?? v
+export default ({ eventsByType = {}, modelsByModulePath = {} } = {}, modulePath = '', refs = {}) => function rev(v, k) {
+  if (dateKeyReg.test(k))   return v ? new Date(v) : v
+  if (!canProxy(v))         return v
+  if (v.__event)            return eventsByType[v.type] ?? v
+  if (v.__refId)               return refs[v.__refId] ??= v
 
   let snap
 
@@ -35,14 +36,10 @@ export const createReviver = (state = {}, modulePath) => {
 }
 
 
-export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}) => (k, v) => {
-  if (dateKeyReg.test(k)) {
-    return v ? new Date(v) : v
-  }
-
-  if (v?.__event) {
-    return eventsByType[v.type] ?? v
-  }
+export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, refs = {}) => (k, v) => {
+  if (dateKeyReg.test(k))  return v ? new Date(v) : v
+  if (v?.__event)          return eventsByType[v.type] ?? v
+  if (v.__refId)              return refs[v.__refId] ??= v
 
   if (v?.__type) {
     const p = v.__modulePath ?? ''
@@ -59,10 +56,11 @@ export const createStateReviver = ({ modelsByModulePath = {}, eventsByType = {} 
 
 
 
-export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '') => (k, v) => {
-  if (dateKeyReg.test(k)) return v ? new Date(v) : v
-  if (v?.__event) return eventsByType[v.type] ?? v
-  
+export const createApiReviver = ({ modelsByModulePath = {}, eventsByType = {} } = {}, modulePath = '', refs = {}) => (k, v) => {
+  if (dateKeyReg.test(k))   return v ? new Date(v) : v
+  if (v?.__event)           return eventsByType[v.type] ?? v
+  if (v.__refId)               return refs[v.__refId] ??= v
+
   if (v?.__type) {
     const p = v.__modulePath ?? modulePath // usually __modulePath won't exist when coming from an API response, and the whole purpose of this reviver is for module-specified db to assign the modulePath via its argument to the outer function, but it's possible that a model (from a different module) passed from the client to the server can be returned from the server, in which case we preserve its __modulePath
     const Model = modelsByModulePath[p][v.__type] ?? modelsByModulePath['']?.[v.__type] // fallback to models from top module in case models not supplied in child module 
@@ -116,8 +114,7 @@ export const createServerReviver = state => {
 
 
 
-export const replacer = (k, v) =>
-  typeof v === 'function' && v.__event ? { __event: true, type: v.type } : v
+export const replacer = (k, v) => v // remember: make models use their id not __refId
 
 
 
