@@ -1,4 +1,3 @@
-import { isNative, isTest } from '../../utils.js'
 import { createTrap, removeTrap } from '../createTrap.js'
 import { addPopListener, removePopListener } from './popListener.js'
 

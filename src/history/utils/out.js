@@ -1,14 +1,12 @@
 import { Linking } from 'react-native'
-import sessionStorage from '../utils/sessionStorage.js'
-import bs from './browserState.js'
-import * as bf from './utils/backForward.js'
-import { isNative, isTest } from '../utils/bools.js'
+import sessionStorage from '../../utils/sessionStorage.js'
+import bs from '../browserState.js'
+import * as buttons from './buttons.js'
+import { isNative, isTest } from '../../utils/bools.js'
 
 
-export default back => back ? backOut() : forwardOut()
 
-
-const backOut = async () => {
+export const back = async () => {
   window.state.respond.saveSessionState()
 
   bs.prevIndex = -1
@@ -16,14 +14,15 @@ const backOut = async () => {
   const { linkedOut, maxIndex } = bs
   sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
-  await bf.go(-getIndex())
+  await buttons.go(-getIndex())
   history.back()
 }
 
 
-const forwardOut = async () => {
+export const forward = async () => {
   if (!bs.linkedOut) {
-    await bf.go(bs.maxIndex - getIndex())
+    const delta = bs.maxIndex - getIndex()
+    await buttons.go(delta)
     bs.prevIndex = bs.maxIndex
     history.replaceState(history.state, '', window.state.prevUrl) // ensure the same/previous url appears on our placeholder tail entry
     return
@@ -37,7 +36,8 @@ const forwardOut = async () => {
   const { linkedOut, maxIndex } = bs
   sessionStorage.setItem('browserState', JSON.stringify({ linkedOut, maxIndex }))
 
-  await bf.go(bs.maxIndex - getIndex())
+  const delta = bs.maxIndex - getIndex()
+  await buttons.go(delta)
   history.forward()
 }
 

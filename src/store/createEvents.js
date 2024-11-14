@@ -80,7 +80,7 @@ const createEvent = (respond, state, config, modulePath, _namespace, _type, nsOb
     const e = { ...info, event, arg, meta }
 
     const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
-    const trigger = (a, m) => dispatch(a, { ...m, trigger: true })
+    const trigger = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m, trigger: true })
 
     return applyTransform(respond, e, dispatch, trigger)
   }

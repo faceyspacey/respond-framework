@@ -1,7 +1,7 @@
 import session from '../utils/sessionStorage.js'
 import bs from './browserState.js'
-import changePath from './changePath.js'
-import { linkOut } from './out.js'
+import changePath, { end} from './changePath.js'
+import { linkOut } from './utils/out.js'
 import { hasHistory } from '../utils/bools.js'
 
 
@@ -16,5 +16,6 @@ export default () => {
     state,
     changePath: hasHistory ? changePath : function() {},
     linkOut,
+    end,
   }
 }

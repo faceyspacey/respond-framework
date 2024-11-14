@@ -91,7 +91,7 @@ export default (top, state, focusedModulePath) => {
     async promisesCompleted(e) {
       await Promise.all(promises)
       promises.length = 0
-      ctx.changedPath = !e.meta.pop ? false : ctx.changedPath
+      ctx.changedPath = false
       this.queueSaveSession()
     },
 
