@@ -1,4 +1,4 @@
-export default function sliceByModulePath(obj, branch) {
+export default function sliceBranch(obj, branch) {
   if (!branch) return obj
   if (!obj) return
   
@@ -8,11 +8,11 @@ export default function sliceByModulePath(obj, branch) {
 
 
 
-export const sliceEventByModulePath = (e, branch = e.branch) => {
+export const sliceEventByBranch = (e, branch = e.branch) => {
   if (!branch) return e
 
-  const type = stripPath(branch, e.type)
-  const namespace = stripPath(branch, e.namespace)
+  const type = stripBranch(branch, e.type)
+  const namespace = stripBranch(branch, e.namespace)
 
   return { ...e, type, namespace }
 }
@@ -20,22 +20,27 @@ export const sliceEventByModulePath = (e, branch = e.branch) => {
 
 
 
-export const stripPath = (a, b) =>
+export const stripBranch = (a, b) =>
   a ? b.replace(new RegExp(`^${a}\.?`), '') : b
 
-export const stripPathDir = (a, b) =>
+export const stripBranchDir = (a, b) =>
   a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
 
 
 
-export const prependPath = (a = '', b = '') =>
+export const prependBranch = (a = '', b = '') =>
   a
     ? b ? `${a}.${b}` : a
     : b
 
 
-export const prependModulePathToE = e => {
-  const namespace = prependPath(e.branch, e._namespace)
+
+export const stripBranchIfAvailable = (a, b) =>
+  a ? b.indexOf(a) === 0 && stripBranch(a, b) : b // caller can do something else falsy
+
+
+export const prependBranchToE = e => {
+  const namespace = prependBranch(e.branch, e._namespace)
   const type = namespace ? `${namespace}.${e._type}` : e._type
 
   return { ...e, type, namespace }
@@ -43,13 +48,13 @@ export const prependModulePathToE = e => {
 
 
 export const recreateFullType = (e, branch = e.branch) => {
-  const namespace = prependPath(branch, e._namespace)
+  const namespace = prependBranch(branch, e._namespace)
   return namespace ? `${namespace}.${e._type}` : e._type
 }
 
 
 
-export const nestAtModulePath = (branch, value, top = {}) => {
+export const nestAtBranch = (branch, value, top = {}) => {
   let slice = top
   
   if (branch) {
@@ -75,11 +80,11 @@ export const traverseModuleChildren = (state, callback) => {
 }
 
 
-export const traverseModules = (state, callback, parent, p = '') => {
-  callback(state, parent, p)
+export const traverseModules = (state, callback, parent, b = '') => {
+  callback(state, parent, b)
 
   for (const k of state.moduleKeys) {
-    traverseModules(state[k], callback, state, p ? `${p}.${k}` : k)
+    traverseModules(state[k], callback, state, b ? `${b}.${k}` : k)
   }
 }
 
@@ -110,11 +115,4 @@ export const traverseModulesAsyncParallel = (top, callback) => {
   })
 
   return Promise.all(promises)
-}
-
-
-export const stateForNormalizedPath = (state, p) => {
-  const { modulePaths, focusedModulePath: fmp } = state.respond
-  const isDescendentOrFocusedTop = p.indexOf(fmp) === 0
-  return isDescendentOrFocusedTop && modulePaths[stripPath(fmp, p)] // there might be no state to assign state.respond.replays, as traversal to top was only required to gather all settings
 }

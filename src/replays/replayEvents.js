@@ -2,12 +2,12 @@ import createState from '../store/createState.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = this.topState.replayState.settings, focusedModulePath = this.topState.replayState.focusedModulePath) {
+export default async function(events, delay = 0, settings = this.topState.replayState.settings, focusedBranch = this.topState.replayState.focusedBranch) {
   const start = new Date
 
   this.playing = false // stop possible previous running replay
 
-  const state = createState(window.state.respond.top, { settings, focusedModulePath, status: 'replay' })
+  const state = createState(window.state.respond.top, { settings, focusedBranch, status: 'replay' })
   console.log('replayEvents.createModule', new Date - start)
 
   const last = new Date

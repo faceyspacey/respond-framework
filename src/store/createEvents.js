@@ -1,5 +1,5 @@
 import isNamespace from '../utils/isNamespace.js'
-import { stripPath } from '../utils/sliceByModulePath.js'
+import { stripBranch } from '../utils/sliceBranch.js'
 
 
 export const kinds = { init: 'init', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
@@ -101,6 +101,10 @@ const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, p
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
   Object.defineProperty(event, 'module', { value: state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 
+  if (respond.eventsByType[type]) {
+    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`) // same type could exist in both cases
+  }
+
   respond.eventsByType[type] = event
 
   if (config.pattern) {
@@ -127,12 +131,12 @@ const createBuiltIns = ({ done, error, data }) => ({
 
 
 const applyTransform = (respond, e, dispatch, trigger) => {
-  const { modulePathReduced } = respond.ctx
+  const { branchReduced } = respond.ctx
   let payload = { ...e.arg }
 
-  if (modulePathReduced) {
-    e.type = stripPath(modulePathReduced, e.type)             // remove pattern prefix so e objects created in reducers are unaware of parent modules
-    e.namespace = stripPath(modulePathReduced, e.namespace)   // eg: stripPath('parent', 'parent.child'): 'child'
+  if (branchReduced) {
+    e.type = stripBranch(branchReduced, e.type)             // remove pattern prefix so e objects created in reducers are unaware of parent modules
+    e.namespace = stripBranch(branchReduced, e.namespace)   // eg: stripBranch('parent', 'parent.child'): 'child'
   }
 
   if (e.event.transform) {

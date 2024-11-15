@@ -1,4 +1,4 @@
-import { replacer, createReviver } from '../utils/revive.js'
+import { createReviver } from '../utils/revive.js'
 import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
@@ -13,12 +13,9 @@ export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => {
   if (cached) return Object.assign({}, cached, { meta: { dbCached: true } })
 
   const res = await fetchWithTimeout(url, {
+    headers,
     method: 'POST',
-    body: JSON.stringify({ ...body, args }, replacer),
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    }
+    body: JSON.stringify({ ...body, args })
   })
 
   const text = await res.text()
@@ -32,6 +29,10 @@ export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => {
 
 const defaultApiUrl = defaultOrigin + '/api'
 
+const headers = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+}
 
 export const argsIn = args =>
   args.map(a => a === undefined ? '__undefined__' : a) // undefined becomes null when stringified, but controller functions may depend on undefined args and default parameters, so we convert this back to undefined server side

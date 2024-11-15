@@ -28,13 +28,13 @@ export default function createControllers(controllers, db, replays, options = {}
 }
 
 
-export const createControllersTree = ({ modules = {}, props = {}, ...db }, hash = {}, p = '') => {
-  hash[p] = {}
+export const createControllersTree = ({ modules = {}, props = {}, ...db }, hash = {}, b = '') => {
+  hash[b] = {}
   mergeProps(db, props)
-  createControllers(db, hash[p])
+  createControllers(db, hash[b])
   
   Object.keys(modules).forEach(k => {
-    createControllersTree(modules[k], undefined, hash, p ? `${p}.${k}` : k)
+    createControllersTree(modules[k], undefined, hash, b ? `${b}.${k}` : k)
   })
 
   return hash

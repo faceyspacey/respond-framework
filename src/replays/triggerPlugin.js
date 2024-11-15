@@ -1,7 +1,7 @@
 import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
-import { prependModulePathToE as fullPath } from '../utils/sliceByModulePath.js'
+import { prependBranchToE as fullPath } from '../utils/sliceBranch.js'
 import { mergeModulesPrevState } from '../store/hydrateModules.js'
 import { push } from '../history/changePath.js'
 import { hasHistory } from '../utils/bools.js'

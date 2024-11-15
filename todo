@@ -552,8 +552,8 @@ if (possibleDuplicate) {
 #multiple references in sessionStorage come out as different objects
 
 #rename modulePath to path and path to pattern
-#assign to orig rather than proxy until end of createModule
 
+#eventsByBranch -> eventsById
 
 ?selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
 ?the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
@@ -563,13 +563,14 @@ if (possibleDuplicate) {
 
 
 
-
-
+assign to orig rather than proxy until end of createModule
 
 basenameFull stored in its own sessionStorage, along with replayState
 
-for navigators, finalize strategy for `key`, eg url + type for navigations; finalize plan for normalizing event meta information in ancestor modules in userland
-eventsByType -> eventsById
+
+for navigators, finalize strategy for `key`, eg url + type for navigations
+finalize plan for normalizing event meta information in ancestor modules in userland
+
 lazy event function creation
 
 

@@ -1,4 +1,4 @@
-import { traverseModulesAsyncParallel } from './sliceByModulePath.js'
+import { traverseModulesAsyncParallel } from './sliceBranch.js'
 
 const loaded = Symbol('pluginsLoaded') // preserve through HMR, but not replays nor sessionStorage.getItem('sessionState')
 

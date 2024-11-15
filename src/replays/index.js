@@ -3,22 +3,22 @@ import defaultCreateSeed from './utils/createSeed.js'
 import defaultCreateToken from './utils/createToken.js'
 
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
-import { nestAtModulePath, stateForNormalizedPath } from '../utils/sliceByModulePath.js'
+import { nestAtBranch } from '../utils/sliceBranch.js'
 import { isProd } from '../utils/bools.js'
 
 
 export default (state, session, start = new Date) => {
   const { respond, replayTools } = state
-  const { top, cookies } = respond
+  const { top, cookies, branches } = respond
   const { replayState, __db: seed } = session
 
   const depth = []
   
-  Object.assign(replayTools, createState(top, depth, replayState))
-  replayState.settings ??= nestSettings(replayTools.settings) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
+  Object.assign(replayTools, createState(top, branches, depth, replayState))
+  replayState.settings ??= nestSettings(replayTools.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
   state.__db ??= {}
-  depth.forEach(finalize(state, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
+  depth.forEach(createDbWithSeed(state, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
   session.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   delete session.__db
@@ -28,20 +28,20 @@ export default (state, session, start = new Date) => {
 
 
 
-const createState = (top, depth, { focusedModulePath, settings: input }) => {
+const createState = (top, branches, depth, { focusedBranch, settings: input }) => {
   const configs = {}
   const settings = {}
 
-  const branch = input?.module ?? focusedModulePath // settings with a module start higher than the focusedModulePath where they get their ancestor replays from
-  const nested = nestAtModulePath(branch, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
+  const branch = input?.branch ?? focusedBranch // settings with a module start higher than the focusedBranch where they get their ancestor replays from
+  const nested = nestAtBranch(branch, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
   
-  createAllSettingsBreadth(top, nested, depth, configs, settings)
+  createAllSettingsBreadth(top, nested, branches, depth, configs, settings)
 
-  return { configs, settings, focusedModulePath }
+  return { configs, settings, focusedBranch }
 }
 
 
-const createAllSettingsBreadth = (mod, input, depth, configs, settings, replays = { config: {}, settings: {} }) => {
+const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings, replays = { config: {}, settings: {} }) => {
   if (mod.db) {
     replays = mod.db.replays
     replays.db = mod.db
@@ -56,34 +56,29 @@ const createAllSettingsBreadth = (mod, input, depth, configs, settings, replays 
   configs[mod.branch] = replays.config
   settings[mod.branch] = replays.settings // replays + db inherited if no mod.db/replays
   
+  const state = branches[mod.branchRelative] // branch might be outside focused module tree
+  if (state) state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+
   depth.unshift([mod, replays])
 
   for (const k of mod.moduleKeysUser) {
-    createAllSettingsBreadth(mod[k], input?.[k], depth, configs, settings, replays)
+    input = input?.[k]
+    if (input && (mod.db ||mod.replays) && replays[k])
+    createAllSettingsBreadth(mod[k], input, branches, depth, configs, settings, replays)
   }
 }
 
 
 
-const finalize = (state, seed, shared = {}) => ([mod, replays]) => { 
-  if (mod.db) { // only call for modules that have actual replays and therefore db/seed data
-    replays.db = createDbWithSeed(state, seed, shared, replays, mod.branch) // pass in replays containing pre-created settings with top-down inherited settings; assign to shared replays reference that will contain inherited settings
-  }
+const createDbWithSeed = (state, seed, shared = {}) => ([mod, replays]) => {
+  if (!mod.db) return // only modules that have actual replays and therefore db/seed data
 
-  const s = stateForNormalizedPath(state, mod.branch)
-
-  if (s) { // if no state, then module is above currently focused one
-    Object.getPrototypeOf(s).replays = s.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
-  }
-}
-
-
-const createDbWithSeed = (state, seed, shared, replays, p) => {
+  const b = mod.branch
   const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
 
-  state.__db[p] ??= {}
+  state.__db[b] ??= {}
 
-  Object.keys(db).forEach(k => mergeTable(state.__db[p], seed?.[p], shared, k, db[k], ))
+  Object.keys(db).forEach(k => mergeTable(state.__db[b], seed?.[b], shared, k, db[k], ))
   if (!seed) createSeed(settings, options, db)
 
   return db

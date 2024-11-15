@@ -30,7 +30,7 @@ export default opts => {
 
 
 const createHandler = ({
-  controllers: controllersByModulePath = {},
+  controllers: controllersByBranch = {},
   findController,
   logRequest = true,
   logResponse = false
@@ -39,8 +39,8 @@ const createHandler = ({
   const { branch, controller, method } = body
 
   const Controller = findController
-    ? findController(controllersByModulePath, branch, controller)
-    : controllersByModulePath[branch][controller] // eg: controllers['admin.foo'].user
+    ? findController(controllersByBranch, branch, controller)
+    : controllersByBranch[branch][controller] // eg: controllers['admin.foo'].user
 
   if (logRequest !== false) {
     console.log(`Respond (REQUEST): db.${controller}.${method}`, body)

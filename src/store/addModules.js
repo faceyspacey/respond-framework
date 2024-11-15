@@ -28,8 +28,8 @@ export default function addModule(
   const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
   if (!id) throw new Error('respond: missing id on module: ' + branch)
 
-  r.modulePathsById[id] = branch
-  r.modulePaths[branch] = state
+  r.branchesById[id] = branch
+  r.branches[branch] = state
   
   const respond = { ...options.merge, ...r, options, branch, moduleKeys, overridenReducers: new Map }
   respond.respond = respond
@@ -44,7 +44,7 @@ export default function addModule(
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
   const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, mod, ignoreParents, findOne, components, state, db, models, plugins, reduce })
+  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, mod, ignoreParents, get replays() { return respond.replays }, findOne, components, state, db, models, plugins, reduce })
 
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
@@ -54,13 +54,13 @@ export default function addModule(
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {
-    const p = branch ? `${branch}.${k}` : k
+    const b = branch ? `${branch}.${k}` : k
     state[k] = Object.create({})
-    addModule(mod[k], r, state[k], hydration[k], state, mod[k].props, p, k, propPlugins)
+    addModule(mod[k], r, state[k], hydration[k], state, mod[k].props, b, k, propPlugins)
 
     // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
-    //   const p = branch ? `${branch}.${k2}` : k2
-    //   state[k][k2] = addModule(mod, respond, k2, p, state, mod.props)
+    //   const b = branch ? `${branch}.${k2}` : k2
+    //   state[k][k2] = addModule(mod, respond, k2, b, state, mod.props)
     // }
   }
 

@@ -5,7 +5,7 @@ import createState from '../../store/createState.js'
 import { kinds } from '../../utils.js'
 
 import nestSettings from './helpers/nestSettings.js'
-import sliceByModulePath from '../../utils/sliceByModulePath.js'
+import sliceBranch from '../../utils/sliceBranch.js'
 import { findClosestAncestorWithObjectContaining, findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
 import { defaultOrigin } from '../../utils/constants.js'
 
@@ -18,7 +18,7 @@ export default {
     transform: ({}, form) => ({ form }),
   },
 
-  changeModulePath: {
+  changeBranch: {
     submit: ({ db, state }) => {
       if (state.tab !== 'tests') return false
       return db.developer.findTests(state.testsParams)
@@ -58,11 +58,11 @@ export default {
   testFromWallaby: {
     before: async ({ respond, state, events }, { test, index, delay }) => {
       const topState = respond.getStore()
-      const { focusedModulePath } = topState.replayState
+      const { focusedBranch } = topState.replayState
 
-      if (test.branch.indexOf(focusedModulePath) !== 0) { // ensure test will run in its original module or a parent module
-        topState.replayState.focusedModulePath = test.branch
-        state.focusedModulePath = test.branch
+      if (test.branch.indexOf(focusedBranch) !== 0) { // ensure test will run in its original module or a parent module
+        topState.replayState.focusedBranch = test.branch
+        state.focusedBranch = test.branch
       }
       
       return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
@@ -82,7 +82,7 @@ export default {
 
       const events = index === undefined ? evs : evs.slice(0, index + 1)
 
-      await state.replayEvents(events, delay, settings, state.focusedModulePath)
+      await state.replayEvents(events, delay, settings, state.focusedBranch)
 
       return false
     },
@@ -95,7 +95,7 @@ export default {
       const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
       if (!name) return
 
-      const { settings, focusedModulePath: branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
+      const { settings, focusedBranch: branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
       const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
       await db.developer.writeTestFile({ name, branch, settings, events })
@@ -192,8 +192,8 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedModulePath, top, errors }) => {
-      settings = gatherAllSettings(settings, focusedModulePath, top)
+    before: async ({ settings, config, focusedBranch, top, errors, respond }) => {
+      settings = gatherAllSettings(settings, focusedBranch, top, respond)
       const { url = '/' } = config
       
       const prev = window.state
@@ -201,7 +201,7 @@ export default {
       prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const start = new Date
-      const state = createState(top, { settings, focusedModulePath, status: 'reload' })
+      const state = createState(top, { settings, focusedBranch, status: 'reload' })
       console.log('reload.createModule', new Date - start)
 
       const e = state.eventFrom(url)
@@ -231,9 +231,9 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, focusedModulePath, top, config }) => {
-      settings = gatherAllSettings(settings, focusedModulePath, top)
-      const hash = createPermalink(settings, focusedModulePath)
+    before: async ({ settings, focusedBranch, top, config, respond }) => {
+      settings = gatherAllSettings(settings, focusedBranch, top, respond)
+      const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'
       
@@ -255,19 +255,19 @@ const uniqueDragId = () => ++id + ''
 
 
 
-const gatherAllSettings = (settings, branch, top) => {
-  const nestedSettings = nestSettings(settings)
+const gatherAllSettings = (settings, branch, top, respond) => {
+  const nestedSettings = nestSettings(settings, respond.branches)
 
-  const mod = sliceByModulePath(top, branch)
+  const mod = sliceBranch(top, branch)
   const hasDb = mod.db || mod.replays?.standalone
 
   if (hasDb) {
-    settings = sliceByModulePath(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
+    settings = sliceBranch(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
   }
   else {
     branch = findClosestAncestorWith('db', branch, top)?.branch ?? ''
-    settings = sliceByModulePath(nestedSettings, branch) ?? {}
-    settings.module = branch
+    settings = sliceBranch(nestedSettings, branch) ?? {}
+    settings.branch = branch
   }
 
   return settings

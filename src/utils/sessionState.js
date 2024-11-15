@@ -6,14 +6,14 @@ import { createStateReviver } from './revive.js'
 import { idCounterRef } from './objectIdDevelopment.js'
 
 
-export default ({ status, settings, focusedModulePath = '', hydration } = {}) => {
+export default ({ status, settings, focusedBranch = '', hydration } = {}) => {
   const { prevState, replayTools = {} } = window.state ?? {}
   const { settings: _, tests: __, ...rt } = replayTools
   const prt = prevState?.replayTools ?? {}
 
   const replayState = status === 'hmr'
     ? { ...prevState.replayState, status: 'hmr' }
-    : { settings, focusedModulePath, idCounterRef, status }
+    : { settings, focusedBranch, idCounterRef, status }
 
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
@@ -27,7 +27,7 @@ export default ({ status, settings, focusedModulePath = '', hydration } = {}) =>
   const session = sessionStorage.getItem('sessionState')
   if (session) return JSON.parse(session)
 
-  const defaultState = { settings: undefined, focusedModulePath: '', idCounterRef, status: 'ready' }
+  const defaultState = { settings: undefined, focusedBranch: '', idCounterRef, status: 'ready' }
   return { ...hydration, replayState: defaultState, replayTools: {} }
 }
 
@@ -54,7 +54,7 @@ const stringifyState = state => {
       ...s.replayTools,
       tests: t,                       // don't waste cycles on tons of tests with their events  
       settings: undefined,            // will be reset to last "checkpoint" by createReplays
-      focusedModulePath: undefined,   // will be reset to last "checkpoint" by createReplays
+      focusedBranch: undefined,   // will be reset to last "checkpoint" by createReplays
     }
   }
 

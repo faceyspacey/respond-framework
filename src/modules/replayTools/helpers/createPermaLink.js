@@ -2,8 +2,8 @@ import { parseSearch, stringifyQuery } from '../../../utils/searchQuery.js'
 import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 
-export default function settingsToHash({ ...query }, focusedModulePath) {
-  if (focusedModulePath) query.mod = focusedModulePath
+export default function settingsToHash({ ...query }, focusedBranch) {
+  if (focusedBranch) query.branch = focusedBranch
   return prefix + stringifyQuery(query) 
 }
 
@@ -17,10 +17,10 @@ export const hashToSettings = () => {
     const search = h.slice(index + length)
     const { module, ...settings } = parseSearch(search) // use hash so search can still be used in userland
     
-    const focusedModulePath = settings.mod ?? ''
+    const focusedBranch = settings.branch ?? ''
     const status = 'ready'
 
-    return { settings, focusedModulePath, idCounterRef, status }
+    return { settings, focusedBranch, idCounterRef, status }
   }
 }
 

@@ -7,11 +7,11 @@ import Test from '../widgets/Test.js'
 import SearchInputForm, { s as rs } from '../components/SearchInputForm.js'
 import { isNative } from '../../../utils/bools.js'
 import { ModuleDropdown } from './Settings.js'
-import { stripPathDir } from '../../../utils/sliceByModulePath.js'
+import { stripBranchDir } from '../../../utils/sliceBranch.js'
 
 
 export default (props, events, state) => {
-  const { testsList, sort, focusedModulePath } = state
+  const { testsList, sort, focusedBranch } = state
   const ref = useRef()
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default (props, events, state) => {
           id,
           key: id,
           deleteTest: events.deleteTest,
-          name: stripPathDir(focusedModulePath, id),
+          name: stripBranchDir(focusedBranch, id),
         }))}
 
         {testsList.length === 0 && !state.loading && <Text style={s.none}>no tests found</Text>}

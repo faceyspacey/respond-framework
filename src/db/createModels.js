@@ -21,7 +21,7 @@ export default (models, db, parent, respond, branch) => {
     models[k] = createModel(k, shared[k], client[k], mixin, extra)
   }
 
-  return respond.modelsByModulePath[branch] = models
+  return respond.modelsByBranch[branch] = models
 }
 
 
@@ -34,7 +34,7 @@ export const createModel = (k, shared, serverOrClient, mixin, extra) => {
   Object.defineProperties(Model.prototype, descriptors)
 
   function Model(doc, branch) {
-    if (branch !== undefined) this.__modulePath = branch
+    if (branch !== undefined) this.__branch = branch
     if (!doc) return
     Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instant properties of the same name as prototype getters without error
   }

@@ -1,11 +1,11 @@
 import trigger from '../../replays/triggerPlugin.js'
 import dispatchPlugins from '../../utils/dispatchPlugins.js'
 import loadPluginsOnce from '../../utils/loadPlugins.js'
-import { sliceEventByModulePath } from '../../utils/sliceByModulePath.js'
+import { sliceEventByBranch } from '../../utils/sliceBranch.js'
 
 
 export default async function(ev, meta) {
-  const e = sliceEventByModulePath(mergeMeta(ev, meta))
+  const e = sliceEventByBranch(mergeMeta(ev, meta))
   const state = e.event.module
 
   const prom = loadPluginsOnce(this.respond.getStore())

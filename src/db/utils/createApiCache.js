@@ -1,6 +1,3 @@
-import { replacer } from '../../utils/revive.js'
-
-
 export default (state, k = 'dbCache') => {
   state[k] ??= {}
 
@@ -11,9 +8,7 @@ export default (state, k = 'dbCache') => {
 
     keygen: new Map,
     key({ args, userId }) {
-      return userId
-        ? `${JSON.stringify(args, replacer)}:${userId}`
-        : `${JSON.stringify(args, replacer)}`
+      return userId ? `${JSON.stringify(args)}:${userId}` : JSON.stringify(args)
     },
     get(body) {
       const { controller, method } = body

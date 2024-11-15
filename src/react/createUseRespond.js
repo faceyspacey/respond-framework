@@ -1,5 +1,5 @@
 import { useContext, memo, forwardRef, useEffect } from 'react'
-import sliceByModulePath from '../utils/sliceByModulePath.js'
+import sliceBranch from '../utils/sliceBranch.js'
 import useSnapshot from '../proxy/useSnapshot.js'
 import RespondContext from './context.js'
 
@@ -7,19 +7,19 @@ import RespondContext from './context.js'
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const top = useContext(RespondContext)
-    const branch = top.modulePathsById[id]
-    return top.modulePaths[branch]
+    const branch = top.branchesById[id]
+    return top.branches[branch]
   }
 
 
   const useRespond = sync => {
     const top = useContext(RespondContext)
-    const branch = top.modulePathsById[id]
+    const branch = top.branchesById[id]
 
     const snap = useSnapshot(top, sync)
-    const state = sliceByModulePath(snap, branch) // selector props require slicing top.state to crawl to top of state tree
+    const state = sliceBranch(snap, branch) // selector props require slicing top.state to crawl to top of state tree
 
-    const store = top.modulePaths[branch]
+    const store = top.branches[branch]
 
     return { state, events: state.events, store }
   }

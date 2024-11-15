@@ -28,8 +28,8 @@ export function findLastEvent() {
 }
 
 export function testsParams() {
-  const { focusedModulePath, searched, filter } = this
-  return { focusedModulePath, searched, filter }
+  const { focusedBranch, searched, filter } = this
+  return { focusedBranch, searched, filter }
 }
 
 export function topState() {

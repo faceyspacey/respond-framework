@@ -11,17 +11,17 @@ import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
 import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
-import createModulePathsAll from '../../replays/createModulePathsAll.js'
+import createBranchesAll from '../../replays/createBranchesAll.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { sliceEventByModulePath, traverseModuleChildren } from '../../utils/sliceByModulePath.js'
+import { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
 
 
-export default (top, state, focusedModulePath) => {
-  const modulePathsAll = createModulePathsAll(top)
-  const modulePaths = { ['']: state, undefined: state }
+export default (top, state, focusedBranch) => {
+  const branchesAll = createBranchesAll(top, focusedBranch)
+  const branches = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
 
@@ -39,12 +39,12 @@ export default (top, state, focusedModulePath) => {
     ctx,
     state, 
 
-    modulePathsAll,
-    focusedModulePath,
+    branchesAll,
+    focusedBranch,
     
-    modulePaths,
-    modulePathsById: {},
-    modelsByModulePath: {},
+    branches,
+    branchesById: {},
+    modelsByBranch: {},
 
     eventsByPattern: {},
     eventsByType: {},
@@ -76,7 +76,7 @@ export default (top, state, focusedModulePath) => {
     },
   
     saveSessionState() {
-      return saveSessionState(state, this.options.replacer)
+      return saveSessionState(state)
     },
 
     parseJsonState(json) {
@@ -148,16 +148,16 @@ export default (top, state, focusedModulePath) => {
     },
   
     findInClosestAncestor(key, branch) {
-      branch = focusedModulePath
-        ? branch ? focusedModulePath + '.' + branch : focusedModulePath
+      branch = focusedBranch
+        ? branch ? focusedBranch + '.' + branch : focusedBranch
         : branch
 
       return findInClosestAncestor(key, branch, this.respond.top)
     },
 
     findClosestAncestorWith(key, branch) {
-      branch = focusedModulePath
-        ? branch ? focusedModulePath + '.' + branch : focusedModulePath
+      branch = focusedBranch
+        ? branch ? focusedBranch + '.' + branch : focusedBranch
         : branch
 
       return findClosestAncestorWith(key, branch, this.respond.top)
@@ -171,7 +171,7 @@ export default (top, state, focusedModulePath) => {
       
       const sendOuter = send.length < 2 || !mp
         ? send
-        : (state, e) => send(state, sliceEventByModulePath(e, mp))
+        : (state, e) => send(state, sliceEventByBranch(e, mp))
 
       listeners.push(sendOuter)
     

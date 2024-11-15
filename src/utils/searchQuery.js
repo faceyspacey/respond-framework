@@ -1,21 +1,21 @@
 import * as qs from 'qs' // we like the qs library because it handles nested objects in query strings
 import isNumber from './isNumber.js'
-import revive, { replacer } from './revive.js'
+import revive from './revive.js'
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
 export const parseSearch = (search, state) => {
-  const parse = state?.options.parseSearch ?? ps
-  return parse(search, state)
+  const ps = state?.options.parseSearch ?? parse
+  return ps(search, state)
 }
 
 export const stringifyQuery = (query, state) => {
-  const stringify = state?.options.stringifyQuery ?? sq
-  return stringify(query, state)
+  const stringify = state?.options.stringifyQuery ?? qs.stringify
+  return stringify(query)
 }
 
 
-const ps = (search, state) => {
+const parse = (search, state) => {
   const rev = revive(state?.respond)
   let k
 
@@ -38,22 +38,4 @@ const ps = (search, state) => {
   }
 
   return qs.parse(search.replace(/^\?/, ''), { decoder })
-}
-
-
-
-const sq = (query, state) => {
-  let k
-
-  const encoder = (v, defaultEncoder, charset, type) => {
-    if (type === 'key') {
-      k = v
-      return defaultEncoder(v)
-    }
-    else if (type === 'value') {
-      return replacer(k, v)
-    }
-  }
-
-  return qs.stringify(query, { encoder })
 }

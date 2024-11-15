@@ -1,14 +1,16 @@
 
 import { isModule } from '../store/reserved.js'
+import { stripBranchIfAvailable } from '../utils/sliceBranch.js'
 
 
-export default function createModulePathsAll(mod, paths = [], p = '') {
+export default function createBranchesAll(mod, focusedBranch, paths = [], b = '') {
   mod[isModule] = true
   mod.moduleKeys = []
   mod.moduleKeysUser = []
-  mod.branch = p
+  mod.branch = b
+  mod.branchRelative = stripBranchIfAvailable(focusedBranch, b) ?? 'unknown.' + b
 
-  paths.push(p)
+  paths.push(b)
 
   Object.keys(mod).forEach(k => {
     const v = mod[k]
@@ -17,7 +19,7 @@ export default function createModulePathsAll(mod, paths = [], p = '') {
     if (isMod) {
       mod.moduleKeys.push(k)
       mod.moduleKeysUser.push(k)
-      createModulePathsAll(v, paths, p ? `${p}.${k}` : k)
+      createBranchesAll(v, focusedBranch, paths, b ? `${b}.${k}` : k)
     }
   })
 

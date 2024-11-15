@@ -1,5 +1,5 @@
 import wrapInActForTests from '../../utils/wrapInActForTests.js'
-import { prependModulePathToE } from '../../utils/sliceByModulePath.js'
+import { prependBranchToE } from '../../utils/sliceBranch.js'
 
 
 export default wrapInActForTests((state, e) => {
@@ -7,7 +7,7 @@ export default wrapInActForTests((state, e) => {
   const { ctx, branch } = respond
 
   const top = respond.getStore()
-  const eTop = prependModulePathToE(e)
+  const eTop = prependBranchToE(e)
 
   try {
     if (e.event.reduce === false) {
@@ -17,7 +17,7 @@ export default wrapInActForTests((state, e) => {
       e.event.reduce.call(state, state, e)
     }
     else if (e.event === top.events.init) {
-      reduceAllModules(eTop, top)
+      reduceAllBranches(eTop, top)
     }
     else {
       reduceBranch(eTop, top, branch.split('.'))
@@ -29,21 +29,21 @@ export default wrapInActForTests((state, e) => {
     respond.onError({ error, kind: 'reduce', e })
   }
 
-  delete ctx.modulePathReduced    // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)  
+  delete ctx.branchReduced    // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)  
   
   return respond.notify(eTop)
 })
 
 
-const reduceAllModules = (e, mod) => {
+const reduceAllBranches = (e, mod) => {
   reduceModule(mod, e, mod, mod.reducers)
-  mod.moduleKeys.forEach(k => reduceAllModules(e, mod[k]))
+  mod.moduleKeys.forEach(k => reduceAllBranches(e, mod[k]))
 }
 
 
 
 const reduceModule = (state, e, mod, reducers) => {
-  mod.ctx.modulePathReduced = mod.branch
+  mod.ctx.branchReduced = mod.branch
   
   for (const k in reducers) {
     const reduce = reducers[k]
@@ -68,7 +68,7 @@ const reduceModule = (state, e, mod, reducers) => {
 
 const reduceBranch = (e, mod, [...remainingBranches]) => {
   const k = remainingBranches.shift()
-  const p = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from branch
+  const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from branch
 
   let ignore = k && mod[k].ignoreParents
   let reduced
@@ -76,7 +76,7 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
   function next() {
     if (!k) return
 
-    const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
+    const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
     const type = namespace ? `${namespace}.${e._type}` : e._type
 
     const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
@@ -111,12 +111,12 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 // const reduceBranchBreadthFirst = (e, mod, remainingBranches) => {
 //   const k = remainingBranches.shift()
-//   const p = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
+//   const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
 //   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreParents)
 
 //   if (!k) return
 
-//   const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
+//   const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
 //   const type = namespace ? `${namespace}.${e._type}` : e._type
 //   reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
 // }
@@ -125,10 +125,10 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 // const reduceBranchDepthFirst = (e, mod, remainingBranches) => {
 //   const k = remainingBranches.shift()
-//   const p = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
+//   const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
 
 //   if (k) {
-//     const namespace = p ? (e._namespace ? `${p}.${e._namespace}` : p) : e._namespace
+//     const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
 //     const type = namespace ? `${namespace}.${e._type}` : e._type
 
 //     const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
