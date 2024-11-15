@@ -58,11 +58,11 @@ export default {
   testFromWallaby: {
     before: async ({ respond, state, events }, { test, index, delay }) => {
       const topState = respond.getStore()
-      const { focusedBranch } = topState.replayState
+      const { branch } = topState.replayState
 
-      if (test.branch.indexOf(focusedBranch) !== 0) { // ensure test will run in its original module or a parent module
-        topState.replayState.focusedBranch = test.branch
-        state.focusedBranch = test.branch
+      if (test.branch.indexOf(branch) !== 0) { // ensure test will run in its original module or a parent module
+        topState.branch.branch = test.branch
+        state.branch = test.branch
       }
       
       return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
@@ -82,7 +82,7 @@ export default {
 
       const events = index === undefined ? evs : evs.slice(0, index + 1)
 
-      await state.replayEvents(events, delay, settings, state.focusedBranch)
+      await state.replayEvents(events, delay, settings, state.branch)
 
       return false
     },
@@ -95,7 +95,7 @@ export default {
       const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
       if (!name) return
 
-      const { settings, focusedBranch: branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
+      const { settings, branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
       const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
       await db.developer.writeTestFile({ name, branch, settings, events })
@@ -192,8 +192,8 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch, top, errors, respond }) => {
-      settings = gatherAllSettings(settings, focusedBranch, top, respond)
+    before: async ({ settings, config, branch, top, errors, respond }) => {
+      settings = gatherAllSettings(settings, branch, top, respond)
       const { url = '/' } = config
       
       const prev = window.state
@@ -201,7 +201,7 @@ export default {
       prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
 
       const start = new Date
-      const state = createState(top, { settings, focusedBranch, status: 'reload' })
+      const state = createState(top, { settings, branch, status: 'reload' })
       console.log('reload.createModule', new Date - start)
 
       const e = state.eventFrom(url)
@@ -231,9 +231,9 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, focusedBranch, top, config, respond }) => {
-      settings = gatherAllSettings(settings, focusedBranch, top, respond)
-      const hash = createPermalink(settings, focusedBranch)
+    before: async ({ settings, branch, top, config, respond }) => {
+      settings = gatherAllSettings(settings, branch, top, respond)
+      const hash = createPermalink(settings, branch)
 
       const baseUrl = config.url || '/'
       

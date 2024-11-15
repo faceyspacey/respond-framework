@@ -42,11 +42,11 @@ export const loading = (_, e, { state }) => {
 
 
 
-export const settings = (state = {}, e, { events, focusedBranch, configs }) => {
+export const settings = (state = {}, e, { events, branch, configs }) => {
   if (e.event !== events.edit) return state
 
-  Object.assign(state[focusedBranch], e.form)
-  cascadeSetting(state, e, focusedBranch, configs)
+  Object.assign(state[branch], e.form)
+  cascadeSetting(state, e, branch, configs)
 
   return state
 }
@@ -60,9 +60,9 @@ export const config = (state = {}, e, { events }) => {
 
 
 
-export const focusedBranch = (state = '', e, { events }) => {
+export const branch = (state = '', e, { events }) => {
   if (e.event !== events.changeBranch) return state
-  return e.focusedBranch
+  return e.branch
 }
 
 

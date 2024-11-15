@@ -12,12 +12,12 @@ import hydrateModules from './hydrateModules.js'
 
 export default (top, opts = {}) => {
   const session = sessionState(opts)
-  const focusedBranch = session.replayState.focusedBranch ?? ''
+  const branch = session.replayState.branch ?? ''
 
   const state = createProxy(Object.create({}))
-  const respond = createRespond(top, state, focusedBranch)
+  const respond = createRespond(top, state, branch)
 
-  const mod = sliceBranch(top, focusedBranch)
+  const mod = sliceBranch(top, branch)
 
   addModule(mod, respond, state, session)
   createReplays(state, session)

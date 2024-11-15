@@ -19,8 +19,8 @@ import { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBra
 import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
 
 
-export default (top, state, focusedBranch) => {
-  const branchesAll = createBranchesAll(top, focusedBranch)
+export default (top, state, branch) => {
+  const branchesAll = createBranchesAll(top, branch)
   const branches = { ['']: state, undefined: state }
   const listeners = []
   const promises = []
@@ -40,7 +40,7 @@ export default (top, state, focusedBranch) => {
     state, 
 
     branchesAll,
-    focusedBranch,
+    branch,
     
     branches,
     branchesById: {},
@@ -147,19 +147,13 @@ export default (top, state, focusedBranch) => {
       this.respond.queueSaveSession()
     },
   
-    findInClosestAncestor(key, branch) {
-      branch = focusedBranch
-        ? branch ? focusedBranch + '.' + branch : focusedBranch
-        : branch
-
+    findInClosestAncestor(key, b) {
+      const branch = branch ? (b ? branch + '.' + b : branch) : b
       return findInClosestAncestor(key, branch, this.respond.top)
     },
 
-    findClosestAncestorWith(key, branch) {
-      branch = focusedBranch
-        ? branch ? focusedBranch + '.' + branch : focusedBranch
-        : branch
-
+    findClosestAncestorWith(key, b) {
+      const branch = branch ? (b ? branch + '.' + b : branch) : b
       return findClosestAncestorWith(key, branch, this.respond.top)
     },
   

@@ -11,7 +11,7 @@ import { stripBranchDir } from '../../../utils/sliceBranch.js'
 
 
 export default (props, events, state) => {
-  const { testsList, sort, focusedBranch } = state
+  const { testsList, sort, branch } = state
   const ref = useRef()
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default (props, events, state) => {
           id,
           key: id,
           deleteTest: events.deleteTest,
-          name: stripBranchDir(focusedBranch, id),
+          name: stripBranchDir(branch, id),
         }))}
 
         {testsList.length === 0 && !state.loading && <Text style={s.none}>no tests found</Text>}

@@ -4,8 +4,8 @@ import * as recursiveReadSync from 'recursive-readdir-sync'
 
 
 
-export default ({ focusedBranch = '', searched = '', filter }) => {
-  const tests = findTests(focusedBranch)
+export default ({ branch = '', searched = '', filter }) => {
+  const tests = findTests(branch)
 
   if (!searched) return tests
 

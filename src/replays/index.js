@@ -28,16 +28,16 @@ export default (state, session, start = new Date) => {
 
 
 
-const createState = (top, branches, depth, { focusedBranch, settings: input }) => {
+const createState = (top, branches, depth, { branch, settings: input }) => {
   const configs = {}
   const settings = {}
 
-  const branch = input?.branch ?? focusedBranch // settings with a module start higher than the focusedBranch where they get their ancestor replays from
-  const nested = nestAtBranch(branch, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
+  const focused = input?.branch ?? branch // settings with a module start higher than the branch where they get their ancestor replays from
+  const nested = nestAtBranch(focused, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
   
   createAllSettingsBreadth(top, nested, branches, depth, configs, settings)
 
-  return { configs, settings, focusedBranch }
+  return { configs, settings, branch }
 }
 
 
