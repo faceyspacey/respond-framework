@@ -72,17 +72,17 @@ export default {
   test: {
     kind: kinds.navigation,
     submit: async (state, { id, index, delay }) => {
-      const { settings, events: evs, name } = state.tests[id]
+      const { events, name, ...test } = state.tests[id]
 
-      state.evs = evs
-      state.divergentIndex = evs.length // purple event rows will appear at end of event list if new events manually triggered by using app
+      state.evs = events
+      state.divergentIndex = events.length // purple event rows will appear at end of event list if new events manually triggered by using app
     
       state.selectedTestId = id
       state.selectedTestName = name
 
-      const events = index === undefined ? evs : evs.slice(0, index + 1)
+      const evs = index === undefined ? events : events.slice(0, index + 1)
 
-      await state.replayEvents(events, delay, settings, state.branch)
+      await state.replayEvents(evs, delay, test)
 
       return false
     },
@@ -192,7 +192,7 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, branch, top, errors, respond }) => {
+    before: async ({ settings, config, focusedBranch: branch, top, errors, respond }) => {
       settings = gatherAllSettings(settings, branch, top, respond)
       const { url = '/' } = config
       
@@ -213,6 +213,7 @@ export default {
         state.replayTools.playing = false
         state.render()
         console.log('reload.trigger/render!', new Date - start)
+        respond.queueSaveSession()
       }
       else {
         window.state = prev
@@ -231,9 +232,9 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, branch, top, config, respond }) => {
-      settings = gatherAllSettings(settings, branch, top, respond)
-      const hash = createPermalink(settings, branch)
+    before: async ({ settings, focusedBranch, top, config, respond }) => {
+      settings = gatherAllSettings(settings, focusedBranch, top, respond)
+      const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'
       

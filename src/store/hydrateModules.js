@@ -4,14 +4,24 @@ import reduce from './plugins/reduce.js'
 
 export default (state, session) => {
   const hydration = revive(state.respond)(session)
-
   mergeModules(state, hydration)
 
-  if (state.prevState) return // hmr + session have prevState + state already populated
-
-  mergeModulesPrevState(state, state.respond.snapshot(state))
+  if (state.replayState.status !== 'reload') return // hmr/replays/session have state already
   reduce(state, state.events.init())
 }
+
+
+
+function mergeModules(state, hydration = {}) {
+  state.moduleKeys.forEach(k => { // depth-first
+    if (!hydration[k]) return
+    mergeModules(state[k], hydration[k])
+    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
+  })
+
+  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
+}
+
 
 
 export function mergeModulesPrevState(state, prevState = {}) {
@@ -27,15 +37,4 @@ export function mergeModulesPrevState(state, prevState = {}) {
   }
 
   state.prevState = prev
-}
-
-
-function mergeModules(state, hydration = {}) {
-  state.moduleKeys.forEach(k => {
-    if (!hydration[k]) return
-    mergeModules(state[k], hydration[k])
-    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
-  })
-
-  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
 }

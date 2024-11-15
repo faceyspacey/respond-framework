@@ -1,4 +1,3 @@
-export const _module = Symbol('_module')
 export const _parent = Symbol('_parent')
 export const isModule = Symbol('isModule')
 

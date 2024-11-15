@@ -28,7 +28,7 @@ export function findLastEvent() {
 }
 
 export function testsParams() {
-  const { branch, searched, filter } = this
+  const { focusedBranch: branch, searched, filter } = this
   return { branch, searched, filter }
 }
 

@@ -5,7 +5,7 @@ import { createModel } from './createModels.js'
 export default (dbRaw, options = {}) => {
   const db = {}
 
-  const { collection, model, controllers: conts = {}, replays = {}, models = {} } = options
+  const { collection, model, controllers: conts = {}, replays = {}, models = {}, modules } = options
   const config = { listLimit: 10, ...options.config }
 
   const shared = models.shared ?? {}
@@ -40,5 +40,7 @@ export default (dbRaw, options = {}) => {
     Object.defineProperties(db[k], descriptors)
   }
 
+  Object.assign(db, modules)
+  
   return db
 }

@@ -8,34 +8,33 @@ import createReducers from './createReducers.js'
 import extractModuleAspects from './extractModuleAspects.js'
 
 import findOne from '../selectors/findOne.js'
-import { _module, _parent } from './reserved.js'
-import { isProd } from '../utils.js'
-
-import * as replayToolsModule from '../modules/replayTools/index.js'
+import { _parent } from './reserved.js'
 
 
 export default function addModule(
+  resp,
   mod,
-  r,
   state,
-  hydration = {},
+  session = {},
   parent = {},
-  props = {},
-  branch = '',
   name,
+  props = {},
   ancestorPlugins,
+  branch = name ?? ''
 ) {
-  const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
-  if (!id) throw new Error('respond: missing id on module: ' + branch)
+  if (!mod.id) throw new Error('respond: missing id on module: ' + branch || 'top')
 
-  r.branchesById[id] = branch
-  r.branches[branch] = state
+  resp.branchesById[mod.id] = branch
+  resp.branches[branch] = state
   
-  const respond = { ...options.merge, ...r, options, branch, moduleKeys, overridenReducers: new Map }
-  respond.respond = respond
-  Object.defineProperty(respond, 'state', { value: state, enumerable: false, configurable: true })
+  state.__module = branch
 
-  state.basename = hydration.basename ?? props.basename ?? mod.basename ?? ''
+  const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
+
+  const respond = { ...options.merge, ...resp, state, id, mod, components, reduce, options, ignoreParents, branch, moduleKeys, overridenReducers: new Map }
+  
+  respond.respond = respond
+  state.basename = session.basename ?? props.basename ?? mod.basename ?? ''
   state.basenameFull = (parent.basenameFull ?? '') + state.basename
 
   const db = createClientDatabase(mod.db, parent.db, props, state, respond, branch)
@@ -43,34 +42,16 @@ export default function addModule(
 
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
-  const proto = Object.getPrototypeOf(state)
-  Object.assign(proto, { ...respond, [_module]: true, [_parent]: parent, id, mod, ignoreParents, get replays() { return respond.replays }, findOne, components, state, db, models, plugins, reduce })
-
-  const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state, state)
+  const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
   
+  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne })
+
   createEvents(proto, respond, state, evs, propEvents, branch)
   createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {
-    const b = branch ? `${branch}.${k}` : k
-    state[k] = Object.create({})
-    addModule(mod[k], r, state[k], hydration[k], state, mod[k].props, b, k, propPlugins)
-
-    // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
-    //   const b = branch ? `${branch}.${k2}` : k2
-    //   state[k][k2] = addModule(mod, respond, k2, b, state, mod.props)
-    // }
+    addModule(resp, mod[k], state[k] = Object.create({}), session[k], state, k, mod[k].props, propPlugins, branch ? `${branch}.${k}` : k)
   }
-
-  if (!branch && !isProd) { // add replayTools to top module only
-    const k = 'replayTools'
-    state[k] = Object.create({})
-    addModule(replayToolsModule, r, state[k], hydration[k], state, undefined, k, k, propPlugins)
-
-    moduleKeys.push(k)
-  }
-
-  return state
 }

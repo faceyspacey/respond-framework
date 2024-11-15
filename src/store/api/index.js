@@ -37,7 +37,6 @@ export default (top, state, branch) => {
   return {
     top,
     ctx,
-    state, 
 
     branchesAll,
     branch,
@@ -84,7 +83,7 @@ export default (top, state, branch) => {
     },
   
     awaitInReplaysOnly(f, onError) {           
-      const promise = typeof f === 'function' ? f() : f   // can be function
+      const promise = typeof f === 'function' ? f() : f // can be function
       if (!(promise instanceof Promise)) return
       promises.push(promise.catch(onError))
     },
@@ -98,7 +97,7 @@ export default (top, state, branch) => {
     queueSaveSession() {
       if (isProd || isTest) return
       if (ctx.saveQueued || state.replayTools?.playing) return
-      if (window.state !== state) return // new state created
+      if (window.state !== state) return // ensure replayEvents saves new state
 
       ctx.saveQueued = true
 
@@ -149,12 +148,12 @@ export default (top, state, branch) => {
   
     findInClosestAncestor(key, b) {
       const branch = branch ? (b ? branch + '.' + b : branch) : b
-      return findInClosestAncestor(key, branch, this.respond.top)
+      return findInClosestAncestor(key, branch, top)
     },
 
     findClosestAncestorWith(key, b) {
       const branch = branch ? (b ? branch + '.' + b : branch) : b
-      return findClosestAncestorWith(key, branch, this.respond.top)
+      return findClosestAncestorWith(key, branch, top)
     },
   
     subscribe(send) {
@@ -193,14 +192,17 @@ export default (top, state, branch) => {
     onError(err)  {
       const { error, kind = 'unknown', e } = err
     
-     if (kind !== 'render') { // react render errors already logged
-      console.error('respond: ' + kind, e || '')
-      console.error(error)
-     }
-    
-      const onError = this.respond.state.options.onError ?? state.options.onError
+      if (kind !== 'render') { // react render errors already logged
+        console.error('respond: ' + kind, e || '')
+        console.error(error)
+      }
 
-      return onError?.({ ...err, state })
+      const hasOnError = this.respond.state.options.onError
+    
+      const onError = hasOnError ?? state.options.onError
+      const s = hasOnError ? this.respond.state : state
+
+      return onError?.({ ...err, state: s })
     }
   }
 }

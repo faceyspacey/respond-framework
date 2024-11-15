@@ -18,7 +18,7 @@ export const hashToSettings = () => {
     const { module, ...settings } = parseSearch(search) // use hash so search can still be used in userland
     
     const branch = settings.branch ?? ''
-    const status = 'ready'
+    const status = 'reload'
 
     return { settings, branch, idCounterRef, status }
   }

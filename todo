@@ -555,6 +555,12 @@ if (possibleDuplicate) {
 
 #eventsByBranch -> eventsById
 
+
+// state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
+//   const b = branch ? `${branch}.${k2}` : k2
+//   state[k][k2] = addModule(mod, respond, k2, b, state, mod.props)
+// }
+
 ?selectors using event.module and such don't work when compared to eg state.website, not using event protos -- this.inApp && this.curr.event.module === this.getStore().website
 ?the fact that if u access an object and don't use it, it always has an extra render -- can we have an api that prevents this?
 ?tables for virtual models shouldn't have to be created
@@ -565,8 +571,17 @@ if (possibleDuplicate) {
 
 assign to orig rather than proxy until end of createModule
 controllerTree -> createServer
+// sub.orig.__refId ??= new ObjectId().toString()
 basenameFull stored in its own sessionStorage, along with replayState
+developerController should use createDatabase for replayTools
+module.in
+builtIn history stack + pop.back/forward using complete list of navigations
+revive only for non ready states
+save sessionState on reload
+table passing as props to db? (db.props)
 
+make tests pass, remove 3 args, remove respond.state
+make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
 
 for navigators, finalize strategy for `key`, eg url + type for navigations
 finalize plan for normalizing event meta information in ancestor modules in userland

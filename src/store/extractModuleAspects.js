@@ -4,7 +4,7 @@ import { isModule, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
 
 
-export default (mod, state, currState) => {
+export default (mod, state, currState = state) => {
   const events = mod.events ? mod.events : {}
   const reducers = mod.reducers ?? {}
 
@@ -27,13 +27,18 @@ export default (mod, state, currState) => {
 const extract = (k, descriptor, selectorDescriptors, events, reducers, state) => {
   const { get, value: v } = descriptor
 
-  if (v?.[isModule]) return
-  else if (v?.event === true) {
+  if (get) {
+    selectorDescriptors[k] = descriptor
+  }
+  else if (!v) {
+    state[k] = v
+  }
+  else if (v[isModule]) {
+    return
+  }
+  else if (v.event === true) {
     events[k] = v
     extractedEvents.set(v, k)
-  }
-  else if (get) {
-    selectorDescriptors[k] = descriptor
   }
   else if (typeof v === 'function') {
     if (v.length >= 2) reducers[k] = v

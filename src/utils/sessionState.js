@@ -27,7 +27,7 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   const session = sessionStorage.getItem('sessionState')
   if (session) return JSON.parse(session)
 
-  const defaultState = { settings: undefined, branch: '', idCounterRef, status: 'ready' }
+  const defaultState = { settings: undefined, branch: '', idCounterRef, status: 'reload' }
   return { ...hydration, replayState: defaultState, replayTools: {} }
 }
 
@@ -39,6 +39,7 @@ export const parseJsonState = (json, state = {}) => {
 
 export const saveSessionState = state => {
   sessionStorage.setItem('sessionState', stringifyState(state))
+  // sessionStorage.setItem('replayState', stringifyState(state[replayState]))
 }
 
 

@@ -1,6 +1,6 @@
 import createSnapProxy from '../createSnapProxy.js'
 import { canProxy, recordUsage } from './helpers.js'
-import { _module, _parent } from '../../store/reserved.js'
+import { _parent } from '../../store/reserved.js'
 
 
 export default (snap, state) => {

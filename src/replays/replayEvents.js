@@ -2,7 +2,7 @@ import createState from '../store/createState.js'
 import { isTest } from '../utils/bools.js'
 
 
-export default async function(events, delay = 0, settings = this.topState.replayState.settings, branch = this.topState.replayState.branch) {
+export default async function(events, delay = 0, { settings, branch } = this.topState.replayState) {
   const start = new Date
 
   this.playing = false // stop possible previous running replay

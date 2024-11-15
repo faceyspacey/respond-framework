@@ -5,16 +5,18 @@ import defaultCreateToken from './utils/createToken.js'
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
 import { nestAtBranch } from '../utils/sliceBranch.js'
 import { isProd } from '../utils/bools.js'
+import addModule from '../store/addModules.js'
+import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
 export default (state, session, start = new Date) => {
-  const { respond, replayTools } = state
+  const { respond } = state
   const { top, cookies, branches } = respond
   const { replayState, __db: seed } = session
 
   const depth = []
   
-  Object.assign(replayTools, createState(top, branches, depth, replayState))
+  const replayTools = Object.assign(Object.create({}), createState(top, branches, depth, replayState))
   replayState.settings ??= nestSettings(replayTools.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
   state.__db ??= {}
@@ -23,7 +25,10 @@ export default (state, session, start = new Date) => {
   session.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   delete session.__db
   
-  console.log('createReplaySettings', new Date - start)
+  console.log('createReplaySettings!!', new Date - start)
+  
+  addModule(respond, replayToolsModule, state.replayTools = replayTools, session.replayTools, state, 'replayTools')
+  state.moduleKeys.push('replayTools')
 }
 
 
@@ -32,12 +37,12 @@ const createState = (top, branches, depth, { branch, settings: input }) => {
   const configs = {}
   const settings = {}
 
-  const focused = input?.branch ?? branch // settings with a module start higher than the branch where they get their ancestor replays from
-  const nested = nestAtBranch(focused, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
+  const focusedBranch = input?.branch ?? branch // settings with a module start higher than the branch where they get their ancestor replays from
+  const nested = nestAtBranch(focusedBranch, input) // input is provided starting at the given module, but we need to traverse from the top to gather possible parent replays
   
   createAllSettingsBreadth(top, nested, branches, depth, configs, settings)
 
-  return { configs, settings, branch }
+  return { configs, settings, focusedBranch }
 }
 
 
@@ -57,14 +62,12 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   settings[mod.branch] = replays.settings // replays + db inherited if no mod.db/replays
   
   const state = branches[mod.branchRelative] // branch might be outside focused module tree
-  if (state) state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  if (state) Object.getPrototypeOf(state).replays = state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
 
   depth.unshift([mod, replays])
 
-  for (const k of mod.moduleKeysUser) {
-    input = input?.[k]
-    if (input && (mod.db ||mod.replays) && replays[k])
-    createAllSettingsBreadth(mod[k], input, branches, depth, configs, settings, replays)
+  for (const k of mod.moduleKeys) {
+    createAllSettingsBreadth(mod[k], input?.[k], branches, depth, configs, settings, replays)
   }
 }
 
