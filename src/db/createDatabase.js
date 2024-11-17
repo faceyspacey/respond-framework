@@ -49,7 +49,7 @@ export default (options = {}) => {
     if (models) child.models = Object.assign({}, child.models, models)
 
     db[k] = child
-    child.original = modules[k] // when a module is focused during development, 
+    child.original = modules[k] // when a module is focused during development, we may need to select original without props
 
     db.moduleKeys.push(k)
   })
