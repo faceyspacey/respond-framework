@@ -567,30 +567,50 @@ if (possibleDuplicate) {
 ?prevNavigationState AND prevState
 
 
+#controllerTree -> createServer
+#revive only for non ready states
+#save sessionState on reload
+
+#module.in
+#builtIn history stack + pop.back/forward using complete list of navigations
 
 
-assign to orig rather than proxy until end of createModule
-controllerTree -> createServer
-// sub.orig.__refId ??= new ObjectId().toString()
-basenameFull stored in its own sessionStorage, along with replayState
-developerController should use createDatabase for replayTools
-module.in
-builtIn history stack + pop.back/forward using complete list of navigations
-revive only for non ready states
-save sessionState on reload
-table passing as props to db? (db.props)
 
-make tests pass, remove 3 args, remove respond.state
-make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
+#developerController should use createDatabase for replayTools
+#table passing as props to db? (db.props) -- mergeProps(db, props)
+
+#assign to orig rather than proxy until end of createModule
+
+#use controllers on real server optionally in development (like developer controller)
+#yarn patch react-native-svg-web
+
+#sub.orig.__refId ??= new ObjectId().toString()
+#modify lastEvent api, and begin new reduce([]) api
+
+
+#basenameFull stored in its own sessionStorage, along with replayState
+
+#revival via JSON.parse needs to conditionally choose revival mechanism based on status
+#is there any way to not have to revive HMR? (replay/reload has minimal state to revive)
+#session.replayTools can possibly be revived in createReplays when addModule is called
+
+
+
+
 
 for navigators, finalize strategy for `key`, eg url + type for navigations
 finalize plan for normalizing event meta information in ancestor modules in userland
 
+
+make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
+
+!make tests pass, remove 3 args, remove respond.state
 lazy event function creation
-
-
 
 
 make all tools replacable by user (including reviver)
 re-organize files
 finalize implementation of respond object etc
+
+
+focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db

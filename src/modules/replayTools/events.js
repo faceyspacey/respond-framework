@@ -21,7 +21,7 @@ export default {
   changeBranch: {
     submit: ({ db, state }) => {
       if (state.tab !== 'tests') return false
-      return db.developer.findTests(state.testsParams)
+      return db.developer.findTests.server(state.testsParams)
     }
   },
 
@@ -39,20 +39,20 @@ export default {
     namespace: false,
     kind: kinds.navigation,
     cache: false,
-    fetch: ({ db, state }) => db.developer.findTests(state.testsParams),
+    fetch: ({ db, state }) => db.developer.findTests.server(state.testsParams),
   },
   
   sortTests: {
-    submit: ({ db, state }) => db.developer.findTests(state.testsParams)
+    submit: ({ db, state }) => db.developer.findTests.server(state.testsParams)
   },
 
   toggleFilter: {
-    submit: ({ db, state }) => db.developer.findTests(state.testsParams)
+    submit: ({ db, state }) => db.developer.findTests.server(state.testsParams)
   },
 
   searchTests: {
     sync: true,
-    debounce: ({ db, state }) => db.developer.findTests(state.testsParams),
+    debounce: ({ db, state }) => db.developer.findTests.server(state.testsParams),
   },
 
   testFromWallaby: {
@@ -98,7 +98,7 @@ export default {
       const { settings, branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
       const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
 
-      await db.developer.writeTestFile({ name, branch, settings, events })
+      await db.developer.writeTestFile.server({ name, branch, settings, events })
       await tests.dispatch({ sort: 'recent' })
     }
   },
@@ -109,13 +109,13 @@ export default {
       if (!yes) return false
 
       const { filename } = state.tests[id]
-      return db.developer.deleteTestFile(filename)
+      return db.developer.deleteTestFile.server(filename)
     }
   },
 
   runTestInTerminal: {
     submit: ({ db }, { id }) => {
-      return db.developer.runTestInTerminal(id)
+      return db.developer.runTestInTerminal.server(id)
     }
   },
 

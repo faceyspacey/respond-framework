@@ -1,21 +1,21 @@
+import flattenDbTreeByBranchBy from '../db/utils/flattenDbTreeByBranchBy.js'
 import { canProxy } from '../proxy/utils/helpers.js'
 
 
-export default ({ eventsByType = {}, modelsByBranch = {}, branches } = {}, branch = '', refs = {}) => function revive(v, k) {
+export default ({ modelsByBranch, eventsByType, branches } = {}, refs = {}) => function revive(v, k) {
   if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
   if (v.__event)     return eventsByType[v.type] ?? v
-  if (v.__refId)     return refs[v.__refId] ??= v
+  if (v.__refId)     return refs[v.__refId] ??= Object.defineProperty(v.__array ?? v, '__refId', { value: v.__refId, enumerable: false })
 
   let snap
 
-  if (v.__type) {
-    const b = v.__branch ?? branch
-    const Model = modelsByBranch[b]?.[v.__type] ?? modelsByBranch['']?.[v.__type]
+  if (v.__type && v.__branch !== undefined) {
+    const Model = modelsByBranch[v.__branch][v.__type]
 
     snap = {}
     keys(v).forEach(k => snap[k] = revive(v[k], k))
 
-    snap = Model ? new Model(snap, b) : snap
+    snap = Model ? new Model(snap) : snap
   }
   else if (v.__module) {
     const mod = branches[v.__module]
@@ -25,32 +25,24 @@ export default ({ eventsByType = {}, modelsByBranch = {}, branches } = {}, branc
   }
   else {
     snap = isArray(v) ? [] : create(getProto(v))
-    keys(v).forEach(k => snap[k] = revive(v[k], k))
+    keys(v).forEach(k => snap[k] = revive(v[k], k)) // breadth-first unlike json revivers below
   }
 
   return snap
 }
 
 
-
-
-
-export const createReviver = (state = {}, branch) => {
-  const isApiResponse = branch !== undefined
-  return isApiResponse ? createApiReviver(state, branch) : createStateReviver(state) 
-}
-
-
-export const createStateReviver = ({ modelsByBranch = {}, eventsByType = {} } = {}, refs = {}) => (k, v) => {
+export const createStateReviver = ({ modelsByBranch, eventsByType, branches }, refs = {}) => (k, v) => {
   if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
   if (v.__event)     return eventsByType[v.type] ?? v
-  if (v.__refId)     return refs[v.__refId] ??= v
+  if (v.__refId)     return refs[v.__refId] ??= Object.defineProperty(v, '__refId', { value: v.__refId, enumerable: false })
 
-  if (v.__type) {
-    const b = v.__branch ?? ''
-    const Model = modelsByBranch[b]?.[v.__type] ?? modelsByBranch['']?.[v.__type]
-    if (!Model) return v
-    return new Model(v, b)
+  if (v.__type && v.__branch !== undefined) {
+    const Model = modelsByBranch[v.__branch][v.__type] // models brought to the client will always have v.__branch tags by virture of createApiReviverForClient above
+    return Model ? new Model(v) : v
+  }
+  else if (v.__module) {
+    Object.setPrototypeOf(v, branches[v.__module])
   }
 
   return v
@@ -58,19 +50,14 @@ export const createStateReviver = ({ modelsByBranch = {}, eventsByType = {} } = 
 
 
 
-
-
-
-export const createApiReviver = ({ modelsByBranch = {}, eventsByType = {} } = {}, branch = '', refs = {}) => (k, v) => {
+export const createApiReviverForClient = ({ models, eventsByType }, branch = '', refs = {}) => (k, v) => {
   if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
   if (v.__event)     return eventsByType[v.type] ?? v
-  if (v.__refId)     return refs[v.__refId] ??= v
+  // if (v.__refId)     return refs[v.__refId] ??= v
 
   if (v.__type) {
-    const b = v.__branch ?? branch // usually __branch won't exist when coming from an API response, and the whole purpose of this reviver is for module-specified db to assign the branch via its argument to the outer function, but it's possible that a model (from a different module) passed from the client to the server can be returned from the server, in which case we preserve its __branch
-    const Model = modelsByBranch[b][v.__type] ?? modelsByBranch['']?.[v.__type] // fallback to models from top module in case models not supplied in child module 
-    if (!Model) return v
-    return new Model(v, b)
+    const Model = models[v.__type]
+    return Model ? new Model(v, branch) : v // important: only clients care about tagging model's with v.__branch, as each db module only ever deals with one branch
   }
 
   return v
@@ -78,48 +65,34 @@ export const createApiReviver = ({ modelsByBranch = {}, eventsByType = {} } = {}
 
 
 
+export const createApiReviverForServer = ({ modelsByBranch }, refs = {}) => (k, v) => {
+  if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__refId)     return refs[v.__refId] ??= Object.defineProperty(v, '__refId', { value: v.__refId, enumerable: false })
 
-
-export const createServerReviver = state => {
-  if (!state) {
-    return (k, v) => {
-      if (dateKeyReg.test(k)) {
-        return v ? new Date(v) : v
-      }
-
-      return v
-    }
+  if (v.__type && v.__branch !== undefined) {
+    const Model = modelsByBranch[v.__branch][v.__type] // models brought to the client will always have v.__branch tags by virture of createApiReviverForClient above
+    return Model ? new Model(v) : v
   }
 
-  if (state.modelsByBranch) return createStateReviver(state)
-  
-  const db = state
-
-  return (k, v) => {
-    if (dateKeyReg.test(k)) {
-      return v ? new Date(v) : v
-    }
-  
-    if (v?.__event) {
-      return eventsByType[v.type] ?? v
-    }
-  
-    if (v?.__type) {
-      const b = v.__branch ?? ''
-      const Model = db[v.__type]?.Model
-      if (!Model) return v
-      return new Model(v, b)
-    }
-  
-    return v
-  }
+  return v
 }
 
 
 
+// in userland only createReviver will ever be used (and only on the server; it's almost identical to createApiReviverForServer, except it receives the entire tree/db, when itself then flattens)
+export const createReviver = db => {
+  const modelsByBranch = flattenDbTreeByBranchBy('models', db) // server receiving models from the client will also always have v.__branch tags by virture of createApiReviverForClient above and createStateReviver which preserves it
+  return createApiReviverForServer({ modelsByBranch })
+}
 
 
-export const replacer = (k, v) => v // remember: make models use their id not __refId
+
+export const replacer = (k, v) =>
+  v?.__refId
+    ? Array.isArray(v)
+      ? { __refId: v.__refId, __array: v.slice() }
+      : { __refId: v.__refId, ...v }
+    : v
 
 
 

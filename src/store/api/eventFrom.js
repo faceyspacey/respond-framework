@@ -9,9 +9,12 @@ export default function eventFrom(url, additionalArg) {
   const event = eventsByPattern[loc.pathname] // basic match, eg '/about', '/admin/users' etc
   if (event) return createEvent(event, loc, additionalArg)
 
+  const cached = L1[loc.url]
+  if (cached) return cached.event({ ...additionalArg, ...cached.arg, ...cached.argFromLoc })
+
   const patterns = Object.keys(eventsByPattern)
+
   const { pattern, arg } = find(patterns, loc.pathname) ?? {}
-  
   return pattern && createEvent(eventsByPattern[pattern], loc, additionalArg, arg)
 }
 
@@ -28,8 +31,10 @@ const createEvent = (event, loc, additionalArg, arg) => {
   else if (loc.search || loc.hash) {
     argFromLoc = searchHashToQueryHash(loc, state)
   }
-  
-  return event({ ...additionalArg, ...arg, ...argFromLoc } )
+
+  L1[loc.url] = { event, arg, argFromLoc }
+
+  return event({ ...additionalArg, ...arg, ...argFromLoc })
 }
 
 
@@ -42,7 +47,7 @@ const find = (patterns, pathname) => {
 
 
 const isMatch = (pathname, pattern) => {
-  const { re, keys } = cache[pattern] ?? compilePath(pattern)
+  const { re, keys } = L2[pattern] ?? compilePath(pattern)
   const match = re.exec(pathname)
 
   if (!match) return
@@ -60,8 +65,9 @@ const isMatch = (pathname, pattern) => {
 const compilePath = pattern => {
   const keys = []
   const re = pathToRegexp(pattern, keys)
-  return cache[pattern] = { re, keys }
+  return L2[pattern] = { re, keys }
 }
 
 
-const cache = {}
+const L1 = {} // cache url
+const L2 = {} // cache pattern for pathname

@@ -8,7 +8,7 @@ import { argsOut } from '../db/fetch.js'
 
 
 export default {
-  _callFilteredByRole(body) {
+  call(body) {
     this.context = body
     return this[body.method](...argsOut(body.args))
   },
@@ -25,8 +25,6 @@ export default {
   },
 
   writeTestFile({ name, branch = '', settings, events }) {
-    if (this.disableTestSaving) return { error: `You can't save tests on the development server` }
-    
     const filename = writeTestFile(name, branch, settings, events)
     openFile(filename)
     return { filename, success: true }

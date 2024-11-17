@@ -10,7 +10,6 @@ export default (props, { searchTests, toggleFilter }, { searched, filter }, _, r
   <View style={s.c}>
     <Input
       event={searchTests}
-      name='searched'
       value={searched}
       style={s.input}
       placeholder={filter === 'tests' ? 'search tests' : 'search snaps /regex/'}

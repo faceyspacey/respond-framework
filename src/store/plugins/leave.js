@@ -1,6 +1,3 @@
-import { kinds } from '../../store/createEvents.js'
-
-
 export default ({
   condition = defaultCondition,
   findCurr = defaultFindCurr
@@ -31,9 +28,8 @@ const handleLeave = async (state, e, next, event) => {
 
 const defaultFindCurr = state => state.curr
 
-const defaultCondition = (state, e) => e.kind === navigation && !state.respond.isEqualNavigations(e, state.curr)
+const defaultCondition = (state, e) => !state.respond.isEqualNavigations(e, state.curr)
 
-const { navigation } = kinds
 
 
 // example conditions

@@ -1,39 +1,37 @@
 import fetch, { argsIn } from './fetch.js'
 import simulateLatency from '../utils/simulateLatency.js'
 import secret from './secret.mock.js'
-import clean from './utils/cleanLikeProduction.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
 import obId from '../utils/objectIdDevelopment.js'
-
+import { createApiReviverForClient, createApiReviverForServer} from '../utils/revive.js'
 
 export default (db, parentDb, props, state, respond, branch) => {
   let { options } = respond
 
   if (!db && !parentDb) {
-    ({ db, options } = respond.findClosestAncestorWith('db', branch) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db
+    ({ db, options } = respond.findClosestAncestorWith('db', branch) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db when in production
   }
   else if (!db) return parentDb
 
   if (props?.db) mergeProps(db, props.db)
 
-  const cache = createApiCache(state)
+  const models = respond.models = {} // ref must exist now for createApiReviverForClient
 
-  return createDbProxy({
+  const clientReviver = createApiReviverForClient(respond, branch)
+  const serverReviver = createApiReviverForServer(respond)
+  
+  const reviveClient = res => JSON.parse(JSON.stringify(res), clientReviver)    // simulate production fetch reviver
+  const reviveServer = args => JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
+
+  const cache = createApiCache(state)
+  const { apiUrl, getContext } = respond.options
+
+  return respond.db = createDbProxy({
+    models,
     cache,
-    developer: new Proxy({}, {
-      get(_, method) {
-        return async (...args) => {
-          const body = { controller: 'developer', method, args }
-          const response = await fetch(options.apiUrl, body, state)
-          return handleResponse(state, { ...body, response })
-        }
-      }
-    }),
-    _call(controller, method) {
-      const { models, branch } = state
-    
+    call(controller, method) {
       const Model = models[controller]
 
       if (method === 'make') {
@@ -46,6 +44,9 @@ export default (db, parentDb, props, state, respond, branch) => {
     
       let useCache
       meth.cache = function(...args) { useCache = true; return meth(...args); }
+
+      let useServer
+      meth.server = function(...args) { useServer = true; return meth(...args); }
       
       return meth
 
@@ -54,8 +55,8 @@ export default (db, parentDb, props, state, respond, branch) => {
         if (!Controller) throw new Error(`controller "${controller}" does not exist in ${branch ?? 'top'} module`)
     
         const { token, userId, adminUserId, basename, basenameFull } = state.getStore()
-        const context = { token, userId, adminUserId, basename, basenameFull, ...options.getContext(state, controller, method, args) }
-        const body = { ...context, branch, controller, method, args: clean(argsIn(args), state), first: !state.__dbFirstCall  }
+        const context = { token, userId, adminUserId, basename, basenameFull, ...getContext?.call(state, controller, method, args) }
+        const body = { ...context, branch, controller, method, args: reviveServer(argsIn(args)), first: !state.__dbFirstCall  }
     
         const cached = useCache && cache.get(body)
 
@@ -64,10 +65,11 @@ export default (db, parentDb, props, state, respond, branch) => {
           return handleResponse(state, { branch, controller, method, args, response })
         }
 
-        const res = await new Controller(secret)._callFilteredByRole(body)
+        const response = useServer
+          ? await fetch(apiUrl, body, clientReviver)
+          : reviveClient(await new Controller(secret).call(body))
 
-        await simulateLatency(state)
-        const response = clean(res, state, branch)
+        await simulateLatency(state, useServer)
 
         if (useCache) cache.set(body, response)
 

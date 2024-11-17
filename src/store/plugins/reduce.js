@@ -17,7 +17,7 @@ export default wrapInActForTests((state, e) => {
       e.event.reduce.call(state, state, e)
     }
     else if (e.event === top.events.init) {
-      reduceAllBranches(eTop, top)
+      reduceTree(eTop, top)
     }
     else {
       reduceBranch(eTop, top, branch.split('.'))
@@ -35,9 +35,32 @@ export default wrapInActForTests((state, e) => {
 })
 
 
-const reduceAllBranches = (e, mod) => {
-  reduceModule(mod, e, mod, mod.reducers)
-  mod.moduleKeys.forEach(k => reduceAllBranches(e, mod[k]))
+const reduceTree = (e, mod) => {
+  reduceModuleInit(mod, e, mod, mod.reducers)
+  mod.moduleKeys.forEach(k => reduceTree(e, mod[k]))
+}
+
+
+
+const reduceModuleInit = (state, e, mod, reducers) => {
+  mod.ctx.branchReduced = mod.branch
+  
+  for (const k in reducers) {
+    const reduce = reducers[k]
+
+    if (mod.overridenReducers.get(reduce)) {
+      continue
+    }
+    else if (typeof reduce === 'object') {
+      if (!state[k]) state[k] = {}
+      reduceModule(state[k], e, mod, reduce)
+    }
+    else {
+      const prev = state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto
+      const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
+      if (next !== undefined) state[k] = next
+    }
+  }
 }
 
 
@@ -52,7 +75,6 @@ const reduceModule = (state, e, mod, reducers) => {
       continue
     }
     else if (typeof reduce === 'object') {
-      if (!state[k]) state[k] = {}
       reduceModule(state[k], e, mod, reduce)
     }
     else {
@@ -61,7 +83,6 @@ const reduceModule = (state, e, mod, reducers) => {
     }
   }
 }
-
 
 
 

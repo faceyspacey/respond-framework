@@ -9,6 +9,7 @@ import extractModuleAspects from './extractModuleAspects.js'
 
 import findOne from '../selectors/findOne.js'
 import { _parent } from './reserved.js'
+import { is, thisIn } from '../utils/inIs.js'
 
 
 export default function addModule(
@@ -23,12 +24,10 @@ export default function addModule(
   branch = name ?? ''
 ) {
   if (!mod.id) throw new Error('respond: missing id on module: ' + branch || 'top')
-
-  resp.branchesById[mod.id] = branch
+  
+  state.__module = resp.branchesById[mod.id] = branch
   resp.branches[branch] = state
   
-  state.__module = branch
-
   const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
 
   const respond = { ...options.merge, ...resp, state, id, mod, components, reduce, options, ignoreParents, branch, moduleKeys, overridenReducers: new Map }
@@ -44,14 +43,16 @@ export default function addModule(
 
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
-  
-  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne })
 
+  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne, is, in: thisIn })
+  
   createEvents(proto, respond, state, evs, propEvents, branch)
   createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
   createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
 
   for (const k of moduleKeys) {
-    addModule(resp, mod[k], state[k] = Object.create({}), session[k], state, k, mod[k].props, propPlugins, branch ? `${branch}.${k}` : k)
+    state[k] = addModule(resp, mod[k], Object.create({}), session[k], state, k, mod[k].props, propPlugins, branch ? `${branch}.${k}` : k)
   }
+
+  return state
 }

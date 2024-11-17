@@ -14,14 +14,12 @@ export default (top, opts = {}) => {
   const session = sessionState(opts)
   const branch = session.replayState.branch
 
-  const state = createProxy(Object.create({}))
+  const state = Object.create({})
   const respond = createRespond(top, state, branch)
-
   const mod = sliceBranch(top, branch)
 
   addModule(respond, mod, state, session)
   createReplays(state, session)
-  hydrateModules(state, session)
 
-  return window.state = state
+  return window.state = hydrateModules(state, session)
 }

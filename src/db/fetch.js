@@ -1,9 +1,8 @@
-import { createReviver } from '../utils/revive.js'
 import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => { 
+export default async (apiUrl = defaultApiUrl, body = {}, reviver, cache) => { 
   const { controller, method, branch } = body
   
   const url = `${apiUrl}/${controller}/${method}`
@@ -19,7 +18,7 @@ export default async (apiUrl = defaultApiUrl, body = {}, state = {}, cache) => {
   })
 
   const text = await res.text()
-  const response = JSON.parse(text, createReviver(state, branch))
+  const response = JSON.parse(text, reviver)
 
   if (cache) cache.set(body, response)
 

@@ -27,7 +27,7 @@ export default (state, session, start = new Date) => {
   
   console.log('createReplaySettings!!', new Date - start)
   
-  addModule(respond, replayToolsModule, state.replayTools = replayTools, session.replayTools, state, 'replayTools')
+  state.replayTools = addModule(respond, replayToolsModule, replayTools, session.replayTools, state, 'replayTools')
   state.moduleKeys.push('replayTools')
 }
 
@@ -81,10 +81,8 @@ const createDbWithSeed = (state, seed, shared = {}) => ([mod, replays]) => {
 
   state.__db[b] ??= {}
 
-  Object.keys(db).forEach(k => mergeTable(state.__db[b], seed?.[b], shared, k, db[k], ))
+  db.tableNames.forEach(k => mergeTable(state.__db[b], seed?.[b], shared, k, db[k]))
   if (!seed) createSeed(settings, options, db)
-
-  return db
 }
 
 const mergeTable = (state, seed, shared, key, table) => {

@@ -103,7 +103,7 @@ export const testsList = (state = [], e, { events, state: st }) => {
 }
 
 
-export const searched = (state = '', e, { events }) => e.event === events.searchTests ? e.searched : state
+export const searched = (state = '', e, { events }) => e.event === events.searchTests ? e.value : state
 
 
 export const sort = (state = 'az', e, { events }) => {

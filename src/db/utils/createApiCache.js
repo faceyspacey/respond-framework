@@ -14,13 +14,13 @@ export default (state, k = 'dbCache') => {
       const { controller, method } = body
       const k = this.key(body)
   
-      this.keygen.set(body, k) // key generated once per request on cache.get (optimization)
+      this.keygen.set(body, k)                          // key generated once per request on cache.get (optimization)  
   
       return this.calls[controller]?.[method]?.[k]
     },
     set(body, v) {
       const { controller, method } = body
-      const k = this.keygen.get(body) ?? this.key(body)
+      const k = this.keygen.get(body) ?? this.key(body) // key reused if already generated per request
   
       this.keygen.delete(body)
   

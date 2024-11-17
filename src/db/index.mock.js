@@ -20,7 +20,7 @@ export default {
   async find(selector, {
     project,
     sort = { updatedAt: -1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
   } = {}) {
     const start = skip * limit
@@ -126,7 +126,7 @@ export default {
     project,
     projectJoin,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0
   } = {}) {
     const coll = this.db[name]
@@ -152,8 +152,8 @@ export default {
     projectJoin,
     sort,
     sortJoin,
-    limit = this.config.listLimit,
-    limitJoin = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
+    limitJoin = this.config.listLimit ?? 10,
     skip = 0,
     innerJoin
   } = {}) {
@@ -189,7 +189,7 @@ export default {
     stages: specs = [],
     project,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0
   } = {}) {
     const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
@@ -305,7 +305,7 @@ export default {
   async _find(selector, {
     project,
     sort = { updatedAt: -1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
     docs = Object.values(this.docs || {}) // methods like aggregate pass in their own docs
   } = {}) {

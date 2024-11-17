@@ -1,4 +1,6 @@
+import createProxy from '../proxy/createProxy.js'
 import revive  from '../utils/revive.js'
+import sliceBranch from '../utils/sliceBranch.js'
 import reduce from './plugins/reduce.js'
 
 
@@ -6,10 +8,18 @@ export default (state, session) => {
   const hydration = revive(state.respond)(session)
   mergeModules(state, hydration)
 
-  if (state.replayState.status !== 'reload') return // hmr/replays/session have state already
-  reduce(state, state.events.init())
+  if (!state.prevState) { // hmr/session have prevState already
+    reduce(state, state.events.init())
+  }
+
+  return createProxies(createProxy(state), state.respond.branches)
 }
 
+const createProxies = (state, branches, b = '') => {
+  state.respond.state = Object.getPrototypeOf(state).state = branches[b] = state
+  state.moduleKeys.forEach(k => createProxies(state[k], branches, b ? `${b}.${k}` : k))
+  return state
+}
 
 
 function mergeModules(state, hydration = {}) {

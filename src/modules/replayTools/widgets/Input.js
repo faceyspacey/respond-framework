@@ -6,7 +6,7 @@ import { colors } from '../styles.js'
 
 export default memo(forwardRef(({
   event,
-  name,
+  name = 'value',
   value: v,
   formatIn = v => v,
   format = v => v,

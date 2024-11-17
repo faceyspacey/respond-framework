@@ -40,14 +40,14 @@ export const createRelativeUrl = (pathname, search, hash) =>
 
 
 
-// helper to conform to our location requirements of { pathname, search, hash } on all platforms
+// helper to conform to our location requirements of { url, pathname, search, hash } on all platforms
 
-export const urlToLocation = url => {
-  if (typeof url === 'object') return url
+export const urlToLocation = urlOrLoc => {
+  if (typeof urlOrLoc === 'object') return browserLocationToRespondLocation(urlOrLoc)
 
-  let pathname = url.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
-  let search = ''
-  let hash = ''
+  const pathname = urlOrLoc.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
+  const search = ''
+  const hash = ''
 
   const hashIndex = pathname.lastIndexOf('#')
 
@@ -67,5 +67,19 @@ export const urlToLocation = url => {
     pathname = '/' + pathname
   }
 
-  return { pathname, search, hash } // downstream all we uses is these to create RespondLocations
+  const url = `${pathname}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`
+
+  return { url, pathname, search, hash }
+}
+
+
+
+const browserLocationToRespondLocation = loc => {
+  let { pathname, search, hash } = loc
+  const url = pathname + search + hash  // relative
+
+  search = search.replace(/^\?/, '')    // no leading ?
+  hash = hash.replace(/^#/, '')         // no leading #
+  
+  return { url, pathname, search, hash }
 }

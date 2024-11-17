@@ -1,46 +1,58 @@
 import createControllers from './createControllers.js'
+import defaultCollection from '../db/index.js'
 import { createModel } from './createModels.js'
 
 
-export default (dbRaw, options = {}) => {
-  const db = {}
+export default (options = {}) => {
+  const { collection = defaultCollection, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, createController, ...modules } = options
+  const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const { collection, model, controllers: conts = {}, replays = {}, models = {}, modules } = options
-  const config = { listLimit: 10, ...options.config }
-
-  const shared = models.shared ?? {}
-  const server = models.server ?? (!models.shared ? models : {})
-
-  const controllers = createControllers(conts, db, replays, options)
+  const modelsShared = models.shared ?? {}
+  const modelsServer = models.server ?? (!models.shared ? models : {})
 
   const descriptors = {
-    db: { enumerable: false, value: db },
-    controllers: { enumerable: false, value: controllers },
+    db:      { enumerable: false, value: db },
     replays: { enumerable: false, value: replays },
   }
 
-  Object.defineProperties(db, descriptors)
+  db.controllers = createControllers(controllers, config, descriptors, createController)
 
   const extra = Object.defineProperties({}, descriptors)
 
-  for (const k in dbRaw) {
-    const coll = dbRaw[k]
+  for (const k in tables) {
+    const coll = tables[k]
     const docs = db[k]?.docs // preserve docs through HMR
 
     const inherit = coll.inherit !== false
 
-    const parent = inherit ? collection : {}
+    const parent =      inherit ? collection : {}
     const parentModel = inherit ? model : {}
 
-    const Model = createModel(k, shared[k], server[k], parentModel, extra)
+    const Model = db.models[k] = createModel(k, modelsShared[k], modelsServer[k], parentModel, extra)
     const make = doc => new Model({ ...doc, __type: db[k]._name })
 
     db[k] = { _name: k, _namePlural: k + 's', make, ...parent, ...coll, docs, Model, db, config }
 
     Object.defineProperties(db[k], descriptors)
+
+    db.tableNames.push(k)
   }
 
-  Object.assign(db, modules)
+  Object.keys(modules).forEach(k => {
+    if (!modules[k]) return // developer db undefined in production
+
+    const { props = {}, ...child } = modules[k]
+    const { db: dbChild, controllers, models } = child
+
+    if (dbChild) Object.assign(child, db) // child is immutable
+    if (controllers) child.controllers = Object.assign({}, child.controllers, controllers) // must be immutable since during development focusing a child branch will lead to using a child db without a parent having overwritten it through props
+    if (models) child.models = Object.assign({}, child.models, models)
+
+    db[k] = child
+    child.original = modules[k] // when a module is focused during development, 
+
+    db.moduleKeys.push(k)
+  })
   
   return db
 }

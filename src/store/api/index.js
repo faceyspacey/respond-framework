@@ -21,7 +21,7 @@ import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
 
 export default (top, state, branch) => {
   const branchesAll = createBranchesAll(top, branch)
-  const branches = { ['']: state, undefined: state }
+  const branches = { ['']: state, get undefined() { return this[''] } }
   const listeners = []
   const promises = []
 
@@ -33,6 +33,8 @@ export default (top, state, branch) => {
     createCookies = defaultCreateCookies,
     ...options
   } = top.options ?? {}
+
+  const getStore = () => branches.undefined
 
   return {
     top,
@@ -70,16 +72,14 @@ export default (top, state, branch) => {
     addToCache,
     addToCacheDeep,
   
-    getStore() {
-      return state
-    },
+    getStore,
   
     saveSessionState() {
-      return saveSessionState(state)
+      return saveSessionState(getStore())
     },
 
     parseJsonState(json) {
-      return parseJsonState(json, state)
+      return parseJsonState(json, getStore())
     },
   
     awaitInReplaysOnly(f, onError) {           
@@ -96,8 +96,8 @@ export default (top, state, branch) => {
 
     queueSaveSession() {
       if (isProd || isTest) return
-      if (ctx.saveQueued || state.replayTools?.playing) return
-      if (window.state !== state) return // ensure replayEvents saves new state
+      if (ctx.saveQueued || getStore().replayTools?.playing) return
+      if (window.state !== getStore()) return // ensure replayEvents saves new state
 
       ctx.saveQueued = true
 
@@ -113,6 +113,8 @@ export default (top, state, branch) => {
       if (!a || !b) return false
       if (a.event !== b.event) return false
       if (a.kind !== kinds.navigation) return false
+      if (b.kind !== kinds.navigation) return false
+      if (!a.event.pattern || !a.event.pattern) return false
       return this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
     },
 
@@ -147,13 +149,13 @@ export default (top, state, branch) => {
     },
   
     findInClosestAncestor(key, b) {
-      const branch = branch ? (b ? branch + '.' + b : branch) : b
-      return findInClosestAncestor(key, branch, top)
+      const b2 = branch ? (b ? branch + '.' + b : branch) : b
+      return findInClosestAncestor(key, b2, top)
     },
 
     findClosestAncestorWith(key, b) {
-      const branch = branch ? (b ? branch + '.' + b : branch) : b
-      return findClosestAncestorWith(key, branch, top)
+      const b2 = branch ? (b ? branch + '.' + b : branch) : b
+      return findClosestAncestorWith(key, b2, top)
     },
   
     subscribe(send) {
@@ -200,7 +202,7 @@ export default (top, state, branch) => {
       const hasOnError = this.respond.state.options.onError
     
       const onError = hasOnError ?? state.options.onError
-      const s = hasOnError ? this.respond.state : state
+      const s = hasOnError ? this.respond.state : getStore()
 
       return onError?.({ ...err, state: s })
     }

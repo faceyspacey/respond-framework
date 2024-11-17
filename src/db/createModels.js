@@ -10,18 +10,16 @@ export default (models, db, parent, respond, branch) => {
   const shared = models.shared ?? {}
   const client = models.client ?? (!models.shared ? models : {})
 
-  models = {}
-
   const extra = Object.defineProperties({}, {
     db: { enumerable: false, configurable: true, value: db },
     replays: { enumerable: false, configurable: true, get: () => respond.replays } // respond.replays won't be defined until later by createReplays
   })
 
   for (const k in { ...shared, ...client }) {
-    models[k] = createModel(k, shared[k], client[k], mixin, extra)
+    db.models[k] = createModel(k, shared[k], client[k], mixin, extra)
   }
 
-  return respond.modelsByBranch[branch] = models
+  return respond.modelsByBranch[branch] = db.models
 }
 
 
@@ -34,9 +32,9 @@ export const createModel = (k, shared, serverOrClient, mixin, extra) => {
   Object.defineProperties(Model.prototype, descriptors)
 
   function Model(doc, branch) {
-    if (branch !== undefined) this.__branch = branch
     if (!doc) return
-    Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instant properties of the same name as prototype getters without error
+    Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
+    if (branch !== undefined) this.__branch = branch
   }
 
   return Model

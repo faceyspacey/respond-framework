@@ -6,7 +6,7 @@ import RespondProvider from './Provider.js'
 
 
 export default function render(props = {}) {
-  const app = createApp(this.state, props)
+  const app = createApp(this.respond.state, props)
   const { ctx } = this
 
   if (isTest) return app

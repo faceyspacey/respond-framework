@@ -3,7 +3,7 @@ import { argsOut } from './fetch.js'
 
 
 export default {
-  async _callFilteredByRole(body) {
+  async call(body) {
     this.context = body
     
     const { method, token, userId, adminUserId, args } = body
@@ -11,7 +11,7 @@ export default {
 
     if (!this[method]) {
       const params = { controller, method }
-      return { error: 'missing-controller-method', params }
+      return { error: 'controller-method-absent', params }
     }
 
     this.user = this._verify(token) 
@@ -28,7 +28,7 @@ export default {
       const allowedRoles = this.permissions[method]
       const roles = this.user?.roles ?? []
       const params = { controller, method, roles, allowedRoles }
-      return { error: 'not-authenticated', params }
+      return { error: 'denied', params }
     }
 
     return this[method](...argsOut(args)) // call eg: controllers/User.updateOne(id)

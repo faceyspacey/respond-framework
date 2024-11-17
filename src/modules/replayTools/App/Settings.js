@@ -78,7 +78,7 @@ const RespondSettingForm = ({ Component, name, options, ...props }, events, stat
     ...props,
     name,
     event: events.editConfig,
-    value:state.config[name],
+    value: state.config[name],
     options: typeof options === 'function' ? options(state.config, state) : options || bools
   })
 }

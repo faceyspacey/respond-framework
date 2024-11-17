@@ -1,3 +1,4 @@
+import { is, thisIn } from '../utils/inIs.js'
 import isNamespace from '../utils/isNamespace.js'
 import { stripBranch } from '../utils/sliceBranch.js'
 
@@ -97,10 +98,12 @@ const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, p
 
   const toJSON = () => ({ __event: true, type })
   
-  Object.assign(event, config, info, { dispatch, prefetch, is, in: includesThis, toJSON, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
+  Object.assign(event, config, info, { dispatch, prefetch, is, in: thisIn, toJSON, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
   Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
-  Object.defineProperty(event, 'module', { value: state, enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
+  Object.defineProperty(event, 'module', { get: () => branches[branch], enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
 
+  const { branches } = respond
+  
   if (respond.eventsByType[type]) {
     throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`) // same type could exist in both cases
   }
@@ -157,15 +160,8 @@ const edit = {
 
 export function Namespace() {}
 
-Namespace.prototype = { is, in: includesThis }
+Namespace.prototype = { is, in: thisIn }
 
-function is(namespaceOrEvent) {
-  return namespaceOrEvent === this
-}
-
-function includesThis(...namespacesOrEvents) {
-  return namespacesOrEvents.includes(this)
-}
 
 
 

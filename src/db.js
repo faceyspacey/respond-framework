@@ -1,5 +1,4 @@
 export { default as createDatabase } from './db/createDatabase.js'
-export { createControllersTree } from './db/createControllers.js'
 
 export { default as collection } from './db/index.js'
 export { default as model } from './db/model.js'

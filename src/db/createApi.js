@@ -1,99 +1,41 @@
-import Developer from '../server/DeveloperController.js'
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
-import secretMock from './secret.mock.js'
+import flattenDbTreeByBranchBy from './utils/flattenDbTreeByBranchBy.js'
+import { isDev as dev } from '../utils.js'
+import { replacer } from '../utils/revive.js'
 
 
 export default opts => {
-  const isProd = process.env.NODE_ENV === 'production'
-  const handler = isProd ? createHandler(opts) : createHandlerDev(opts)
+  const handle = createHandler(opts)
 
   return async (req, res) => {
     try {
-      await handler(req, res)
+      await handle(req, res)
     }
     catch (error) {
-      if (!req.body) {
-        const error = 'missing express middleware: app.use(express.json({ reviver: createServerReviver() }))'
-        console.error(error)
-        res.json({ error })
-        return
-      }
-
-      const { controller, method, args } = req.body
-      console.error('Respond: the following error occurred in a controller method', { controller, method, args }, error)
-      res.json({ error: 'unknown-server', params: { controller, method, args, message: error.message } })
+      console.error('respond: the following error occurred in a controller method', req.body, error)
+      res.json({ error: 'unknown-server-error', params: { ...req.body, message: error.message } })
     }
   }
 }
 
 
-
-
-const createHandler = ({
-  controllers: controllersByBranch = {},
-  findController,
-  logRequest = true,
-  logResponse = false
-}) => async (req, res) => {
-  const { body } = req
-  const { branch, controller, method } = body
-
-  const Controller = findController
-    ? findController(controllersByBranch, branch, controller)
-    : controllersByBranch[branch][controller] // eg: controllers['admin.foo'].user
-
-  if (logRequest !== false) {
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, body)
-  }
-
-  if (!Controller) {
-    res.json({ error: 'controller-not-permitted', params: { branch, controller, method } })
-    return
-  }
-
-  let response = await new Controller(request)._callFilteredByRole(body)
-  response = response === undefined ? {} : response // client code always expects objects, unless something else is explicitly returned
-
-  if (logResponse !== false) {
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { ...body, response })
-  }
-  
-  if (response?.error) {
-    response.params = { ...response.params, controller, method }
-  }
-
-  res.json(response)
-}
-
-
-
-
-
-// Developer controller only available during development
-
-const createHandlerDev = opts => {
-  const io = opts.server && createWallabySocketsServer(opts.server)
-
-  function Controller(request = {}, io) { this.request = request; this.io = io; }
-  Controller.prototype = Developer
+const createHandler = ({ db, log = true, server }) => {
+  const controllers = flattenDbTreeByBranchBy('controllers', db)
+  const io = dev && server && createWallabySocketsServer(server)
 
   return async (req, res) => {
-    const { body } = req
-    const { controller, method } = body
+    const { branch, controller, method } = req.body
+
+    if (log) console.log(`request.request: db.${controller}.${method}`, req.body)
+      
+    const Controller = controllers[branch][controller] // eg: controllers['admin.foo'].user
+    if (!Controller) return res.json({ error: 'controller-absent', params: req.body })
+
+    const r = await new Controller(req, io).call(req.body)
+    const response = r === undefined ? {} : r // client code always expects objects, unless something else is explicitly returned
   
-    if (controller !== 'developer') {
-      res.json({ error: 'invalid developer controller' })
-      return
-    }
+    if (log) console.log(`respond.response: db.${controller}.${method}`, ...(dev ? [] : [req.body, '=>']), response) // during prod, other requests might come thru between requests, so response needs to be paired with request
   
-    console.log(`Respond (REQUEST): db.${controller}.${method}`, { branch: '', ...body })
-  
-    let response = await new Controller(req, io)._callFilteredByRole(body)
-    response = response === undefined ? {} : response
-  
-    console.log(`Respond (RESPONSE): db.${controller}.${method}`, { branch: '', ...body, response })
-    
-    res.json(response)
+    res.type('json').send(JSON.stringify(response, replacer))
   }
 }
-

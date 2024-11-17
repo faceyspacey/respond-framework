@@ -22,7 +22,7 @@ export default !isProd ? mock : {
   async find(selector, {
     project,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
   } = {}) {
     selector = this._toObjectIdsSelector(selector)
@@ -94,7 +94,7 @@ export default !isProd ? mock : {
     path = ['firstName', 'lastName'],
     selector,
     project,
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
   } = {}) {
     selector = this._toObjectIdsSelector(selector)
@@ -130,7 +130,7 @@ export default !isProd ? mock : {
   async searchGeo({ lng, lat }, {
     selector,
     project,
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0
   } = {}) {
     selector = this._toObjectIdsSelector(selector)
@@ -185,7 +185,7 @@ export default !isProd ? mock : {
     project,
     projectJoin,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0
   } = {}) {
     const coll = this.db[name]
@@ -214,8 +214,8 @@ export default !isProd ? mock : {
     projectJoin,
     sort,
     sortJoin,
-    limit = this.config.listLimit,
-    limitJoin = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
+    limitJoin = this.config.listLimit ?? 10,
     skip = 0,
     innerJoin
   } = {}) {
@@ -270,7 +270,7 @@ export default !isProd ? mock : {
     stages: specs = [],
     project,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
   } = {}) {
     const stages = createAggregateStages(specs, { collection: this, selector, project, sort, limit, skip })
@@ -357,7 +357,7 @@ export default !isProd ? mock : {
   async _find(selector, {
     project,
     sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit,
+    limit = this.config.listLimit ?? 10,
     skip = 0,
   } = {}) {
     selector = this._toObjectIdsSelector(selector)
