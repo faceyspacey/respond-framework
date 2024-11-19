@@ -2,16 +2,13 @@ import fetch from './fetch.js'
 import createDbProxy from './utils/createDbProxy.js'
 import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
-import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
 import { ObjectId } from 'bson'
 
 
-export default !isProd ? mock : (db, parentDb, props, state, respond, branch) => {
+export default !isProd ? mock : (db, parentDb, state, respond, branch) => {
   if (!db && !parentDb) db = {}
   else if (!db) return parentDb
-    
-  if (props?.db) mergeProps(db, props.db)
 
   const models = respond.models = {} // ref must exist now for createApiReviverForClient
   const clientReviver = createApiReviverForClient(respond, branch)

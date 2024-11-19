@@ -590,19 +590,15 @@ if (possibleDuplicate) {
 
 #basenameFull stored in its own sessionStorage, along with replayState
 
-#revival via JSON.parse needs to conditionally choose revival mechanism based on status
-#is there any way to not have to revive HMR? (replay/reload has minimal state to revive)
-#session.replayTools can possibly be revived in createReplays when addModule is called
-
-
 
 
 
 for navigators, finalize strategy for `key`, eg url + type for navigations
 finalize plan for normalizing event meta information in ancestor modules in userland
 
-
 make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
+api returns need to be check for undefined
+
 
 !make tests pass, remove 3 args, remove respond.state
 lazy event function creation
@@ -611,6 +607,28 @@ lazy event function creation
 make all tools replacable by user (including reviver)
 re-organize files
 finalize implementation of respond object etc
+
+
+if (e.meta.parallel && !e.meta.changePath) return
+
+
+
+#revive doesn't need to occur for hmr if model function refs are maintained, prevState can just merge w/ currState
+
+move seed to its own sessionStorage
+
+save prevState in 2 sessionStorages, and keep a boolean or index number in sessionStorage of the last one used
+apply preventExtensions, and save prevStates on protos; revive from correct index and put back on protos
+
+comparison of a curr state object a and a prev state object after sessionStorage, they will never be the same ref
+
+dont pass session.replayTools to addModule; figure out how to never specify replayTools {} in session
+
+
+
+move db out of state
+make hmr replay everything, conslidate sessionState creation
+move replayState to its own sessionStorage along with basenames
 
 
 focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db

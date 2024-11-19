@@ -1,6 +1,7 @@
 import createControllers from './createControllers.js'
 import defaultCollection from '../db/index.js'
 import { createModel } from './createModels.js'
+import { isDev } from '../utils.js'
 
 
 export default (options = {}) => {

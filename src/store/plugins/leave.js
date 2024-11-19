@@ -1,28 +1,36 @@
+import trySync from '../../utils/trySync.js'
+
+
 export default ({
   condition = defaultCondition,
   findCurr = defaultFindCurr
-} = {}) => async (state, e, next) => {
+} = {}) => (state, e, next) => {
   if (!condition(state, e)) return
 
   const event = findCurr(state).event
-  const modState = event.module // callback could be in any module
+  const modState = event.module // plugin could be in any module
 
-  return handleLeave(modState, e, next, event)  
+  const res = event.beforeLeave?.call(modState, modState, e)
+
+  return trySync(res, r => leave(modState, e, r, next, event))
 }
 
 
-const handleLeave = async (state, e, next, event) => {
-  const canLeave = await event.beforeLeave?.call(state, state, e)
 
+const leave = (state, e, canLeave, next, event) => {
   if (canLeave === false) {
     state.respond.devtools.sendPrevented({ type: 'beforeLeave', returned: false }, e)
     return false
   }
   
-  await event.leave?.call(state, state, e)
-  await next()
-  await event.afterLeave?.call(state, state, e)
+  const res = event.leave?.call(state, state, e)
+
+  return trySync(res, _ => {
+    if (!event.afterLeave) return
+    return trySync(next(), _ => event.afterLeave(state, state, e))
+  })
 }
+
 
 
 

@@ -1,8 +1,7 @@
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
-import flattenDbTreeByBranchBy from './utils/flattenDbTreeByBranchBy.js'
+import { flattenControllers } from './utils/flattenDbTree.js'
 import { isDev as dev } from '../utils.js'
-import { replacer } from '../utils/revive.js'
-
+import replayTools from '../modules/replayTools/db.js'
 
 export default opts => {
   const handle = createHandler(opts)
@@ -20,7 +19,12 @@ export default opts => {
 
 
 const createHandler = ({ db, log = true, server }) => {
-  const controllers = flattenDbTreeByBranchBy('controllers', db)
+  if (dev && !db.replayTools) {
+    db.moduleKeys.push('replayTools')
+    db.replayTools = replayTools
+  }
+
+  const controllers = flattenControllers(db)
   const io = dev && server && createWallabySocketsServer(server)
 
   return async (req, res) => {
@@ -36,6 +40,6 @@ const createHandler = ({ db, log = true, server }) => {
   
     if (log) console.log(`respond.response: db.${controller}.${method}`, ...(dev ? [] : [req.body, '=>']), response) // during prod, other requests might come thru between requests, so response needs to be paired with request
   
-    res.type('json').send(JSON.stringify(response, replacer))
+    res.json(response)
   }
 }

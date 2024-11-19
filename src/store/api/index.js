@@ -45,7 +45,9 @@ export default (top, state, branch) => {
     
     branches,
     branchesById: {},
+
     modelsByBranch: {},
+    modelsByBranchType: {},
 
     eventsByPattern: {},
     eventsByType: {},

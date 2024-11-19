@@ -36,7 +36,7 @@ export default function addModule(
   state.basename = session.basename ?? props.basename ?? mod.basename ?? ''
   state.basenameFull = (parent.basenameFull ?? '') + state.basename
 
-  const db = createClientDatabase(mod.db, parent.db, props, state, respond, branch)
+  const db = createClientDatabase(mod.db, parent.db, state, respond, branch)
   const models = createModels(mod.models, db, parent, respond, branch)
 
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)

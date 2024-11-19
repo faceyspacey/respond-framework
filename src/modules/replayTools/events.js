@@ -198,7 +198,10 @@ export default {
       
       const prev = window.state
       const { eventsByType } = prev.respond
-      prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+      
+      if (branch !== prev.replayState.branch) {
+        prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+      }
 
       const start = new Date
       const state = createState(top, { settings, branch, status: 'reload' })

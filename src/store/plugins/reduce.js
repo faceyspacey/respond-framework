@@ -36,6 +36,7 @@ export default wrapInActForTests((state, e) => {
 
 
 const reduceTree = (e, mod) => {
+  mod.prevState = {}
   reduceModuleInit(mod, e, mod, mod.reducers)
   mod.moduleKeys.forEach(k => reduceTree(e, mod[k]))
 }
@@ -43,7 +44,7 @@ const reduceTree = (e, mod) => {
 
 
 const reduceModuleInit = (state, e, mod, reducers) => {
-  mod.ctx.branchReduced = mod.branch
+  mod.respond.ctx.branchReduced = mod.branch
   
   for (const k in reducers) {
     const reduce = reducers[k]
@@ -53,7 +54,7 @@ const reduceModuleInit = (state, e, mod, reducers) => {
     }
     else if (typeof reduce === 'object') {
       if (!state[k]) state[k] = {}
-      reduceModule(state[k], e, mod, reduce)
+      reduceModuleInit(state[k], e, mod, reduce)
     }
     else {
       const prev = state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto
@@ -66,7 +67,7 @@ const reduceModuleInit = (state, e, mod, reducers) => {
 
 
 const reduceModule = (state, e, mod, reducers) => {
-  mod.ctx.branchReduced = mod.branch
+  mod.respond.ctx.branchReduced = mod.branch
   
   for (const k in reducers) {
     const reduce = reducers[k]

@@ -6,6 +6,8 @@ import RespondProvider from './Provider.js'
 
 
 export default function render(props = {}) {
+  const start = new Date
+
   const app = createApp(this.respond.state, props)
   const { ctx } = this
 
@@ -13,6 +15,8 @@ export default function render(props = {}) {
 
   if (!isNative) renderWeb(ctx, app)
   else renderNative(ctx, app, props)
+
+  console.log('render', new Date - start)
 }
 
 

@@ -1,36 +1,42 @@
 import createProxy from '../proxy/createProxy.js'
 import revive  from '../utils/revive.js'
-import sliceBranch from '../utils/sliceBranch.js'
 import reduce from './plugins/reduce.js'
 
 
 export default (state, session) => {
-  const hydration = revive(state.respond)(session)
-  mergeModules(state, hydration)
+  reviveModules(state, session, session.replayState.status === 'session' && revive(state.respond))
 
   if (!state.prevState) { // hmr/session have prevState already
     reduce(state, state.events.init())
   }
 
-  return createProxies(createProxy(state), state.respond.branches)
+  const proxy = createProxy(state)
+
+  replaceWithProxies(proxy, state.respond.branches)
+
+  return proxy
 }
 
-const createProxies = (state, branches, b = '') => {
-  state.respond.state = Object.getPrototypeOf(state).state = branches[b] = state
-  state.moduleKeys.forEach(k => createProxies(state[k], branches, b ? `${b}.${k}` : k))
-  return state
-}
 
 
-function mergeModules(state, hydration = {}) {
-  state.moduleKeys.forEach(k => { // depth-first
-    if (!hydration[k]) return
-    mergeModules(state[k], hydration[k])
-    delete hydration[k] // not deleting would overwrite fully created modules; instead delete so a depth-first shallow merge is performed for each module
+const reviveModules = (state, session, revive) => {
+  state.moduleKeys.forEach(k => {                   // depth-first
+    if (!session[k]) return
+    reviveModules(state[k], session[k], revive)
+    delete session[k]                               // delete to prevent overwriting child modules..
   })
-
-  Object.assign(state, hydration) // shallow -- user expectation is for state to be exactly what was hydrated (after revival)
+  
+  Object.assign(state, revive ? revive(session) : session)             // ...so parent receives shallow merge of everything except already assign child modules
 }
+
+
+
+const replaceWithProxies = (state, branches, b = '') => {
+  state.respond.state = Object.getPrototypeOf(state).state = branches[b] = state // replace module states with proxy
+  state.moduleKeys.forEach(k => replaceWithProxies(state[k], branches, b ? `${b}.${k}` : k))
+}
+
+
 
 
 

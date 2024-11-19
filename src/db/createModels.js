@@ -15,27 +15,32 @@ export default (models, db, parent, respond, branch) => {
     replays: { enumerable: false, configurable: true, get: () => respond.replays } // respond.replays won't be defined until later by createReplays
   })
 
+  const prevModels = window.state?.respond?.modelsByBranchType ?? {}
+
   for (const k in { ...shared, ...client }) {
-    db.models[k] = createModel(k, shared[k], client[k], mixin, extra)
+    const key = branch + '_' + k
+    const prevModel = prevModels[key]
+
+    const Model = createModel(k, shared[k], client[k], mixin, extra, prevModel)
+    respond.modelsByBranchType[key] = db.models[k] = Model
   }
 
-  return respond.modelsByBranch[branch] = db.models
+  return db.models
 }
 
 
 
-export const createModel = (k, shared, serverOrClient, mixin, extra) => {
+export const createModel = (k, shared, serverOrClient, mixin, extra, Model) => {
   const base = { _name: k, _namePlural: k + 's' }
   const descriptors = Object.assign(g(base), g(mixin), g(shared), g(serverOrClient), g(extra))
 
+  Model ??= function Model(doc, branch) {
+    if (doc) Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
+    if (branch !== undefined) this.__branchType = branch + '_' + k
+  }
+
   Object.defineProperty(Model, 'name', { value: k })
   Object.defineProperties(Model.prototype, descriptors)
-
-  function Model(doc, branch) {
-    if (!doc) return
-    Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
-    if (branch !== undefined) this.__branch = branch
-  }
 
   return Model
 }

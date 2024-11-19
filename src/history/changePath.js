@@ -1,5 +1,4 @@
 import bs from './browserState.js'
-import * as buttons from './utils/buttons.js'
 import { createTrap } from './createTrap.js'
 
 
@@ -32,7 +31,7 @@ const change = (url, redirect) => {
   const index = history.state?.index
 
   if (index === undefined) replace(url) // first visit
-  else if (!bs.hasTrap) replace(url)    // return visit in same session, not cached by browser (i will be defined, but trap not yet setup)
+  else if (!bs.hasTrap) replace(url)    // return visit in same session when not cached by browser (index will be defined, but trap not yet setup)
   else if (redirect) replace(url)       // subsequent redirects in single dispatch pipeline must both be treated as a replace
   else push(url)                        // new links (only one per user-triggered dispatch pipeline)
 }

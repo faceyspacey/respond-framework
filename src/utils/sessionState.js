@@ -11,7 +11,7 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   const { settings: _, tests, selectedTestId, ...rt } = replayTools
   const prt = prevState?.replayTools ?? {}
 
-  const replayState = status === 'hmr'
+  let replayState = status === 'hmr'
     ? { ...prevState.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
     : { settings, branch, idCounterRef, status }
 
@@ -21,14 +21,14 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
     case 'hmr':     return { ...prevState, replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false } }
   }
 
-  const prs = !isProd && permalinkReplayState()
-  if (prs) return { ...hydration, replayState: prs, replayTools: {} }
+  replayState = !isProd && permalinkReplayState()
+  if (replayState) return { ...hydration, replayState, replayTools: {} }
 
   const session = sessionStorage.getItem('sessionState')
   if (session) return JSON.parse(session) // JSON.parse(sessionStorage.getItem('preState'))
 
-  const defaultState = { settings: undefined, branch: '', idCounterRef, status: 'reload' }
-  return { ...hydration, replayState: defaultState, replayTools: {} }
+  replayState = { settings: undefined, branch: '', idCounterRef, status: 'reload' }
+  return { ...hydration, replayState, replayTools: {} }
 }
 
 
@@ -66,7 +66,7 @@ const stringifyState = state => {
       ...s.replayTools,
       tests: t,                       // don't waste cycles on tons of tests with their events  
       settings: undefined,            // will be reset to last "checkpoint" by createReplays
-      branch: undefined,   // will be reset to last "checkpoint" by createReplays
+      focusedbranch: undefined,   // will be reset to last "checkpoint" by createReplays
     }
   }
 

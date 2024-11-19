@@ -2,28 +2,23 @@ import fetch, { argsIn } from './fetch.js'
 import simulateLatency from '../utils/simulateLatency.js'
 import secret from './secret.mock.js'
 import createDbProxy from './utils/createDbProxy.js'
-import mergeProps from './utils/mergeProps.js'
 import createApiCache from './utils/createApiCache.js'
 import obId from '../utils/objectIdDevelopment.js'
-import { createApiReviverForClient, createApiReviverForServer} from '../utils/revive.js'
+import { createApiReviverForClient, createReviver } from '../utils/revive.js'
 
-export default (db, parentDb, props, state, respond, branch) => {
-  let { options } = respond
-
+export default (db, parentDb, state, respond, branch) => {
   if (!db && !parentDb) {
     ({ db, options } = respond.findClosestAncestorWith('db', branch) ?? {}) // focused module is a child without its own db, but who expects to use a parent module's db when in production
   }
   else if (!db) return parentDb
 
-  if (props?.db) mergeProps(db, props.db)
-
   const models = respond.models = {} // ref must exist now for createApiReviverForClient
 
   const clientReviver = createApiReviverForClient(respond, branch)
-  const serverReviver = createApiReviverForServer(respond)
+  const serverReviver = createReviver(db)
   
-  const reviveClient = res => JSON.parse(JSON.stringify(res), clientReviver)    // simulate production fetch reviver
-  const reviveServer = args => JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
+  const reviveClient = (res = {}) => JSON.parse(JSON.stringify(res), clientReviver)   // simulate production fetch reviver
+  const reviveServer = args =>       JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
 
   const cache = createApiCache(state)
   const { apiUrl, getContext } = respond.options
