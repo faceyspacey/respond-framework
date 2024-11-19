@@ -18,7 +18,7 @@ export default (top, opts = {}) => {
   const respond = createRespond(top, state, branch)
   const mod = sliceBranch(top, branch)
 
-  addModule(respond, mod, state, session)
+  addModule(respond, mod, state)
   createReplays(state, session)
 
   return window.state = hydrateModules(state, session)

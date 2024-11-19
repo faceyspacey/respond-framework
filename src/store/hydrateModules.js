@@ -1,12 +1,28 @@
 import createProxy from '../proxy/createProxy.js'
-import revive  from '../utils/revive.js'
+import revive, { createStateReviver }  from '../utils/revive.js'
+import sessionStorage from '../utils/sessionStorage.js'
 import reduce from './plugins/reduce.js'
 
 
 export default (state, session) => {
-  reviveModules(state, session, session.replayState.status === 'session' && revive(state.respond))
+  let { replayState, seed, prevState, ...sesh } = session
 
-  if (!state.prevState) { // hmr/session have prevState already
+  if (replayState.status === 'session') {
+    const hydration = state.respond.getSessionState()
+    reviveModules(state, hydration)
+    prevState = JSON.parse(sessionStorage.getItem('prevState'), createStateReviver(state))
+  }
+  else {
+    reviveModules(state, sesh)
+  }
+
+  Object.getPrototypeOf(state).replayState = replayState
+  Object.getPrototypeOf(state).seed = seed
+
+  if (prevState) { // hmr/session have prevState already
+    mergeModulesPrevState(state, prevState)
+  }
+  else {
     reduce(state, state.events.init())
   }
 
@@ -19,14 +35,14 @@ export default (state, session) => {
 
 
 
-const reviveModules = (state, session, revive) => {
+const reviveModules = (state, session) => {
   state.moduleKeys.forEach(k => {                   // depth-first
     if (!session[k]) return
-    reviveModules(state[k], session[k], revive)
+    reviveModules(state[k], session[k])
     delete session[k]                               // delete to prevent overwriting child modules..
   })
   
-  Object.assign(state, revive ? revive(session) : session)             // ...so parent receives shallow merge of everything except already assign child modules
+  Object.assign(state, session)             // ...so parent receives shallow merge of everything except already assign child modules
 }
 
 
@@ -38,19 +54,27 @@ const replaceWithProxies = (state, branches, b = '') => {
 
 
 
-
-
-export function mergeModulesPrevState(state, prevState = {}) {
+export function mergeModulesPrevState(state, prevState) {
   state.moduleKeys.forEach(k => {
     mergeModulesPrevState(state[k], prevState[k])
   })
 
-  const prev = Object.create(Object.getPrototypeOf(prevState))
-  Object.assign(prev, prevState)
-
-  if (prev.prevState?.prevState) {
-    delete prev.prevState.prevState // prevent infinite circular references to prevStates (however: we need 2 prevStates for HMR which hydrates from prevState; otherwise, this would be cut off 1 level sooner)
-  }
-
-  state.prevState = prev
+  Object.getPrototypeOf(state).prevState = prevState
 }
+
+
+
+// export function mergeModulesPrevState(state, prevState = {}) {
+//   state.moduleKeys.forEach(k => {
+//     mergeModulesPrevState(state[k], prevState[k])
+//   })
+
+//   const prev = Object.create(Object.getPrototypeOf(prevState))
+//   Object.assign(prev, prevState)
+
+//   if (prev.prevState?.prevState) {
+//     delete prev.prevState.prevState // prevent infinite circular references to prevStates (however: we need 2 prevStates for HMR which hydrates from prevState; otherwise, this would be cut off 1 level sooner)
+//   }
+
+//   state.prevState = prev
+// }

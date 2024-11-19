@@ -14,7 +14,6 @@ export default async function(events, delay = 0, { settings, branch } = this.top
   await run(events, delay, state)
   console.log('replayEvents.run', new Date - last)
 
-  console.log('replayEvents', new Date - start)
   return state
 }
 

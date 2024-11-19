@@ -16,7 +16,7 @@ import createBranchesAll from '../../replays/createBranchesAll.js'
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
-import { parseJsonState, saveSessionState } from '../../utils/sessionState.js'
+import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 
 
 export default (top, state, branch) => {
@@ -80,8 +80,8 @@ export default (top, state, branch) => {
       return saveSessionState(getStore())
     },
 
-    parseJsonState(json) {
-      return parseJsonState(json, getStore())
+    getSessionState() {
+      return getSessionState(getStore())
     },
   
     awaitInReplaysOnly(f, onError) {           

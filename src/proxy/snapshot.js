@@ -1,8 +1,8 @@
-import { proxyStates, canProxy } from './utils/helpers.js'
+import { ref, canProxy } from './utils/helpers.js'
 
 
 export default function snapshot(proxy) {
-  const sub = proxyStates.get(proxy)
+  const sub = ref.subs.get(proxy)
   return sub ? createSnapshot(sub) : proxy // proxy : primitive value
 }
 

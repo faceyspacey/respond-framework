@@ -7,8 +7,8 @@ import { idCounterRef } from './objectIdDevelopment.js'
 
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
-  const { prevState, replayTools = {} } = window.state ?? {}
-  const { settings: _, tests, selectedTestId, ...rt } = replayTools
+  const { prevState, prevPrevState, replayTools = {} } = window.state ?? {}
+  const { settings: _, configs: __, tests, selectedTestId, ...rt } = replayTools
   const prt = prevState?.replayTools ?? {}
 
   let replayState = status === 'hmr'
@@ -18,40 +18,45 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
     case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState, replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false } }
+    case 'hmr':     return { ...prevState, replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }, prevState: prevPrevState }
   }
 
   replayState = !isProd && permalinkReplayState()
-  if (replayState) return { ...hydration, replayState, replayTools: {} }
+  if (replayState) return { ...hydration, replayState }
 
-  const session = sessionStorage.getItem('sessionState')
-  if (session) return JSON.parse(session) // JSON.parse(sessionStorage.getItem('preState'))
+  const pre = getPreState()
+  if (pre) return pre
 
   replayState = { settings: undefined, branch: '', idCounterRef, status: 'reload' }
-  return { ...hydration, replayState, replayTools: {} }
+  return { ...hydration, replayState }
+}
+
+
+const getPreState = () => {
+  const pre = sessionStorage.getItem('preState')
+  if (!pre) return
+
+  const { seed, replayState } = JSON.parse(pre)
+  replayState.status = 'session'
+  return { seed, replayState }
 }
 
 
 
-export const parseJsonState = (json, state = {}) => {
-  return JSON.parse(json, createStateReviver(state))
+export const getSessionState = state => {
+  const json = sessionStorage.getItem('sessionState')
+  return json && JSON.parse(json, createStateReviver(state))
 }
+
 
 export const saveSessionState = state => {
+  const { seed, replayState } = state
+  sessionStorage.setItem('preState', JSON.stringify({ seed, replayState }))
+  sessionStorage.setItem('prevState', JSON.stringify(state.snapshot(state), replacer))
   sessionStorage.setItem('sessionState', stringifyState(state))
 }
 
 
-export const parsePreState = json => {
-  return JSON.parse(sessionStorage.getItem('preState'))
-}
-
-export const saveSessionStateNext = state => {
-  const { replayState, __seed, basenames, ...rest } = state
-
-  sessionStorage.setItem('sessionState', stringifyState(rest))
-  sessionStorage.setItem('preState', stringifyState({ replayState, __seed, basenames }))
-}
 
 
 
@@ -64,17 +69,11 @@ const stringifyState = state => {
 
     s.replayTools = {
       ...s.replayTools,
-      tests: t,                       // don't waste cycles on tons of tests with their events  
-      settings: undefined,            // will be reset to last "checkpoint" by createReplays
+      tests: t,                   // don't waste cycles on tons of tests with their events  
+      settings: undefined,        // will be reset to last "checkpoint" by createReplays
       focusedbranch: undefined,   // will be reset to last "checkpoint" by createReplays
     }
   }
-
-  if (s.prevState?.prevState) {
-    s.prevState = { ...s.prevState, prevState: undefined }
-  }
-
-  s.replayState = { ...s.replayState, status: 'session' } // GET RID OF THIS!
   
   return JSON.stringify(s, replacer)
 }

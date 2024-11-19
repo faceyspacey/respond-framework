@@ -627,8 +627,23 @@ dont pass session.replayTools to addModule; figure out how to never specify repl
 
 
 move db out of state
-make hmr replay everything, conslidate sessionState creation
 move replayState to its own sessionStorage along with basenames
 
+remove prevState, create userland prevState for app
+
+make hmr replay everything, conslidate sessionState creation
+
+
+STILL NEED TO APPLY REPLAY TOOLS, AS ITS NO LONGER HANDLED IN reviveModules
+
+use WeakMap to store refIds
+
+why are nested objects receive refIds instead of the parent simply being found?
+why are config options being seen twice by subs WeakMap?
+configs need to be cloned each time (like seed in userland)
+but why are the configs being found in subs?
+since we don't clone incoming state, we risk double wrapped proxies on replays/reloads
+
+use a map to see whats inside, and be able to clear it!
 
 focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db

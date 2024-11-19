@@ -11,8 +11,8 @@ export default ({ modelsByBranchType, eventsByType } = {}, refs = {}) => functio
     : v.map(revive)
     
   if (v.__refId)      return refs[v.__refId] ??= Object.defineProperty(
-    v.__array
-      ? v.__array.map(revive)
+    v.__arr
+      ? v.__arr.map(revive)
       : keys(v).reduce((obj, k) => {
           obj[k] = revive(v[k], k)
           return obj
@@ -31,14 +31,20 @@ export default ({ modelsByBranchType, eventsByType } = {}, refs = {}) => functio
 
 
 export const createStateReviver = ({ modelsByBranchType, eventsByType }, refs = {}) => (k, v) => {
-  if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
-  if (v.__event)     return eventsByType[v.type] ?? v
-  if (v.__refId)      return refs[v.__refId] ??= Object.defineProperty(v.__array ? v.map(revive) : v, '__refId', { value: v.__refId, enumerable: false })
-  if (isArray(v))     return v.map(revive)
+  if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__event)      return eventsByType[v.type] ?? v
 
-  const Model = modelsByBranchType[v.__branchType]
-  return Model ? new Model(v) : v
+  const Mo = v.__branchType && modelsByBranchType[v.__branchType]
+  const id = v.__refId
+
+  if (id)             return refs[id] ??= define(Mo ? new Mo(v) : v.__arr ?? v, rid, { value: id, enumerable })
+
+  return Mo ? new Mo(v) : v
 }
+
+const define = Object.defineProperty
+const enumerable = false
+const rid = '__refId'
 
 
 
@@ -77,7 +83,7 @@ export const createReviver = db => {
 export const replacer = (k, v) =>
   v?.__refId && !v.__event
     ? Array.isArray(v)
-      ? { __refId: v.__refId, __array: v.slice() }
+      ? { __refId: v.__refId, __arr: v.slice() }
       : { __refId: v.__refId, ...v }
     : v
 

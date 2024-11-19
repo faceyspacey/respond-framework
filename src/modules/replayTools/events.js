@@ -213,9 +213,9 @@ export default {
         const start = new Date
         state.replayTools.playing = true // trigger timeouts not to work like replayEvents
         await e.trigger()
+        console.log('reload.trigger', new Date - start)
         state.replayTools.playing = false
         state.render()
-        console.log('reload.trigger/render!', new Date - start)
         respond.queueSaveSession()
       }
       else {

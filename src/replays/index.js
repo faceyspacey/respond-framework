@@ -12,22 +12,22 @@ import * as replayToolsModule from '../modules/replayTools/index.js'
 export default (state, session, start = new Date) => {
   const { respond } = state
   const { top, cookies, branches } = respond
-  const { replayState, __db: seed } = session
+  const { replayState, seed } = session
 
   const depth = []
   
+  // const replayTools = replayState.status === 'hmr' ? Object.assign(Object.create({}), session.replayTools) : Object.assign(Object.create({}), createState(top, branches, depth, replayState)) // todo: caching by still calling createState if conf changed, and removing configs/settings from session.replayTools -- also HMR also needs replays assigned, so i guess we can't do this
   const replayTools = Object.assign(Object.create({}), createState(top, branches, depth, replayState))
   replayState.settings ??= nestSettings(replayTools.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
-  state.__db ??= {}
-  depth.forEach(createDbWithSeed(state, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
+  const nextSeed = session.seed = {}
+  depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  session.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
-  delete session.__db
+  state.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   
   console.log('createReplaySettings!!', new Date - start)
   
-  state.replayTools = addModule(respond, replayToolsModule, replayTools, session.replayTools, state, 'replayTools')
+  state.replayTools = addModule(respond, replayToolsModule, replayTools, state, 'replayTools')
   state.moduleKeys.push('replayTools')
 }
 
@@ -73,29 +73,29 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
 
 
 
-const createDbWithSeed = (state, seed, shared = {}) => ([mod, replays]) => {
+const createDbWithSeed = (nextSeed, seed, shared = {}) => ([mod, replays]) => {
   if (!mod.db) return // only modules that have actual replays and therefore db/seed data
 
   const b = mod.branch
   const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
 
-  state.__db[b] ??= {}
+  nextSeed[b] = {}
 
-  db.tableNames.forEach(k => mergeTable(state.__db[b], seed?.[b], shared, k, db[k]))
+  db.tableNames.forEach(k => mergeTable(nextSeed[b], seed?.[b], shared, k, db[k]))
   if (!seed) createSeed(settings, options, db)
 }
 
-const mergeTable = (state, seed, shared, key, table) => {
+const mergeTable = (nextSeed, seed, shared, key, table) => {
   if (table.share === false) return
 
   const k = table.shareKey ?? key
   const docs = shared[k]?.docs
 
-  state[k] = seed
+  table.docs = seed
     ? docs ? Object.assign(docs, seed[k]) : seed[k] // seed[k] will contain the same docs, but we must link the object reference so they continue to update together
     : docs ?? {}
 
-  table.docs = state[k] // now docs is a proxy, that will update in the client proxy whenever the server db changes
+  nextSeed[k] = table.docs
   shared[k] = table
 }
 

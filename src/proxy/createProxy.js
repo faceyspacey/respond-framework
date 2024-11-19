@@ -1,24 +1,24 @@
-
-import { canProxy, proxyStates as ps } from './utils/helpers.js'
+import { canProxy, ref } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 import { ObjectId } from 'bson'
 
 
-export default function createProxy(o, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
-  const found = findExistingProxyOrObject(o, notifyParent, cache)
+export default function createProxy(o, notifyParent = function() {}, subs = new WeakMap, cache =  new WeakMap, snapCache = new WeakMap) {
+  ref.subs = subs
+  const found = findExistingProxyOrObject(o, notifyParent, subs, cache)
   if (found) return found
 
-  const sub = new Subscription(o, snapCache)
-  const proxy = new Proxy(o, createHandler(sub.notify, cache, snapCache))
+  const sub = new Subscription(o, subs, snapCache)
+  const proxy = new Proxy(o, createHandler(sub.notify, subs, cache, snapCache))
 
   cache.set(o, proxy)
-  ps.set(proxy, sub)
+  subs.set(proxy, sub)
 
   sub.listeners.add(notifyParent)
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    o[k] = canProxy(v) ? createProxy(v, sub.notify, cache, snapCache) : v
+    o[k] = canProxy(v) ? createProxy(v, sub.notify, subs, cache, snapCache) : v
   })
 
   return proxy
@@ -33,8 +33,9 @@ class Subscription {
   version = highestVersion
   listeners = new Set
 
-  constructor(orig, cache) {
+  constructor(orig, subs,cache) {
     this.orig = orig
+    this.subs = subs
     this.cache = cache
   }
 
@@ -47,14 +48,14 @@ class Subscription {
   remove = notifyParent => {
     this.listeners.delete(notifyParent)
     if (this.listeners.size) return // proxy is assigned elsewhere and therefore has other listeners
-    Object.values(this.orig).forEach(v => ps.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
+    Object.values(this.orig).forEach(v => this.subs.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
   }
 }
 
 
 
-const findExistingProxyOrObject = (po, notifyParent, cache) => {
-  const sub = ps.get(po)       // proxy assigned that exists elsewhere
+const findExistingProxyOrObject = (po, notifyParent, subs, cache) => {
+  const sub = subs.get(po)       // proxy assigned that exists elsewhere
 
   if (sub) {
     sub.listeners.add(notifyParent)
@@ -69,7 +70,7 @@ const findExistingProxyOrObject = (po, notifyParent, cache) => {
   const proxy = cache.get(po)  // object assigned that exists somewhere else as a proxy
 
   if (proxy) {
-    const sub = ps.get(proxy)
+    const sub = subs.get(proxy)
     sub.listeners.add(notifyParent)
 
     if (!po.__refId) {

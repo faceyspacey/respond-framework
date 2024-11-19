@@ -36,7 +36,7 @@ export default wrapInActForTests((state, e) => {
 
 
 const reduceTree = (e, mod) => {
-  mod.prevState = {}
+  Object.getPrototypeOf(mod).prevState = {}
   reduceModuleInit(mod, e, mod, mod.reducers)
   mod.moduleKeys.forEach(k => reduceTree(e, mod[k]))
 }

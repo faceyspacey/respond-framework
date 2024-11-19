@@ -1,7 +1,6 @@
 import { _parent } from './reserved.js'
 import curr from './reducers/curr.js'
 import stack from './reducers/stack.js'
-import { proxyStates } from '../proxy/utils/helpers.js'
 
 
 export default (proto, moduleName, reducers, propReducers, parentReducers = {}, respond, state) => {
@@ -25,6 +24,6 @@ export default (proto, moduleName, reducers, propReducers, parentReducers = {}, 
     Object.defineProperty(proto, k, { get, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)     // disable possible child reducer mock, so reduce prop's selector takes precedence
-    if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k]    // delete possible selector or initialState
+    if (state.hasOwnProperty(k)) delete state[k]    // delete possible selector or initialState
   })
 }

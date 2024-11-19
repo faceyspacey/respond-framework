@@ -1,10 +1,10 @@
-import { proxyStates } from './utils/helpers.js'
+import { ref } from './utils/helpers.js'
 import { isTest } from '../utils/bools.js'
 import { syncRef } from '../store/plugins/edit/index.js'
 
 
 export default (proxy, callback) => {  
-  const { listeners } = proxyStates.get(proxy)
+  const { listeners } = ref.subs.get(proxy)
   const batched = isTest ? callback : batch(callback)
 
   listeners.add(batched)

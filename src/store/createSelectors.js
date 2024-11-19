@@ -1,4 +1,3 @@
-import { proxyStates } from '../proxy/utils/helpers.js'
 import { _parent } from './reserved.js'
 
 
@@ -14,7 +13,7 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, respond, st
     Object.defineProperty(proto, k, { [kind]: v, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // selector takes precedence if both exist
-    if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k]  // delete possible initialState for possible reducer
+    if (state.hasOwnProperty(k)) delete state[k]     // delete possible initialState for possible reducer
   })
 
   if (respond.branch) {
@@ -34,7 +33,7 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, respond, st
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // disable potential child reducer mock, so selector takes precedence
-    if (state.hasOwnProperty(k)) delete proxyStates.get(state).orig[k]  // delete possible initialState
+    if (state.hasOwnProperty(k)) delete state[k]  // delete possible initialState
   })
 }
 
