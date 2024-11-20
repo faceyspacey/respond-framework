@@ -42,10 +42,10 @@ export default function addModule(
 
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
+  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne, is, in: thisIn })
+  
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
-
-  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne, is, in: thisIn })
   
   createEvents(proto, respond, state, evs, propEvents, branch)
   createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)

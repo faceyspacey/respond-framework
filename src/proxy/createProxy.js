@@ -3,8 +3,7 @@ import createHandler from './utils/createHandler.js'
 import { ObjectId } from 'bson'
 
 
-export default function createProxy(o, notifyParent = function() {}, subs = new WeakMap, cache =  new WeakMap, snapCache = new WeakMap) {
-  ref.subs = subs
+export default function createProxy(o, subs = new WeakMap, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
   const found = findExistingProxyOrObject(o, notifyParent, subs, cache)
   if (found) return found
 
@@ -18,7 +17,7 @@ export default function createProxy(o, notifyParent = function() {}, subs = new 
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    o[k] = canProxy(v) ? createProxy(v, sub.notify, subs, cache, snapCache) : v
+    o[k] = canProxy(v) ? createProxy(v, subs, sub.notify, cache, snapCache) : v
   })
 
   return proxy

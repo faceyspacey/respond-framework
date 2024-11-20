@@ -7,6 +7,7 @@ import { nestAtBranch } from '../utils/sliceBranch.js'
 import { isProd } from '../utils/bools.js'
 import addModule from '../store/addModules.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
+import { snapDeepClone } from '../proxy/snapshot.js'
 
 
 export default (state, session, start = new Date) => {
@@ -51,11 +52,13 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
     replays = mod.db.replays
     replays.db = mod.db
     replays.settings = defaultCreateSettings(replays.config, input)
+    replays.config = snapDeepClone(replays.config)
   }
   else if (mod.replays) {
     mod.replays.db = replays.db // db inherited (but not replays)
     replays = mod.replays
     mod.replays.settings = defaultCreateSettings(mod.replays.config, input)
+    replays.config = snapDeepClone(replays.config)
   }
 
   configs[mod.branch] = replays.config

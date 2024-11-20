@@ -1,6 +1,5 @@
 import createProxy from '../proxy/createProxy.js'
-import revive, { createStateReviver }  from '../utils/revive.js'
-import sessionStorage from '../utils/sessionStorage.js'
+import { snapDeepClone } from '../proxy/snapshot.js'
 import reduce from './plugins/reduce.js'
 
 
@@ -8,12 +7,12 @@ export default (state, session) => {
   let { replayState, seed, prevState, ...sesh } = session
 
   if (replayState.status === 'session') {
-    const hydration = state.respond.getSessionState()
-    reviveModules(state, hydration)
-    prevState = JSON.parse(sessionStorage.getItem('prevState'), createStateReviver(state))
+    const [prev, curr] = state.respond.getSessionState()
+    reviveModules(state, curr)
+    prevState = prev
   }
   else {
-    reviveModules(state, sesh)
+    reviveModules(state, snapDeepClone(sesh))
   }
 
   Object.getPrototypeOf(state).replayState = replayState
@@ -26,7 +25,7 @@ export default (state, session) => {
     reduce(state, state.events.init())
   }
 
-  const proxy = createProxy(state)
+  const proxy = createProxy(state, state.respond.subscribers)
 
   replaceWithProxies(proxy, state.respond.branches)
 

@@ -10,8 +10,11 @@ export const isObject = x => typeof x === object && x
 export const canProxy = x => typeof x === object && x && !x.____cantProxy
 
 Date.prototype.____cantProxy = true
+Error.prototype.____cantProxy = true
 RegExp.prototype.____cantProxy = true
+Promise.prototype.____cantProxy = true
 Namespace.prototype.____cantProxy = true
+ArrayBuffer.prototype.____cantProxy = true
 
 const object = 'object'
 

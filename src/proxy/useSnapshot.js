@@ -1,17 +1,16 @@
 import { useSyncExternalStore, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import createSnapProxy from './createSnapProxy.js'
-import createSnapshot from './snapshot.js'
 import isChanged from './utils/isChanged.js'
-import sub from './subscribe.js'
 
 
-export default (proxy, sync) => {
+export default proxy => {
   const last = useRef()
+  const respond = proxy.respond
 
-  const subscribe = useCallback(cb => sub(proxy, cb, sync), [proxy, sync])
-  const getServerSnapshot = () => createSnapshot(proxy)
+  const subscribe = useCallback(cb => respond.subscribeAll(proxy, cb), [proxy])
+  const getServerSnapshot = () => respond.snapshot(proxy)
   const getSnapshot = () => {
-    const next = createSnapshot(proxy)
+    const next = respond.snapshot(proxy)
     const { snapshot, affected } = last.current ?? {}
 
     return inRender || !last.current || isChanged(snapshot, next, affected)

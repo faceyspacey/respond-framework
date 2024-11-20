@@ -4,6 +4,7 @@ import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
 
 import snapshot from '../../proxy/snapshot.js'
+import subscribeAll from '../../proxy/subscribeAll.js'
 import render from '../../react/render.js'
 
 import defaultCreateDevtools from '../../devtools/index.mock.js'
@@ -68,7 +69,10 @@ export default (top, state, branch) => {
     fromEvent,
     eventFrom,
   
+    subscribers: new WeakMap,
     snapshot,
+    subscribeAll,
+    
     render,
 
     addToCache,
@@ -77,11 +81,12 @@ export default (top, state, branch) => {
     getStore,
   
     saveSessionState() {
-      return saveSessionState(getStore())
+      const snap = this.snapshot(getStore())
+      return saveSessionState(snap)
     },
 
     getSessionState() {
-      return getSessionState(getStore())
+      return getSessionState(getStore().respond)
     },
   
     awaitInReplaysOnly(f, onError) {           

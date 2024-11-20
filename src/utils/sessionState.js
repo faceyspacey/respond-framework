@@ -8,7 +8,7 @@ import { idCounterRef } from './objectIdDevelopment.js'
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
   const { prevState, prevPrevState, replayTools = {} } = window.state ?? {}
-  const { settings: _, configs: __, tests, selectedTestId, ...rt } = replayTools
+  const { settings: _, configs: __, tests, selectedTestId, ...rt } = replayTools.respond?.snapshot(replayTools) ?? {}
   const prt = prevState?.replayTools ?? {}
 
   let replayState = status === 'hmr'
@@ -43,16 +43,24 @@ const getPreState = () => {
 
 
 
-export const getSessionState = state => {
-  const json = sessionStorage.getItem('sessionState')
-  return json && JSON.parse(json, createStateReviver(state))
+export const getSessionState = respond => {
+  const jc = sessionStorage.getItem('sessionState')
+  if (!jc) return
+
+  const jp = sessionStorage.getItem('prevState')
+  const re = createStateReviver(respond)
+
+  const prev = JSON.parse(jp, re)
+  const curr = JSON.parse(jc, re)
+
+  return [prev, curr]
 }
 
 
 export const saveSessionState = state => {
   const { seed, replayState } = state
   sessionStorage.setItem('preState', JSON.stringify({ seed, replayState }))
-  sessionStorage.setItem('prevState', JSON.stringify(state.snapshot(state), replacer))
+  sessionStorage.setItem('prevState', JSON.stringify(state.prevState, replacer))
   sessionStorage.setItem('sessionState', stringifyState(state))
 }
 
@@ -61,7 +69,7 @@ export const saveSessionState = state => {
 
 
 const stringifyState = state => {
-  const s = { ...snapshot(state) }
+  const s = { ...state }
       
   if (s.replayTools) {
     const { tests, selectedTestId } = s.replayTools

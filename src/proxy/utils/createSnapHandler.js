@@ -28,7 +28,7 @@ export default (snap, state) => {
         if (get) return get.call(proxy)                     // getter
         if (typeof value === func) return value             // will be called as method with proxy as `this` automatically
 
-        recordUsage(state.affected, g, snap, k)             // record usage, as value may be assigned to state, overriding proto, in the future
+        recordUsage(state.affected, g, snap, k)             // record usage, as value may be assigned to state, overriding proto, in the future -- could also be proto.prevState, which is made into a snapshot separately and benefits from the same immutable isChanged/affected reactivity
         return value
       }
 

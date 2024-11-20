@@ -1,10 +1,9 @@
-import { ref } from './utils/helpers.js'
 import { isTest } from '../utils/bools.js'
 import { syncRef } from '../store/plugins/edit/index.js'
 
 
-export default (proxy, callback) => {  
-  const { listeners } = ref.subs.get(proxy)
+export default function subscribeAll(proxy, callback) {  
+  const { listeners } = this.subscribers.get(proxy)
   const batched = isTest ? callback : batch(callback)
 
   listeners.add(batched)

@@ -4,7 +4,7 @@ import secret from './secret.mock.js'
 import createDbProxy from './utils/createDbProxy.js'
 import createApiCache from './utils/createApiCache.js'
 import obId from '../utils/objectIdDevelopment.js'
-import { createApiReviverForClient, createReviver } from '../utils/revive.js'
+import { createApiReviverForClient, createReviver as createApiReviverForServer } from '../utils/revive.js'
 
 export default (db, parentDb, state, respond, branch) => {
   if (!db && !parentDb) {
@@ -15,7 +15,7 @@ export default (db, parentDb, state, respond, branch) => {
   const models = respond.models = {} // ref must exist now for createApiReviverForClient
 
   const clientReviver = createApiReviverForClient(respond, branch)
-  const serverReviver = createReviver(db)
+  const serverReviver = createApiReviverForServer(db)
   
   const reviveClient = (res = {}) => JSON.parse(JSON.stringify(res), clientReviver)   // simulate production fetch reviver
   const reviveServer = args =>       JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
