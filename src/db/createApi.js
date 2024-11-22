@@ -1,7 +1,9 @@
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
-import { flattenControllers } from './utils/flattenDbTree.js'
+import { flattenControllers, flattenModels } from './utils/flattenDbTree.js'
 import { isDev as dev } from '../utils.js'
 import replayTools from '../modules/replayTools/db.js'
+import sliceBranch from '../utils/sliceBranch.js'
+
 
 export default opts => {
   const handle = createHandler(opts)
@@ -19,6 +21,12 @@ export default opts => {
 
 
 const createHandler = ({ db, log = true, server }) => {
+  if (db.focusedBranch) {
+    db = sliceBranch(db, db.focusedBranch)
+  }
+
+  db.modelsByBranchType = flattenModels(db)
+
   if (dev && !db.replayTools) {
     db.moduleKeys.push('replayTools')
     db.replayTools = replayTools

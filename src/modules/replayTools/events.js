@@ -2,7 +2,7 @@ import { Linking } from 'react-native'
 import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
-import { kinds } from '../../utils.js'
+import { navigation } from '../../store/kinds.js'
 
 import nestSettings from './helpers/nestSettings.js'
 import sliceBranch from '../../utils/sliceBranch.js'
@@ -27,17 +27,17 @@ export default {
 
   settings: {
     namespace: false,
-    kind: kinds.navigation,
+    kind: navigation,
   },
 
   events: {
     namespace: false,
-    kind: kinds.navigation,
+    kind: navigation,
   },
 
   tests: {
     namespace: false,
-    kind: kinds.navigation,
+    kind: navigation,
     cache: false,
     fetch: ({ db, state }) => db.developer.findTests.server(state.testsParams),
   },
@@ -70,7 +70,7 @@ export default {
   },
 
   test: {
-    kind: kinds.navigation,
+    kind: navigation,
     submit: async (state, { id, index, delay }) => {
       const { events, name, ...test } = state.tests[id]
 

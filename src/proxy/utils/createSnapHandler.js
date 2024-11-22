@@ -4,7 +4,7 @@ import { _parent } from '../../store/reserved.js'
 
 
 export default (snap, state) => {
-  const protoDescriptors = gopd(getProto(snap))
+  const protoDescriptors = getOwnPropertyDescriptors(getProto(snap))
 
   return {
     ownKeys(snap) {
@@ -16,7 +16,7 @@ export default (snap, state) => {
       return Reflect.has(snap, k)
     },
     getOwnPropertyDescriptor(snap, k) {
-      recordUsage(state.affected, getOwnPropertyDescriptor, snap, k)
+      recordUsage(state.affected, gopd, snap, k)
       return Reflect.getOwnPropertyDescriptor(snap, k)
     },
     get(snap, k, proxy) {
@@ -42,11 +42,11 @@ export default (snap, state) => {
 
 
 const getProto = Object.getPrototypeOf
-const gopd = Object.getOwnPropertyDescriptors
+const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors
 
 const ownKeys = 'ownKeys'
 const has = 'has'
-const getOwnPropertyDescriptor = 'getOwnPropertyDescriptor'
+const gopd = 'getOwnPropertyDescriptor'
+const g = 'get'
 
 const func = 'function'
-const g = 'get'

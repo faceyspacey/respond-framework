@@ -3,12 +3,13 @@ import { AppRegistry } from 'react-native'
 import { createRoot } from 'react-dom/client'
 import { isNative, isTest } from '../utils/bools.js'
 import RespondProvider from './Provider.js'
+import createProxy from '../proxy/createProxy.js'
 
 
 export default function render(props = {}) {
   const start = new Date
 
-  const app = createApp(this.respond.state, props)
+  const app = createApp(this.respond, props)
   const { ctx } = this
 
   if (isTest) return app
@@ -20,7 +21,10 @@ export default function render(props = {}) {
 }
 
 
-const createApp = (state, props) => {
+const createApp = (respond, props) => {
+  const state = createProxy(respond.getStore(), respond.subscribers)
+  respond.replaceWithProxies(state)
+
   const Provider = props.Provider || state.components?.Provider || RespondProvider
   const { App, Error } = state.components ?? {}
 

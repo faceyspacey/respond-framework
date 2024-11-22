@@ -38,7 +38,7 @@ const run = async (events, delay, { respond, replayTools }) => {           // ke
     await timeout(delay, meta, last, options.testDelay)
   }
 
-  replayTools.playing = false
+  respond.state.replayTools.playing = false // proxy, whereas until render it wasn't a proxy, but now we need it reactive to display STOP REPLAY
   ctx.isFastReplay = false
 
   respond.queueSaveSession()                                                      // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)

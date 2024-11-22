@@ -5,7 +5,7 @@ export const subs = new WeakMap // subscribers
 export const ref = {}
 export const equal = Object.is
 
-export const isObject = x => typeof x === object && x
+export const isObj = x => typeof x === object && x
 
 export const canProxy = x => typeof x === object && x && !x.____cantProxy
 

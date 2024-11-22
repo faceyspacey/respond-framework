@@ -15,7 +15,7 @@ export default (db, parentDb, state, respond, branch) => {
   const models = respond.models = {} // ref must exist now for createApiReviverForClient
 
   const clientReviver = createApiReviverForClient(respond, branch)
-  const serverReviver = createApiReviverForServer(db)
+  const serverReviver = createApiReviverForServer(respond.geStore().respond.db ?? db) // needs top focusedBranch's db to simulate reviver on server, which will then find controllers based on branch
   
   const reviveClient = (res = {}) => JSON.parse(JSON.stringify(res), clientReviver)   // simulate production fetch reviver
   const reviveServer = args =>       JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver

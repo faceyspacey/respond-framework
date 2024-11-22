@@ -1,9 +1,9 @@
-import { kinds } from '../createEvents.js'
+import { navigation } from '../kinds.js'
 
 
 export default function (curr, e) {
   if (!curr && e.event === this.events.init) return e
-  return e.kind === kinds.navigation ? e : curr
+  return e.kind === navigation ? e : curr
 }
 
 

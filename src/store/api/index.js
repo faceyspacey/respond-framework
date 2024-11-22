@@ -35,7 +35,7 @@ export default (top, state, branch) => {
     ...options
   } = top.options ?? {}
 
-  const getStore = () => branches.undefined
+  const getStore = () => branches['']
 
   return {
     top,
@@ -72,7 +72,7 @@ export default (top, state, branch) => {
     subscribers: new WeakMap,
     snapshot,
     subscribeAll,
-    
+
     render,
 
     addToCache,
@@ -80,6 +80,11 @@ export default (top, state, branch) => {
   
     getStore,
   
+    replaceWithProxies: function replaceWithProxies(proxy, b = '') {
+      proxy.respond.state = Object.getPrototypeOf(proxy).state = branches[b] = proxy // replace module states with proxy
+      proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], b ? `${b}.${k}` : k))
+    },
+    
     saveSessionState() {
       const snap = this.snapshot(getStore())
       return saveSessionState(snap)

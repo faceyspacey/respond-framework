@@ -1,4 +1,3 @@
-import createProxy from '../proxy/createProxy.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 import reduce from './plugins/reduce.js'
 
@@ -25,11 +24,8 @@ export default (state, session) => {
     reduce(state, state.events.init())
   }
 
-  const proxy = createProxy(state, state.respond.subscribers)
 
-  replaceWithProxies(proxy, state.respond.branches)
-
-  return proxy
+  return state
 }
 
 
@@ -45,11 +41,6 @@ const reviveModules = (state, session) => {
 }
 
 
-
-const replaceWithProxies = (state, branches, b = '') => {
-  state.respond.state = Object.getPrototypeOf(state).state = branches[b] = state // replace module states with proxy
-  state.moduleKeys.forEach(k => replaceWithProxies(state[k], branches, b ? `${b}.${k}` : k))
-}
 
 
 

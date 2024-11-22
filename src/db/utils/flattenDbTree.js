@@ -14,5 +14,5 @@ export function flattenModels(db, modelsByBranchType = {}, b = '') {
 
   db.moduleKeys.forEach(k => flattenModels(db[k], modelsByBranchType, b ? `${b}.${k}` : k))
   
-  return modelsByBranchType // 1d: modelsByBranchType[branchType]
+  return modelsByBranchType // 1d: modelsByBranchType[doc.__branchType]
 }

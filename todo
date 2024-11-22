@@ -592,27 +592,6 @@ if (possibleDuplicate) {
 
 
 
-
-for navigators, finalize strategy for `key`, eg url + type for navigations
-finalize plan for normalizing event meta information in ancestor modules in userland
-
-make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
-api returns need to be check for undefined
-
-
-!make tests pass, remove 3 args, remove respond.state
-lazy event function creation
-
-
-make all tools replacable by user (including reviver)
-re-organize files
-finalize implementation of respond object etc
-
-
-if (e.meta.parallel && !e.meta.changePath) return
-
-
-
 #revive doesn't need to occur for hmr if model function refs are maintained, prevState can just merge w/ currState
 
 move seed to its own sessionStorage
@@ -625,7 +604,6 @@ comparison of a curr state object a and a prev state object after sessionStorage
 dont pass session.replayTools to addModule; figure out how to never specify replayTools {} in session
 
 
-
 move db out of state
 move replayState to its own sessionStorage along with basenames
 
@@ -636,8 +614,6 @@ make hmr replay everything, conslidate sessionState creation
 
 STILL NEED TO APPLY REPLAY TOOLS, AS ITS NO LONGER HANDLED IN reviveModules
 
-use WeakMap to store refIds
-
 why are nested objects receive refIds instead of the parent simply being found?
 why are config options being seen twice by subs WeakMap?
 configs need to be cloned each time (like seed in userland)
@@ -646,4 +622,37 @@ since we don't clone incoming state, we risk double wrapped proxies on replays/r
 
 use a map to see whats inside, and be able to clear it!
 
-focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db
+
+#if (e.meta.parallel && !e.meta.changePath) return
+
+#shrink seed
+#dont load all games until needed
+
+
+#dont proxify on replay until after last event
+#focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db
+
+#use WeakMap to store refIds
+
+
+move basenames to pre state
+
+
+
+
+make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
+api returns need to be check for undefined
+
+
+for navigators, finalize strategy for `key`, eg url + type for navigations
+finalize plan for normalizing event meta information in ancestor modules in userland
+lazy event function creation
+
+
+
+!make tests pass, remove 3 args, remove respond.state, switch e + state arguments
+
+
+make all tools replacable by user (including reviver)
+re-organize files
+finalize implementation of respond object etc

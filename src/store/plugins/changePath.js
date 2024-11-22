@@ -1,5 +1,5 @@
 export default (state, e) => {
-  if (e.meta.parallel && !e.meta.changePath) return
+  if (e.meta.parallel && e.meta.changePath !== true) return
 
   if (e.event.changePath) {
     const other = e.event.changePath.call(state, state, e)

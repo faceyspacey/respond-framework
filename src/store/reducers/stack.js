@@ -1,8 +1,8 @@
-import { kinds } from '../createEvents.js'
+import { navigation } from '../kinds.js'
 
 
 export default function (stack = { entries: [], index: -1 }, e) {
-  if (e.kind !== kinds.navigation) return stack
+  if (e.kind !== navigation) return stack
 
   const { entries, index } = stack
   if (index === -1) return { entries: [e], index: 0 }

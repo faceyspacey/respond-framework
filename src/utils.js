@@ -2,6 +2,6 @@ export { isProd, isTest, isDev, isServer, hasLocalStorage, hasSessionStorage, is
 export { addToCache, addToCacheDeep, addOneToCache, addOneToCacheSlug } from './utils/addToCache.js'
 export { memo, isEqualDeepPartial } from './utils/isEqual.js'
 export { createReviver, createApiReviverForClient } from './utils/revive.js'
-export { kinds } from './store/createEvents.js'
+export { default as kinds } from './store/kinds.js'
 export { default as mergeDeep } from './utils/mergeDeep.js'
 export { default as timeout } from './utils/timeout.js'

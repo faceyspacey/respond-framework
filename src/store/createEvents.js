@@ -1,9 +1,7 @@
 import { is, thisIn } from '../utils/inIs.js'
 import isNamespace from '../utils/isNamespace.js'
 import { stripBranch } from '../utils/sliceBranch.js'
-
-
-export const kinds = { init: 'init', navigation: 'navigation', submission: 'submission', done: 'done', error: 'error', data: 'data' }
+import { init, navigation, submission } from './kinds.js'
 
 
 export default function(proto, ...args) {
@@ -18,10 +16,10 @@ function createEvents(respond, state, events = {}, propEvents = {}, branch, ns =
   const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same pattern, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same pattern, and the primary one is matched on first load, but you can dispatch different events that will have the same pattern but different queries
 
   const isModule = !ns && !isBuiltIns
-  const init = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: 'init' }, branch, '', 'init')) // same init event reference on all modules
+  const initEvent = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: init }, branch, '', init)) // same init event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
-  if (init) Object.assign(acc, { init })
+  if (initEvent) Object.assign(acc, { init: initEvent })
   
   const cache = respond.eventsCache
 
@@ -62,7 +60,7 @@ const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, p
 
   const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
 
-  const kind = config.kind ?? (config.pattern ? kinds.navigation : kinds.submission)
+  const kind = config.kind ?? (config.pattern ? navigation : submission)
   const info = { type, namespace, kind, _type: _typeResolved, _namespace, branch }
 
   let event = window.state?.respond?.eventsByType[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them

@@ -79,3 +79,5 @@ const findExistingProxyOrObject = (po, notifyParent, subs, cache) => {
     return proxy
   }
 }
+
+// const refIds = new WeakMap

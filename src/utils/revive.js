@@ -58,22 +58,15 @@ export const createApiReviverForClient = ({ models, eventsByType }, branch = '')
 
 
 
-const createApiReviverForServer = (modelsByBranchType, k, v) => {
-  if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
-
-  const Model = modelsByBranchType[v.__branchType] // models brought to the client will always have v.__branch tags by virture of createApiReviverForClient above
-  return Model ? new Model(v) : v
-}
-
-
-
-// in userland only createReviver will ever be used (and only on the server; it's almost identical to createApiReviverForServer, except it receives the entire tree/db, when itself then flattens)
-export const createReviver = db => {
-  let modelsByBranchType // models can't be flattened till execution time, as replayTools module is added to top module by createApi, which might run before OR after createReviver
+// in userland only createReviver will ever be used
+export const createReviver = function createApiReviverForServer(db) {
+  const { modelsByBranchType } = db 
 
   return (k, v) => {
-    modelsByBranchType ??= flattenModels(db) // server receiving models from the client will also always have v.__branch tags by virture of createApiReviverForClient above and createStateReviver which preserves it
-    return createApiReviverForServer(modelsByBranchType, k, v)
+    if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
+
+    const Model = modelsByBranchType[v.__branchType] // models brought to the client will always have v.__branchType tags by virture of createApiReviverForClient above
+    return Model ? new Model(v) : v
   }
 }
 
