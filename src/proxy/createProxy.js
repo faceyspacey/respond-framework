@@ -1,14 +1,13 @@
-import { canProxy, ref } from './utils/helpers.js'
+import { canProxy } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
-import { ObjectId } from 'bson'
 
 
-export default function createProxy(o, subs = new WeakMap, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
-  const found = findExistingProxyOrObject(o, notifyParent, subs, cache)
+export default function createProxy(o, subs = new WeakMap, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
+  const found = findExistingProxyOrObject(o, notifyParent, subs, refIds, cache)
   if (found) return found
 
   const sub = new Subscription(o, subs, snapCache)
-  const proxy = new Proxy(o, createHandler(sub.notify, subs, cache, snapCache))
+  const proxy = new Proxy(o, createHandler(sub.notify, subs, refIds,cache, snapCache))
 
   cache.set(o, proxy)
   subs.set(proxy, sub)
@@ -17,7 +16,7 @@ export default function createProxy(o, subs = new WeakMap, notifyParent = functi
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    o[k] = canProxy(v) ? createProxy(v, subs, sub.notify, cache, snapCache) : v
+    o[k] = canProxy(v) ? createProxy(v, subs, refIds, sub.notify, cache, snapCache) : v
   })
 
   return proxy
@@ -53,14 +52,14 @@ class Subscription {
 
 
 
-const findExistingProxyOrObject = (po, notifyParent, subs, cache) => {
+const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
   const sub = subs.get(po)       // proxy assigned that exists elsewhere
 
   if (sub) {
     sub.listeners.add(notifyParent)
 
-    if (!sub.orig.__refId) {
-      Object.defineProperty(sub.orig, '__refId', { value: new ObjectId().toString(), enumerable: false })
+    if (!refIds.has(sub.orig)) {
+      refIds.set(sub.orig, counter++)
     }
 
     return po
@@ -72,12 +71,13 @@ const findExistingProxyOrObject = (po, notifyParent, subs, cache) => {
     const sub = subs.get(proxy)
     sub.listeners.add(notifyParent)
 
-    if (!po.__refId) {
-      Object.defineProperty(po, '__refId', { value: new ObjectId().toString(), enumerable: false })
+    if (!refIds.has(po)) {
+      refIds.set(po, counter++)
     }
 
     return proxy
   }
 }
 
-// const refIds = new WeakMap
+let counter = 0
+export const refIds = new WeakMap

@@ -16,11 +16,14 @@ import createBranchesAll from '../../replays/createBranchesAll.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
+import sliceBranch, { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 
 
-export default (top, state, branch) => {
+export default (top, state, session) => {
+  const { replayState, seed, basenames = {} } = session
+  const branch = replayState.branch
+
   const branchesAll = createBranchesAll(top, branch)
   const branches = { ['']: state, get undefined() { return this[''] } }
   const listeners = []
@@ -41,8 +44,14 @@ export default (top, state, branch) => {
     top,
     ctx,
 
+    replayState,
+    seed,
+    basenames,
+
+    focusedModule: sliceBranch(top, branch),
+    focusedBranch: branch,
+
     branchesAll,
-    branch,
     
     branches,
     branchesById: {},
@@ -52,7 +61,7 @@ export default (top, state, branch) => {
 
     eventsByPattern: {},
     eventsByType: {},
-  
+
     listeners,
     promises,
     refs: {},
@@ -70,6 +79,7 @@ export default (top, state, branch) => {
     eventFrom,
   
     subscribers: new WeakMap,
+    refIds: new WeakMap,
     snapshot,
     subscribeAll,
 
@@ -132,12 +142,12 @@ export default (top, state, branch) => {
 
     changeBasename(basename) {
       const e = this.respond.eventFrom(window.location.href)
-      const { state } = this.respond
+      const { state, branch } = this.respond
 
       const prevBasename = state.basename
       const prevBasenameFull = state.basenameFull
       
-      state.basename = basename
+      state.basename = basenames[branch] = basename
       state.basenameFull = prevBasenameFull.replace(new RegExp(prevBasename + '$'), basename)
 
       traverseModuleChildren(state, (state, parent) => {

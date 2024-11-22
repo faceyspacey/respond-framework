@@ -1,10 +1,5 @@
 import sessionState from '../utils/sessionState.js'
-
-import createProxy from '../proxy/createProxy.js'
 import createRespond from './api/index.js'
-
-import sliceBranch from '../utils/sliceBranch.js'
-
 import addModule from './addModules.js'
 import createReplays from '../replays/index.js'
 import hydrateModules from './hydrateModules.js'
@@ -12,13 +7,11 @@ import hydrateModules from './hydrateModules.js'
 
 export default (top, opts = {}) => {
   const session = sessionState(opts)
-  const branch = session.replayState.branch
 
   const state = Object.create({})
-  const respond = createRespond(top, state, branch)
-  const mod = sliceBranch(top, branch)
+  const respond = createRespond(top, state, session)
 
-  addModule(respond, mod, state)
+  addModule(respond, respond.focusedModule, state)
   createReplays(state, session)
 
   return window.state = hydrateModules(state, session)

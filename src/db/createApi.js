@@ -1,8 +1,9 @@
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
-import { flattenControllers, flattenModels } from './utils/flattenDbTree.js'
+import { flattenDatabase, flattenModels } from './utils/flattenDbTree.js'
 import { isDev as dev } from '../utils.js'
 import replayTools from '../modules/replayTools/db.js'
-import sliceBranch from '../utils/sliceBranch.js'
+import { prependBranch as prepend } from '../utils/sliceBranch.js'
+import { __undefined__ } from './fetch.js'
 
 
 export default opts => {
@@ -20,27 +21,23 @@ export default opts => {
 }
 
 
-const createHandler = ({ db, log = true, server }) => {
-  if (db.focusedBranch) {
-    db = sliceBranch(db, db.focusedBranch)
-  }
-
-  db.modelsByBranchType = flattenModels(db)
-
-  if (dev && !db.replayTools) {
+const createHandler = ({ db, log = true, server, call = defCall }) => {
+  if (dev) {
     db.moduleKeys.push('replayTools')
     db.replayTools = replayTools
   }
 
-  const controllers = flattenControllers(db)
+  db.modelsByBranchType = flattenModels(db)
+
+  const branches = flattenDatabase(db)
   const io = dev && server && createWallabySocketsServer(server)
 
   return async (req, res) => {
-    const { branch, controller, method } = req.body
-
-    if (log) console.log(`request.request: db.${controller}.${method}`, req.body)
+    const { focusedBranch: fb, branch: b, controller, method } = req.body
+    
+    if (log) console.log(`request.request: db.${table}.${method}`, req.body)
       
-    const Controller = controllers[branch][controller] // eg: controllers['admin.foo'].user
+    const Controller = branches[prepend(fb, b)][controller] // eg: controllers['admin.foo'].user
     if (!Controller) return res.json({ error: 'controller-absent', params: req.body })
 
     const r = await new Controller(req, io).call(req.body)

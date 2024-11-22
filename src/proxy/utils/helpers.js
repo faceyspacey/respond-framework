@@ -2,7 +2,6 @@ import { Namespace } from '../../store/createEvents.js'
 
 
 export const subs = new WeakMap // subscribers
-export const ref = {}
 export const equal = Object.is
 
 export const isObj = x => typeof x === object && x

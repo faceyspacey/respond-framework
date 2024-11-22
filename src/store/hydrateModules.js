@@ -3,7 +3,7 @@ import reduce from './plugins/reduce.js'
 
 
 export default (state, session) => {
-  let { replayState, seed, prevState, ...sesh } = session
+  let { replayState, seed, basenames, prevState, ...sesh } = session
 
   if (replayState.status === 'session') {
     const [prev, curr] = state.respond.getSessionState()
@@ -13,9 +13,6 @@ export default (state, session) => {
   else {
     reviveModules(state, snapDeepClone(sesh))
   }
-
-  Object.getPrototypeOf(state).replayState = replayState
-  Object.getPrototypeOf(state).seed = seed
 
   if (prevState) { // hmr/session have prevState already
     mergeModulesPrevState(state, prevState)

@@ -16,7 +16,7 @@ export default (proto, selectorDescriptors, propSelectorDescriptors, respond, st
     if (state.hasOwnProperty(k)) delete state[k]     // delete possible initialState for possible reducer
   })
 
-  if (respond.branch) {
+  if (respond.branch) { // only children have a truthy branch
     propSelectorDescriptors.token = token // pass token from top module down to all children
   }
 

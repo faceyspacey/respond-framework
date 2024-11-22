@@ -32,10 +32,9 @@ export default function addModule(
   const respond = { ...options.merge, ...resp, state, id, mod, components, reduce, options, ignoreParents, branch, moduleKeys, overridenReducers: new Map }
   
   respond.respond = respond
-  // state.basename = session.basename ?? props.basename ?? mod.basename ?? ''
-  // state.basenameFull = (parent.basenameFull ?? '') + state.basename
-  state.basename = ''
-  state.basenameFull = ''
+
+  state.basename = respond.basenames[branch] ?? props.basename ?? mod.basename ?? ''
+  state.basenameFull = (parent.basenameFull ?? '') + state.basename
 
   const db = createClientDatabase(mod.db, parent.db, state, respond, branch)
   const models = createModels(mod.models, db, parent, respond, branch)
@@ -43,7 +42,7 @@ export default function addModule(
   const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
 
   const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne, is, in: thisIn })
-  
+
   const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
   

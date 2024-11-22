@@ -22,7 +22,7 @@ export default function render(props = {}) {
 
 
 const createApp = (respond, props) => {
-  const state = createProxy(respond.getStore(), respond.subscribers)
+  const state = createProxy(respond.getStore(), respond.subscribers, respond.refIds)
   respond.replaceWithProxies(state)
 
   const Provider = props.Provider || state.components?.Provider || RespondProvider
