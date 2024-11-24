@@ -35,10 +35,13 @@ export default wrapInActForTests((state, e) => {
 })
 
 
-const reduceTree = (e, mod) => {
-  Object.getPrototypeOf(mod).prevState = {}
+const reduceTree = (e, mod, prevState = {}) => {
+  const proto = Object.getPrototypeOf(mod)
+  proto.prevState = prevState
+
+  mod.moduleKeys.forEach(k => reduceTree(e, mod[k], prevState[k] = {}))
+  
   reduceModuleInit(mod, e, mod, mod.reducers)
-  mod.moduleKeys.forEach(k => reduceTree(e, mod[k]))
 }
 
 
@@ -117,7 +120,7 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
     if (shouldReduce) reduce() // allow reducing by default, and only having to think about `next` (depth-first maintained as default) -- but since we want this default AND the ability to prevent reducing the current module, we introduce returning `false` to facilitate all scenarios
   }
   else {
-    next()
+    next() // default is depth-first
     if (!ignore) reduce()
   }
 

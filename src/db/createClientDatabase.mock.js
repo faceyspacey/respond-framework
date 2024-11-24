@@ -7,18 +7,16 @@ import { createApiReviverForClient, createReviver as createApiReviverForServer }
 import { createTableConstructors } from './utils/flattenDbTree.js'
 
 
-export default ({ mod, state, respond, branch }) => {
+export default ({ mod, proto, state, respond, branch }) => {
   let { db } = mod
 
   if (!db && !parent.db) {
     db = respond.findClosestAncestorWith('db', branch)?.db ?? {} // focused module is a child without its own db, but who expects to use a parent module's db when in production
   }
-  else if (!db) return parent.db
-
-  const models = respond.models = {} // ref must exist now for createApiReviverForClient
+  else if (!db) return respond.db = proto.db = parent.db
 
   const clientReviver = createApiReviverForClient(respond, branch)
-  const serverReviver = createApiReviverForServer(respond.focusedModule.db) // needs top focusedBranch's db to simulate reviver on server, which will then find controllers based on branch
+  const serverReviver = createApiReviverForServer(respond.focusedModule.db ?? respond.findClosestAncestorWith('db', respond.focusedModule.branch)?.db ?? {}) // needs top focusedBranch's db to simulate reviver on server, which will then find controllers based on branch
   
   const reviveClient = res => res === undefined ? undefined : JSON.parse(JSON.stringify(res), clientReviver)   // simulate production fetch reviver
   const reviveServer = args =>                                JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
@@ -28,11 +26,10 @@ export default ({ mod, state, respond, branch }) => {
 
   const tables = createTableConstructors(db)
 
-  return respond.db = state.db = createDbProxy({
-    models,
+  return respond.db = proto.db = createDbProxy({
     cache,
     call(table, method) {
-      const Model = models[table]
+      const Model = respond.models[table]
 
       if (method === 'make') {
         return d => new Model({ ...d, __type: table }, branch)
@@ -73,7 +70,7 @@ export default ({ mod, state, respond, branch }) => {
 
         if (useCache) cache.set(body, response)
 
-        return handleResponse(state, branch, table, method, args, response, models)
+        return handleResponse(state, branch, table, method, args, response, respond.models)
       }
     }
   })
@@ -90,7 +87,7 @@ const handleResponse = (state, branch, table, method, args, response, models) =>
 
   if (singularPlural[method]) {
     if (!response) return response // eg: arg.user will be undefined anyway by the time it reaches reducers
-    const model = models[table]
+    const model = models[table].prototype
     const value = singularPlural[method] === 'plural' ? model._namePlural : model._name
     if (response.hasOwnProperty(value) && (response.__branchType || Array.isArray(response[value]))) return response // overriden method that returns nested objects/arrays, and therefore doesn't need this
     Object.defineProperty(response, '__argName', { value, enumerable: false })

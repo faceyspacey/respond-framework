@@ -82,6 +82,10 @@ export default {
 
       const evs = index === undefined ? events : events.slice(0, index + 1)
 
+      if (state.focusedBranch !== window.state.replayState.branch) {
+        window.state.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
+      }
+
       await state.replayEvents(evs, delay, test)
 
       return false

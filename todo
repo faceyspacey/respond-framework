@@ -648,6 +648,15 @@ use a map to see whats inside, and be able to clear it!
 #make queries/mutations return object containing result
 
 
+findCurrentUser -> .user
+this.parent.find()
+#! showing in URLs
+reduceModuleInit + mod.reduce -- depth-first truly default?
+double check props.plugins approach
+createDatabase.props
+better nameing for mod vs state, top vs topModule/state, etc
+immutable reducers/selectors/events
+
 
 for navigators, finalize strategy for `key`, eg url + type for navigations
 finalize plan for normalizing event meta information in ancestor modules in userland

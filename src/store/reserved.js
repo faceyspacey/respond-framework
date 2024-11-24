@@ -5,6 +5,7 @@ export const moduleApi = {
   __esModule: true,
   id: true,
   branch: true,
+  branchAbsolute: true,
   moduleKeys: true,
   ignoreParents: true,
   initialState: true,

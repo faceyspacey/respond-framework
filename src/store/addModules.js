@@ -10,21 +10,14 @@ import extractModuleAspects from './extractModuleAspects.js'
 import { _parent } from './reserved.js'
 
 
-export default function addModule(
-  resp,
-  mod,
-  parent = {},
-  name = '',
-  state = Object.create({}),
-  props = mod.props ?? {},
-  branch = parent.respond?.branch ? `${parent.respond.branch}.${name}` : name
-) {
-  if (!mod.id) throw new Error('respond: missing id on module: ' + branch || 'top')
+export default function addModule(resp, mod, parent = {}, name = '', state = Object.create({})) {
+  const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
+  const props = name ? mod.props ?? {} : {} // props disabled on top focused module
+
+  if (!id) throw new Error('respond: missing id on module: ' + branch || 'top')
   
-  resp.branchLocatorsById[mod.id] = branch
+  resp.branchLocatorsById[id] = branch
   resp.branches[branch] = state
-  
-  const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
 
   const respond = { ...options.merge, ...resp, state, id, mod, branch, moduleKeys, components, reduce, options, ignoreParents, overridenReducers: new Map, get respond() { return respond } }
   const proto   = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent })

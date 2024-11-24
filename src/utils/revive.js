@@ -13,7 +13,7 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
     return Model ? new Model(obj) : obj
   }
 
-  return function revive(v, k) {
+  function revive(v, k) {
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
     if (v.__event)      return eventsByType[v.type] ?? v
   
@@ -27,8 +27,10 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
       return refs[id] = obj
     }
   
-    return createObject(v)
+    return isArray(v) ? v.map(revive) : createObject(v)
   }
+
+  return revive
 }
 
 
@@ -58,11 +60,11 @@ export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds },
 
 
 
-export const createApiReviverForClient = ({ models, eventsByType }, branch = '') => (k, v) => {
+export const createApiReviverForClient = (respond, branch = '') => (k, v) => {
   if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
-  if (v.__event)     return eventsByType[v.type] ?? v
+  if (v.__event)     return respond.eventsByType[v.type] ?? v
 
-  const Model = models[v.__type]
+  const Model = respond.models[v.__type]
   return Model ? new Model(v, branch) : v // important: only clients care about tagging model's with v.__branch, as each db module only ever deals with one branch
 }
 

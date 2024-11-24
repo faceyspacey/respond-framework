@@ -10,7 +10,7 @@ import createAggregateStages, { createStagesCount } from './aggregates/createAgg
 
 import call from './utils/call.js'
 import findCurrentUser from './utils/findCurrentUser.js'
-import findByQueryPaginated from './utils/findByQueryPaginated.js'
+import aggregatePaginated from './utils/aggregatePaginated.js'
 
 
 export default !isProd ? mock : {  
@@ -283,11 +283,12 @@ export default !isProd ? mock : {
 
   async aggregate({
     selector,
-    stages: specs = [],
+    stages: specs = [], // stages in userland are respond-specific "specs" which abstracts the underlying implementation
     project,
     sort = { updatedAt: -1, _id: 1 },
     limit = this.config.listLimit ?? 10,
     skip = 0,
+    query, // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
   } = {}) {
     const stages = createAggregateStages(specs, { collection: this, selector, project, sort, limit, skip })
 
@@ -299,7 +300,7 @@ export default !isProd ? mock : {
     const count = counts[0]?.count ?? 0
     const models = docs.map(m => this._create(m))
 
-    return { count, [this._namePlural]: models }
+    return { query, count, [this._namePlural]: models }
   },
 
   async count(selector) {
@@ -451,5 +452,5 @@ export default !isProd ? mock : {
 
   call,
   findCurrentUser,
-  findByQueryPaginated,
+  aggregatePaginated,
 }

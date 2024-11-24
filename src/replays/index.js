@@ -61,14 +61,14 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   else if (mod.replays) {
     mod.replays.db = replays.db // db inherited (but not replays)
     replays = mod.replays
-    mod.replays.settings = defaultCreateSettings(mod.replays.config, input)
+    replays.settings = defaultCreateSettings(mod.replays.config, input)
     replays.config = snapDeepClone(replays.config)
   }
 
-  configs[mod.branch] = replays.config
-  settings[mod.branch] = replays.settings // replays + db inherited if no mod.db/replays
+  configs[mod.branchAbsolute] = replays.config
+  settings[mod.branchAbsolute] = replays.settings // replays + db inherited if no mod.db/replays
   
-  const state = branches[mod.branchRelative] // branch might be outside focused module tree
+  const state = branches[mod.branch] // branch might be outside focused module tree
   if (state) Object.getPrototypeOf(state).replays = state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
 
   depth.unshift([mod, replays])
@@ -83,7 +83,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
 const createDbWithSeed = (nextSeed, seed, shared = {}) => ([mod, replays]) => {
   if (!mod.db) return // only modules that have actual replays and therefore db/seed data
 
-  const b = mod.branch
+  const b = mod.branchAbsolute
   const { db = {}, settings = {}, createSeed = defaultCreateSeed, ...options } = replays
 
   nextSeed[b] = {}

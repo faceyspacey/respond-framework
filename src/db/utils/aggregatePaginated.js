@@ -1,5 +1,5 @@
-import stringToRegex, { isRegexString } from '../utils/stringToRegex.js'
-import dateStringToDate from '../utils/dateStringToDate.js'
+import stringToRegex, { isRegexString } from './stringToRegex.js'
+import dateStringToDate from './dateStringToDate.js'
 
 
 export default async function(query) {
@@ -15,19 +15,11 @@ export default async function(query) {
     ...sel
   } = query
 
-  const table = this.db[this._name]
-  const selector = createQuerySelector(table._toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
-
+  const selector = createQuerySelector(this._toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
   const sort = { [sortKey]: sortValue, _id: sortValue, location }
-  const stages = table.aggregateStages?.map(s => ({ ...s, startDate, endDate })) || []
+  const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
 
-  const { [this._namePlural]: models, count } = await table.aggregate({ selector, stages, project, sort, limit, skip })
-
-  return {
-    [this._namePlural]: models,
-    count,
-    query,
-  }
+  return this.aggregate({ selector, sort, stages, project, limit, skip, query })
 }
 
 

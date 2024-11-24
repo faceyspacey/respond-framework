@@ -8,7 +8,7 @@ import { isServer } from '../utils/bools.js'
 
 import call from './utils/call.js'
 import findCurrentUser from './utils/findCurrentUser.js'
-import findByQueryPaginated from './utils/findByQueryPaginated.js'
+import aggregatePaginated from './utils/aggregatePaginated.js'
 
 
 export default {
@@ -201,16 +201,17 @@ export default {
 
   async aggregate({
     selector,
-    stages: specs = [],
+    stages: specs = [], // stages in userland are respond-specific "specs" which abstracts the underlying implementation
     project,
     sort = { updatedAt: -1, _id: 1 },
     limit = this.config.listLimit ?? 10,
-    skip = 0
+    skip = 0,
+    query // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
   } = {}) {
     const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
     const page = await this._find(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
-    return { count: docs.length, [this._namePlural]: page }
+    return { query, count: docs.length, [this._namePlural]: page }
   },
 
   async count(selector) {
@@ -395,5 +396,5 @@ export default {
 
   call,
   findCurrentUser,
-  findByQueryPaginated,
+  aggregatePaginated,
 }

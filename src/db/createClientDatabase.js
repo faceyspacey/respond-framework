@@ -6,13 +6,12 @@ import createApiCache from './utils/createApiCache.js'
 import { ObjectId } from 'bson'
 
 
-export default !isProd ? mock : ({ mod, state, respond, branch }) => {
+export default !isProd ? mock : ({ mod, proto, state, respond, branch }) => {
   let { db } = mod
   
   if (!db && !parent.db) db = {}
-  else if (!db) return parent.db
+  else if (!db) return respond.db = proto.db = parent.db
 
-  const models = respond.models = {} // ref must exist now for createApiReviverForClient
   const clientReviver = createApiReviverForClient(respond, branch)
 
   const cache = createApiCache(state)
@@ -25,16 +24,15 @@ export default !isProd ? mock : ({ mod, state, respond, branch }) => {
     retryRequest = (table, method, args) => call(table, method)(...args),
   } = respond.options
   
-  return respond.db = state.db = createDbProxy({
-    models,
+  return respond.db = proto.db = createDbProxy({
     cache,
     call: function call(table, method) {
       if (method === 'make') {
-        return d => models[table]({ ...d, __type: table }, branch)
+        return d => respond.models[table]({ ...d, __type: table }, branch)
       }
       
       if (method === 'create') {
-        return d => models[table]({ ...d, __type: table, id: d?.id || obId() }, branch)
+        return d => respond.models[table]({ ...d, __type: table, id: d?.id || obId() }, branch)
       }
     
       let useCache

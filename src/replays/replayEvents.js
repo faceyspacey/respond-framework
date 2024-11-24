@@ -1,5 +1,6 @@
 import createState from '../store/createState.js'
 import { isTest } from '../utils/bools.js'
+import revive from '../utils/revive.js'
 
 
 export default async function(events, delay = 0, { settings, branch } = this.topState.replayState) {
@@ -11,6 +12,15 @@ export default async function(events, delay = 0, { settings, branch } = this.top
   console.log('replayEvents.createModule', new Date - start)
 
   const last = new Date
+  // const e = events[0]
+  // const { eventsByType } = state.respond
+  // if (typeof e.event !== 'function' || eventsByType[e.type] !== e.event) {
+  //   events = revive(state.respond)(events)
+  // }
+
+  events = revive(state.respond)(events)
+  console.log('events', events)
+
   await run(events, delay, state)
   console.log('replayEvents.run', new Date - last)
 
