@@ -4,13 +4,16 @@ import { execSync } from 'child_process'
 import findTests, { findTest } from './utils/findTests.js'
 import writeTestFile from './utils/writeTestFile.js'
 import openFile from './utils/openFile.js'
-import { argsOut } from '../db/fetch.js'
+import { argsOut as out } from '../db/fetch.js'
 
 
 export default {
-  call(body) {
-    this.context = body
-    return this[body.method](...argsOut(body.args))
+  call(req, context) {
+    this.req = req
+    this.context = context
+
+    const { method, args } = req.body
+    return this[method](...out(args))
   },
 
   findTests(params) {
@@ -80,9 +83,6 @@ export default {
     
     const test = findTest(completeFilename)
 
-    this.io.sockets.emit('wallaby', { test, index, delay })
+    this.context.io.sockets.emit('wallaby', { test, index, delay })
   },
-
-  _name: 'developer',
-  _namePlural: 'developers',
 }

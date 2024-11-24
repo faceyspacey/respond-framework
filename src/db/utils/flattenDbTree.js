@@ -1,10 +1,3 @@
-export function flattenControllers(db, controllers = {}, b = '') {
-  controllers[b] = db.controllers ?? {}
-  db.moduleKeys.forEach(k => flattenControllers(db[k], controllers, b ? `${b}.${k}` : k))
-  return controllers // 2d: controllers[branch][controllerName]
-}
-
-
 export function flattenModels(db, modelsByBranchType = {}, b = '') {
   const models = db.models ?? {}
 
@@ -16,3 +9,19 @@ export function flattenModels(db, modelsByBranchType = {}, b = '') {
   
   return modelsByBranchType // 1d: modelsByBranchType[doc.__branchType]
 }
+
+
+export function flattenDatabase(db = {}, branches = {}, b = '') {
+  branches[b] = createTableConstructors(db)
+  db.moduleKeys.forEach(k => flattenDatabase(db[k], branches, b ? `${b}.${k}` : k))
+  return branches // 2d: branches[branch][table]
+}
+
+
+export const createTableConstructors = db =>
+  Object.keys(db).reduce((acc, k) => {
+    function Table() {}
+    Table.prototype = db[k] // table methods available on an instance (similar to controllers) so that this.context and this.user is available (but only to the initially called table query/mutation method; on the other hand, when called within this method, the `this` context won't exist)
+    acc[k] = Table
+    return acc
+  }, {})

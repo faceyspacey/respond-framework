@@ -29,10 +29,10 @@ export default (state, session, start = new Date) => {
   console.log('createReplaySettings!!', new Date - start)
   
   if (top.db) {
-    top.db.focusedBranch = replayTools.focusedBranch
+    top.db.focusedBranch = replayTools.focusedBranch // so db can dynamically select focused module during development
   }
 
-  state.replayTools = addModule(respond, replayToolsModule, replayTools, state, 'replayTools')
+  addModule(respond, replayToolsModule, state, 'replayTools', replayTools)
   state.moduleKeys.push('replayTools')
 }
 

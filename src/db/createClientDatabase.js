@@ -6,9 +6,11 @@ import createApiCache from './utils/createApiCache.js'
 import { ObjectId } from 'bson'
 
 
-export default !isProd ? mock : (db, parentDb, state, respond, branch) => {
-  if (!db && !parentDb) db = {}
-  else if (!db) return parentDb
+export default !isProd ? mock : ({ mod, state, respond, branch }) => {
+  let { db } = mod
+  
+  if (!db && !parent.db) db = {}
+  else if (!db) return parent.db
 
   const models = respond.models = {} // ref must exist now for createApiReviverForClient
   const clientReviver = createApiReviverForClient(respond, branch)
@@ -20,19 +22,19 @@ export default !isProd ? mock : (db, parentDb, state, respond, branch) => {
     getContext,
     onServerUp = state => state._serverDown = false,
     onServerDown = state => state._serverDown = true,
-    retryRequest = (controller, method, args) => call(controller, method)(...args),
+    retryRequest = (table, method, args) => call(table, method)(...args),
   } = respond.options
   
-  return respond.db = createDbProxy({
+  return respond.db = state.db = createDbProxy({
     models,
     cache,
-    call: function call(controller, method) {
+    call: function call(table, method) {
       if (method === 'make') {
-        return d => models[controller]({ ...d, __type: controller }, branch)
+        return d => models[table]({ ...d, __type: table }, branch)
       }
       
       if (method === 'create') {
-        return d => models[controller]({ ...d, __type: controller, id: d?.id || obId() }, branch)
+        return d => models[table]({ ...d, __type: table, id: d?.id || obId() }, branch)
       }
     
       let useCache
@@ -44,15 +46,15 @@ export default !isProd ? mock : (db, parentDb, state, respond, branch) => {
 
       async function meth(...args) {
         const { token, userId, adminUserId, basename, basenameFull } = state
-        const context = { token, userId, adminUserId, basename, basenameFull, ...getContext?.call(state, controller, method, args) }
+        const context = { token, userId, adminUserId, basename, basenameFull, ...getContext?.call(state, table, method, args) }
     
         try {
-          const body = { ...context, branch, controller, method, args, first: !state.__dbFirstCall }
+          const body = { ...context, branch, table, method, args, first: !state.__dbFirstCall }
           const response = await fetch(apiUrl, body, clientReviver, useCache && cache)
     
           state.__dbFirstCall = true
         
-          state.devtools.sendNotification({ type: `=> db.${controller}.${method}`, ...body, response })
+          state.devtools.sendNotification({ type: `=> db.${table}.${method}`, ...body, response })
           
           if (_serverDown) {
             _serverDown = false

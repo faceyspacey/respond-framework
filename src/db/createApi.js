@@ -14,14 +14,35 @@ export default opts => {
       await handle(req, res)
     }
     catch (error) {
-      console.error('respond: the following error occurred in a controller method', req.body, error)
+      console.error('respond: the following error occurred in a table method', req.body, error)
       res.json({ error: 'unknown-server-error', params: { ...req.body, message: error.message } })
     }
   }
 }
 
 
-const createHandler = ({ db, log = true, server, call = defCall }) => {
+const createHandler = ({ db, log = true, server, context = {} }) => {
+  const branches = createBranches(db)
+  context.io = dev && server && createWallabySocketsServer(server)
+
+  return async (req, res) => {
+    const { table, method, focusedBranch: fb, branch: b } = req.body
+    
+    if (log) console.log(`request.request: db.${table}.${method}`, req.body)
+      
+    const T = branches[prepend(fb, b)][table] // eg: branches['admin.foo'].user
+    if (!T) return res.json({ error: 'table-absent', params: req.body })
+    const r = await new T().call(req, context)
+
+    if (log) console.log(`respond.response: db.${table}.${method}`, ...(dev ? [] : [req.body, '=>']), r) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
+  
+    res.json(r === undefined ? __undefined__ : r)
+  }
+}
+
+
+
+const createBranches = db => {
   if (dev) {
     db.moduleKeys.push('replayTools')
     db.replayTools = replayTools
@@ -29,22 +50,5 @@ const createHandler = ({ db, log = true, server, call = defCall }) => {
 
   db.modelsByBranchType = flattenModels(db)
 
-  const branches = flattenDatabase(db)
-  const io = dev && server && createWallabySocketsServer(server)
-
-  return async (req, res) => {
-    const { focusedBranch: fb, branch: b, controller, method } = req.body
-    
-    if (log) console.log(`request.request: db.${table}.${method}`, req.body)
-      
-    const Controller = branches[prepend(fb, b)][controller] // eg: controllers['admin.foo'].user
-    if (!Controller) return res.json({ error: 'controller-absent', params: req.body })
-
-    const r = await new Controller(req, io).call(req.body)
-    const response = r === undefined ? {} : r // client code always expects objects, unless something else is explicitly returned
-  
-    if (log) console.log(`respond.response: db.${controller}.${method}`, ...(dev ? [] : [req.body, '=>']), response) // during prod, other requests might come thru between requests, so response needs to be paired with request
-  
-    res.json(response)
-  }
+  return flattenDatabase(db)
 }

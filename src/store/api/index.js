@@ -18,18 +18,20 @@ import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import sliceBranch, { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
+import findOne from '../../selectors/findOne.js'
+import { is, thisIn } from '../../utils/inIs.js'
 
 
-export default (top, state, session) => {
+export default (top, session) => {
   const { replayState, seed, basenames = {} } = session
   const branch = replayState.branch
 
   const branchesAll = createBranchesAll(top, branch)
-  const branches = { ['']: state, get undefined() { return this[''] } }
+  const branches = { get undefined() { return this[''] } }
   const listeners = []
   const promises = []
 
-  const ctx = window.state?.ctx ?? {}
+  const ctx = window.state?.respond?.ctx ?? {}
 
   const {
     createDevtools = defaultCreateDevtools,
@@ -48,13 +50,17 @@ export default (top, state, session) => {
     seed,
     basenames,
 
+    devtools: createDevtools(),
+    history: createHistory(),
+    cookies: createCookies(),
+
     focusedModule: sliceBranch(top, branch),
     focusedBranch: branch,
 
     branchesAll,
     
     branches,
-    branchesById: {},
+    branchLocatorsById: {},
 
     modelsByBranch: {},
     modelsByBranchType: {},
@@ -66,10 +72,6 @@ export default (top, state, session) => {
     promises,
     refs: {},
     eventsCache: new Map,
-  
-    devtools: createDevtools(),
-    history: createHistory(),
-    cookies: createCookies(),
 
     kinds,
   
@@ -90,6 +92,11 @@ export default (top, state, session) => {
   
     getStore,
   
+    findOne,
+
+    is,
+    in: thisIn,
+
     replaceWithProxies: function replaceWithProxies(proxy, b = '') {
       proxy.respond.state = Object.getPrototypeOf(proxy).state = branches[b] = proxy // replace module states with proxy
       proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], b ? `${b}.${k}` : k))
@@ -204,7 +211,7 @@ export default (top, state, session) => {
       const { event } = e
 
       if (event.sync && !event.notify) return
-      if (event === state.events.init) return
+      if (event === this.respond.state.events.init) return
 
       const sent = listeners
         .filter(send => e.branch.indexOf(send.branch) === 0) // event is child of subscribed module or the same module
@@ -221,10 +228,10 @@ export default (top, state, session) => {
         console.error(error)
       }
 
-      const hasOnError = this.respond.state.options.onError
+      const ownOnError = this.respond.state.options.onError
     
-      const onError = hasOnError ?? state.options.onError
-      const s = hasOnError ? this.respond.state : getStore()
+      const onError = ownOnError ?? getStore().state.options.onError
+      const s = ownOnError ? this.respond.state : getStore()
 
       return onError?.({ ...err, state: s })
     }

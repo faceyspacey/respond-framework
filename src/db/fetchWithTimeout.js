@@ -1,10 +1,10 @@
 export default async (resource, options = {}, timeout = 12000) => {  
-  const controller = new AbortController()
-  const id = setTimeout(() => controller.abort(), timeout)
+  const co = new AbortController()
+  const id = setTimeout(() => co.abort(), timeout)
 
   const response = await fetch(resource, {
     ...options,
-    signal: controller.signal  
+    signal: co.signal  
   })
 
   clearTimeout(id)

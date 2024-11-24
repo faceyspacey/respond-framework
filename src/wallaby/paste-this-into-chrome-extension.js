@@ -6,9 +6,9 @@
 // NOTE: ./extension.js will be fetched + evaled fresh on open of Wallaby Explorer, and therefore allow you to edit that code, while ensuring the Chrome Extension is always up to date
 // NOTE: Wallaby Explorer can run on multiple URLs. For the Chrome Extension to work, it must be run on the https version of this URL: https://wallabyjs.com/app/#/tests (not the localhost version, and again, it MUST BE HTTPS! for cors to work)
 
-window.callControllerMethod = async (controller, method, args = []) => {
-  const url = `http://localhost:3000/api/${controller}/${method}`
-  const context = { controller, method, args }
+window.callRespond = async (table, method, args = []) => {
+  const url = `http://localhost:3000/api/${table}/${method}`
+  const context = { table, method, args }
   
   const res = await fetch(url, {
     method: 'POST',
@@ -24,7 +24,7 @@ window.callControllerMethod = async (controller, method, args = []) => {
 
 
 const fetchExtension = async () => {
-  const { extension } = await callControllerMethod('developer', 'getWallabyChromeExtensionCode')
+  const { extension } = await callRespond('developer', 'getWallabyChromeExtensionCode')
   eval(extension)
 }
 

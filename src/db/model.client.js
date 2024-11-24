@@ -7,7 +7,7 @@ export default {
       Object.assign(this, moreDoc)
     }
 
-    const res = await this.db[this._name].save(this)
+    const res = await this.db[this._name].upsert(this)
     return res?.error ? res : { [this._name]: this } // preserve reference so reactivity sees it as the same object, and triggers less re-renders
   },
 
@@ -19,12 +19,12 @@ export default {
       Object.assign(this, moreDoc)
     }
 
-    const res = await this.db[this._name].saveSafe(this)
+    const res = await this.db[this._name].upsertSafe(this)
     return res?.error ? res : { [this._name]: this }
   },
 
   async remove() {
     const { id } = this
-    return this.db[this._name].remove({ id })
+    return this.db[this._name].deleteOne({ id })
   }
 }

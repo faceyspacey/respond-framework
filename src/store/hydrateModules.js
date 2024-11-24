@@ -15,14 +15,18 @@ export default (state, session) => {
   }
 
   if (prevState) { // hmr/session have prevState already
-    mergeModulesPrevState(state, prevState)
+    mergePrevState(state, prevState)
   }
   else {
     reduce(state, state.events.init())
   }
+}
 
 
-  return state
+
+export function mergePrevState(state, prev) {
+  state.moduleKeys.forEach(k => mergePrevState(state[k], prev[k]))
+  Object.getPrototypeOf(state).prevState = prev
 }
 
 
@@ -36,32 +40,3 @@ const reviveModules = (state, session) => {
   
   Object.assign(state, session)             // ...so parent receives shallow merge of everything except already assign child modules
 }
-
-
-
-
-
-export function mergeModulesPrevState(state, prevState) {
-  state.moduleKeys.forEach(k => {
-    mergeModulesPrevState(state[k], prevState[k])
-  })
-
-  Object.getPrototypeOf(state).prevState = prevState
-}
-
-
-
-// export function mergeModulesPrevState(state, prevState = {}) {
-//   state.moduleKeys.forEach(k => {
-//     mergeModulesPrevState(state[k], prevState[k])
-//   })
-
-//   const prev = Object.create(Object.getPrototypeOf(prevState))
-//   Object.assign(prev, prevState)
-
-//   if (prev.prevState?.prevState) {
-//     delete prev.prevState.prevState // prevent infinite circular references to prevStates (however: we need 2 prevStates for HMR which hydrates from prevState; otherwise, this would be cut off 1 level sooner)
-//   }
-
-//   state.prevState = prev
-// }

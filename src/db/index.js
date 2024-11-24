@@ -1,11 +1,16 @@
+import { isProd } from '../utils/bools.js'
 import { MongoClient, ObjectId } from 'mongodb'
 import mock from './index.mock.js'
+import pick from './utils/pick.js'
+import safeMethods from './safeMethods.js'
+
 import createJoin from './utils/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds } from './utils/toFromObjectIds.js'
-import pick from './utils/pick.js'
-import { isProd } from '../utils/bools.js'
-import safeMethods from './safeMethods.js'
 import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
+
+import call from './utils/call.js'
+import findCurrentUser from './utils/findCurrentUser.js'
+import findByQueryPaginated from './utils/findByQueryPaginated.js'
 
 
 export default !isProd ? mock : {  
@@ -90,6 +95,17 @@ export default !isProd ? mock : {
     return this._find({ ...selector, [key]: value }, options)
   },
 
+  async findPaginated(selector, options) {
+    skip = skip ? parseInt(skip) : 0
+
+    const [posts, count] = await Promise.all([
+      db.post.find(selector, { ...options, skip }),
+      db.post.count(selector)
+    ])
+
+    return { posts, count, skip }
+  },
+  
   async search(query, {
     path = ['firstName', 'lastName'],
     selector,
@@ -431,5 +447,9 @@ export default !isProd ? mock : {
     return project
   },
 
-  ...safeMethods
+  ...safeMethods,
+
+  call,
+  findCurrentUser,
+  findByQueryPaginated,
 }

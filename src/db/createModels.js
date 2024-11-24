@@ -1,11 +1,15 @@
 import mixin from './model.client.js'
 
 
-export default (models, db, parent, respond, branch) => {
+export default ({ respond, mod, state, parent, branch }) => {
+  let { models } = mod
+
   if (!models) {
     if (parent.models) return parent.models
     models = respond.findInClosestAncestor('models', branch) ?? {}
   }
+
+  const { db } = respond
 
   const shared = models.shared ?? {}
   const client = models.client ?? (!models.shared ? models : {})
@@ -25,7 +29,7 @@ export default (models, db, parent, respond, branch) => {
     respond.modelsByBranchType[key] = db.models[k] = Model
   }
 
-  return db.models
+  return respond.models = state.models = db.models
 }
 
 

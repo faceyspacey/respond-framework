@@ -11,45 +11,45 @@ export default (state, k = 'dbCache') => {
       return userId ? `${JSON.stringify(args)}:${userId}` : JSON.stringify(args)
     },
     get(body) {
-      const { controller, method } = body
+      const { table, method } = body
       const k = this.key(body)
   
       this.keygen.set(body, k)                          // key generated once per request on cache.get (optimization)  
   
-      return this.calls[controller]?.[method]?.[k]
+      return this.calls[table]?.[method]?.[k]
     },
     set(body, v) {
-      const { controller, method } = body
+      const { table, method } = body
       const k = this.keygen.get(body) ?? this.key(body) // key reused if already generated per request
   
       this.keygen.delete(body)
   
-      this.calls[controller] ??= {}
-      this.calls[controller][method] ??= {}
-      this.calls[controller][method][k] = v
+      this.calls[table] ??= {}
+      this.calls[table][method] ??= {}
+      this.calls[table][method][k] = v
     },
-    clear({ controller, method, args, userId }) {
-      if (controller && method && args && userId) {
-        const items = this.calls[controller]?.[method] ?? {}
+    clear({ table, method, args, userId }) {
+      if (table && method && args && userId) {
+        const items = this.calls[table]?.[method] ?? {}
         const key = this.key({ args, userId })
   
         delete items[key]
       }
-      else if (controller && method && args) {
-        const items = this.calls[controller]?.[method] ?? {}
+      else if (table && method && args) {
+        const items = this.calls[table]?.[method] ?? {}
         const key = this.key({ args })
   
         Object.keys(items).forEach(k => {
           if (k.indexOf(key) === 0) delete items[k]
         })
       } 
-      else if (controller && method) {
-        if (this.calls[controller]) {
-          this.calls[controller][method] = {}
+      else if (table && method) {
+        if (this.calls[table]) {
+          this.calls[table][method] = {}
         }
       }
-      else if (controller) {
-        this.calls[controller] = {}
+      else if (table) {
+        this.calls[table] = {}
       }
       else {
         this.calls = {}

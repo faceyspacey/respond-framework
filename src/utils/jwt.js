@@ -15,3 +15,17 @@ export default isProd && isServer ? jwt : {
     return JSON.parse(json)
   }
 }
+
+
+if (isProd) {
+  const verify = jwt.verify.bind(jwt)
+
+  jwt.verify = function(token, secret) {
+    if (!token) return
+    
+    try {
+      return verify(token, secret)
+    }
+    catch {}
+  }
+}

@@ -1,9 +1,9 @@
 export default db =>
   new Proxy(db, {
-    get(_, controller) {
-      if (db[controller]) return db[controller] // not a controller
+    get(_, table) {
+      if (db[table]) return db[table] // not a table
 
-      const get = (_, method) => db.call(controller, method)
+      const get = (_, method) => db.call(table, method)
       return new Proxy({}, { get })
     }
   })

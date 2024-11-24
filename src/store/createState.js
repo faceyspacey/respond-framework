@@ -7,12 +7,11 @@ import hydrateModules from './hydrateModules.js'
 
 export default (top, opts = {}) => {
   const session = sessionState(opts)
-
-  const state = Object.create({})
-  const respond = createRespond(top, state, session)
-
-  addModule(respond, respond.focusedModule, state)
+  const respond = createRespond(top, session)
+  const state = addModule(respond, respond.focusedModule)
+  
   createReplays(state, session)
+  hydrateModules(state, session)
 
-  return window.state = hydrateModules(state, session)
+  return window.state = state
 }

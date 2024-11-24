@@ -2,7 +2,7 @@ import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { prependBranchToE as fullPath } from '../utils/sliceBranch.js'
-import { mergeModulesPrevState } from '../store/hydrateModules.js'
+import { mergePrevState } from '../store/hydrateModules.js'
 import { push } from '../history/changePath.js'
 import { hasHistory } from '../utils/bools.js'
 import bs from '../history/browserState.js'
@@ -26,13 +26,13 @@ export default function (state, e) {
 
   if (e.branch === 'replayTools' && !replayTools.config.log) {
     Object.getPrototypeOf(top).prevPrevState = top.prevState
-    mergeModulesPrevState(replayTools, respond.snapshot(replayTools))
+    mergePrevState(replayTools, respond.snapshot(replayTools))
     return
   }
 
   if (!e.meta.skipped) {
     Object.getPrototypeOf(top).prevPrevState = top.prevState
-    mergeModulesPrevState(top, respond.snapshot(top))
+    mergePrevState(top, respond.snapshot(top))
   }
 
   if (!replayTools) return

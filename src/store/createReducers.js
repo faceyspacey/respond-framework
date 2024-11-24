@@ -3,20 +3,21 @@ import curr from './reducers/curr.js'
 import stack from './reducers/stack.js'
 
 
-export default (proto, moduleName, reducers, propReducers, parentReducers = {}, respond, state) => {
+export default ({ respond, proto, state, parent, name }, reducers, propReducers) => {
   reducers = reducers.curr // preserve reducer order if stack or curr already exists
     ? reducers.stack ? { ...reducers }       : { stack, ...reducers }
     : reducers.stack ? { curr, ...reducers } : { stack, curr, ...reducers }
 
   proto.reducers = reducers
   
+  const parentReducers = parent.reducers ?? {}
   const parentKeys = Object.keys(parentReducers)
 
   Object.keys(propReducers).forEach(k => {
     const reducer = propReducers[k]
     const parentK = parentKeys.find(k => parentReducers[k] === reducer)
 
-    const k2 = parentK ?? moduleName + '_' + k                            // reuse existing reducer state if available (perf optimization)
+    const k2 = parentK ?? name + '_' + k                                  // reuse existing reducer state if available (perf optimization)
 
     parentReducers[k2] = reducer                                          // if parent reducer doesn't exist, assign new reducer to parent
 

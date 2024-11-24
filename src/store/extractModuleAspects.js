@@ -51,14 +51,9 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
 
 
 
-const mergeInitialState = (state, initialState, currState) => {
-  const initial = typeof initialState === 'function'
-    ? initialState(currState) 
-    : initialState
-
-  if (initial) {
-    Object.assign(state, cloneDeep(initial))
-  }
+const mergeInitialState = (state, initial, curr) => {
+  const s = typeof initial === 'function' ? initial(curr) : initial
+  if (s) Object.assign(state, cloneDeep(s))
 }
 
 

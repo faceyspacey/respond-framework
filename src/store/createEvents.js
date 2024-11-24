@@ -4,19 +4,19 @@ import { stripBranch } from '../utils/sliceBranch.js'
 import { init, navigation, submission } from './kinds.js'
 
 
-export default function(proto, ...args) {
-  proto.events = createEvents(...args)
+export default function({ respond, proto, state, branch }, events, propEvents) {
+  proto.events = createEvents(respond, state, branch, events, propEvents)
   extractedEvents.clear()
 }
 
-function createEvents(respond, state, events = {}, propEvents = {}, branch, ns = '', nsObj, parentType) {
+function createEvents(respond, state, branch, events = {}, propEvents = {}, ns = '', nsObj, parentType) {
   const isBuiltIns = !!parentType
   
   const allEvents = isBuiltIns ? events : { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same pattern, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same pattern, and the primary one is matched on first load, but you can dispatch different events that will have the same pattern but different queries
 
   const isModule = !ns && !isBuiltIns
-  const initEvent = isModule && (respond.eventsByType.init ?? createEvent(respond, state, { kind: init }, branch, '', init)) // same init event reference on all modules
+  const initEvent = isModule && (respond.eventsByType.init ?? createEvent(respond, state, branch, { kind: init }, '', init)) // same init event reference on all modules
   
   const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
   if (initEvent) Object.assign(acc, { init: initEvent })
@@ -33,13 +33,13 @@ function createEvents(respond, state, events = {}, propEvents = {}, branch, ns =
       acc[k] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(propConfig ?? config, isBuiltIns)) {
-      acc[k] = createEvents(respond, state, config, propConfig, branch, ns ? `${ns}.${k}` : k)
+      acc[k] = createEvents(respond, state, branch, config, propConfig, ns ? `${ns}.${k}` : k)
     }
     else if (propConfig) {
-      acc[k] = createEvent(respond, state, propConfig, branch, ns, k, acc) // fresh event passed as prop
+      acc[k] = createEvent(respond, state, branch, propConfig, ns, k, acc) // fresh event passed as prop
     }
     else if (config) {
-      acc[k] = createEvent(respond, state, config, branch, ns, k, nsObj || acc, parentType)
+      acc[k] = createEvent(respond, state, branch, config, ns, k, nsObj || acc, parentType)
     }
 
     if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
@@ -50,7 +50,7 @@ function createEvents(respond, state, events = {}, propEvents = {}, branch, ns =
 
 
 
-const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, parentType) => {
+const createEvent = (respond, state, branch, config, _namespace, _type, nsObj, parentType) => {
   const isBuiltIn = !!parentType
   const _typeResolved = isBuiltIn ? `${parentType}.${_type}` : _type 
     
@@ -70,6 +70,10 @@ const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, p
   }
 
   event ??= function event(arg = {}, meta = {}) { // event itself is a function
+    if (arg.__argName) {
+      arg = { [arg.__argName]: arg }
+    }
+
     if (arg.meta) {
       const { meta: m, ...rest } = arg
       meta = { ...m, ...meta }
@@ -84,7 +88,7 @@ const createEvent = (respond, state, config, branch, _namespace, _type, nsObj, p
     return applyTransform(respond, e, dispatch, trigger)
   }
 
-  const children = !isBuiltIn && createEvents(respond, state, createBuiltIns(config), undefined, branch, _namespace, nsObj, _type)
+  const children = !isBuiltIn && createEvents(respond, state, branch, createBuiltIns(config), undefined, _namespace, nsObj, _type)
 
   const dispatch = (arg, meta) => respond.dispatch(event(arg, meta))
 
@@ -157,10 +161,6 @@ const edit = {
 
 
 export function Namespace() {}
-
 Namespace.prototype = { is, in: thisIn }
-
-
-
 
 const assign = Object.assign

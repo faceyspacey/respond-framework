@@ -6,6 +6,10 @@ import safeMethods from './safeMethods.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
 import { isServer } from '../utils/bools.js'
 
+import call from './utils/call.js'
+import findCurrentUser from './utils/findCurrentUser.js'
+import findByQueryPaginated from './utils/findByQueryPaginated.js'
+
 
 export default {
   async findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
@@ -81,6 +85,17 @@ export default {
     const value = new RegExp(`^${term}`, 'i')
 
     return this._find({ ...selector, [key]: value }, options)
+  },
+
+  async findPaginated(selector, options) {
+    skip = skip ? parseInt(skip) : 0
+
+    const [posts, count] = await Promise.all([
+      db.post.find(selector, { ...options, skip }),
+      db.post.count(selector)
+    ])
+
+    return { posts, count, skip }
   },
 
   async search(query, {
@@ -376,5 +391,9 @@ export default {
     return project
   },
 
-  ...safeMethods
+  ...safeMethods,
+
+  call,
+  findCurrentUser,
+  findByQueryPaginated,
 }

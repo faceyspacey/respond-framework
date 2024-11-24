@@ -1,7 +1,7 @@
 import { _parent } from './reserved.js'
 
 
-export default (proto, selectorDescriptors, propSelectorDescriptors, respond, state) => {
+export default ({ respond, proto, state }, selectorDescriptors, propSelectorDescriptors) => {
   const { reducers } = proto
 
   Object.keys(selectorDescriptors).forEach(k => {

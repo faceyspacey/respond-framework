@@ -127,13 +127,13 @@ baseUrl = 'http://localhost:3000/api/'
 
 openEventFile = (t) => {
   const namespace = parseNamespace(t.textContent)
-  callControllerMethod('developer', 'openEventsFile', [{ namespace }])
+  callRespond('developer', 'openEventsFile', [{ namespace }])
 }
 
 runTest = (f, t, delay) => {
   const filename = f.textContent.split('.js')[0] + '.js'
   const index = parseEventNum(t.textContent)
-  callControllerMethod('developer', 'runTest', [{ filename, index, delay }])
+  callRespond('developer', 'runTest', [{ filename, index, delay }])
 }
 
 

@@ -7,14 +7,14 @@ import RespondContext from './context.js'
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const top = useContext(RespondContext)
-    const branch = top.respond.branchesById[id]
+    const branch = top.respond.branchLocatorsById[id]
     return top.respond.branches[branch]
   }
 
 
   const useRespond = sync => {
     const top = useContext(RespondContext)
-    const branch = top.respond.branchesById[id]
+    const branch = top.respond.branchLocatorsById[id]
 
     const snap = useSnapshot(top, sync)
     const state = sliceBranch(snap, branch) // selector props require slicing top.state to crawl to top of state tree

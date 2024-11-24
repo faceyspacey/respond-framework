@@ -633,15 +633,20 @@ use a map to see whats inside, and be able to clear it!
 #focused module needs to select focused db server side, and take into account that it might be an ancestor that has the db
 
 #use WeakMap to store refIds
-
-
-move basenames to pre state
-
+#move basenames to pre state
 
 
 
-make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
-api returns need to be check for undefined
+#make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
+#api returns need to be check for undefined
+
+
+#move AuthController into db/index.js
+#move findPaginated + + admin controller into db/index.js
+
+#give __method approach a try
+#make queries/mutations return object containing result
+
 
 
 for navigators, finalize strategy for `key`, eg url + type for navigations

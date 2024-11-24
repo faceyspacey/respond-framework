@@ -1,11 +1,9 @@
-import createControllers from './createControllers.js'
-import defaultCollection from '../db/index.js'
+import defaultMixin from '../db/index.js'
 import { createModel } from './createModels.js'
-import { isDev } from '../utils.js'
 
 
 export default (options = {}) => {
-  const { collection = defaultCollection, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, createController, ...modules } = options
+  const { mixin = defaultMixin, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
   const modelsShared = models.shared ?? {}
@@ -16,8 +14,6 @@ export default (options = {}) => {
     replays: { enumerable: false, value: replays },
   }
 
-  db.controllers = createControllers(controllers, config, descriptors, createController)
-
   const extra = Object.defineProperties({}, descriptors)
 
   for (const k in tables) {
@@ -26,7 +22,7 @@ export default (options = {}) => {
 
     const inherit = coll.inherit !== false
 
-    const parent =      inherit ? collection : {}
+    const parent =      inherit ? mixin : {}
     const parentModel = inherit ? model : {}
 
     const Model = db.models[k] = createModel(k, modelsShared[k], modelsServer[k], parentModel, extra)
@@ -39,15 +35,15 @@ export default (options = {}) => {
     db.tableNames.push(k)
   }
 
+  // create tree of dbs
   Object.keys(modules).forEach(k => {
     if (!modules[k]) return // developer db undefined in production
 
     const { props = {}, ...child } = modules[k]
-    const { db: dbChild, controllers, models } = child
+    const { db: dbChild, models } = child
 
     if (dbChild) Object.assign(child, db) // child is immutable
-    if (controllers) child.controllers = Object.assign({}, child.controllers, controllers) // must be immutable since during development focusing a child branch will lead to using a child db without a parent having overwritten it through props
-    if (models) child.models = Object.assign({}, child.models, models)
+    if (models) child.models = Object.assign({}, child.models, models) // must be immutable since during development focusing a child branch will lead to using a child db without a parent having overwritten it through props
 
     db[k] = child
     child.original = modules[k] // when a module is focused during development, we may need to select original without props

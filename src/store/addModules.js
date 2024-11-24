@@ -1,58 +1,47 @@
 import createClientDatabase from '../db/createClientDatabase.js'
-import createModels from '../db/createModels.js'
-import createPlugins from './createPlugins.js'
+import createClientModels from '../db/createModels.js'
+import createBasename from './createBasename.js'
 import createEvents from './createEvents.js'
-import createSelectors from './createSelectors.js'
+import createPlugins from './createPlugins.js'
 import createReducers from './createReducers.js'
+import createSelectors from './createSelectors.js'
 
 import extractModuleAspects from './extractModuleAspects.js'
-
-import findOne from '../selectors/findOne.js'
 import { _parent } from './reserved.js'
-import { is, thisIn } from '../utils/inIs.js'
 
 
 export default function addModule(
   resp,
   mod,
-  state,
   parent = {},
-  name,
-  props = {},
-  ancestorPlugins,
-  branch = name ?? ''
+  name = '',
+  state = Object.create({}),
+  props = mod.props ?? {},
+  branch = parent.respond?.branch ? `${parent.respond.branch}.${name}` : name
 ) {
   if (!mod.id) throw new Error('respond: missing id on module: ' + branch || 'top')
   
-  state.__module = resp.branchesById[mod.id] = branch
+  resp.branchLocatorsById[mod.id] = branch
   resp.branches[branch] = state
   
   const { id, ignoreParents, components, reduce, options = {}, moduleKeys = [] } = mod
 
-  const respond = { ...options.merge, ...resp, state, id, mod, components, reduce, options, ignoreParents, branch, moduleKeys, overridenReducers: new Map }
-  
-  respond.respond = respond
+  const respond = { ...options.merge, ...resp, state, id, mod, branch, moduleKeys, components, reduce, options, ignoreParents, overridenReducers: new Map, get respond() { return respond } }
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent })
+  const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
-  state.basename = respond.basenames[branch] ?? props.basename ?? mod.basename ?? ''
-  state.basenameFull = (parent.basenameFull ?? '') + state.basename
-
-  const db = createClientDatabase(mod.db, parent.db, state, respond, branch)
-  const models = createModels(mod.models, db, parent, respond, branch)
-
-  const [plugins, propPlugins] = createPlugins(mod.plugins, props.plugins, ancestorPlugins, parent)
-
-  const proto = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, db, models, plugins, findOne, is, in: thisIn })
-
-  const [evs, reducers, selectorDescriptors] = extractModuleAspects(mod, state)
+  const [events,     reducers,     selectorDescriptors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state, parent)
+
+  createClientDatabase(deps)
+  createClientModels(deps)
+  createBasename(deps)
+  createPlugins(deps)
+  createEvents(deps, events, propEvents)
+  createReducers(deps, reducers, propReducers)
+  createSelectors(deps, selectorDescriptors, propSelectorDescriptors)
   
-  createEvents(proto, respond, state, evs, propEvents, branch)
-  createReducers(proto, name, reducers, propReducers, parent.reducers, respond, state)
-  createSelectors(proto, selectorDescriptors, propSelectorDescriptors, respond, state)
+  moduleKeys.forEach(k => addModule(resp, mod[k], state, k))
 
-  for (const k of moduleKeys) {
-    state[k] = addModule(resp, mod[k], Object.create({}), state, k, mod[k].props, propPlugins, branch ? `${branch}.${k}` : k)
-  }
-
-  return state
+  return parent[name] = state
 }
