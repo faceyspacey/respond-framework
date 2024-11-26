@@ -82,10 +82,6 @@ export default {
 
       const evs = index === undefined ? events : events.slice(0, index + 1)
 
-      if (state.focusedBranch !== window.state.replayState.branch) {
-        window.state.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
-      }
-
       await state.replayEvents(evs, delay, test)
 
       return false
@@ -200,13 +196,6 @@ export default {
       settings = gatherAllSettings(settings, branch, top, respond)
       const { url = '/' } = config
       
-      const prev = window.state
-      const { eventsByType } = prev.respond
-      
-      if (branch !== prev.replayState.branch) {
-        prev.respond.eventsByType = {} // eventsByType is reused from previous state -- since modules could change, it's possible that the same type will exist in different modules but not be the same event due to namespaces -- so we don't use eventsByType to preserve references in this case, as we do with HMR + replays
-      }
-
       const start = new Date
       const state = createState(top, { settings, branch, status: 'reload' })
       console.log('reload.createModule', new Date - start)
@@ -223,8 +212,6 @@ export default {
         respond.queueSaveSession()
       }
       else {
-        window.state = prev
-        prev.respond.eventsByType = eventsByType
         errors.url = `no event for url "${url}" in module`
       }
 

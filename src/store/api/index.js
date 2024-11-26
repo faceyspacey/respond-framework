@@ -24,16 +24,18 @@ import { is, thisIn } from '../../utils/inIs.js'
 
 export default (top, session) => {
   const { replayState, seed, basenames = {} } = session
-  const branch = replayState.branch
+  const focusedBranch = replayState.branch
 
-  const branchesAll = createBranchesAll(top, branch)
+  const branchesAll = createBranchesAll(top, focusedBranch)
   const branches = { get undefined() { return this[''] } }
   const listeners = []
   const promises = []
 
-  const ctx = window.state?.respond?.ctx ?? {}
+  const prev = window.state?.respond
+
+  const ctx = prev?.ctx ?? {}
   ctx.rendered = false
-  
+
   const {
     createDevtools = defaultCreateDevtools,
     createHistory = defaultCreateHistory,
@@ -42,6 +44,8 @@ export default (top, session) => {
   } = top.options ?? {}
 
   const getStore = () => branches['']
+
+  const eventsByType = prev?.focusedBranch === focusedBranch ? prev.eventsByType : {}
 
   return {
     top,
@@ -56,8 +60,8 @@ export default (top, session) => {
     history: createHistory(),
     cookies: createCookies(),
 
-    focusedModule: sliceBranch(top, branch),
-    focusedBranch: branch,
+    focusedModule: sliceBranch(top, focusedBranch),
+    focusedBranch,
 
     branchesAll,
     
@@ -68,7 +72,7 @@ export default (top, session) => {
     modelsByBranchType: {},
 
     eventsByPattern: {},
-    eventsByType: {},
+    eventsByType,
 
     listeners,
     promises,
@@ -183,29 +187,23 @@ export default (top, session) => {
     },
   
     findInClosestAncestor(key, b) {
-      const b2 = branch ? (b ? branch + '.' + b : branch) : b
+      const b2 = focusedBranch ? (b ? focusedBranch + '.' + b : focusedBranch) : b
       return findInClosestAncestor(key, b2, top)
     },
 
     findClosestAncestorWith(key, b) {
-      const b2 = branch ? (b ? branch + '.' + b : branch) : b
+      const b2 = focusedBranch ? (b ? focusedBranch + '.' + b : focusedBranch) : b
       return findClosestAncestorWith(key, b2, top)
     },
   
     subscribe(send) {
       send.module = this.respond.state
       send.branch = this.respond.state.branch // branch of module attached to `respond` object unique to each module
-      
-      const mp = send.branch
-      
-      const sendOuter = send.length < 2 || !mp
-        ? send
-        : (state, e) => send(state, sliceEventByBranch(e, mp))
 
-      listeners.push(sendOuter)
+      listeners.push(send)
     
       return () => {
-        const index = listeners.findIndex(l => l === sendOuter)
+        const index = listeners.findIndex(l => l === send)
         listeners.splice(index, 1)
       }
     },

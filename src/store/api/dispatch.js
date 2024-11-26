@@ -1,11 +1,10 @@
 import trigger from '../../replays/triggerPlugin.js'
 import dispatchPlugins from '../../utils/dispatchPlugins.js'
 import loadPluginsOnce from '../../utils/loadPlugins.js'
-import { sliceEventByBranch } from '../../utils/sliceBranch.js'
 
 
-export default async function(ev, meta) {
-  const e = sliceEventByBranch(mergeMeta(ev, meta))
+export default async function(e, meta) {
+  if (meta) e.meta = { ...e.meta, ...meta }
   const state = e.event.module
 
   const prom = loadPluginsOnce(this.respond.getStore())
@@ -21,6 +20,3 @@ export default async function(ev, meta) {
   if (!e.meta.trigger) return
   await state.respond.promisesCompleted(e)
 }
-
-
-const mergeMeta = (e, m) => m ? { ...e, meta: { ...e.meta, ...m } } : e

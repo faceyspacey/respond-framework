@@ -7,7 +7,6 @@ import Test from '../widgets/Test.js'
 import SearchInputForm, { s as rs } from '../components/SearchInputForm.js'
 import { isNative } from '../../../utils/bools.js'
 import { ModuleDropdown } from './Settings.js'
-import { stripBranchDir } from '../../../utils/sliceBranch.js'
 
 
 export default (props, events, state) => {
@@ -55,6 +54,9 @@ export default (props, events, state) => {
 
 
 const sortOptions = [{ value: 'az', text: 'A-Z' }, { value: 'recent', text: 'Recent' }]
+
+const stripBranchDir = (a, b) =>
+  a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
 
 
 const s = StyleSheet.create({

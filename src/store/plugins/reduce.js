@@ -1,13 +1,9 @@
 import wrapInActForTests from '../../utils/wrapInActForTests.js'
-import { prependBranchToE } from '../../utils/sliceBranch.js'
 
 
 export default wrapInActForTests((state, e) => {
   const { respond } = state
-  const { ctx, branch } = respond
-
   const top = respond.getStore()
-  const eTop = prependBranchToE(e)
 
   try {
     if (e.event.reduce === false) {
@@ -17,10 +13,10 @@ export default wrapInActForTests((state, e) => {
       e.event.reduce.call(state, state, e)
     }
     else if (e.event === top.events.init) {
-      reduceTree(eTop, top)
+      reduceTree(e, top)
     }
     else {
-      reduceBranch(eTop, top, branch.split('.'))
+      reduceBranch(e, top, respond.branch.split('.'))
     }
 
     e.event.afterReduce?.call(state, state, e)
@@ -29,9 +25,7 @@ export default wrapInActForTests((state, e) => {
     respond.onError({ error, kind: 'reduce', e })
   }
 
-  delete ctx.branchReduced    // workaround: events created in reducers will have their type/namespace sliced for the given module (see below + createEvents.js)  
-  
-  return respond.notify(eTop)
+  return respond.notify(e)
 })
 
 
@@ -47,8 +41,6 @@ const reduceTree = (e, mod, prevState = {}) => {
 
 
 const reduceModuleInit = (state, e, mod, reducers) => {
-  mod.respond.ctx.branchReduced = mod.branch
-  
   for (const k in reducers) {
     const reduce = reducers[k]
 
@@ -70,8 +62,6 @@ const reduceModuleInit = (state, e, mod, reducers) => {
 
 
 const reduceModule = (state, e, mod, reducers) => {
-  mod.respond.ctx.branchReduced = mod.branch
-  
   for (const k in reducers) {
     const reduce = reducers[k]
 
@@ -100,11 +90,7 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
   function next() {
     if (!k) return
-
-    const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
-    const type = namespace ? `${namespace}.${e._type}` : e._type
-
-    const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
+    const ignoreParents = reduceBranch(e, mod[k], remainingBranches)
     ignore ??= ignoreParents // ignore recursively back up the depth-first tree
   }
 

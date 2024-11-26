@@ -1,4 +1,4 @@
-import { Namespace } from '../../store/createEvents.js'
+import { Namespace, Event } from '../../store/createEvents.js'
 
 
 export const subs = new WeakMap // subscribers
@@ -10,6 +10,7 @@ export const canProxy = x => typeof x === object && x && !x.____cantProxy
 
 Date.prototype.____cantProxy = true
 Error.prototype.____cantProxy = true
+Event.prototype.____cantProxy = true
 RegExp.prototype.____cantProxy = true
 Promise.prototype.____cantProxy = true
 Namespace.prototype.____cantProxy = true

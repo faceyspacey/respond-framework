@@ -10,7 +10,7 @@ export default function eventFrom(url, additionalArg) {
   if (event) return createEvent(event, loc, additionalArg)
 
   const cached = L1[loc.url]
-  if (cached) return cached.event({ ...additionalArg, ...cached.arg, ...cached.argFromLoc })
+  if (cached) return cached.event.create({ ...additionalArg, ...cached.arg, ...cached.argFromLoc })
 
   const patterns = Object.keys(eventsByPattern)
 
@@ -34,7 +34,7 @@ const createEvent = (event, loc, additionalArg, arg) => {
 
   L1[loc.url] = { event, arg, argFromLoc }
 
-  return event({ ...additionalArg, ...arg, ...argFromLoc })
+  return event.create({ ...additionalArg, ...arg, ...argFromLoc })
 }
 
 

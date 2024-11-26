@@ -1,7 +1,7 @@
 import { flattenModels } from '../db/utils/flattenDbTree.js'
 import { canProxy } from '../proxy/utils/helpers.js'
 import { isServer } from './bools.js'
-import { prependBranch } from './sliceBranch.js'
+import { E } from '../store/createEvents.js'
 
 
 export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) => {
@@ -15,6 +15,7 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 
   function revive(v, k) {
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+    if (v.__e)          return Object.assign(Object.create(E.prototype), { ...v, event: eventsByType[v.type] })
     if (v.__event)      return eventsByType[v.type] ?? v
   
     const id = v.__refId
@@ -39,6 +40,7 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 
 export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
   if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__e)          return Object.assign(Object.create(E.prototype), v)
   if (v.__event)      return eventsByType[v.type] ?? v
 
   const id = v.__refId
@@ -62,6 +64,7 @@ export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds },
 
 export const createApiReviverForClient = (respond, branch = '') => (k, v) => {
   if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__e)         return Object.assign(Object.create(E.prototype), v)
   if (v.__event)     return respond.eventsByType[v.type] ?? v
 
   const Model = respond.models[v.__type]

@@ -1,60 +1,26 @@
 export default function sliceBranch(obj, branch) {
-  if (!branch) return obj
-  if (!obj) return
-  
+  if (!branch || !obj) return obj
   const modules = branch.split('.')
   return modules.reduce((slice, k) => slice[k], obj)
 }
 
 
 
-export const sliceEventByBranch = (e, branch = e.branch) => {
-  if (!branch) return e
-
-  const type = stripBranch(branch, e.type)
-  const namespace = stripBranch(branch, e.namespace)
-
-  return { ...e, type, namespace }
-}
-
-
-
-
-export const stripBranch = (a, b) =>              // 'admin', 'admin.foo' or 'admin', 'admin'
+export const strip = (a, b) =>                    // 'admin', 'admin.foo' or 'admin', 'admin'
   a ? b.replace(new RegExp(`^${a}\.?`), '') : b   // 'foo'                   ''
 
-export const stripBranchDir = (a, b) =>
-  a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
-
-
-
-export const prependBranch = (a = '', b = '') =>
+export const prepend = (a = '', b = '') =>
   a
     ? b ? `${a}.${b}` : a
     : b
 
-
-
+    
 export const stripBranchWithUnknownFallback = (a, b) =>
   a
     ? b.indexOf(a) === 0  // a is parent of b
-      ? stripBranch(a, b)
+      ? strip(a, b)
       : 'unknown.' + b
     : b 
-
-
-export const prependBranchToE = e => {
-  const namespace = prependBranch(e.branch, e._namespace)
-  const type = namespace ? `${namespace}.${e._type}` : e._type
-
-  return { ...e, type, namespace }
-}
-
-
-export const recreateFullType = (e, branch = e.branch) => {
-  const namespace = prependBranch(branch, e._namespace)
-  return namespace ? `${namespace}.${e._type}` : e._type
-}
 
 
 

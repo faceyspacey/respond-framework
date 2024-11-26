@@ -2,7 +2,7 @@ import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js
 import { flattenDatabase, flattenModels } from './utils/flattenDbTree.js'
 import { isDev as dev } from '../utils.js'
 import replayTools from '../modules/replayTools/db.js'
-import { prependBranch as prepend } from '../utils/sliceBranch.js'
+import { prepend as prepend } from '../utils/sliceBranch.js'
 import { __undefined__ } from './fetch.js'
 
 

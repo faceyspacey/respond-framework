@@ -1,7 +1,6 @@
 import revive from '../utils/revive.js'
 import combineInputEvents from '../devtools/utils/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
-import { prependBranchToE as fullPath } from '../utils/sliceBranch.js'
 import { mergePrevState } from '../store/hydrateModules.js'
 import { push } from '../history/changePath.js'
 import { hasHistory } from '../utils/bools.js'
@@ -37,10 +36,10 @@ export default function (state, e) {
 
   if (!replayTools) return
 
-  sendTrigger(fullPath(e), replayTools, top)
+  sendTrigger(e, replayTools, top)
 
   if (e.meta.skipped) {
-    // devtools.forceNotification({ ...fullPath(e), __prefix: '-- ' })
+    // devtools.forceNotification({ ...e, __prefix: '-- ' })
     return false
   }
 }

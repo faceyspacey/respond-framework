@@ -664,7 +664,9 @@ better nameing for mod vs state, top vs topModule/state, etc
 immutable reducers/selectors/events
 make kind an object like Namespace, with methods
 built in cache reducers for all tables
-
+why !v.__event in replacer?
+in createSnapHandler, events shouldn't be crawled
+mark cache in E constructor
 
 
 is there any need for done/error/data events to have their own callbacks?
