@@ -648,6 +648,12 @@ use a map to see whats inside, and be able to clear it!
 #make queries/mutations return object containing result
 
 
+
+#for navigators, finalize strategy for `key`, eg url + type for navigations
+#finalize plan for normalizing event meta information in ancestor modules in userland
+#lazy event function creation
+
+
 findCurrentUser -> .user
 this.parent.find()
 #! showing in URLs
@@ -656,12 +662,15 @@ double check props.plugins approach
 createDatabase.props
 better nameing for mod vs state, top vs topModule/state, etc
 immutable reducers/selectors/events
+make kind an object like Namespace, with methods
+built in cache reducers for all tables
 
 
-for navigators, finalize strategy for `key`, eg url + type for navigations
-finalize plan for normalizing event meta information in ancestor modules in userland
-lazy event function creation
 
+is there any need for done/error/data events to have their own callbacks?
+done/error/data go direct to reducer
+configurable redirect plugin that returns false instead of finishing pipeline
+onError calls event.onError if available
 
 
 !make tests pass, remove 3 args, remove respond.state, switch e + state arguments

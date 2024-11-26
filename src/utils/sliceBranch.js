@@ -20,8 +20,8 @@ export const sliceEventByBranch = (e, branch = e.branch) => {
 
 
 
-export const stripBranch = (a, b) =>
-  a ? b.replace(new RegExp(`^${a}\.?`), '') : b
+export const stripBranch = (a, b) =>              // 'admin', 'admin.foo' or 'admin', 'admin'
+  a ? b.replace(new RegExp(`^${a}\.?`), '') : b   // 'foo'                   ''
 
 export const stripBranchDir = (a, b) =>
   a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
@@ -35,8 +35,12 @@ export const prependBranch = (a = '', b = '') =>
 
 
 
-export const stripBranchIfAvailable = (a, b) =>
-  a ? b.indexOf(a) === 0 && stripBranch(a, b) : b // caller can do something else falsy
+export const stripBranchWithUnknownFallback = (a, b) =>
+  a
+    ? b.indexOf(a) === 0  // a is parent of b
+      ? stripBranch(a, b)
+      : 'unknown.' + b
+    : b 
 
 
 export const prependBranchToE = e => {

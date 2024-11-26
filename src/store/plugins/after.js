@@ -31,7 +31,7 @@ const after = (state, e, res) => {
     return e.event.error.dispatch(res, meta)
   }
   else if (res?.dispatch) {
-    return res.dispatch({ meta})
+    return res.dispatch({ meta })
   }
   else if (res) {
     return e.event.data.dispatch(res, meta)

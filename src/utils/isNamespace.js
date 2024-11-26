@@ -1,9 +1,8 @@
-export default (event, isBuiltIns) => {
-  if (isBuiltIns) return false
-  if (!event) return false
-  if (event.pattern) return false
-  if (event.namespace !== undefined) return event.namespace
+export default config => {
+  if (!config) return false
+  if (config.pattern) return false
+  if (config.namespace !== undefined) return config.namespace
 
-  const keys = Object.keys(event)
-  return keys.length === 0 ? false : !keys.find(k => typeof event[k] === 'function')
+  const keys = Object.keys(config)
+  return keys.length === 0 ? false : !keys.find(k => typeof config[k] === 'function')
 }

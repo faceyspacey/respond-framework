@@ -45,6 +45,7 @@ export default (top, session) => {
   return {
     top,
     ctx,
+    prev: window.state?.respond,
 
     replayState,
     seed,
@@ -76,7 +77,10 @@ export default (top, session) => {
     kinds,
   
     dispatch,
-  
+    trigger(ev, meta) {
+      return this.respond.dispatch(ev, { ...meta, trigger: true })
+    },
+
     fromEvent,
     eventFrom,
   

@@ -1,116 +1,60 @@
-import { is, thisIn } from '../utils/inIs.js'
 import isNamespace from '../utils/isNamespace.js'
-import { stripBranch } from '../utils/sliceBranch.js'
-import { init, navigation, submission } from './kinds.js'
+import { init, navigation, submission, done, error, data } from './kinds.js'
 
 
-export default function({ respond, proto, state, branch }, events, propEvents) {
-  proto.events = createEvents(respond, state, branch, events, propEvents)
+export default (deps, events, propEvents) => {
+  deps.respond.eventsByBranch[deps.branch] = {}
+
+  deps.proto.events = createEvents(deps, events, propEvents)
+  deps.proto.events.init = deps.respond.eventsByBranch[''].init ?? createEvent(deps, { kind: init }, init)
+
   extractedEvents.clear()
 }
 
-function createEvents(respond, state, branch, events = {}, propEvents = {}, ns = '', nsObj, parentType) {
-  const isBuiltIns = !!parentType
-  
-  const allEvents = isBuiltIns ? events : { edit, ...events }
+
+const createEvents = (deps, events = {}, propEvents = {}, namespace = '') => {
+  const allEvents = { edit, ...events }
   const keys = Object.keys({ ...allEvents, ...propEvents }).reverse() // navigation events can have the same pattern, and we want the first one's matched first -- this allows for a special pattern for search/query strings where multiple events share the same pattern, and the primary one is matched on first load, but you can dispatch different events that will have the same pattern but different queries
 
-  const isModule = !ns && !isBuiltIns
-  const initEvent = isModule && (respond.eventsByType.init ?? createEvent(respond, state, branch, { kind: init }, '', init)) // same init event reference on all modules
-  
-  const acc = Object.create(Namespace.prototype) // prevent from being reactive by using Namespace prototype, thereby preserving reference equality, as it's never made a proxy
-  if (initEvent) Object.assign(acc, { init: initEvent })
-  
-  const cache = respond.eventsCache
+  const cache = deps.respond.eventsCache
+  const ns = new Namespace
 
-  return keys.reduce((acc, k) => {
-    const config = allEvents[k]
-    const propConfig = propEvents[k]
+  keys.forEach(name => {
+    const config = allEvents[name]
+    const propConfig = propEvents[name]
 
     const eventOrNamespaceFromAncestor = cache.get(propConfig)
 
     if (eventOrNamespaceFromAncestor) {
-      acc[k] = eventOrNamespaceFromAncestor
+      ns[name] = eventOrNamespaceFromAncestor
     }
-    else if (isNamespace(propConfig ?? config, isBuiltIns)) {
-      acc[k] = createEvents(respond, state, branch, config, propConfig, ns ? `${ns}.${k}` : k)
+    else if (isNamespace(propConfig ?? config)) {
+      ns[name] = createEvents(deps, config, propConfig, namespace ? `${namespace}.${name}` : name)
     }
     else if (propConfig) {
-      acc[k] = createEvent(respond, state, branch, propConfig, ns, k, acc) // fresh event passed as prop
+      ns[name] = createEvent(deps, propConfig, name, namespace, ns) // fresh event passed as prop
     }
     else if (config) {
-      acc[k] = createEvent(respond, state, branch, config, ns, k, nsObj || acc, parentType)
+      ns[name] = createEvent(deps, config, name, namespace, ns)
     }
 
-    if (config) cache.set(config, acc[k]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
-      
-    return acc
-  }, acc)
+    if (config) cache.set(config, ns[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
+  })
+
+  return ns
 }
 
 
 
-const createEvent = (respond, state, branch, config, _namespace, _type, nsObj, parentType) => {
-  const isBuiltIn = !!parentType
-  const _typeResolved = isBuiltIn ? `${parentType}.${_type}` : _type 
-    
-  const namespace = branch
-    ? _namespace ? `${branch}.${_namespace}` : branch
-    : _namespace
+const createEvent = (deps, config, name, namespace = '', ns) => {
+  const { respond, branch, state } = deps
 
-  const type = namespace ? `${namespace}.${_typeResolved}` : _typeResolved
+  const type = namespace ? `${namespace}.${name}` : name
+  const event = respond.prev?.eventsByBranch[branch][type] ?? new Event // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
-  const kind = config.kind ?? (config.pattern ? navigation : submission)
-  const info = { type, namespace, kind, _type: _typeResolved, _namespace, branch }
+  event.construct(respond, config, branch, name, namespace, ns, type)
 
-  let event = window.state?.respond?.eventsByType[type] // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
-
-  if (event) {
-    Object.keys(event).forEach(k => delete event[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
-  }
-
-  event ??= function event(arg = {}, meta = {}) { // event itself is a function
-    if (arg.__argName) {
-      arg = { [arg.__argName]: arg }
-    }
-
-    if (arg.meta) {
-      const { meta: m, ...rest } = arg
-      meta = { ...m, ...meta }
-      arg = rest
-    }
-    
-    const e = { ...info, event, arg, meta }
-
-    const dispatch = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m })
-    const trigger = (a, m) => event.dispatch({ ...arg, ...a }, { ...meta, ...m, trigger: true })
-
-    return applyTransform(respond, e, dispatch, trigger)
-  }
-
-  const children = !isBuiltIn && createEvents(respond, state, branch, createBuiltIns(config), undefined, _namespace, nsObj, _type)
-
-  const dispatch = (arg, meta) => respond.dispatch(event(arg, meta))
-
-  const prefetch = config.fetch && (async (arg, meta) => {
-    const e = event(arg, meta)
-    const fetch = e.event.prefetch ?? e.event.fetch
-    await fetch.call(state, state, e)
-  })
-
-  const toJSON = () => ({ __event: true, type })
-  
-  Object.assign(event, config, info, { dispatch, prefetch, is, in: thisIn, toJSON, __event: true }, children)  // assign back event callback functions -- event is now a function with object props -- so you can do: events.post.update() + events.post.update.namespace etc
-  Object.defineProperty(event, 'namespace', { value: nsObj, enumerable: false }) // tack on namespace ref for switchin thru in reducers like e.event (ie: e.event.namespace)
-  Object.defineProperty(event, 'module', { get: () => branches[branch], enumerable: false, configurable: true }) // same as namespace, except modules might be proxies, since reactivity isn't prevented by using prototypes as with Namespace
-
-  const { branches } = respond
-  
-  if (respond.eventsByType[type]) {
-    throw new Error(`respond: you cannot create an event namespace with the same name as an adjacent module: "${type}"`) // same type could exist in both cases
-  }
-
-  respond.eventsByType[type] = event
+  respond.eventsByBranch[branch][type] = event
 
   if (config.pattern) {
     const pattern = state.basenameFull ? `${state.basenameFull}${config.pattern}` : config.pattern
@@ -126,41 +70,155 @@ const createEvent = (respond, state, branch, config, _namespace, _type, nsObj, p
 }
 
 
+
+export class Namespace {
+  is(namespace) {
+    return this === namespace
+  }
+
+  in(...namespaces) {
+    return namespaces.includes(this)
+  }
+}
+
+
+class E {
+  constructor(arg, meta, event) {
+    mergArgs(this, arg, meta)
+
+    if (event.transform) {
+      const state = event.module
+      this.payload = event.transform.call(state, state, arg, this) ?? { ...arg }
+    }
+
+    Object.assign(this, payload, event.props)
+  }
+
+  dispatch(arg, meta) {
+    mergArgs(this, arg, meta) // chance to supply additional meta/arg
+    return this.event.respond.dispatch(this)
+  }
+
+  trigger(arg, meta) {
+    mergArgs(this, arg, meta) // chance to supply additional meta/arg
+    return this.event.respond.trigger(this)
+  }
+}
+
+
+const mergArgs = (e, arg, meta) => {
+  if (arg) {
+    if (arg.meta) {
+      const { meta: m, ...rest } = arg
+      meta = { ...m, ...meta }
+      arg = rest
+    }
+  
+    Object.assign(e, arg)
+
+    if (e.arg) Object.assign(e.arg, arg)
+    else e.arg = arg
+  }
+  else this.arg ??= {}
+
+  e.meta = e.meta
+    ? meta ? { ...e.meta, ...meta } : e.meta
+    : meta ?? {}
+}
+
+
+const br = Symbol('branch')
+
+
+class Event {
+  construct(respond, config, branch, namespace, name, ns, type) {
+    if (this.config) Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
+    Object.assign(this, config)
+
+    this.config = config
+    this.respond = respond
+    this.name = name
+    this.type = type
+
+    this[br] = branch
+    const kind = this.kind ??= config.pattern ? navigation : submission
+
+    this._namespace = namespace
+    this.namespace = ns                                 // e.event.namespace is object, and e.namespace is string
+
+    this.props = { event: this, kind, name, namespace } // <-- e.namespace
+  }
+
+  create(arg, meta) {
+    if (arg?.__argName) arg = { [arg.__argName]: arg }
+    return new E(arg, meta, this)
+  }
+
+  dispatch(arg, meta) {
+    const e = this.create(arg, meta)
+    return this.respond.dispatch(e)
+  }
+
+  trigger(arg, meta) {
+    const e = this.create(arg, meta)
+    return this.respond.trigger(e)
+  }
+
+  relativeIdentifier(state) {
+    const { branch } = state.respond
+    const b = stripBranchWithUnknownFallback(branch, this[br])
+    return prependBranch(b, this.type)
+  }
+
+  prefetch(arg, meta) {
+    const e = this.create(arg, meta)
+    return this.fetch?.call(this.module, this.module, e)
+  }
+
+  get module() {
+    const branch = this[br]
+    return this.respond.branches[branch]
+  }
+
+  is(event) {
+    return this === event
+  }
+
+  in(...events) {
+    return events.includes(this)
+  }
+
+  toJSON() {
+    return { __event: true, type: this.type }
+  }
+
+  get done() {
+    const value = createEvent(this.respond, { kind: done }, done, this._namespace, this.namespace)
+    Object.defineProperty(this, done, { value })
+    return value
+  }
+
+  get error() {
+    const value = createEvent(this.respond, { kind: error }, error, this._namespace, this.namespace)
+    Object.defineProperty(this, error, { value })
+    return value
+  }
+
+  get data() {
+    const value = createEvent(this.respond, { kind: data }, data, this._namespace, this.namespace)
+    Object.defineProperty(this, data, { value })
+    return value
+  }
+}
+
+
+
 export const extractedEvents = new Map
 
-const createBuiltIns = ({ done, error, data }) => ({
-  done:  assign({ kind: 'done'  }, done),
-  error: assign({ kind: 'error' }, error),
-  data:  assign({ kind: 'data' } , data)
-})
 
-
-const applyTransform = (respond, e, dispatch, trigger) => {
-  const { branchReduced } = respond.ctx
-  let payload = { ...e.arg }
-
-  if (branchReduced) {
-    e.type = stripBranch(branchReduced, e.type)             // remove pattern prefix so e objects created in reducers are unaware of parent modules
-    e.namespace = stripBranch(branchReduced, e.namespace)   // eg: stripBranch('parent', 'parent.child'): 'child'
-  }
-
-  if (e.event.transform) {
-    const state = e.event.module
-    payload = e.event.transform.call(state, state, e.arg, e) ?? {}
-  }
-
-  return { ...e.arg, ...payload, ...e, payload, dispatch, trigger } // overwrite name clashes in payload, but also put here for convenience 
-}
 
 
 const edit = {
   sync: true,
   transform: ({}, form) => ({ form }),
 }
-
-
-
-export function Namespace() {}
-Namespace.prototype = { is, in: thisIn }
-
-const assign = Object.assign
