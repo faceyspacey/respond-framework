@@ -32,7 +32,8 @@ export default (top, session) => {
   const promises = []
 
   const ctx = window.state?.respond?.ctx ?? {}
-
+  ctx.rendered = false
+  
   const {
     createDevtools = defaultCreateDevtools,
     createHistory = defaultCreateHistory,

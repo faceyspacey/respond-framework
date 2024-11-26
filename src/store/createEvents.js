@@ -84,29 +84,30 @@ export class Namespace {
 
 class E {
   constructor(arg, meta, event) {
-    mergArgs(this, arg, meta)
+    mergArgs(arg, meta, this)
 
     if (event.transform) {
       const state = event.module
       this.payload = event.transform.call(state, state, arg, this) ?? { ...arg }
     }
 
-    Object.assign(this, payload, event.props)
+    const { kind, name, _namespace: namespace } = event
+    Object.assign(this, payload, { event, kind, name, namespace })
   }
 
   dispatch(arg, meta) {
-    mergArgs(this, arg, meta) // chance to supply additional meta/arg
+    mergArgs(arg, meta, this) // 2nd chance to supply meta/arg
     return this.event.respond.dispatch(this)
   }
 
   trigger(arg, meta) {
-    mergArgs(this, arg, meta) // chance to supply additional meta/arg
+    mergArgs(arg, meta, this) // 2nd chance to supply meta/arg
     return this.event.respond.trigger(this)
   }
 }
 
 
-const mergArgs = (e, arg, meta) => {
+const mergArgs = (arg, meta, e) => {
   if (arg) {
     if (arg.meta) {
       const { meta: m, ...rest } = arg
@@ -140,13 +141,11 @@ class Event {
     this.name = name
     this.type = type
 
-    this[br] = branch
-    const kind = this.kind ??= config.pattern ? navigation : submission
-
     this._namespace = namespace
-    this.namespace = ns                                 // e.event.namespace is object, and e.namespace is string
+    this.namespace = ns // e.event.namespace is object, and e.namespace will be string
 
-    this.props = { event: this, kind, name, namespace } // <-- e.namespace
+    this[br] = branch
+    this.kind ??= config.pattern ? navigation : submission
   }
 
   create(arg, meta) {
@@ -155,29 +154,33 @@ class Event {
   }
 
   dispatch(arg, meta) {
-    const e = this.create(arg, meta)
-    return this.respond.dispatch(e)
+    return this.respond.dispatch(this.create(arg, meta))
   }
 
   trigger(arg, meta) {
-    const e = this.create(arg, meta)
-    return this.respond.trigger(e)
+    return this.respond.trigger(this.create(arg, meta))
   }
 
-  relativeIdentifier(state) {
+  id(state) {
+    if (!state) return this.type
     const { branch } = state.respond
     const b = stripBranchWithUnknownFallback(branch, this[br])
     return prependBranch(b, this.type)
   }
 
   prefetch(arg, meta) {
-    const e = this.create(arg, meta)
-    return this.fetch?.call(this.module, this.module, e)
+    return this.fetch?.call(this.module, this.module, this.create(arg, meta))
   }
 
   get module() {
     const branch = this[br]
-    return this.respond.branches[branch]
+    const state = this.respond.branches[branch]
+
+    if (this.respond.ctx.rendered) {
+      Object.defineProperty(this, 'module', { value: state }) // optimization: override getter once proxified
+    }
+
+    return state
   }
 
   is(event) {
@@ -193,8 +196,8 @@ class Event {
   }
 
   get done() {
-    const value = createEvent(this.respond, { kind: done }, done, this._namespace, this.namespace)
-    Object.defineProperty(this, done, { value })
+    const value = createEvent(this.respond, { kind: done }, done, this._namespace, this.namespace) // lazy
+    Object.defineProperty(this, done, { value }) // override proto getter, i.e. createEvent only once when first used
     return value
   }
 
