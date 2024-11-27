@@ -10,7 +10,7 @@ import * as replayToolsModule from '../modules/replayTools/index.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
 
-export default (state, session, start = new Date) => {
+export default (state, session, start = performance.now()) => {
   const { respond } = state
   const { top, cookies, branches } = respond
   const { replayState, seed } = session
@@ -26,7 +26,7 @@ export default (state, session, start = new Date) => {
 
   state.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   
-  console.log('createReplaySettings!!', new Date - start)
+  console.log('createReplaySettings!!', performance.now() - start)
   
   if (top.db) {
     top.db.focusedBranch = replayTools.focusedBranch // so db can dynamically select focused module during development

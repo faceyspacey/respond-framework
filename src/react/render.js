@@ -7,7 +7,7 @@ import createProxy from '../proxy/createProxy.js'
 
 
 export default function render(props = {}) {
-  const start = new Date
+  const start = performance.now()
 
   const app = createApp(this.respond, props)
   const { ctx } = this
@@ -17,7 +17,7 @@ export default function render(props = {}) {
   if (!isNative) renderWeb(ctx, app)
   else renderNative(ctx, app, props)
 
-  console.log('render', new Date - start)
+  console.log('render', performance.now() - start)
 }
 
 
@@ -25,7 +25,7 @@ const createApp = (respond, props) => {
   const state = window.state = createProxy(respond.getStore(), respond.subscribers, respond.refIds)
   respond.replaceWithProxies(state)
   respond.ctx.rendered = true
-  
+
   const Provider = props.Provider || state.components?.Provider || RespondProvider
   const { App, Error } = state.components ?? {}
 

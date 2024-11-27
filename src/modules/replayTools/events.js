@@ -196,17 +196,17 @@ export default {
       settings = gatherAllSettings(settings, branch, top, respond)
       const { url = '/' } = config
       
-      const start = new Date
+      const start = performance.now()
       const state = createState(top, { settings, branch, status: 'reload' })
-      console.log('reload.createModule', new Date - start)
+      console.log('reload.createModule', performance.now() - start)
 
       const e = state.eventFrom(url)
 
       if (e) {
-        const start = new Date
+        const start = performance.now()
         state.replayTools.playing = true // trigger timeouts not to work like replayEvents
         await e.trigger()
-        console.log('reload.trigger', new Date - start)
+        console.log('reload.trigger', performance.now() - start)
         state.replayTools.playing = false
         state.render()
         respond.queueSaveSession()

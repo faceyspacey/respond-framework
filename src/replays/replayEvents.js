@@ -4,14 +4,14 @@ import revive from '../utils/revive.js'
 
 
 export default async function(events, delay = 0, { settings, branch } = this.topState.replayState) {
-  const start = new Date
+  const start = performance.now()
 
   this.playing = false // stop possible previous running replay
 
   const state = createState(window.state.respond.top, { settings, branch, status: 'replay' })
-  console.log('replayEvents.createModule', new Date - start)
+  console.log('replayEvents.createModule', performance.now() - start)
 
-  const last = new Date
+  const last = performance.now()
   // const e = events[0]
   // const { eventsByType } = state.respond
   // if (typeof e.event !== 'function' || eventsByType[e.type] !== e.event) {
@@ -22,7 +22,7 @@ export default async function(events, delay = 0, { settings, branch } = this.top
   console.log('events', events)
 
   await run(events, delay, state)
-  console.log('replayEvents.run', new Date - last)
+  console.log('replayEvents.run', performance.now() - last)
 
   return state
 }
