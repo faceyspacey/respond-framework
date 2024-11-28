@@ -127,9 +127,7 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 //   if (!k) return
 
-//   const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
-//   const type = namespace ? `${namespace}.${e._type}` : e._type
-//   reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
+//   reduceBranch(e, mod[k], remainingBranches)
 // }
 
 
@@ -139,10 +137,8 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 //   const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
 
 //   if (k) {
-//     const namespace = b ? (e._namespace ? `${b}.${e._namespace}` : b) : e._namespace
-//     const type = namespace ? `${namespace}.${e._type}` : e._type
 
-//     const ignoreParents = reduceBranch({ ...e, type, namespace }, mod[k], remainingBranches)
+//     const ignoreParents = reduceBranch(e, mod[k], remainingBranches)
 //     if (ignoreParents || mod[k].ignoreParents) return true
 //   }
 

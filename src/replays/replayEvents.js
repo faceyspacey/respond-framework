@@ -40,7 +40,7 @@ const run = async (events, delay, { respond, replayTools }) => {           // ke
     const last =  i === events.length - 1
 
     const { event, arg, meta } = events[i]
-    await event.dispatch(arg,  { ...meta, trigger: true })
+    await event.trigger(arg,  meta)
 
     if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
     if (delay ? first : last) respond.render()                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed

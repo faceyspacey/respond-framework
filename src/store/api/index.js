@@ -20,6 +20,7 @@ import sliceBranch, { sliceEventByBranch, traverseModuleChildren } from '../../u
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import findOne from '../../selectors/findOne.js'
 import { is, thisIn } from '../../utils/inIs.js'
+import { branch as branchSymol } from '../reserved.js'
 
 
 export default (top, session) => {
@@ -217,7 +218,7 @@ export default (top, session) => {
       if (event === this.respond.state.events.init) return
 
       const sent = listeners
-        .filter(send => e.branch.indexOf(send.branch) === 0) // event is child of subscribed module or the same module
+        .filter(send => e.event[branchSymol].indexOf(send.branch) === 0) // event is child of subscribed module or the same module
         .map(send => send(send.module, e))
 
       if (sent.length > 0) promises.push(sent)

@@ -654,6 +654,12 @@ use a map to see whats inside, and be able to clear it!
 #lazy event function creation
 
 
+#is there any need for done/error/data events to have their own callbacks?
+#done/error/data go direct to reducer
+
+#mark cache in E constructor
+
+
 findCurrentUser -> .user
 this.parent.find()
 #! showing in URLs
@@ -666,11 +672,11 @@ make kind an object like Namespace, with methods
 built in cache reducers for all tables
 why !v.__event in replacer?
 in createSnapHandler, events shouldn't be crawled
-mark cache in E constructor
+
+db with separate replays
 
 
-is there any need for done/error/data events to have their own callbacks?
-done/error/data go direct to reducer
+
 configurable redirect plugin that returns false instead of finishing pipeline
 onError calls event.onError if available
 

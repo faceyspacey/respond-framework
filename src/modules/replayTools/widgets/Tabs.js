@@ -8,7 +8,7 @@ import { colors } from '../styles.js'
 const tab = ({ tabs, value }) =>
   <View style={s.c}>
     {tabs.map(t =>
-      <Tab {...t} key={t.text} active={t.event._type === value} />
+      <Tab {...t} key={t.text} active={t.event.name === value} />
     )}
   </View>
 

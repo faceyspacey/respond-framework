@@ -1,5 +1,6 @@
 export const _parent = Symbol('_parent')
 export const isModule = Symbol('isModule')
+export const branch = Symbol('branch')
 
 export const moduleApi = {
   __esModule: true,

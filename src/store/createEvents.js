@@ -2,7 +2,7 @@ import isNamespace from '../utils/isNamespace.js'
 import { prepend } from '../utils/sliceBranch.js'
 import mergeArgMeta from './helpers/mergeArgMeta.js'
 import { init, navigation, submission, done, error, data } from './kinds.js'
-
+import { branch as branchSymbol } from './reserved.js'
 
 export default (deps, events, propEvents) => {
   deps.proto.events = createEvents(deps, events, propEvents)
@@ -49,7 +49,7 @@ const createEvent = (deps, config, name, _namespace = '', namespace) => {
   const { respond, branch, state } = deps
 
   const type = prepend(branch, prepend(_namespace, name))
-  const event = respond.prev?.eventsByType[type] ?? new Event // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
+  const event = respond.prev?.eventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
   event.construct(branch, { config, name, _namespace, namespace, respond, type })
 
@@ -69,6 +69,14 @@ const createEvent = (deps, config, name, _namespace = '', namespace) => {
 }
 
 
+const new_Event = () => {
+  const event = (arg, meta) => event.create(arg, meta)
+  Object.setPrototypeOf(event, Event.prototype)
+  Object.defineProperty(event, 'name', { writable: true })
+  return event
+}
+
+
 
 export class Namespace {
   is(namespace) {
@@ -81,37 +89,38 @@ export class Namespace {
 }
 
 
-export class Event {
+class Event {
   construct(branch, props) {
     if (this.config) Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
     
     Object.assign(this, props.config, props)
 
-    this[br] = branch
+    this[branchSymbol] = branch
+    this.typeLocal = prepend(this._namespace, this.name)
     this.kind ??= this.pattern ? navigation : submission
   }
 
   get done() {
-    const value = createEvent(this.respond, { kind: done }, done, prepend(this._namespace, this.name), this.namespace) // lazy
+    const value = createEvent(this.respond, { ...this.config.done, kind: done }, done, prepend(this._namespace, this.name), this.namespace) // lazy
     Object.defineProperty(this, done, { value }) // override proto getter, i.e. createEvent only once when first used
     return value
   }
 
   get error() {
-    const value = createEvent(this.respond, { kind: error }, error, prepend(this._namespace, this.name), this.namespace)
+    const value = createEvent(this.respond, { ...this.config.error, kind: error }, error, prepend(this._namespace, this.name), this.namespace)
     Object.defineProperty(this, error, { value })
     return value
   }
 
   get data() {
-    const value = createEvent(this.respond, { kind: data }, data, prepend(this._namespace, this.name), this.namespace)
+    const value = createEvent(this.respond, { ...this.config.data, kind: data }, data, prepend(this._namespace, this.name), this.namespace)
     Object.defineProperty(this, data, { value })
     return value
   }
 
   create(arg, meta) {
     if (arg?.__argName) arg = { [arg.__argName]: arg }
-    return new E(arg, meta, this)
+    return new e(arg, meta, this)
   }
 
   dispatch(arg, meta) {
@@ -127,14 +136,14 @@ export class Event {
   }
 
   id(state) {
-    if (!state) return this.type
+    if (!state) return this.typeLocal
     const { branch } = state.respond
-    const b = stripBranchWithUnknownFallback(branch, this[br])
-    return prepend(b, this.type)
+    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    return prepend(b, this.typeLocal)
   }
 
   get module() {
-    const branch = this[br]
+    const branch = this[branchSymbol]
     const state = this.respond.branches[branch]
 
     if (this.respond.ctx.rendered) {
@@ -159,7 +168,7 @@ export class Event {
 
 
 
-export class E {
+export class e {
   constructor(arg, meta, event) {
     mergeArgMeta(arg, meta, this)
 
@@ -168,8 +177,9 @@ export class E {
     const { kind, name, _namespace: namespace } = event
     Object.assign(this, this.payload, { event, kind, name, namespace, __e: true })
 
-    if (kind === navigation) {
+    if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url
+      this.meta.cached = !!event.respond.cache?.has(e)
     }
   }
 
@@ -191,8 +201,6 @@ export class E {
 
 
 export const extractedEvents = new Map
-
-const br = Symbol('branch')
 
 const edit = {
   sync: true,
