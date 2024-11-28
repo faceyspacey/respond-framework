@@ -179,7 +179,6 @@ export class e {
 
     if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url
-      this.meta.cached = !!event.respond.cache?.has(e)
     }
   }
 

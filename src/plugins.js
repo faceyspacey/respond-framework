@@ -6,6 +6,7 @@ export * from './store/plugins/index.js'
 export const defaultSyncPlugins = [
   plugins.edit,
   plugins.markPop,
+  plugins.markCached
 ]
 
 export const defaultAsyncPlugins = [

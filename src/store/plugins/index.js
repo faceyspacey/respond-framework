@@ -4,6 +4,7 @@
 export { default as trigger } from '../../replays/triggerPlugin.js'
 export { default as edit } from './edit/index.js'
 export { markPop } from './history.js'
+export { markCached } from './fetch/index.js'
 export { default as before } from './before.js'
 export { default as validate } from './validate.js'
 export { default as reduce } from './reduce.js'
