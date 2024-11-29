@@ -23,7 +23,7 @@ const joinSum = (spec, parentSelector) => {
       $lookup: {
         from: from,       // eg: user
         localField,       // eg: _id
-        foreignField,     // eg: cityId -- similar to: db.user.find({ cityId: city.id })
+        foreignField,     // eg: cityId -- similar to: db.user.findMany({ cityId: city.id })
         as: name,         // eg: userCount (this is the name we give to the array containing joined docs, eg: city.userCount, which can be filtered by the parentSelector -- the real values we want are at city.userCount.0.userCount)
         pipeline: [
           ...($match ? [{ $match }] : []), // additional filter on joined collection, eg { pro: true } || { pro: true, createdDate: { $gte: Date } }
@@ -75,7 +75,7 @@ const joinInner = (spec, parentSelector, collection) => {
       $lookup: {
         from: from,       // eg: user
         localField,       // eg: _id
-        foreignField,     // eg: cityId -- similar to: db.user.find({ cityId: city.id }
+        foreignField,     // eg: cityId -- similar to: db.user.findMany({ cityId: city.id }
         as: name,
         pipeline: $match ? [{ $match: collection._toObjectIdsSelector($match) }] : undefined
       }

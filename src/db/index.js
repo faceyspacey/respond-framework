@@ -20,7 +20,7 @@ export default !isProd ? mock : {
     return doc && this._create(doc)
   },
 
-  async find(selector, {
+  async findMany(selector, {
     project,
     sort = { updatedAt: -1, _id: 1 },
     limit = this.config.listLimit ?? 10,
@@ -81,25 +81,25 @@ export default !isProd ? mock : {
   },
 
   async findAll(selector, options) {
-    return this._find(selector, { ...options, limit: 0 })
+    return this._findMany(selector, { ...options, limit: 0 })
   },
 
   async findLike(key, term, { selector, ...options } = {}) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ ...selector, [key]: value }, options)
+    return this._findMany({ ...selector, [key]: value }, options)
   },
 
   async findPaginated(selector, options) {
     skip = skip ? parseInt(skip) : 0
 
-    const [posts, count] = await Promise.all([
-      db.post.find(selector, { ...options, skip }),
-      db.post.count(selector)
+    const [models, count] = await Promise.all([
+      this._findMany(selector, { ...options, skip }),
+      this.count(selector)
     ])
 
-    return { posts, count, skip }
+    return { [this._namePlural]: models, count, skip }
   },
   
   async search(query, {
@@ -112,7 +112,7 @@ export default !isProd ? mock : {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find({ $text: { $search: query }, ...selector }, { project, skip, limit, sort: { updatedAt: 1 } })
+      return this._findMany({ $text: { $search: query }, ...selector }, { project, skip, limit, sort: { updatedAt: 1 } })
     }
 
     const models = await this.mongo().aggregate([
@@ -148,7 +148,7 @@ export default !isProd ? mock : {
     selector = this._toObjectIdsSelector(selector)
 
     if (this.config.useLocalDb) {
-      return this._find(selector, { project, limit, skip, sort:  { updatedAt: 1 } }) // updateAt: 1, sorts in opposite of default direction to indicate something happened
+      return this._findMany(selector, { project, limit, skip, sort:  { updatedAt: 1 } }) // updateAt: 1, sorts in opposite of default direction to indicate something happened
     }
     
     const models = await this.mongo().aggregate([
@@ -212,7 +212,7 @@ export default !isProd ? mock : {
 
     let [parent, children] = await Promise.all([
       this._findOne(id, project),
-      coll.find(selector, { project: projectJoin, sort, limit, skip }),
+      coll.findMany(selector, { project: projectJoin, sort, limit, skip }),
     ])
 
     return { [parentName]: parent, [coll._namePlural]: children }
@@ -387,7 +387,7 @@ export default !isProd ? mock : {
     return doc && this._create(doc)
   },
 
-  async _find(selector, {
+  async _findMany(selector, {
     project,
     sort = { updatedAt: -1, _id: 1 },
     limit = this.config.listLimit ?? 10,

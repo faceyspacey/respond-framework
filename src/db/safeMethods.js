@@ -7,9 +7,9 @@ export default {
     return this.findOne(selector, { ...opts, project })
   },
 
-  async findSafe(selector, opts) {
+  async findManySafe(selector, opts) {
     const project = excludeProjectFields(opts?.project, this.privateFields)
-    return this.find(selector, { ...opts, project })
+    return this.findMany(selector, { ...opts, project })
   },
 
   async findAllSafe(selector, opts) {

@@ -13,11 +13,11 @@ export default {
     if (typeof selector === 'string') return this._pick(this.docs[selector], project)
     if (selector.id) return this._pick(this.docs[selector.id], project)
 
-    const models = await this._find(selector, { project, sort, limit: 1 })
+    const models = await this._findMany(selector, { project, sort, limit: 1 })
     return models[0]
   },
 
-  async find(selector, {
+  async findMany(selector, {
     project,
     sort = { updatedAt: -1 },
     limit = this.config.listLimit ?? 10,
@@ -73,25 +73,25 @@ export default {
   },
 
   async findAll(selector, options) {
-    return this._find(selector, { ...options, limit: 0 })
+    return this._findMany(selector, { ...options, limit: 0 })
   },
 
   async findLike(key, term, { selector, ...options } = {}) {
     term = term.replace(/\\*$/g, '') // backslashes cant exist at end of regex
     const value = new RegExp(`^${term}`, 'i')
 
-    return this._find({ ...selector, [key]: value }, options)
+    return this._findMany({ ...selector, [key]: value }, options)
   },
 
   async findPaginated(selector, options) {
     skip = skip ? parseInt(skip) : 0
 
-    const [posts, count] = await Promise.all([
-      db.post.find(selector, { ...options, skip }),
-      db.post.count(selector)
+    const [models, count] = await Promise.all([
+      this._findMany(selector, { ...options, skip }),
+      this.count(selector)
     ])
 
-    return { posts, count, skip }
+    return { [this._namePlural]: models, count, skip }
   },
 
   async search(query, {
@@ -99,7 +99,7 @@ export default {
     selector,
     ...options
   } = {}) {
-    const allRows = await this._find(selector, { ...options, sort: { updatedAt: -1 } })
+    const allRows = await this._findMany(selector, { ...options, sort: { updatedAt: -1 } })
 
     query = query.replace(/[\W_]+/g, '')    // remove non-alphanumeric characters
 
@@ -110,7 +110,7 @@ export default {
   },
 
   async searchGeo({ lng, lat }, { selector, ...options } = {}) {
-    return this._find(selector, options)
+    return this._findMany(selector, options)
   },
 
   async joinOne(id, name, {
@@ -149,7 +149,7 @@ export default {
 
     const [parent, children] = await Promise.all([
       this._findOne(id, project),
-      coll.find(selector, { project: projectJoin, sort, limit, skip })
+      coll.findMany(selector, { project: projectJoin, sort, limit, skip })
     ])
 
     return { [parentName]: parent, [coll._namePlural]: children }
@@ -173,14 +173,14 @@ export default {
 
     fk ??= this._name + 'Id'
     
-    let parents = await this._find(selector, { project, sort, limit, skip })
+    let parents = await this._findMany(selector, { project, sort, limit, skip })
     const $in = parents.map(p => p.id)
 
     selectorJoin = { ...selectorJoin, [fk]: { $in } }
 
     const coll = this.db[name]
 
-    const children = await coll.find(selectorJoin, { project: projectJoin, sort: sortJoin, limit: limitJoin }) 
+    const children = await coll.findMany(selectorJoin, { project: projectJoin, sort: sortJoin, limit: limitJoin }) 
     
     const outer = this._namePlural
     const inner = coll._namePlural
@@ -205,7 +205,7 @@ export default {
     query // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
   } = {}) {
     const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
-    const page = await this._find(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
+    const page = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
     return { query, count: docs.length, [this._namePlural]: page }
   },
@@ -251,13 +251,13 @@ export default {
   },
 
   async updateMany(selector, doc) {
-    const models = await this._find(selector)
+    const models = await this._findMany(selector)
     models.forEach(m => m.save(doc))
     return { acknowledged: true }
   },
 
   async deleteMany(selector) {
-    const models = await this._find(selector)
+    const models = await this._findMany(selector)
     models.forEach(m => delete this.docs[m.id])
     return { acknowledged: true }
   },
@@ -330,11 +330,11 @@ export default {
     if (typeof selector === 'string') return this._pick(this.docs[selector], project)
     if (selector.id) return this._pick(this.docs[selector.id], project)
   
-    const models = await this._find(selector, { project, sort, limit: 1 })
+    const models = await this._findMany(selector, { project, sort, limit: 1 })
     return models[0]
   },
   
-  async _find(selector, {
+  async _findMany(selector, {
     project,
     sort = { updatedAt: -1 },
     limit = this.config.listLimit ?? 10,
