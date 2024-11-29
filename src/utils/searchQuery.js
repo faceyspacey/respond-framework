@@ -6,7 +6,7 @@ import { canProxy } from '../proxy/utils/helpers.js'
 
 export const parseSearch = (search, state) => {
   const ps = state?.options.parseSearch ?? parse
-  return ps(search, state)
+  return ps(search, state?.respond)
 }
 
 export const stringifyQuery = (query, state) => {
@@ -15,8 +15,8 @@ export const stringifyQuery = (query, state) => {
 }
 
 
-const parse = (search, state) => {
-  const rev = revive(state?.respond)
+const parse = (search, respond) => {
+  const rev = respond?.revive(respond) ?? (v => v)
   let k
 
   const decoder = (v, defaultDecoder, charset, type) => {

@@ -683,7 +683,6 @@ use a map to see whats inside, and be able to clear it!
 
 
 createDatabase.props
-better nameing for mod vs state, top vs topModule/state, etc
 
 
 
@@ -700,4 +699,4 @@ built in cache reducers for all tables
 
 make all tools replacable by user (including reviver)
 re-organize files
-finalize implementation of respond object etc
+finalize implementation of respond object etc, better nameing for mod vs state, top vs topModule/state, etc

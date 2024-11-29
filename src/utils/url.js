@@ -1,17 +1,14 @@
 import { parseSearch, stringifyQuery } from './searchQuery.js'
-import { stripPermalinkPrefix as stripPermalink } from '../modules/replayTools/helpers/createPermalink.js'
+import { stripPermalink } from '../modules/replayTools/helpers/createPermalink.js'
 
 
 export const searchHashToQueryHash = ({ search, hash: h } = {}, state = {}) => {     // input: { search: '?bar=baz', hash='#bla' }
   const query = search && parseSearch(search, state)
-  const hash = h && stripPermalink(h)
-  
-  // only return what's actually available
-  // note: #respond: prefix possibly removed and is really non-existent
+  const hash = h && stripPermalink(h) // remove possible permalink, eg #!userId=123
   
   if (query && hash) return { query, hash }
-  if (query) return { query }
-  if (hash) return { hash }
+  if (query)         return { query }
+  if (hash)          return { hash }
 }                                                                                   // output: { query: { bar: 'baz' }, hash: 'bla' }   
 
 
@@ -49,7 +46,7 @@ export const urlToLocation = urlOrLoc => {
   const search = ''
   const hash = ''
 
-  const hashIndex = pathname.lastIndexOf('#')
+  const hashIndex = pathname.indexOf('#')
 
   if (hashIndex !== -1) {
     hash = pathname.substr(hashIndex + 1)

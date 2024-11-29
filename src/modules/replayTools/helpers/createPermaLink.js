@@ -4,7 +4,7 @@ import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 export default function settingsToHash({ ...query }, branch) {
   if (branch) query.branch = branch
-  return prefix + stringifyQuery(query) 
+  return '#!' + stringifyQuery(query) 
 }
 
 
@@ -12,10 +12,10 @@ export default function settingsToHash({ ...query }, branch) {
 export const hashToSettings = () => {
   const h = typeof window !== undefined && window.location?.hash
 
-  if (h && h.indexOf(prefix) > -1) {
-    const index = h.indexOf(prefix)
-    const search = h.slice(index + length)
-    const { module, ...settings } = parseSearch(search) // use hash so search can still be used in userland
+  if (h && h[1] === '!') {
+    const search = stripUserHash(h.slice(2)) // strip possible second hash by user, eg: #!userId=123#foo
+
+    const { module, ...settings } = parseSearch(search) // use hash so search can still be used unobstructed in userland (as hash can easily used for both purposes as handled in this file)
     
     const branch = settings.branch ?? ''
     const status = 'reload'
@@ -25,15 +25,14 @@ export const hashToSettings = () => {
 }
 
 
-export const prefix = '#!'
-const length = prefix.length
+export const stripPermalink = (h = '') => h[0] === '!' ? stripPermalinkHash(h) : h
 
+const stripPermalinkHash = h => {
+  const userHashIndex = h.indexOf('#')
+  return userHashIndex > -1 ? h.slice(userHashIndex + 1) : '' // eg: stripPermalink('#!userId=123#foo') -> '#foo' or '#!userId=123' -> ''
+}
 
-export const stripPermalinkPrefix = h => {
-  if (h) {
-    const index = h.indexOf(prefix)
-    if (index > -1) h = h.slice(0, index)
-  }
-
-  return h[0] === '#' ? h.substr(1) : h // could be a second hash provided by user, even if we stripped prefix
+const stripUserHash = h => {
+  const userHashIndex = h.indexOf('#')
+  return userHashIndex > -1 ? h.slice(0, userHashIndex) : h // eg: stripPermalink('userId=123#foo') -> 'userId=123'
 }

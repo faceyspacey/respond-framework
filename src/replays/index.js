@@ -53,7 +53,7 @@ const createState = (top, branches, depth, { branch, settings: input }) => {
 
 const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings, replays = { config: {}, settings: {} }) => {
   if (mod.db) {
-    replays = mod.db.replays
+    replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
     replays.settings = defaultCreateSettings(replays.config, input)
     replays.config = snapDeepClone(replays.config)
