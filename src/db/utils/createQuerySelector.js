@@ -2,30 +2,7 @@ import stringToRegex, { isRegexString } from './stringToRegex.js'
 import dateStringToDate from './dateStringToDate.js'
 
 
-export default async function(query) {
-  const {
-    project,
-    sortKey = 'updatedAt',
-    sortValue = -1,
-    limit,
-    skip = 0,
-    startDate,
-    endDate,
-    location,
-    ...sel
-  } = query
-
-  const selector = createQuerySelector(this._toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
-  const sort = { [sortKey]: sortValue, _id: sortValue, location }
-  const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
-
-  return this.aggregate({ selector, sort, stages, project, limit, skip, query })
-}
-
-
-
-
-const createQuerySelector = ({ ...selector }) => {
+export default ({ ...selector }) => {
   Object.keys(selector).forEach(k => {
     let v = selector[k]
     const paramCleared = v === '' || v === undefined

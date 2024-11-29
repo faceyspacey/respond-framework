@@ -2,13 +2,9 @@ import ObjectId from '../utils/objectIdDevelopment.js'
 import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import pick from './utils/pick.js'
-import safeMethods from './safeMethods.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
 import { isServer } from '../utils/bools.js'
-
-import call from './utils/call.js'
-import findCurrentUser from './utils/findCurrentUser.js'
-import aggregatePaginated from './utils/aggregatePaginated.js'
+import createQuerySelector from './utils/createQuerySelector.js'
 
 
 export default {
@@ -214,6 +210,26 @@ export default {
     return { query, count: docs.length, [this._namePlural]: page }
   },
 
+  async aggregatePaginated(query) {
+    const {
+      project,
+      sortKey = 'updatedAt',
+      sortValue = -1,
+      limit,
+      skip = 0,
+      startDate,
+      endDate,
+      location,
+      ...sel
+    } = query
+  
+    const selector = createQuerySelector(sel) // clear unused params, transform regex strings, date handling
+    const sort = { [sortKey]: sortValue, _id: sortValue, location }
+    const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
+  
+    return this.aggregate({ selector, sort, stages, project, limit, skip, query })
+  },
+
   async count(selector) {
     return Object.values(this.docs).filter(applySelector(selector)).length
   },
@@ -391,10 +407,4 @@ export default {
   _toProject(project) {
     return project
   },
-
-  ...safeMethods,
-
-  call,
-  findCurrentUser,
-  aggregatePaginated,
 }

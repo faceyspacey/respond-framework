@@ -29,39 +29,37 @@ export default wrapInActForTests((state, e) => {
 })
 
 
+
 const reduceTree = (e, mod, prevState = {}) => {
   const proto = Object.getPrototypeOf(mod)
   proto.prevState = prevState
 
-  mod.moduleKeys.forEach(k => reduceTree(e, mod[k], prevState[k] = {}))
-  
-  reduceModuleInit(mod, e, mod, mod.reducers)
-}
+  let nexted
+  let reduced
 
-
-
-const reduceModuleInit = (state, e, mod, reducers) => {
-  for (const k in reducers) {
-    const reduce = reducers[k]
-
-    if (mod.overridenReducers.get(reduce)) {
-      continue
-    }
-    else if (typeof reduce === 'object') {
-      if (!state[k]) state[k] = {}
-      reduceModuleInit(state[k], e, mod, reduce)
-    }
-    else {
-      const prev = state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto
-      const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
-      if (next !== undefined) state[k] = next
-    }
+  function next() {
+    nexted = true
+    mod.moduleKeys.forEach(k => reduceTree(e, mod[k], prevState[k] = {}))
   }
+
+  function reduce() {
+    reduced = true
+    reduceModule(mod, e, mod, mod.reducers, true)
+  }
+
+  if (mod.reduce) {
+    mod.reduce(mod, e, next, reduce)
+  }
+  
+  if (!nexted) next() // default is depth-first
+  if (!reduced) reduce()
 }
 
 
 
-const reduceModule = (state, e, mod, reducers) => {
+
+
+const reduceModule = (state, e, mod, reducers, init) => {
   for (const k in reducers) {
     const reduce = reducers[k]
 
@@ -69,10 +67,11 @@ const reduceModule = (state, e, mod, reducers) => {
       continue
     }
     else if (typeof reduce === 'object') {
-      reduceModule(state[k], e, mod, reduce)
+      reduceModule(state[k] ??= {}, e, mod, reduce)
     }
     else {
-      const next = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
+      const prev = init && state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto on init : prevState as normal in subsequence reductions
+      const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
       if (next !== undefined) state[k] = next
     }
   }
@@ -83,7 +82,6 @@ const reduceModule = (state, e, mod, reducers) => {
 
 const reduceBranch = (e, mod, [...remainingBranches]) => {
   const k = remainingBranches.shift()
-  const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from branch
 
   let ignore = k && mod[k].ignoreParents
   let reduced
@@ -122,7 +120,6 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 // const reduceBranchBreadthFirst = (e, mod, remainingBranches) => {
 //   const k = remainingBranches.shift()
-//   const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
 //   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreParents)
 
 //   if (!k) return
@@ -134,7 +131,6 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 // const reduceBranchDepthFirst = (e, mod, remainingBranches) => {
 //   const k = remainingBranches.shift()
-//   const b = remainingBranches.join('.') // make reducers unaware of their module by removing its segment from path
 
 //   if (k) {
 

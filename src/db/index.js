@@ -2,15 +2,11 @@ import { isProd } from '../utils/bools.js'
 import { MongoClient, ObjectId } from 'mongodb'
 import mock from './index.mock.js'
 import pick from './utils/pick.js'
-import safeMethods from './safeMethods.js'
 
 import createJoin from './utils/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds } from './utils/toFromObjectIds.js'
 import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
-
-import call from './utils/call.js'
-import findCurrentUser from './utils/findCurrentUser.js'
-import aggregatePaginated from './utils/aggregatePaginated.js'
+import createQuerySelector from './utils/createQuerySelector.js'
 
 
 export default !isProd ? mock : {  
@@ -303,6 +299,26 @@ export default !isProd ? mock : {
     return { query, count, [this._namePlural]: models }
   },
 
+  async aggregatePaginated(query) {
+    const {
+      project,
+      sortKey = 'updatedAt',
+      sortValue = -1,
+      limit,
+      skip = 0,
+      startDate,
+      endDate,
+      location,
+      ...sel
+    } = query
+  
+    const selector = createQuerySelector(this._toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
+    const sort = { [sortKey]: sortValue, _id: sortValue, location }
+    const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
+  
+    return this.aggregate({ selector, sort, stages, project, limit, skip, query })
+  },
+
   async count(selector) {
     return this.mongo().count(this._toObjectIdsSelector(selector))
   },
@@ -447,10 +463,4 @@ export default !isProd ? mock : {
 
     return project
   },
-
-  ...safeMethods,
-
-  call,
-  findCurrentUser,
-  aggregatePaginated,
 }

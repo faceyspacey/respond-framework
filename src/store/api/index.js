@@ -1,4 +1,4 @@
-import dispatch from './dispatch.js'
+import dispatch, { trigger } from './dispatch.js'
 
 import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
@@ -83,9 +83,7 @@ export default (top, session) => {
     kinds,
   
     dispatch,
-    trigger(ev, meta) {
-      return this.respond.dispatch(ev, { ...meta, trigger: true })
-    },
+    trigger,
 
     fromEvent,
     eventFrom,
@@ -103,9 +101,6 @@ export default (top, session) => {
     getStore,
   
     findOne,
-
-    is,
-    in: thisIn,
 
     replaceWithProxies: function replaceWithProxies(proxy, b = '') {
       proxy.respond.state = Object.getPrototypeOf(proxy).state = branches[b] = proxy // replace module states with proxy
@@ -232,12 +227,14 @@ export default (top, session) => {
         console.error(error)
       }
 
-      const ownOnError = this.respond.state.options.onError
-    
-      const onError = ownOnError ?? getStore().state.options.onError
-      const s = ownOnError ? this.respond.state : getStore()
+      const eventOnError = e.event?.onError
+      if (eventOnError) return eventOnError({ ...err, state: e.event.state })
 
-      return onError?.({ ...err, state: s })
+      const ownOnError = this.respond.state.options.onError
+      if (ownOnError) return ownOnError({ ...err, state: this.respond.state })
+
+      const state = getStore()
+      return state.options.onError?.({ ...err, state })
     }
   }
 }

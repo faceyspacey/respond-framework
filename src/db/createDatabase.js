@@ -1,9 +1,11 @@
-import defaultMixin from '../db/index.js'
+import mixinDefault from '../db/index.js'
+import call from './utils/call.js'
+import safeMethods from './safeMethods.js'
 import { createModel } from './createModels.js'
 
 
 export default (options = {}) => {
-  const { mixin = defaultMixin, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, ...modules } = options
+  const { mixin = mixinDefault, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
   const modelsShared = models.shared ?? {}
@@ -11,10 +13,13 @@ export default (options = {}) => {
 
   const descriptors = {
     db:      { enumerable: false, value: db },
-    replays: { enumerable: false, value: replays },
+    replays: { enumerable: false, value: replays }, 
   }
 
   const extra = Object.defineProperties({}, descriptors)
+
+  descriptors.user = userDescriptor
+  descriptors.userSafe = userSafeDescriptor
 
   for (const k in tables) {
     const coll = tables[k]
@@ -26,9 +31,8 @@ export default (options = {}) => {
     const parentModel = inherit ? model : {}
 
     const Model = db.models[k] = createModel(k, modelsShared[k], modelsServer[k], parentModel, extra)
-    const make = doc => new Model({ ...doc, __type: db[k]._name })
 
-    db[k] = { _name: k, _namePlural: k + 's', make, ...parent, ...coll, docs, Model, db, config }
+    db[k] = { _name: k, _namePlural: k + 's', make, call, ...safeMethods, ...parent, ...coll, docs, Model, config }
 
     Object.defineProperties(db[k], descriptors)
 
@@ -52,4 +56,32 @@ export default (options = {}) => {
   })
   
   return db
+}
+
+
+
+
+const userDescriptor = {
+  enumerable: false,
+  get() {
+    if (this._user) return this._user
+    if (!this.req) throw new Error('respond: `this.user` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
+    if (!this.identity) return null
+    return this.db.user.findOne(this.identity.id).then(user => this._user = user)
+  }
+}
+
+const userSafeDescriptor = {
+  enumerable: false,
+  get() {
+    if (this._userSafe) return this._userSafe
+    if (!this.req) throw new Error('respond: `this.userSafe` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
+    if (!this.identity) return null
+    return this.db.user.findOneSafe(this.identity.id).then(user => this._userSafe = user)
+  }
+}
+
+
+function make(doc) {
+  return new this.Model({ ...doc, __type: this._name })
 }

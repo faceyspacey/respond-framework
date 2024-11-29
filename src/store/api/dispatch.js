@@ -20,3 +20,8 @@ export default async function(e, meta) {
   if (!e.meta.trigger) return
   await state.respond.promisesCompleted(e)
 }
+
+
+export function trigger(ev, meta) {
+  return this.dispatch(ev, { ...meta, trigger: true })
+}

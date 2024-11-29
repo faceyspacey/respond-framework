@@ -658,27 +658,38 @@ use a map to see whats inside, and be able to clear it!
 #done/error/data go direct to reducer
 
 #mark cache in E constructor
+#in createSnapHandler, events shouldn't be crawled
+#make kind an object like Namespace, with methods
+#this.parent.find()
+#configurable redirect plugin that returns false instead of finishing pipeline
+#onError calls event.onError if available
+#double check props.plugins approach
 
-
-findCurrentUser -> .user
-this.parent.find()
+#findCurrentUser -> .user
+#findMany
+#db with separate replays
 #! showing in URLs
-reduceModuleInit + mod.reduce -- depth-first truly default?
-double check props.plugins approach
+
+#event revival:: replayEvents: needs to revive off of e.event using branch; tests either need branch or type needs to be unique
+
+#immutable reducers/selectors/events
+#why !v.__event in replacer?
+#reduceModuleInit + mod.reduce -- depth-first truly default?
+
+
+
+e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
+
+
+
 createDatabase.props
 better nameing for mod vs state, top vs topModule/state, etc
-immutable reducers/selectors/events
-make kind an object like Namespace, with methods
 built in cache reducers for all tables
-why !v.__event in replacer?
-in createSnapHandler, events shouldn't be crawled
-
-db with separate replays
+isChanged(prevState, prevPrevState)
 
 
 
-configurable redirect plugin that returns false instead of finishing pipeline
-onError calls event.onError if available
+
 
 
 !make tests pass, remove 3 args, remove respond.state, switch e + state arguments

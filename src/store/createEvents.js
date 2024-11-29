@@ -89,7 +89,7 @@ export class Namespace {
 }
 
 
-class Event {
+export class Event {
   construct(branch, props) {
     if (this.config) Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
     
@@ -140,6 +140,20 @@ class Event {
     const { branch } = state.respond
     const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
     return prepend(b, this.typeLocal)
+  }
+
+  relativeType(state) {
+    if (!state) return this.typeLocal
+    const { branch } = state.respond
+    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    return prepend(b, this.typeLocal)
+  }
+
+  relativeNamespace(state) {
+    if (!state) return this._namespace
+    const { branch } = state.respond
+    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    return prepend(b, this._namespace)
   }
 
   get module() {
