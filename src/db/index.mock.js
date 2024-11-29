@@ -3,8 +3,8 @@ import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import pick from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
-import { isServer } from '../utils/bools.js'
 import createQuerySelector from './utils/createQuerySelector.js'
+import { isServer } from '../utils/bools.js'
 
 
 export default {
@@ -383,28 +383,5 @@ export default {
   _pick(doc, project) {
     const picked = pick(doc, project)
     return picked ? this._create(picked) : undefined
-  },
-
-
-  // production methods for resolving id <-> _id
-
-  _getIdName() {
-    return 'id'
-  },
-
-  _toObjectIds(doc) {
-    return doc
-  },
-
-  _fromObjectIds(doc) {
-    return doc
-  },
-
-  _toObjectIdsSelector(selector) {
-    return selector
-  },
-
-  _toProject(project) {
-    return project
   },
 }

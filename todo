@@ -667,6 +667,7 @@ use a map to see whats inside, and be able to clear it!
 
 #findCurrentUser -> .user
 #findMany
+
 #db with separate replays
 #! showing in URLs
 
@@ -676,17 +677,19 @@ use a map to see whats inside, and be able to clear it!
 #why !v.__event in replacer?
 #reduceModuleInit + mod.reduce -- depth-first truly default?
 
+#e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
 
-
-e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
 
 
 
 createDatabase.props
 better nameing for mod vs state, top vs topModule/state, etc
-built in cache reducers for all tables
-isChanged(prevState, prevPrevState)
 
+
+
+isChanged(prevState, prevPrevState)
+replayTools added like any other module
+built in cache reducers for all tables
 
 
 
