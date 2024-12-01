@@ -49,7 +49,7 @@ const opts = { encode: x => x } // just pathname by default, eg: '/foo'
 const createPathname = (pattern, e) => {
   try {
     const argsToPathName = L2[pattern] ??= compile(pattern)
-    return argsToPathName(e, opts)
+    return argsToPathName(e.arg, opts)
   }
   catch (error) {
     throw new Error(`event.pattern "${pattern}" for event "${e.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)

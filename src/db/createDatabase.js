@@ -1,59 +1,57 @@
-import mixinDefault from '../db/index.js'
+import tableDefault from '../db/index.js'
+import modelDefault from '../db/model.js'
+
 import call from './utils/call.js'
-import safeMethods from './safeMethods.js'
 import { createModel } from './createModels.js'
 
 
 export default (options = {}) => {
-  const { mixin = mixinDefault, model, tables = {}, models = {}, controllers = {}, replays = {}, config = {}, ...modules } = options
+  const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const modelsShared = models.shared ?? {}
-  const modelsServer = models.server ?? (!models.shared ? models : {})
+  const base = { make, call, config, ...table, ...mixin }
+
+  const [shared, client] = sharedClientModels(models)
 
   const descriptors = {
     db:      { enumerable: false, value: db },
     replays: { enumerable: false, value: replays }, 
   }
 
-  const extra = Object.defineProperties({}, descriptors)
-
-  descriptors.user = userDescriptor
-  descriptors.userSafe = userSafeDescriptor
+  const extra = Object.defineProperties(mixinModel, descriptors)
 
   for (const k in tables) {
-    const coll = tables[k]
-    const docs = db[k]?.docs // preserve docs through HMR
-
-    const inherit = coll.inherit !== false
-
-    const parent =      inherit ? mixin : {}
-    const parentModel = inherit ? model : {}
-
-    const Model = db.models[k] = createModel(k, modelsShared[k], modelsServer[k], parentModel, extra)
-
-    db[k] = { _name: k, _namePlural: k + 's', make, call, ...safeMethods, ...parent, ...coll, docs, Model, config }
-
-    Object.defineProperties(db[k], descriptors)
-
-    db.tableNames.push(k)
+    createTable(k, db, base, model, descriptors, tables, shared, client, extra)
   }
 
-  // create tree of dbs
-  Object.keys(modules).forEach(k => {
-    if (!modules[k]) return // developer db undefined in production
-
-    const { props = {}, ...child } = modules[k]
-    const { db: dbChild, models } = child
-
-    if (dbChild) Object.assign(child, db) // child is immutable
-    if (models) child.models = Object.assign({}, child.models, models) // must be immutable since during development focusing a child branch will lead to using a child db without a parent having overwritten it through props
+  for (const k in modules) {
+    const { props, ...child } = modules[k]
 
     db[k] = child
     child.original = modules[k] // when a module is focused during development, we may need to select original without props
+    db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
 
-    db.moduleKeys.push(k)
-  })
+    if (props?.tables) {
+      const [shared, client] = sharedClientModels(props.models)
+      
+      for (const k2 in props.tables) {
+        const propTable = props.tables[k2]
+        let other
+  
+        if (propTable === tables[k2]) {  // original table same as in parent
+          child[k2] = db[k2]             // assign fully created table
+          child.models[k2] = child[k2].Model = db[k2].Model // assign fully created model
+        }
+        else if (other = Object.keys(tables).find(k3 => tables[k3] === propTable)) { // propTable is a name of another table
+          child[k2] = db[other]
+          child.models[k2] = child[k2].Model = db[other].Model
+        }
+        else {
+          createTable(k2, child, base, model, descriptors, props.tables, shared, client, extra)
+        }
+      }
+    }
+  }
   
   return db
 }
@@ -61,27 +59,55 @@ export default (options = {}) => {
 
 
 
-const userDescriptor = {
-  enumerable: false,
-  get() {
-    if (this._user) return this._user
-    if (!this.req) throw new Error('respond: `this.user` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
-    if (!this.identity) return null
-    return this.db.user.findOne(this.identity.id).then(user => this._user = user)
+const createTable = (k, db, base, model, descriptors, tables, shared, client, extra) => {
+  const table = tables[k]
+  const docs = db[k]?.docs // preserve docs through HMR
+  const Model = db.models[k] = createModel(k, model, shared[k], client[k], extra)
+
+  db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, docs, Model }
+  
+  Object.defineProperties(db[k], descriptors)
+  Object.defineProperties(db[k], userGetters)
+
+  db.tableNames.push(k)
+}
+
+
+
+
+
+const userGetters = {
+  user: {
+    enumerable: false,
+    get() {
+      if (this._user) return this._user
+      if (!this.req) throw new Error('respond: `this.user` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
+      if (!this.identity) return null
+      return this.db.user.findOne(this.identity.id).then(user => this._user = user)
+    }
+  },
+
+  userSafe: {
+    enumerable: false,
+    get() {
+      if (this._userSafe) return this._userSafe
+      if (!this.req) throw new Error('respond: `this.userSafe` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
+      if (!this.identity) return null
+      return this.db.user.findOneSafe(this.identity.id).then(user => this._userSafe = user)
+    }
   }
 }
 
-const userSafeDescriptor = {
-  enumerable: false,
-  get() {
-    if (this._userSafe) return this._userSafe
-    if (!this.req) throw new Error('respond: `this.userSafe` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
-    if (!this.identity) return null
-    return this.db.user.findOneSafe(this.identity.id).then(user => this._userSafe = user)
-  }
-}
 
 
 function make(doc) {
   return new this.Model({ ...doc, __type: this._name })
 }
+
+
+
+
+const sharedClientModels = models => [
+  Array.isArray(models) ? (models[0] ?? {}) : {},
+  Array.isArray(models) ? (models[1] ?? {}) : models ?? {}
+]

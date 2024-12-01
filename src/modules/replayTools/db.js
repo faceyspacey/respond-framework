@@ -5,5 +5,5 @@ import { isDev } from '../../utils.js'
 export default isDev && createDatabase({
   tables: {
     developer
-  },
+  }
 })

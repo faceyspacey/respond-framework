@@ -1,17 +1,18 @@
 import ObjectId from '../utils/objectIdDevelopment.js'
 import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
-import pick from './utils/pick.js'
+import { pickAndCreate as pick } from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
-import createQuerySelector from './utils/createQuerySelector.js'
+import createAggregatePaginatedSelector from './utils/createAggregatePaginatedSelector.js'
 import { isServer } from '../utils/bools.js'
+import safeMethods from './safeMethods.js'
 
 
 export default {
   async findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
-    if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
-    if (typeof selector === 'string') return this._pick(this.docs[selector], project)
-    if (selector.id) return this._pick(this.docs[selector.id], project)
+    if (!selector) throw new Error(`You are passing undefined to db.${this._name}.findOne()!`)
+    if (typeof selector === 'string') return pick(this.docs[selector], project, this)
+    if (selector.id) return pick(this.docs[selector.id], project, this)
 
     const models = await this._findMany(selector, { project, sort, limit: 1 })
     return models[0]
@@ -31,7 +32,7 @@ export default {
     docs = sortDocs(docs.filter(applySelector(selector)), sort)
     docs = limit === 0 ? docs.slice(start) : docs.slice(start, end)
     
-    return docs.map(doc => this._pick(doc, project))
+    return docs.map(doc => pick(doc, project, this))
   },
 
   async insertOne(doc, { project } = {}) {
@@ -39,7 +40,7 @@ export default {
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this._create(doc)
-    return this._pick(this.docs[doc.id], project)
+    return pick(this.docs[doc.id], project, this)
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
@@ -53,7 +54,7 @@ export default {
     model.updatedAt = new Date
     this.docs[model.id] = model
 
-    return this._pick(model, project)
+    return pick(model, project, this)
   },
 
   async upsert(selector, newDoc, { insertDoc, project } = {}) {
@@ -205,9 +206,9 @@ export default {
     query // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
   } = {}) {
     const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
-    const page = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
+    const models = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
-    return { query, count: docs.length, [this._namePlural]: page }
+    return { query, count: docs.length, [this._namePlural]: models }
   },
 
   async aggregatePaginated(query) {
@@ -223,7 +224,7 @@ export default {
       ...sel
     } = query
   
-    const selector = createQuerySelector(sel) // clear unused params, transform regex strings, date handling
+    const selector = createAggregatePaginatedSelector(sel) // clear unused params, transform regex strings, date handling
     const sort = { [sortKey]: sortValue, _id: sortValue, location }
     const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
   
@@ -326,9 +327,9 @@ export default {
   // stable duplicates (allows overriding non-underscored versions in userland without breaking other methods that use them)
 
   async _findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
-    if (!selector) throw new Error('You are passing undefined to Model.findOne()!')
-    if (typeof selector === 'string') return this._pick(this.docs[selector], project)
-    if (selector.id) return this._pick(this.docs[selector.id], project)
+    if (!selector) throw new Error(`You are passing undefined to db.${this._name}.findOne()!`)
+    if (typeof selector === 'string') return pick(this.docs[selector], project, this)
+    if (selector.id) return pick(this.docs[selector.id], project, this)
   
     const models = await this._findMany(selector, { project, sort, limit: 1 })
     return models[0]
@@ -347,7 +348,7 @@ export default {
     docs = sortDocs(docs.filter(applySelector(selector)), sort)
     docs = limit === 0 ? docs.slice(start) : docs.slice(start, end)
     
-    return docs.map(doc => this._pick(doc, project))
+    return docs.map(doc => pick(doc, project, this))
   },
   
   async _insertOne(doc, { project } = {}) {
@@ -355,7 +356,7 @@ export default {
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
   
     this.docs[doc.id] = this._create(doc)
-    return this._pick(this.docs[doc.id], project)
+    return pick(this.docs[doc.id], project, this)
   },
   
   async _updateOne(selector, newDoc, { project } = {}) {
@@ -369,7 +370,7 @@ export default {
     model.updatedAt = new Date
     this.docs[model.id] = model
 
-    return this._pick(model, project)
+    return pick(model, project, this)
   },
 
   _create(doc) {
@@ -377,11 +378,5 @@ export default {
     return this.make({ ...doc, id })
   },
 
-
-  // utils
-
-  _pick(doc, project) {
-    const picked = pick(doc, project)
-    return picked ? this._create(picked) : undefined
-  },
+  ...safeMethods,
 }

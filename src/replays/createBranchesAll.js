@@ -4,8 +4,8 @@ import { stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
 
 
 export default function createBranchesAll(mod, focusedBranch, branchesAll = [], b = '') {
-  const ancestorOrChild = focusedBranch.indexOf(b) === 0 || b.indexOf(focusedBranch) === 0
-  if (!ancestorOrChild) return
+  // const ancestorOrChild = focusedBranch.indexOf(b) === 0 || b.indexOf(focusedBranch) === 0
+  // if (!ancestorOrChild) return
 
   mod[isModule] = true
   mod.moduleKeys = []

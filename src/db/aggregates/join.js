@@ -1,5 +1,5 @@
 import dateStringToDate from '../utils/dateStringToDate.js'
-import { resolveId } from '../utils/toFromObjectIds.js'
+import { resolveId, toObjectIdsSelector } from '../utils/toFromObjectIds.js'
 
 
 export default ({ ...spec }, parentSelector, collection) => {
@@ -77,7 +77,7 @@ const joinInner = (spec, parentSelector, collection) => {
         localField,       // eg: _id
         foreignField,     // eg: cityId -- similar to: db.user.findMany({ cityId: city.id }
         as: name,
-        pipeline: $match ? [{ $match: collection._toObjectIdsSelector($match) }] : undefined
+        pipeline: $match ? [{ $match: toObjectIdsSelector($match) }] : undefined
       }
     },
     {

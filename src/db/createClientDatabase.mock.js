@@ -110,7 +110,7 @@ const singularPlural = {
   searchGeo: 'plural',
 
   findOneSafe: 'singular',
-  findSafe: 'singular',
+  findManySafe: 'singular',
   insertOneSafe: 'singular',
   updateOneSafe: 'singular',
   upsertSafe: 'singular',
@@ -132,9 +132,9 @@ const keyNamesByMethod2 = {
   findLike: true,
   search: true,
   searchGeo: true,
-
+  
   findOneSafe: true,
-  findSafe: true,
+  findManySafe: true,
   insertOneSafe: true,
   updateOneSafe: true,
   upsertSafe: true,
@@ -144,3 +144,70 @@ const keyNamesByMethod2 = {
   searchSafe: true,
   searchGeoSafe: true,
 }
+
+
+
+
+
+
+
+// import fetch from './fetch.js'
+
+
+// class Respond {
+//   call(table, method) {
+//     if (method === 'make')   return this.mod.db.make
+//     if (method === 'create') return this.mod.db.create
+  
+//     const meth = (...args) => {
+//       const { apiUrl } = this.options
+//       const body = this.createBody(table, method, args)
+//       return fetch(apiUrl, body, meth, this)
+//     }
+
+//     meth.cache  = (...args) => (meth.useCache  = true) && meth(...args)
+//     meth.server = (...args) => (meth.useServer = true) && meth(...args)
+
+//     return meth
+//   }
+  
+//   dbCache = createApiCache(state)
+
+//   db = new Proxy({}, {
+//     get: (_, table) => {
+//       const get = (_, method) => this.call(table, method)
+//       return new Proxy({}, { get })
+//     }
+//   })
+// }
+
+
+// // development fetch
+// // revival
+
+// // simulate latency
+// // full context creation
+// // cacheByBranch
+// // external model.create/make
+
+
+
+// const handleResponse = (branch, table, method, args, response) => {
+//   const { state, models } = this
+//   state.__dbFirstCall = true
+
+//   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
+//     const type = `=> db.${table}.${method}`
+//     state.devtools.sendNotification({ type, branch, table, method, args, response })
+//   })
+
+//   if (singularPlural[method]) {
+//     if (!response) return response // eg: arg.user will be undefined anyway by the time it reaches reducers
+//     const model = models[table].prototype
+//     const value = singularPlural[method] === 'plural' ? model._namePlural : model._name
+//     if (response.hasOwnProperty(value) && (response.__branchType || Array.isArray(response[value]))) return response // overriden method that returns nested objects/arrays, and therefore doesn't need this
+//     Object.defineProperty(response, '__argName', { value, enumerable: false })
+//   }
+
+//   return response
+// }

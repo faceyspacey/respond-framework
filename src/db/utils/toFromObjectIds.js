@@ -90,3 +90,14 @@ export const fromObjectIds = doc => {
 
   return doc // primitive
 }
+
+
+
+export const toProject = project => {
+  if (project?.id !== undefined) {
+    const { id, ...proj } = project
+    return { ...proj, _id: id }
+  }
+
+  return project
+}

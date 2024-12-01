@@ -18,7 +18,7 @@ export default (state, session) => {
     mergePrevState(state, prevState)
   }
   else {
-    reduce(state, state.events.init.create())
+    reduce(state, state.events.init())
   }
 }
 

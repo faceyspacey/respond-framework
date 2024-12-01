@@ -2,7 +2,7 @@ import stringToRegex, { isRegexString } from './stringToRegex.js'
 import dateStringToDate from './dateStringToDate.js'
 
 
-export default ({ ...selector }) => {
+export default function({ ...selector }) {
   Object.keys(selector).forEach(k => {
     let v = selector[k]
     const paramCleared = v === '' || v === undefined

@@ -4,6 +4,7 @@ import mock from './createClientDatabase.mock.js'
 import { isProd } from '../utils/bools.js'
 import createApiCache from './utils/createApiCache.js'
 import { ObjectId } from 'bson'
+import { createApiReviverForClient } from '../utils/revive.js'
 
 
 export default !isProd ? mock : ({ mod, proto, state, respond, branch }) => {
@@ -65,7 +66,7 @@ export default !isProd ? mock : ({ mod, proto, state, respond, branch }) => {
           _serverDown = true
           console.warn('db timeout: retrying every 12 seconds...', error)     // fetch made with 12 second timeout, then throw -- see fetchWithTimeout.js
           onServerDown(state)
-          return retryRequest(ontroller, method, args)            // timeouts are the only way to trigger this error, so we know it its in need of a retry
+          return retryRequest(table, method, args)            // timeouts are the only way to trigger this error, so we know it its in need of a retry
         }
       }
     }

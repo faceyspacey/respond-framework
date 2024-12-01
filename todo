@@ -671,6 +671,9 @@ use a map to see whats inside, and be able to clear it!
 #db with separate replays
 #! showing in URLs
 
+#createDatabase.props
+
+
 #event revival:: replayEvents: needs to revive off of e.event using branch; tests either need branch or type needs to be unique
 
 #immutable reducers/selectors/events
@@ -678,19 +681,18 @@ use a map to see whats inside, and be able to clear it!
 #reduceModuleInit + mod.reduce -- depth-first truly default?
 
 #e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
+#e.event.moduleName
 
 
-
-
-createDatabase.props
-
-
-
+use snapDeepClone instead of: reviveServer = args =>  JSON.parse(JSON.stringify(args), serverReviver)
 isChanged(prevState, prevPrevState)
+
+
 replayTools added like any other module
 built in cache reducers for all tables
 
 
+nestins settings for events.reload when already in a child module not working
 
 
 

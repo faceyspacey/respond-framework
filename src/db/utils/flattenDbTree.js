@@ -19,7 +19,7 @@ export function flattenDatabase(db = {}, branches = {}, b = '') {
 
 
 export const createTableConstructors = db =>
-  Object.keys(db).reduce((acc, k) => {
+  db.tableNames.reduce((acc, k) => {
     function Table() {}
     Table.prototype = db[k] // table methods available on an instance (similar to controllers) so that this.context and this.user is available (but only to the initially called table query/mutation method; on the other hand, when called within this method, the `this` context won't exist)
     acc[k] = Table

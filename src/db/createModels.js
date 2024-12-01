@@ -11,8 +11,8 @@ export default ({ respond, mod, proto, parent, branch }) => {
 
   const { db } = respond
 
-  const shared = models.shared ?? {}
-  const client = models.client ?? (!models.shared ? models : {})
+  const shared = Array.isArray(models) ? (models[0] ?? {}) : {}
+  const client = Array.isArray(models) ? (models[1] ?? {}) : models
 
   const extra = Object.defineProperties({}, {
     db: { enumerable: false, configurable: true, value: db },
@@ -26,7 +26,7 @@ export default ({ respond, mod, proto, parent, branch }) => {
     const key = branch + '_' + k
     const prevModel = prevModels[key]
 
-    const Model = createModel(k, shared[k], client[k], mixin, extra, prevModel)
+    const Model = createModel(k, mixin, shared[k], client[k], extra, prevModel)
     respond.modelsByBranchType[key] = nextModels[k] = Model
   }
 
@@ -35,7 +35,7 @@ export default ({ respond, mod, proto, parent, branch }) => {
 
 
 
-export const createModel = (k, shared, serverOrClient, mixin, extra, Model) => {
+export const createModel = (k, mixin, shared, serverOrClient, extra, Model) => {
   const base = { _name: k, _namePlural: k + 's' }
   const descriptors = Object.assign(g(base), g(mixin), g(shared), g(serverOrClient), g(extra))
 

@@ -10,6 +10,6 @@ export default createParallelEvent => (state, e) => {
 
   state.respond.devtools.sendPluginNotification({ type: 'parallel', returned: parallelEvent })
 
-  const meta = { parallel: true }
+  const meta = { parallel: true, from: e }
   return parallelEvent.dispatch({ meta })
 }

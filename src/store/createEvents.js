@@ -3,6 +3,8 @@ import { prepend } from '../utils/sliceBranch.js'
 import mergeArgMeta from './helpers/mergeArgMeta.js'
 import { init, navigation, submission, done, error, data } from './kinds.js'
 import { branch as branchSymbol } from './reserved.js'
+import { stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
+
 
 export default (deps, events, propEvents) => {
   deps.proto.events = createEvents(deps, events, propEvents)
@@ -69,7 +71,7 @@ const createEvent = (deps, config, name, _namespace = '', namespace) => {
 }
 
 
-const new_Event = () => {
+const new_Event = () => { // like new Event, except the instance is a function instead of an object (so we can do events.foo()), and we set its prototype manually
   const event = (arg, meta) => event.create(arg, meta)
   Object.setPrototypeOf(event, Event.prototype)
   Object.defineProperty(event, 'name', { writable: true })
@@ -91,30 +93,45 @@ export class Namespace {
 
 export class Event {
   construct(branch, props) {
-    if (this.config) Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
+    if (props.respond.hmr && this.config) {
+      Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
+    }
     
+    if (props.respond.reuseEvents){
+      delete this.done
+      delete this.error
+      delete this.data
+
+      delete this.module
+    }
+
     Object.assign(this, props.config, props)
 
     this[branchSymbol] = branch
-    this.typeLocal = prepend(this._namespace, this.name)
+    this._id = prepend(this._namespace, this.name)
     this.kind ??= this.pattern ? navigation : submission
+    this.moduleName = props.respond.moduleName
+    this.__event = true
   }
 
   get done() {
     const value = createEvent(this.respond, { ...this.config.done, kind: done }, done, prepend(this._namespace, this.name), this.namespace) // lazy
-    Object.defineProperty(this, done, { value }) // override proto getter, i.e. createEvent only once when first used
+    value._namespace = this._namespace // nested built-ins share parent namespace for consistent matching
+    Object.defineProperty(this, done, { value, configurable: true }) // override proto getter, i.e. createEvent only once when first used
     return value
   }
 
   get error() {
     const value = createEvent(this.respond, { ...this.config.error, kind: error }, error, prepend(this._namespace, this.name), this.namespace)
-    Object.defineProperty(this, error, { value })
+    value._namespace = this._namespace 
+    Object.defineProperty(this, error, { value, configurable: true })
     return value
   }
 
   get data() {
     const value = createEvent(this.respond, { ...this.config.data, kind: data }, data, prepend(this._namespace, this.name), this.namespace)
-    Object.defineProperty(this, data, { value })
+    value._namespace = this._namespace
+    Object.defineProperty(this, data, { value, configurable: true })
     return value
   }
 
@@ -135,21 +152,26 @@ export class Event {
     return this.fetch?.call(this.module, this.module, this.create(arg, meta))
   }
 
+  is(event) {
+    return this === event
+  }
+
+  in(...events) {
+    return events.includes(this)
+  }
+
+  toJSON() {
+    return { __event: true, type: this.type }
+  }
+
   id(state) {
-    if (!state) return this.typeLocal
+    if (!state) return this._id
     const { branch } = state.respond
     const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
-    return prepend(b, this.typeLocal)
+    return prepend(b, this._id)
   }
 
-  relativeType(state) {
-    if (!state) return this.typeLocal
-    const { branch } = state.respond
-    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
-    return prepend(b, this.typeLocal)
-  }
-
-  relativeNamespace(state) {
+  idNamespace(state) {
     if (!state) return this._namespace
     const { branch } = state.respond
     const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
@@ -161,22 +183,10 @@ export class Event {
     const state = this.respond.branches[branch]
 
     if (this.respond.ctx.rendered) {
-      Object.defineProperty(this, 'module', { value: state }) // optimization: override getter once proxified
+      Object.defineProperty(this, 'module', { value: state, configurable: true }) // optimization: override getter once proxified
     }
 
     return state
-  }
-
-  is(event) {
-    return this === event
-  }
-
-  in(...events) {
-    return events.includes(this)
-  }
-
-  toJSON() {
-    return { __event: true, type: this.type }
   }
 }
 

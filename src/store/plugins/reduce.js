@@ -6,6 +6,8 @@ export default wrapInActForTests((state, e) => {
   const top = respond.getStore()
 
   try {
+    e.event.beforeReduce?.call(state, state, e)
+
     if (e.event.reduce === false) {
       
     }

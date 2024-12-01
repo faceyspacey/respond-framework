@@ -21,7 +21,7 @@ export default function addModule(resp, mod, parent = {}, name = '', state = Obj
   resp.branchLocatorsById[id] = branch
   resp.branches[branch] = state
 
-  const respond = { ...options.merge, ...resp,  state, id, mod, branch, moduleKeys, components, reduce, options, ignoreParents, overridenReducers: new Map, get respond() { return respond } }
+  const respond = { ...options.merge, ...resp,  state, id, mod, branch, moduleKeys, components, reduce, options, ignoreParents, moduleName: name, overridenReducers: new Map, get respond() { return respond } }
   const proto   = Object.assign(Object.getPrototypeOf(state), { ...respond, [_parent]: parent, kinds, is, in: thisIn })
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 

@@ -46,13 +46,17 @@ export default (top, session) => {
 
   const getStore = () => branches['']
 
-  const eventsByType = prev?.focusedBranch === focusedBranch ? prev.eventsByType : {}
+  const reuseEvents = prev?.focusedBranch === focusedBranch
+  const eventsByType = reuseEvents ? prev.eventsByType : {}
 
   return {
     top,
     ctx,
     prev: window.state?.respond,
 
+    hmr: replayState.status === 'hmr',
+    reuseEvents,
+    
     replayState,
     seed,
     basenames,

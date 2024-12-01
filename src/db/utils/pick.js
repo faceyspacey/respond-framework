@@ -37,3 +37,10 @@ const include = (doc, project) =>
     acc[field] = doc[field]
     return acc
   }, {})
+
+
+
+export const pickAndCreate = (doc, project, self) => {
+  const picked = pick(doc, project)
+  return picked ? self._create(picked) : undefined
+}

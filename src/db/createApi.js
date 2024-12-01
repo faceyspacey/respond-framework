@@ -30,7 +30,7 @@ const createHandler = ({ db, log = true, server, context = {} }) => {
     
     if (log) console.log(`request.request: db.${table}.${method}`, req.body)
       
-    const T = branches[prepend(fb, b)][table] // eg: branches['admin.foo'].user
+    const T = getTable(branches, fb, b, table) // eg: branches['admin.foo'].user
     if (!T) return res.json({ error: 'table-absent', params: req.body })
     const r = await new T().call(req, context)
 
@@ -40,6 +40,14 @@ const createHandler = ({ db, log = true, server, context = {} }) => {
   }
 }
 
+
+const getTable = (branches, fb, b, table) => {
+  if (fb && !b) return branches[fb][table].original // use original for top focused db, as props variant is stored in branches at branches[fb][table]
+  if (fb && b === 'replayTools') return branches.replayTools[table]
+
+  const branch = prepend(fb, b)
+  return branches[branch][table]
+}
 
 
 const createBranches = db => {
