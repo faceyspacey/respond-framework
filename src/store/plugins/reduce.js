@@ -65,7 +65,7 @@ const reduceModule = (state, e, mod, reducers, init) => {
   for (const k in reducers) {
     const reduce = reducers[k]
 
-    if (mod.overridenReducers.get(reduce)) {
+    if (mod.respond.overridenReducers.get(reduce)) {
       continue
     }
     else if (typeof reduce === 'object') {

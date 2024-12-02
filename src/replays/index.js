@@ -10,9 +10,8 @@ import * as replayToolsModule from '../modules/replayTools/index.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
 
-export default (state, session, start = performance.now()) => {
-  const { respond } = state
-  const { top, cookies, branches } = respond
+export default (Respond, state, session, start = performance.now()) => {
+  const { top, cookies, branches } = state.respond
   const { replayState, seed } = session
 
   const depth = []
@@ -24,7 +23,7 @@ export default (state, session, start = performance.now()) => {
   const nextSeed = session.seed = {}
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  state.token = isProd ? cookies.get('token') : defaultCreateToken(respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
+  state.token = isProd ? cookies.get('token') : defaultCreateToken(state.respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
   
   console.log('createReplaySettings!!', performance.now() - start)
   
@@ -32,7 +31,7 @@ export default (state, session, start = performance.now()) => {
     top.db.focusedBranch = replayTools.focusedBranch // so db can dynamically select focused module during development
   }
 
-  addModule(respond, replayToolsModule, state, 'replayTools', replayTools)
+  addModule(Respond, replayToolsModule, state, 'replayTools', replayTools)
   state.moduleKeys.push('replayTools')
 }
 
@@ -69,7 +68,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   settings[mod.branchAbsolute] = replays.settings // replays + db inherited if no mod.db/replays
   
   const state = branches[mod.branch] // branch might be outside focused module tree
-  if (state) Object.getPrototypeOf(state).replays = state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  if (state) state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
 
   depth.unshift([mod, replays])
 
@@ -110,4 +109,4 @@ const mergeTable = (nextSeed, seed, shared, key, table) => {
 // will receive collections created in child modules even if they don't themselves have it.
 
 // This is to ensure docs sharing will jump over intermediary modules that don't require
-// the given table, and so by the end `state.replays.db` will contain all collections.
+// the given table, and so by the end `state.respond.replays.db` will contain all collections.

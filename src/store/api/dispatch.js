@@ -7,7 +7,7 @@ export default async function(e, meta) {
   if (meta) e.meta = { ...e.meta, ...meta }
   const state = e.event.module
 
-  const prom = loadPluginsOnce(this.respond.getStore())
+  const prom = loadPluginsOnce(this.getStore())
   if (prom instanceof Promise) await prom
 
   try {
@@ -18,7 +18,7 @@ export default async function(e, meta) {
   }
 
   if (!e.meta.trigger) return
-  await state.respond.promisesCompleted(e)
+  await this.promisesCompleted(e)
 }
 
 

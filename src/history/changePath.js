@@ -16,7 +16,8 @@ export default (e, redirect) => {
 
 
 const changePath = (e, redirect) => {
-  const { respond, ctx } = window.state
+  const { respond } = window.state
+  const { ctx } = respond
   const { url } = respond.fromEvent(e)
 
   change(url, ctx.changedPath || redirect)

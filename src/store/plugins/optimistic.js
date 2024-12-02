@@ -14,7 +14,7 @@ export default (state, e) => {
 
 
 const optimistic = (state, e, res) => {
-  state.devtools.sendPluginNotification({ type: 'optimistic', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'optimistic', returned: res }, e)
   const meta = { from: e }
   return res?.dispatch?.({ meta }) ?? (res && e.event.data.dispatch(res, meta))
 }

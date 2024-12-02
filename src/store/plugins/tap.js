@@ -4,7 +4,7 @@ export default (state, e) => {
 
 const tap = (state, e) => state.respond.awaitInReplaysOnly(() => {
   try {
-    state.devtools.sendPluginNotification({ type: 'tap' }, e)
+    state.respond.devtools.sendPluginNotification({ type: 'tap' }, e)
     return e.event.tap.call(state, state, e)
   }
   catch (error) {

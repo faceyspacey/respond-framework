@@ -53,7 +53,7 @@ export default !isProd ? mock : ({ mod, proto, state, respond, branch }) => {
     
           state.__dbFirstCall = true
         
-          state.devtools.sendNotification({ type: `=> db.${table}.${method}`, ...body, response })
+          state.respond.devtools.sendNotification({ type: `=> db.${table}.${method}`, ...body, response })
           
           if (_serverDown) {
             _serverDown = false

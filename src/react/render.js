@@ -9,7 +9,7 @@ import createProxy from '../proxy/createProxy.js'
 export default function render(props = {}) {
   const start = performance.now()
 
-  const app = createApp(this.respond, props)
+  const app = createApp(this, props)
   const { ctx } = this
 
   if (isTest) return app

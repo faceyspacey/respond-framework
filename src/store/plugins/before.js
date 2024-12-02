@@ -12,16 +12,16 @@ export default (state, e) => {
 
 const before = (state, e, res) => {
   if (res === false) {
-    state.devtools.sendPrevented({ type: 'before', returned: res }, e)
+    state.respond.devtools.sendPrevented({ type: 'before', returned: res }, e)
     return false
   }
 
   if (res?.dispatch) {
-    state.devtools.sendRedirect({ type: 'before', returned: res }, e)
+    state.respond.devtools.sendRedirect({ type: 'before', returned: res }, e)
     return res.dispatch({ meta: { from: e } }).then(_ => false) // redirect
   }
 
-  state.devtools.sendPluginNotification({ type: 'before', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'before', returned: res }, e)
 
   return res
 }

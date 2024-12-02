@@ -11,7 +11,7 @@ import { branch as branchSymbol } from '../store/reserved.js'
 export default function (state, e) {
   if (!e.meta.trigger) return
 
-  const top = state.getStore()
+  const top = state.respond.getStore()
   const { respond, replayTools } = top
 
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
@@ -40,7 +40,7 @@ export default function (state, e) {
   sendTrigger(e, replayTools, top)
 
   if (e.meta.skipped) {
-    // devtools.forceNotification({ ...e, __prefix: '-- ' })
+    // respond.devtools.forceNotification({ ...e, __prefix: '-- ' })
     return false
   }
 }

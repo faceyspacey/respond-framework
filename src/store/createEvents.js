@@ -51,10 +51,11 @@ const createEvent = (deps, config, name, _namespace = '', namespace) => {
   const { respond, branch, state } = deps
 
   const type = prepend(branch, prepend(_namespace, name))
-  const event = respond.prev?.eventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
+  const event = respond.prevEventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
   event.construct(branch, { config, name, _namespace, namespace, respond, type })
 
+  if (respond.eventsByType[type]) throw new Error(`respond: adjacent namespaces + modules can't share the same name: "${type}"`)
   respond.eventsByType[type] = event
 
   if (config.pattern) {

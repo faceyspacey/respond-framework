@@ -10,7 +10,7 @@ export default (state, e) => {
 
 
 const end = (state, e, res) => {
-  state.devtools.sendPluginNotification({ type: 'end', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'end', returned: res }, e)
 
   const meta = { from: e }
 

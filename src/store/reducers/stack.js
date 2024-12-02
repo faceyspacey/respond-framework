@@ -7,15 +7,15 @@ export default function (stack = { entries: [], index: -1 }, e) {
   const { entries, index } = stack
   if (index === -1) return { entries: [e], index: 0 }
 
-  if (this.isEqualNavigations(e, entries[index])) {
+  if (this.respond.isEqualNavigations(e, entries[index])) {
     return stack
   }
 
-  if (this.isEqualNavigations(e, entries[index - 1])) {
+  if (this.respond.isEqualNavigations(e, entries[index - 1])) {
     return { ...stack, index: index - 1 }
   }
 
-  if (this.isEqualNavigations(e, entries[index + 1])) {
+  if (this.respond.isEqualNavigations(e, entries[index + 1])) {
     return { ...stack, index: index + 1 }
   }
 

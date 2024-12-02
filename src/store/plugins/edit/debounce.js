@@ -7,8 +7,8 @@ export default async (state, e) => {
   const res = await debounced.call(state, state, e)
   
   if (res !== false) {
-    state.devtools.forceNotification({ ...e, __prefix: '>> ' })
-    state.devtools.sendPluginNotification({ ...e.arg, type: 'debounce', returned: res }, e)
+    state.respond.devtools.forceNotification({ ...e, __prefix: '>> ' })
+    state.respond.devtools.sendPluginNotification({ ...e.arg, type: 'debounce', returned: res }, e)
   }
 
   if (res?.error) {

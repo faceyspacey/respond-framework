@@ -10,7 +10,7 @@ export default Animated => {
   const loop = Animated.loop
 
   Animated.timing = (value, config) => {
-    if (window.state?.ctx.isFastReplay) {
+    if (window.state?.respond.ctx.isFastReplay) {
       return timing(value, {
         duration: 0,
         delay: 0,
@@ -24,7 +24,7 @@ export default Animated => {
 
 
   Animated.spring = (value, config) => {
-    if (window.state?.ctx.isFastReplay) {
+    if (window.state?.respond.ctx.isFastReplay) {
       return timing(value, {
         duration: 0,
         delay: 0,
@@ -37,7 +37,7 @@ export default Animated => {
   }
 
   Animated.loop = (animation, config) => {
-    if (window.state?.ctx.isFastReplay) {
+    if (window.state?.respond.ctx.isFastReplay) {
       return animation
     }
 

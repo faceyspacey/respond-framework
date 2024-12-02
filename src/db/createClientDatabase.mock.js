@@ -51,7 +51,7 @@ export default ({ mod, proto, state, respond, branch }) => {
         const T = tables[table]
         if (!T) throw new Error(`table "${table}" does not exist in ${branch ?? 'top'} module`)
     
-        const { token, userId, adminUserId, basename, basenameFull } = state.getStore()
+        const { token, userId, adminUserId, basename, basenameFull } = state.respond.getStore()
         const context = { token, userId, adminUserId, basename, basenameFull, ...getContext?.call(state, table, method, args) }
         const body = { ...context, branch, table, method, args: useServer ? args : reviveServer(argsIn(args)), first: !state.__dbFirstCall, focusedBranch: respond.focusedBranch }
     
@@ -82,7 +82,7 @@ const handleResponse = (state, branch, table, method, args, response, models) =>
 
   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
     const type = `=> db.${table}.${method}`
-    state.devtools.sendNotification({ type, branch, table, method, args, response })
+    state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
   })
 
   if (singularPlural[method]) {
@@ -198,7 +198,7 @@ const keyNamesByMethod2 = {
 
 //   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
 //     const type = `=> db.${table}.${method}`
-//     state.devtools.sendNotification({ type, branch, table, method, args, response })
+//     state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
 //   })
 
 //   if (singularPlural[method]) {

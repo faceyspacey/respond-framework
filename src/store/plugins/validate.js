@@ -12,16 +12,16 @@ export default (state, e) => {
 
 const validate = (state, e, res) => {
   if (res === false) {
-    state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
+    state.respond.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     return false
   }
 
   if (res?.error || res?.flash?.error) {
-    state.devtools.sendPrevented({ type: 'validate', returned: res }, e)
+    state.respond.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     return e.event.error.dispatch(res, { from: e }).then(_ => false)
   }
 
-  state.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)
 
   return res
 }

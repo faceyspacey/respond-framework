@@ -200,7 +200,7 @@ export default {
       const state = createState(top, { settings, branch, status: 'reload' })
       console.log('reload.createModule', performance.now() - start)
 
-      const e = state.eventFrom(url)
+      const e = state.respond.eventFrom(url)
 
       if (e) {
         const start = performance.now()
@@ -208,8 +208,8 @@ export default {
         await e.trigger()
         console.log('reload.trigger', performance.now() - start)
         state.replayTools.playing = false
-        state.render()
-        respond.queueSaveSession()
+        state.respond.render()
+        state.respond.queueSaveSession()
       }
       else {
         errors.url = `no event for url "${url}" in module`

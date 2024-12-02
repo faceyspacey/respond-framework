@@ -5,7 +5,7 @@ export default (state, e) => {
   if (!e.event.redirect) return
 
   const res = e.event.redirect.call(state, state, e)
-  state.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'redirect', returned: res }, e)
   return trySync(res, r => redirect(e, r))
 }
 

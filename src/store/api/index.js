@@ -16,10 +16,9 @@ import createBranchesAll from '../../replays/createBranchesAll.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import sliceBranch, { sliceEventByBranch, traverseModuleChildren } from '../../utils/sliceBranch.js'
+import sliceBranch, { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import findOne from '../../selectors/findOne.js'
-import { is, thisIn } from '../../utils/inIs.js'
 import { branch as branchSymol } from '../reserved.js'
 
 
@@ -47,16 +46,27 @@ export default (top, session) => {
   const getStore = () => branches['']
 
   const reuseEvents = prev?.focusedBranch === focusedBranch
-  const eventsByType = reuseEvents ? prev.eventsByType : {}
 
-  return {
+  const eventsByPattern = {}
+  function Respond(props) {
+    Object.assign(this, props)
+    this.overridenReducers = new Map
+  }
+
+  Respond.prototype = {
+    get respond() { return this },
+
     top,
     ctx,
     prev: window.state?.respond,
 
     hmr: replayState.status === 'hmr',
-    reuseEvents,
     
+    reuseEvents,
+
+    prevEventsByType: reuseEvents ? prev.eventsByType : {},
+    eventsByType: {},
+
     replayState,
     seed,
     basenames,
@@ -76,8 +86,7 @@ export default (top, session) => {
     modelsByBranch: {},
     modelsByBranchType: {},
 
-    eventsByPattern: {},
-    eventsByType,
+    eventsByPattern,
 
     listeners,
     promises,
@@ -117,7 +126,7 @@ export default (top, session) => {
     },
 
     getSessionState() {
-      return getSessionState(getStore().respond)
+      return getSessionState(this)
     },
   
     awaitInReplaysOnly(f, onError) {           
@@ -153,12 +162,12 @@ export default (top, session) => {
       if (a.kind !== kinds.navigation) return false
       if (b.kind !== kinds.navigation) return false
       if (!a.event.pattern || !a.event.pattern) return false
-      return this.respond.fromEvent(a).url === this.respond.fromEvent(b).url
+      return this.fromEvent(a).url === this.fromEvent(b).url
     },
 
     changeBasename(basename) {
-      const e = this.respond.eventFrom(window.location.href)
-      const { state, branch } = this.respond
+      const e = this.eventFrom(window.location.href)
+      const { state, branch } = this
 
       const prevBasename = state.basename
       const prevBasenameFull = state.basenameFull
@@ -170,7 +179,6 @@ export default (top, session) => {
         state.basenameFull = parent.basenameFull + state.basename
       })
 
-      const { eventsByPattern } = this.respond
       const next = {}
 
       Object.keys(eventsByPattern).forEach(prev => {
@@ -182,8 +190,8 @@ export default (top, session) => {
 
       Object.assign(eventsByPattern, next)
 
-      this.respond.history.changePath(e, true)
-      this.respond.queueSaveSession()
+      this.history.changePath(e, true)
+      this.queueSaveSession()
     },
   
     findInClosestAncestor(key, b) {
@@ -197,8 +205,8 @@ export default (top, session) => {
     },
   
     subscribe(send) {
-      send.module = this.respond.state
-      send.branch = this.respond.state.branch // branch of module attached to `respond` object unique to each module
+      send.module = this.state
+      send.branch = this.state.branch // branch of module attached to `respond` object unique to each module
 
       listeners.push(send)
     
@@ -209,12 +217,12 @@ export default (top, session) => {
     },
     
     notify(e) {  
-      this.respond.devtools.send(e)
+      this.devtools.send(e)
 
       const { event } = e
 
       if (event.sync && !event.notify) return
-      if (event === this.respond.state.events.init) return
+      if (event === this.state.events.init) return
 
       const sent = listeners
         .filter(send => e.event[branchSymol].indexOf(send.branch) === 0) // event is child of subscribed module or the same module
@@ -234,11 +242,13 @@ export default (top, session) => {
       const eventOnError = e.event?.onError
       if (eventOnError) return eventOnError({ ...err, state: e.event.state })
 
-      const ownOnError = this.respond.state.options.onError
-      if (ownOnError) return ownOnError({ ...err, state: this.respond.state })
+      const ownOnError = this.state.options.onError
+      if (ownOnError) return ownOnError({ ...err, state: this.state })
 
       const state = getStore()
       return state.options.onError?.({ ...err, state })
     }
   }
+
+  return Respond
 }

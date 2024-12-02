@@ -23,7 +23,7 @@ export default (state, e) => {
 // (except replays which rely on the previous trigger cycle completing)
 
 const after = (state, e, res) => {
-  state.devtools.sendPluginNotification({ type: 'after', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'after', returned: res }, e)
 
   const meta = { from: e }
 

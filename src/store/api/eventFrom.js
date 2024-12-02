@@ -4,7 +4,7 @@ import { cleanSearchHash, searchHashToQueryHash, urlToLocation } from '../../uti
 
 export default function eventFrom(url, additionalArg) {
   const loc = urlToLocation(url)
-  const { eventsByPattern } = this.respond
+  const { eventsByPattern } = this
 
   const event = eventsByPattern[loc.pathname] // basic match, eg '/about', '/admin/users' etc
   if (event) return createEvent(event, loc, additionalArg)

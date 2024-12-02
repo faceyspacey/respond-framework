@@ -10,7 +10,7 @@ export default (state, e) => {
 
 
 const submit = (state, e, res) => {
-  state.devtools.sendPluginNotification({ type: 'submit', returned: res }, e)
+  state.respond.devtools.sendPluginNotification({ type: 'submit', returned: res }, e)
 
   const meta = { from: e }
 
