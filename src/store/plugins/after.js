@@ -4,7 +4,7 @@ import trySync from '../../utils/trySync.js'
 export default (state, e) => {
   if (!e.event.after) return
 
-  const onError = error => state.onError({ error, kind: 'after', e })
+  const onError = error => state.respond.onError({ error, kind: 'after', e })
 
   return state.respond.awaitInReplaysOnly(() => { // <-- see here "await in replays only"
     const res = e.event.after.call(state, state, e)

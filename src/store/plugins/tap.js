@@ -8,6 +8,6 @@ const tap = (state, e) => state.respond.awaitInReplaysOnly(() => {
     return e.event.tap.call(state, state, e)
   }
   catch (error) {
-    state.onError({ error, kind: 'tap', e })
+    state.respond.onError({ error, kind: 'tap', e })
   }
 })

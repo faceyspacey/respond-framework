@@ -18,7 +18,6 @@ import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import sliceBranch, { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
-import findOne from '../../selectors/findOne.js'
 import { branch as branchSymol } from '../reserved.js'
 
 
@@ -61,7 +60,7 @@ export default (top, session) => {
     prev: window.state?.respond,
 
     hmr: replayState.status === 'hmr',
-    
+
     reuseEvents,
 
     prevEventsByType: reuseEvents ? prev.eventsByType : {},
@@ -112,8 +111,6 @@ export default (top, session) => {
     addToCacheDeep,
   
     getStore,
-  
-    findOne,
 
     replaceWithProxies: function replaceWithProxies(proxy, b = '') {
       proxy.respond.state = Object.getPrototypeOf(proxy).state = branches[b] = proxy // replace module states with proxy

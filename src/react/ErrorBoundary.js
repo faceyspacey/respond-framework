@@ -13,7 +13,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   async componentDidCatch(error, errorInfo) {
-    await this.props.state.onError({ error, kind: 'render' })
+    await this.props.state.respond.onError({ error, kind: 'render' })
   }
 
   render() {

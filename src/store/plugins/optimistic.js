@@ -4,7 +4,7 @@ import trySync from '../../utils/trySync.js'
 export default (state, e) => {
   if (!e.event.optimistic) return
 
-  const onError = error => state.onError({ error, kind: 'optimistic', e })
+  const onError = error => state.respond.onError({ error, kind: 'optimistic', e })
   
   return state.respond.awaitInReplaysOnly(() => {
     const res = e.event.optimistic.call(state, state, e)  // optimistic is for fast syncronous routines like providing another event, which will be dispatched in parallel below

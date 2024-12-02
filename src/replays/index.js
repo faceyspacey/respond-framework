@@ -68,7 +68,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   settings[mod.branchAbsolute] = replays.settings // replays + db inherited if no mod.db/replays
   
   const state = branches[mod.branch] // branch might be outside focused module tree
-  if (state) state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
+  if (state) Object.getPrototypeOf(state).replays = state.respond.replays = replays // now, by a sharing a reference, child modules who didn't have replays will have BOTH the correct top-down inherited settings + bottom-up merged db/seed
 
   depth.unshift([mod, replays])
 
