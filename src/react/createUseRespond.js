@@ -12,29 +12,24 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useRespond = sync => {
+  const useRespond = () => {
     const top = useContext(RespondContext)
     const branch = top.respond.branchLocatorsById[id]
 
-    const snap = useSnapshot(top, sync)
-    const state = sliceBranch(snap, branch) // selector props require slicing top.state to crawl to top of state tree
-
-    const store = top.respond.branches[branch]
-
-    return { state, events: state.events, store }
+    const snap = useSnapshot(top)
+    return sliceBranch(snap, branch) // selector props require slicing top.state to crawl to top of state tree
   }
 
 
-  const respond = (Component, name = Component.name, sync) => {
+  const respond = (Component, name = Component.name) => {
     const { length } = Component
 
     if (length <= 1) return Component
     
-    if (length === 5) {
+    if (length === 3) {
       const { [name]: ComponentWithName } = {
         [name]: forwardRef(function(props, ref) {
-          const { events, state, store } = useRespond(sync)
-          return Component(props, events, state, store, ref)
+          return Component(props, useRespond(), ref)
         })
       }
   
@@ -43,8 +38,7 @@ export default (id = createUniqueModuleId()) => {
 
     const { [name]: ComponentWithName } = {
       [name]: function(props) {
-        const { events, state, store } = useRespond(sync, length === 2)
-        return Component(props, events, state, store)
+        return Component(props, useRespond())
       }
     }
 

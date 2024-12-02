@@ -6,7 +6,7 @@ import { colors } from '../styles.js'
 import ErrorBoundary from '../components/ErrorBoundary.js'
 
 
-export default (props, { toggle }, { open, config }) => {
+export default (props, { events, open, config }) => {
   const { hide, position } = config
   if (hide) return
 
@@ -22,7 +22,7 @@ export default (props, { toggle }, { open, config }) => {
     <ErrorBoundary>
       <Layout open={open} />
 
-      <Pressable style={style} event={toggle}>
+      <Pressable style={style} event={events.toggle}>
         <Gear spin={spin} color={color} />
       </Pressable>
     </ErrorBoundary>

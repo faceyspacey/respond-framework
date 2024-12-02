@@ -34,7 +34,7 @@ export const tab = (state = 'settings', e, { events }) => {
 }
 
 
-export const loading = (_, e, { state }) => {
+export const loading = (_, e, state) => {
   if (state.testsList?.length > 0) return false
   return !!e.event.fetch
 }
@@ -81,7 +81,9 @@ export const tests = (state = {}, e, { events }) => {
 }
 
 
-export const testsList = (state = [], e, { events, state: st }) => {
+export const testsList = (state = [], e, st) => {
+  const { events } = st
+  
   switch (e.event) {
     case events.changeBranch.done:
     case events.sortTests.done:

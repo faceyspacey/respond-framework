@@ -10,7 +10,7 @@ import ErrorField from '../widgets/ErrorField.js'
 
 
 
-export default (props, events, { focusedBranch, configs }) => {
+export default (props, { events, focusedBranch, configs }) => {
   const urlInput = createSettings({ url: respondConfig.url }, RespondSettingForm)
 
   const config = configs[focusedBranch]
@@ -54,20 +54,20 @@ const createSettings = (config = {}, FormComponent, event, z = -1) => {
 }
 
 
-export const ModuleDropdown = ({ style }, events, state) =>
+export const ModuleDropdown = ({ style }, { events, focusedBranch, respond }) =>
   React.createElement(Dropdown, {
     name: 'focusedBranch',
     event: events.changeBranch,
-    value: state.focusedBranch,
-    options: state.respond.branchesAll.map(v => ({ value: v, label: v || 'top' })),
+    value: focusedBranch,
+    options: respond.branchesAll.map(v => ({ value: v, label: v || 'top' })),
     createLabel: o => 'module: ' + (o?.value || 'top'),
     style
   })
 
 
 
-const RespondSettingForm = ({ Component, name, options, ...props }, events, state) => {
-  const { errors } = state
+const RespondSettingForm = ({ Component, name, options, ...props }, state) => {
+  const { errors, events } = state
 
   if (errors[name]) {
     const props = { event: events.removeError, name, message: errors[name] }
@@ -85,7 +85,7 @@ const RespondSettingForm = ({ Component, name, options, ...props }, events, stat
 
 
 
-const UserSettingForm = ({ Component, name, available, options, ...props }, events, { settings, focusedBranch }) => {
+const UserSettingForm = ({ Component, name, available, options, ...props }, { settings, focusedBranch }) => {
   const modSettings = settings[focusedBranch]
 
   if (available && !available(modSettings)) return

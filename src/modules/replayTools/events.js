@@ -19,9 +19,9 @@ export default {
   },
 
   changeBranch: {
-    submit: ({ db, state }) => {
-      if (state.tab !== 'tests') return false
-      return db.developer.findTests.server(state.testsParams)
+    submit: ({ db, tab, testsParams }) => {
+      if (tab !== 'tests') return false
+      return db.developer.findTests.server(testsParams)
     }
   },
 
@@ -39,24 +39,26 @@ export default {
     namespace: false,
     kind: navigation,
     cache: false,
-    fetch: ({ db, state }) => db.developer.findTests.server(state.testsParams),
+    fetch: ({ db, testsParams }) => db.developer.findTests.server(testsParams),
   },
   
   sortTests: {
-    submit: ({ db, state }) => db.developer.findTests.server(state.testsParams)
+    submit: ({ db, testsParams }) => db.developer.findTests.server(testsParams)
   },
 
   toggleFilter: {
-    submit: ({ db, state }) => db.developer.findTests.server(state.testsParams)
+    submit: ({ db, testsParams }) => db.developer.findTests.server(testsParams)
   },
 
   searchTests: {
     sync: true,
-    debounce: ({ db, state }) => db.developer.findTests.server(state.testsParams),
+    debounce: ({ db, testsParams }) => db.developer.findTests.server(testsParams),
   },
 
   testFromWallaby: {
-    before: async ({ respond, state, events }, { test, index, delay }) => {
+    before: async (state, { test, index, delay }) => {
+      const { respond, events } = state
+
       const topState = respond.getStore()
       const { branch } = topState.replayState
 
@@ -89,7 +91,9 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ state, db, topState, events: { tests } }) => {
+    submit: async state => {
+      const { db, topState, events: { tests } } = state
+
       state.selectedTestName ??= state.evs[0].type.replace(/\./g, '/') + '.js'
       
       const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
@@ -104,11 +108,11 @@ export default {
   },
 
   deleteTest: {
-    submit: ({ db, state }, { id }) => {
+    submit: ({ db, tests }, { id }) => {
       const yes = confirm('Are you sure you want to delete test ' + id)
       if (!yes) return false
 
-      const { filename } = state.tests[id]
+      const { filename } = tests[id]
       return db.developer.deleteTestFile.server(filename)
     }
   },

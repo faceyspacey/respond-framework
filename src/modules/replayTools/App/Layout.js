@@ -10,7 +10,7 @@ import { colors } from '../styles.js'
 import useSlide from '../hooks/useSlide.js'
 
 
-export default ({ open }, events, { tab, loading, config }) => {
+export default ({ open }, { events, tab, loading, config }) => {
   const p = config.position
 
   const x = p?.left ? 'left' : 'right'

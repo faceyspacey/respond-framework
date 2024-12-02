@@ -8,18 +8,14 @@ function respondBabelPlugin(babel) {
   const visited = Symbol('visited')
 
   const temp = template(`props => {
-    const { events, state, store } = USE_RESPOND(SYNC, EVENTS_ONLY)
-    return FUNC(props, events, state, store)
+    return FUNC(props, USE_RESPOND())
   }`)
 
   const tempWithRef = template(`FORWARD_REF(function NAME(props, ref) {
-    const { events, state, store } = USE_RESPOND(SYNC)
-    return FUNC(props, events, state, store, ref)
+    return FUNC(props, USE_RESPOND(), ref)
   })`)
 
   const isComponentCase = name => name[0] === name[0].toUpperCase()
-
-  const isForm = name => name.indexOf('Form') > -1
 
   const upperCaseFirst = word => word.charAt(0).toUpperCase() + word.slice(1)
   
@@ -135,12 +131,11 @@ function respondBabelPlugin(babel) {
         const { name } = parent.id
         if (!isComponentCase(name)) return
 
-        if (args === 5) {
+        if (args === 3) {
           path.replaceWith(tempWithRef({
             FORWARD_REF: addNamed(path, 'forwardRef', 'react', { nameHint: 'react' }),
             USE_RESPOND: t.cloneDeep(this.useRespond),
             FUNC: path.node,
-            SYNC: isForm(name) ? 'true' : 'false',
             NAME: /App\d*$/.test(name) ? this.defaultExportDisplayName : name,
           }))
         }
@@ -148,8 +143,6 @@ function respondBabelPlugin(babel) {
           path.replaceWith(temp({
             USE_RESPOND: t.cloneDeep(this.useRespond),
             FUNC: path.node,
-            SYNC: isForm(name) ? 'true' : 'false',
-            EVENTS_ONLY: args === 2 ? 'true' : 'false',
           }))
         }
       },

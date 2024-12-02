@@ -92,7 +92,7 @@ export default !isProd ? mock : {
     return this._findMany({ ...selector, [key]: value }, options)
   },
 
-  async findPaginated(selector, options) {
+  async findManyPaginated(selector, options) {
     skip = skip ? parseInt(skip) : 0
 
     const [models, count] = await Promise.all([

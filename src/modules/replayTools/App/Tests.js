@@ -9,8 +9,8 @@ import { isNative } from '../../../utils/bools.js'
 import { ModuleDropdown } from './Settings.js'
 
 
-export default (props, events, state) => {
-  const { testsList, sort, branch } = state
+export default (props, state) => {
+  const { events, testsList, sort, branch } = state
   const ref = useRef()
 
   useEffect(() => {
@@ -55,8 +55,11 @@ export default (props, events, state) => {
 
 const sortOptions = [{ value: 'az', text: 'A-Z' }, { value: 'recent', text: 'Recent' }]
 
+
 const stripBranchDir = (a, b) =>
   a ? b.replace(new RegExp(`^${a.replace(/\./, '/')}\/?`), '') : b
+
+
 
 
 const s = StyleSheet.create({

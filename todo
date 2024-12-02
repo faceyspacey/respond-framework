@@ -683,6 +683,9 @@ use a map to see whats inside, and be able to clear it!
 #e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
 #e.event.moduleName
 
+#!make tests pass, remove 3 args, remove respond.state, switch e + state arguments
+
+
 
 use snapDeepClone instead of: reviveServer = args =>  JSON.parse(JSON.stringify(args), serverReviver)
 isChanged(prevState, prevPrevState)
@@ -695,9 +698,11 @@ built in cache reducers for all tables
 nestins settings for events.reload when already in a child module not working
 state.replayState --> __replayState
 seed missing data
+findManyByCourseId needs inferrence
+use only e.event.name etc
 
+state.post doesn't work well like this const post = post[id]
 
-!make tests pass, remove 3 args, remove respond.state, switch e + state arguments
 
 
 make all tools replacable by user (including reviver)
