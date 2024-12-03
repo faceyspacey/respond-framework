@@ -1,10 +1,10 @@
-import { snapDeepClone } from '../proxy/snapshot.js'
-import { isProd } from '../utils.js'
 import { isModule, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
+import { snapDeepClone } from '../proxy/snapshot.js'
+import { isProd } from '../utils.js'
 
 
-export default (mod, state, currState = state) => {
+export default (mod, state) => {
   const events = mod.events ? mod.events : {}
   const reducers = mod.reducers ?? {}
 
@@ -17,8 +17,6 @@ export default (mod, state, currState = state) => {
     if (moduleApi[k]) return
     extract(k, descriptors[k], selectorDescriptors, events, reducers, state)
   })
-
-  mergeInitialState(state, mod.initialState, currState)
 
   return [events, reducers, selectorDescriptors]
 }
@@ -45,17 +43,6 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
     else selectorDescriptors[k] = descriptor
   }
   else {
-    state[k] = cloneDeep(v)
+    state[k] = isProd ? v : snapDeepClone(v) // clones only needed during development when replayEvents requires non-mutated initial modules/state
   }
 }
-
-
-
-const mergeInitialState = (state, initial, curr) => {
-  const s = typeof initial === 'function' ? initial(curr) : initial
-  if (s) Object.assign(state, cloneDeep(s))
-}
-
-
-
-const cloneDeep = o => isProd ? o : snapDeepClone(o) // clones only needed during development when replayEvents requires non-mutated initial modules/state

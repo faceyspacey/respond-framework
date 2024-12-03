@@ -689,7 +689,6 @@ use a map to see whats inside, and be able to clear it!
 
 #state.post doesn't work well like this const post = post[id]
 #state.replayState --> __replayState
-#built in cache reducers for all tables
 
 #use snapDeepClone instead of: reviveServer = args =>  JSON.parse(JSON.stringify(args), serverReviver)
 
@@ -699,7 +698,11 @@ use a map to see whats inside, and be able to clear it!
 #replayTools added like any other module
 
 
-use only e.event.name etc
+
+#built in cache reducers for all tables
+#use only e.event.name etc
+
+
 
 nesting settings for events.reload when already in a child module not working
 isChanged(prevState, prevPrevState)

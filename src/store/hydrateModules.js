@@ -1,5 +1,6 @@
 import { snapDeepClone } from '../proxy/snapshot.js'
 import reduce from './plugins/reduce.js'
+import createToken from '../replays/utils/createToken.js'
 
 
 export default (state, session) => {
@@ -11,6 +12,7 @@ export default (state, session) => {
     prevState = prev
   }
   else {
+    state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
     reviveModules(state, snapDeepClone(sesh))
   }
 

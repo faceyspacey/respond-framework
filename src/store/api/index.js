@@ -57,6 +57,8 @@ export default (top, session, branchesAll, focusedModule) => {
     ctx,
     prev: window.state?.respond,
 
+    session,
+    
     hmr: replayState.status === 'hmr',
 
     reuseEvents,

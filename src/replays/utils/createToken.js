@@ -1,9 +1,12 @@
 import jwt from '../../utils/jwt.js'
 import secret from '../../db/secret.mock.js'
+import { isProd } from '../../utils.js'
 
 
-export default topReplays => {
-  const { settings, db } = topReplays
+export default respond => {
+  if (isProd) return respond.cookies.get('token')
+    
+  const { settings, db } = respond.replays
   if (!settings.userId) return
   
   const id = settings.userId

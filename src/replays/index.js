@@ -1,38 +1,26 @@
 import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
-import defaultCreateToken from './utils/createToken.js'
 
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
 import { nestAtBranch } from '../utils/sliceBranch.js'
-import { isProd } from '../utils/bools.js'
-import addModule from '../store/addModules.js'
-import * as replayToolsModule from '../modules/replayTools/index.js'
 import { snapDeepClone } from '../proxy/snapshot.js'
 
 
-export default (Respond, state, session, start = performance.now()) => {
-  const { top, cookies, branches } = state.respond
+export default (state, respond) => {
+  const start = performance.now()
+
+  const { session, top, branches } = respond
   const { replayState, seed } = session
 
   const depth = []
-  
-  // const replayTools = replayState.status === 'hmr' ? Object.assign(Object.create({}), session.replayTools) : Object.assign(Object.create({}), createState(top, branches, depth, replayState)) // todo: caching by still calling createState if conf changed, and removing configs/settings from session.replayTools -- also HMR also needs replays assigned, so i guess we can't do this
-  const replayTools = Object.assign(Object.create({}), createState(top, branches, depth, replayState))
-  replayState.settings ??= nestSettings(replayTools.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
+
+  Object.assign(state, createState(top, branches, depth, replayState)) // // const replayTools = replayState.status === 'hmr' ? Object.assign(Object.create({}), session.replayTools) : Object.assign(Object.create({}), createState(top, branches, depth, replayState)) // todo: caching by still calling createState if conf changed, and removing configs/settings from session.replayTools -- also HMR also needs replays assigned, so i guess we can't do this
+  replayState.settings ??= nestSettings(state.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
   const nextSeed = session.seed = {}
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  state.token = isProd ? cookies.get('token') : defaultCreateToken(state.respond.replays) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
-  
-  console.log('createReplaySettings!!', performance.now() - start)
-  
-  if (top.db) {
-    top.db.focusedBranch = replayTools.focusedBranch // so db can dynamically select focused module during development
-  }
-
-  addModule(Respond, replayToolsModule, state, 'replayTools', replayTools)
-  state.moduleKeys.push('replayTools')
+  console.log('createReplaySettings', performance.now() - start)
 }
 
 
@@ -73,6 +61,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   depth.unshift([mod, replays])
 
   for (const k of mod.moduleKeys) {
+    if (k === 'replayTools') continue
     createAllSettingsBreadth(mod[k], input?.[k], branches, depth, configs, settings, replays)
   }
 }

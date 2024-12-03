@@ -1,6 +1,8 @@
 
 import { isModule } from '../store/reserved.js'
+import { isDev, isTest } from '../utils.js'
 import { stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
+import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
 export default function createBranches(mod, focusedBranch, branches = [], b = '') {
@@ -24,6 +26,12 @@ export default function createBranches(mod, focusedBranch, branches = [], b = ''
     mod.moduleKeys.push(k)
     createBranches(v, focusedBranch, branches, b ? `${b}.${k}` : k)
   })
+
+  if (b === '' && isDev && !isTest) {
+    mod.replayTools = replayToolsModule
+    mod.moduleKeys.push('replayTools')
+    createBranches(replayToolsModule, focusedBranch, branches, 'replayTools')
+  }
 
   return branches
 }
