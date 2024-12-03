@@ -9,7 +9,7 @@ import Pressable from '../widgets/Pressable.js'
 export default (props, { events, searched, filter }, _, ref) =>
   <View style={s.c}>
     <Input
-      event={searchTests}
+      event={events.searchTests}
       value={searched}
       style={s.input}
       placeholder={filter === 'tests' ? 'search tests' : 'search snaps /regex/'}

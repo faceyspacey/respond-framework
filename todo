@@ -687,21 +687,23 @@ use a map to see whats inside, and be able to clear it!
 
 
 
-use snapDeepClone instead of: reviveServer = args =>  JSON.parse(JSON.stringify(args), serverReviver)
-isChanged(prevState, prevPrevState)
+#state.post doesn't work well like this const post = post[id]
+#state.replayState --> __replayState
+#built in cache reducers for all tables
+
+#use snapDeepClone instead of: reviveServer = args =>  JSON.parse(JSON.stringify(args), serverReviver)
+
+#seed missing data (Settings -> CourseList)
+#findManyByCourseId needs inferrence
+
+#replayTools added like any other module
 
 
-replayTools added like any other module
-built in cache reducers for all tables
-
-
-nestins settings for events.reload when already in a child module not working
-state.replayState --> __replayState
-seed missing data
-findManyByCourseId needs inferrence
 use only e.event.name etc
 
-state.post doesn't work well like this const post = post[id]
+nesting settings for events.reload when already in a child module not working
+isChanged(prevState, prevPrevState)
+
 
 
 

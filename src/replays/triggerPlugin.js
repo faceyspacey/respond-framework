@@ -18,8 +18,8 @@ export default function (state, e) {
     push(window.location.href) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
   }
 
-  if (top.replayState.status === 'session') {
-    top.replayState.status = 'reload'
+  if (respond.replayState.status === 'session') {
+    respond.replayState.status = 'reload'
     const refresh = window.state.prevUrl === respond.fromEvent(e).url
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }

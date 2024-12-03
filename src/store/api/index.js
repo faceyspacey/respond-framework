@@ -12,20 +12,18 @@ import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
 import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
-import createBranchesAll from '../../replays/createBranchesAll.js'
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import sliceBranch, { traverseModuleChildren } from '../../utils/sliceBranch.js'
+import { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import { branch as branchSymol } from '../reserved.js'
 
 
-export default (top, session) => {
+export default (top, session, branchesAll, focusedModule) => {
   const { replayState, seed, basenames = {} } = session
-  const focusedBranch = replayState.branch
-
-  const branchesAll = createBranchesAll(top, focusedBranch)
+  const focusedBranch = focusedModule.branchAbsolute
+  
   const branches = { get undefined() { return this[''] } }
   const listeners = []
   const promises = []
@@ -74,7 +72,7 @@ export default (top, session) => {
     history: createHistory(),
     cookies: createCookies(),
 
-    focusedModule: sliceBranch(top, focusedBranch),
+    focusedModule,
     focusedBranch,
 
     branchesAll,

@@ -56,19 +56,7 @@ export default {
   },
 
   testFromWallaby: {
-    before: async (state, { test, index, delay }) => {
-      const { respond, events } = state
-
-      const topState = respond.getStore()
-      const { branch } = topState.replayState
-
-      if (test.branch.indexOf(branch) !== 0) { // ensure test will run in its original module or a parent module
-        topState.branch.branch = test.branch
-        state.branch = test.branch
-      }
-      
-      return events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
-    },
+    before: async ({ events }, { test, index, delay }) => events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
   },
 
   test: {
@@ -91,16 +79,14 @@ export default {
   },
 
   saveTest: {
-    submit: async state => {
-      const { db, topState, events: { tests } } = state
-
-      state.selectedTestName ??= state.evs[0].type.replace(/\./g, '/') + '.js'
+    async submit({ db, respond, events: { tests } }) {
+      this.selectedTestName ??= this.evs[0].type.replace(/\./g, '/') + '.js'
       
-      const name = prompt('Name of your test?', state.selectedTestName)?.replace(/^\//, '')
+      const name = prompt('Name of your test?', this.selectedTestName)?.replace(/^\//, '')
       if (!name) return
 
-      const { settings, branch } = topState.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
-      const events = combineInputEvents(state.evs.filter(e => !e.meta?.skipped))
+      const { settings, branch } = respond.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
+      const events = combineInputEvents(this.evs.filter(e => !e.meta?.skipped))
 
       await db.developer.writeTestFile.server({ name, branch, settings, events })
       await tests.dispatch({ sort: 'recent' })

@@ -12,7 +12,7 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   const prt = prevState?.replayTools ?? {}
 
   let replayState = status === 'hmr'
-    ? { ...prevState.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
+    ? { ...prevState.respond.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
     : { settings, branch, idCounterRef, status }
 
   switch (status) {
@@ -58,12 +58,10 @@ export const getSessionState = respond => {
 
 
 export const saveSessionState = state => {
-  const { seed, replayState } = state
-  const { basenames } = state.respond
-  
+  const { replayState, seed, basenames} = state.respond
   const replacer = createReplacer(state.respond)
 
-  sessionStorage.setItem('preState', JSON.stringify({ seed, replayState, basenames }))
+  sessionStorage.setItem('preState', JSON.stringify({ replayState, seed, basenames }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState))
   sessionStorage.setItem('sessionState', stringifyState(state, replacer))
 }

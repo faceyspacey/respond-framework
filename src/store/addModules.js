@@ -22,7 +22,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   Respond.prototype.branches[branch] = state
 
   const respond = new Respond({ state, id, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_parent]: parent, kinds, is, in: thisIn, top: respond.top, replayState: respond.replayState, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_parent]: parent, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
   const [events,     reducers,     selectorDescriptors    ] = extractModuleAspects(mod, state)
