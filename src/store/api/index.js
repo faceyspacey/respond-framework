@@ -51,14 +51,12 @@ export default (top, session, branchesAll, focusedModule) => {
   }
 
   Respond.prototype = {
-    get respond() { return this },
-
     top,
     ctx,
     prev: window.state?.respond,
 
     session,
-    
+
     hmr: replayState.status === 'hmr',
 
     reuseEvents,

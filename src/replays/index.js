@@ -3,10 +3,10 @@ import defaultCreateSeed from './utils/createSeed.js'
 
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
 import { nestAtBranch } from '../utils/sliceBranch.js'
-import { snapDeepClone } from '../proxy/snapshot.js'
+import { cloneDeep } from '../proxy/snapshot.js'
 
 
-export default (state, respond) => {
+export default ({ state, respond }) => {
   const start = performance.now()
 
   const { session, top, branches } = respond
@@ -43,13 +43,13 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
     replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
     replays.settings = defaultCreateSettings(replays.config, input)
-    replays.config = snapDeepClone(replays.config)
+    replays.config = cloneDeep(replays.config)
   }
   else if (mod.replays) {
     mod.replays.db = replays.db // db inherited (but not replays)
     replays = mod.replays
     replays.settings = defaultCreateSettings(mod.replays.config, input)
-    replays.config = snapDeepClone(replays.config)
+    replays.config = cloneDeep(replays.config)
   }
 
   configs[mod.branchAbsolute] = replays.config
@@ -79,6 +79,7 @@ const createDbWithSeed = (nextSeed, seed, shared = {}) => ([mod, replays]) => {
   db.tableNames.forEach(k => mergeTable(nextSeed[b], seed?.[b], shared, k, db[k]))
   if (!seed) createSeed(settings, options, db)
 }
+
 
 const mergeTable = (nextSeed, seed, shared, key, table) => {
   if (table.share === false) return

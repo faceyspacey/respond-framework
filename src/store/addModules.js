@@ -11,6 +11,7 @@ import { _parent } from './reserved.js'
 import kinds from './kinds.js'
 import { is, thisIn } from '../utils/inIs.js'
 import genId from '../utils/objectIdDevelopment.js'
+import { cloneDeepDevelopmentOnly as cloneDeep } from '../proxy/snapshot.js'
 
 
 export default function addModule(Respond, mod, parent = {}, name = '', state = Object.create({})) {
@@ -24,22 +25,23 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   respond.branchLocatorsById[id] = branch
   respond.branches[branch] = state
 
-  mod.build?.  (state, respond, props, parent)
-  props.build?.(state, respond, props, parent)
+  mod.build?.  (deps, cloneDeep)
+  props.build?.(deps, cloneDeep)
 
-  const [events,     reducers,     selectorDescriptors    ] = extractModuleAspects(mod, state)
-  const [propEvents, propReducers, propSelectorDescriptors] = extractModuleAspects(props, state)
+  const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
+  const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
 
+  createEvents(deps,    events,    propEvents   )
+  createReducers(deps,  reducers,  propReducers )
+  createSelectors(deps, selectors, propSelectors)
+  
   createClientDatabase(deps)
   createClientModels(deps)
   createBasename(deps)
   createPlugins(deps)
-  createEvents(deps, events, propEvents)
-  createReducers(deps, reducers, propReducers)
-  createSelectors(deps, selectorDescriptors, propSelectorDescriptors)
   
-  mod.buildAfter?.  (state, respond, props, parent)
-  props.buildAfter?.(state, respond, props, parent)
+  mod.buildAfter?.  (deps, cloneDeep)
+  props.buildAfter?.(deps, cloneDeep)
 
   moduleKeys.forEach(k => addModule(Respond, mod[k], state, k))
 

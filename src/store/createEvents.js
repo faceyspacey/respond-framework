@@ -7,19 +7,22 @@ import { stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
 
 
 export default (deps, events, propEvents) => {
-  deps.proto.events = createEvents(deps, events, propEvents)
-  deps.proto.events.init = deps.respond.eventsByType.init ?? createEvent(deps, { kind: init }, init)
+  const { proto, respond } = deps
+
+  proto.events = createEvents(respond, events, propEvents)
+  proto.events.init = respond.eventsByType.init ?? createEvent(respond, { kind: init }, init)
+  
   extractedEvents.clear()
 }
 
 
-const createEvents = (deps, events, propEvents, namespace = '') => {
+const createEvents = (respond, events, propEvents, namespace = '') => {
   const evs = { edit, ...events }
   const keys = propEvents ? Object.keys({ ...evs, ...propEvents }) : Object.keys(evs)
 
   propEvents ??= {}
 
-  const cache = deps.respond.eventsCache
+  const cache = respond.eventsCache
 
   return keys.reduce((ns, name) => {
     const config = evs[name]
@@ -31,13 +34,13 @@ const createEvents = (deps, events, propEvents, namespace = '') => {
       ns[name] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(propConfig ?? config)) {
-      ns[name] = createEvents(deps, config, propConfig, namespace ? `${namespace}.${name}` : name)
+      ns[name] = createEvents(respond, config, propConfig, namespace ? `${namespace}.${name}` : name)
     }
     else if (propConfig) {
-      ns[name] = createEvent(deps, propConfig, name, namespace, ns) // fresh event passed as prop
+      ns[name] = createEvent(respond, propConfig, name, namespace, ns) // fresh event passed as prop
     }
     else if (config) {
-      ns[name] = createEvent(deps, config, name, namespace, ns)
+      ns[name] = createEvent(respond, config, name, namespace, ns)
     }
 
     if (config) cache.set(config, ns[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
@@ -47,8 +50,8 @@ const createEvents = (deps, events, propEvents, namespace = '') => {
 
 
 
-const createEvent = (deps, config, name, _namespace = '', namespace) => {
-  const { respond, branch, state } = deps
+const createEvent = (respond, config, name, _namespace = '', namespace) => {
+  const { branch, state } = respond
 
   const type = prepend(branch, prepend(_namespace, name))
   const event = respond.prevEventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
@@ -165,18 +168,18 @@ export class Event {
     return { __event: true, type: this.type }
   }
 
-  id(state) {
-    if (!state) return this._id
-    const { branch } = state.respond
-    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
-    return prepend(b, this._id)
-  }
+  id(respondOrStateOrBranch, namespaceOnly) {
+    const id = namespaceOnly ? this._namespace : this._id
 
-  idNamespace(state) {
-    if (!state) return this._namespace
-    const { branch } = state.respond
+    if (respondOrState === undefined) return id
+
+    const branch = typeof respondOrStateOrBranch === 'string'
+      ? respondOrStateOrBranch
+      : respondOrStateOrBranch.respond?.branch ?? respondOrStateOrBranch.branch
+
     const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
-    return prepend(b, this._namespace)
+
+    return prepend(b, id)
   }
 
   get module() {

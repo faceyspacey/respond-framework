@@ -1,8 +1,12 @@
 import { _parent } from './reserved.js'
+import token from './selectors/token.js'
+import curr from './selectors/curr.js'
 
 
 export default ({ respond, proto, state }, selectorDescriptors, propSelectorDescriptors) => {
   const { reducers } = proto
+
+  selectorDescriptors.curr ??= { get: curr }
 
   Object.keys(selectorDescriptors).forEach(k => {
     const descriptor = selectorDescriptors[k]
@@ -17,7 +21,7 @@ export default ({ respond, proto, state }, selectorDescriptors, propSelectorDesc
   })
 
   if (respond.branch) { // only children have a truthy branch
-    propSelectorDescriptors.token = token // pass token from top module down to all children
+    propSelectorDescriptors.token = { get: token } // pass token from top module down to all children
   }
 
   Object.keys(propSelectorDescriptors).forEach(k => {
@@ -35,11 +39,4 @@ export default ({ respond, proto, state }, selectorDescriptors, propSelectorDesc
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // disable potential child reducer mock, so selector takes precedence
     if (state.hasOwnProperty(k)) delete state[k]  // delete possible initialState
   })
-}
-
-
-const token = {
-  get() {
-    return this.token
-  }
 }

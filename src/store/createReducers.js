@@ -1,12 +1,9 @@
 import { _parent } from './reserved.js'
-import curr from './reducers/curr.js'
 import stack from './reducers/stack.js'
 
 
 export default ({ respond, proto, state, parent, name }, reducers, propReducers) => {
-  reducers = reducers.curr // preserve reducer order if stack or curr already exists
-    ? reducers.stack ? { ...reducers }       : { stack, ...reducers }
-    : reducers.stack ? { curr, ...reducers } : { stack, curr, ...reducers }
+  reducers = reducers.stack ? { ...reducers } : { stack, ...reducers } // preserve reducer order if stack or curr already exists
 
   proto.reducers = reducers
   

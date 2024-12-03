@@ -1,6 +1,6 @@
 import { isModule, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
-import { snapDeepClone } from '../proxy/snapshot.js'
+import { cloneDeepDevelopmentOnly as cloneDeep } from '../proxy/snapshot.js'
 import { isProd } from '../utils.js'
 
 
@@ -43,6 +43,6 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
     else selectorDescriptors[k] = descriptor
   }
   else {
-    state[k] = isProd ? v : snapDeepClone(v) // clones only needed during development when replayEvents requires non-mutated initial modules/state
+    state[k] = cloneDeep(v) // clones only needed during development when replayEvents requires non-mutated initial modules/state
   }
 }

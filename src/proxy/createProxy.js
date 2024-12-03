@@ -53,9 +53,9 @@ class Subscription {
 
 
 const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
-  const sub = subs.get(po)       // proxy assigned that exists elsewhere
+  const sub = subs.get(po)
 
-  if (sub) {
+  if (sub) {                          // proxy assigned that exists elsewhere
     sub.listeners.add(notifyParent)
 
     if (!refIds.has(sub.orig)) {
@@ -65,9 +65,9 @@ const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
     return po
   }
 
-  const proxy = cache.get(po)  // object assigned that exists somewhere else as a proxy
+  const proxy = cache.get(po)
 
-  if (proxy) {
+  if (proxy) {                         // object assigned that exists somewhere else as a proxy
     const sub = subs.get(proxy)
     sub.listeners.add(notifyParent)
 
