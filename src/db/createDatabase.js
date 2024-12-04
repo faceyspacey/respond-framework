@@ -101,7 +101,7 @@ const userGetters = {
 
 
 function make(doc) {
-  return new this.Model({ ...doc, __type: this._name })
+  return new this.Model(doc)
 }
 
 

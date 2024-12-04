@@ -1,4 +1,4 @@
-import { flattenModels } from '../db/utils/flattenDbTree.js'
+import { flattenModels } from '../db/utils/flattenDatabase.js'
 import { canProxy } from '../proxy/utils/helpers.js'
 import { isServer } from './bools.js'
 import { e } from '../store/createEvents.js'
@@ -35,6 +35,45 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 }
 
 
+
+export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) => {
+  const createObject = v => {
+    const obj = {}
+    keys(v).forEach(k => obj[k] = revive(v[k], k))
+    
+    const Model = v.__type && modelsByBranchType[branch + '_' + v.__type]
+    return Model ? new Model(obj) : obj
+  }
+
+  function revive(v, k) {
+    if (v?.__event)     return eventsByType[v.type] ?? v
+    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+  
+    return isArray(v) ? v.map(revive) : createObject(v)
+  }
+
+  return revive
+}
+
+
+
+export const reviveApiServer = ({ modelsByBranchType }) => {
+  const createObject = v => {
+    const obj = {}
+    keys(v).forEach(k => obj[k] = revive(v[k], k))
+    
+    const Model = v.__branchType && modelsByBranchType[v.__branchType]
+    return Model ? new Model(obj) : obj
+  }
+
+  function revive(v, k) {
+    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+
+    return isArray(v) ? v.map(revive) : createObject(v)
+  }
+
+  return revive
+}
 
 
 

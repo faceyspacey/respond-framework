@@ -6,7 +6,7 @@ import Remove from '../icons/Remove.js'
 import Pressable from '../widgets/Pressable.js'
 
 
-export default (props, { events, searched, filter }, _, ref) =>
+export default (props, { events, searched, filter }, ref) =>
   <View style={s.c}>
     <Input
       event={events.searchTests}

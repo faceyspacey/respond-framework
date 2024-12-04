@@ -1,84 +1,117 @@
-import fetch, { argsIn } from './fetch.js'
-import simulateLatency from '../utils/simulateLatency.js'
-import createDbProxy from './utils/createDbProxy.js'
-import createApiCache from './utils/createApiCache.js'
-import obId from '../utils/objectIdDevelopment.js'
-import { createApiReviverForClient, createReviver as createApiReviverForServer } from '../utils/revive.js'
-import { createTableConstructors } from './utils/flattenDbTree.js'
+import { isProd, isDev } from '../utils.js'
+import _fetch, { __undefined__, argsIn } from './fetch.js'
+import { reviveApiClient, reviveApiServer } from '../utils/revive.js'
+import flattenDatabase from './utils/flattenDatabase.js'
+import { prepend } from '../utils/sliceBranch.js'
 
 
-export default ({ mod, proto, state, respond, branch }) => {
-  let { db } = mod
+export default function(table, method) {
+  if (method === 'make')   return this.models[table].make
+  if (method === 'create') return this.models[table].create
 
-  if (!db && !parent.db) {
-    db = respond.findClosestAncestorWith('db', branch)?.db ?? {} // focused module is a child without its own db, but who expects to use a parent module's db when in production
+  const getter = async (...args) => {
+    const { apiUrl } = this.options
+    const body = createBody(table, method, argsIn(args), this)
+    const response = await fetch(apiUrl, body, getter, this, this.dbCache)
+
+    if (!getter.useServer) await this.simulateLatency()
+
+    return createResponse(this, body, response)
   }
-  else if (!db) return respond.db = proto.db = parent.db
 
-  const clientReviver = createApiReviverForClient(respond, branch)
-  const serverReviver = createApiReviverForServer(respond.focusedModule.db ?? respond.findClosestAncestorWith('db', respond.focusedModule.branch)?.db ?? {}) // needs top focusedBranch's db to simulate reviver on server, which will then find controllers based on branch
-  
-  const reviveClient = res => res === undefined ? undefined : JSON.parse(JSON.stringify(res), clientReviver)   // simulate production fetch reviver
-  const reviveServer = args =>                                JSON.parse(JSON.stringify(args), serverReviver)  // simulate production server express.json reviver
+  getter.cache  = (...args) => (getter.useCache  = true) && getter(...args)
+  getter.server = (...args) => (getter.useServer = true) && getter(...args)
 
-  const cache = createApiCache(state)
-  const { apiUrl, getContext } = respond.options
-
-  const tables = createTableConstructors(db)
-
-  return respond.db = proto.db = createDbProxy({
-    cache,
-    call(table, method) {
-      const Model = respond.models[table]
-
-      if (method === 'make') {
-        return d => new Model({ ...d, __type: table }, branch)
-      }
-
-      if (method === 'create') {
-        return d => new Model({ ...d, __type: table, id: d?.id || obId() }, branch)
-      }
-    
-      let useCache
-      meth.cache = function(...args) { useCache = true; return meth(...args); }
-
-      let useServer
-      meth.server = function(...args) { useServer = true; return meth(...args); }
-      
-      return meth
-
-      async function meth(...args) {
-        const T = tables[table]
-        if (!T) throw new Error(`table "${table}" does not exist in ${branch ?? 'top'} module`)
-    
-        const { token, userId, adminUserId, basename, basenameFull } = state.respond.getStore()
-        const context = { token, userId, adminUserId, basename, basenameFull, ...getContext?.call(state, table, method, args) }
-        const body = { ...context, branch, table, method, args: useServer ? args : reviveServer(argsIn(args)), first: !state.__dbFirstCall, focusedBranch: respond.focusedBranch }
-    
-        const cached = useCache && cache.get(body)
-
-        if (cached) {
-          const response = Object.assign({}, cached, { meta: { dbCached: true } })
-          return handleResponse(state, { branch, table, method, args, response })
-        }
-
-        const response = useServer
-          ? await fetch(apiUrl, body, clientReviver)
-          : reviveClient(await new T().call({ body }))
-
-        await simulateLatency(state, useServer)
-
-        if (useCache) cache.set(body, response)
-
-        return handleResponse(state, branch, table, method, args, response, respond.models)
-      }
-    }
-  })
+  return getter
 }
 
 
-const handleResponse = (state, branch, table, method, args, response, models) => {
-  state.__dbFirstCall = true
+
+
+
+const fetch = async (apiUrl, body, getter, respond, cache) => {
+  const cached = cache?.get(body)
+  if (cached) return cached
+
+  const r = isProd || getter.useServer
+    ? await _fetch(apiUrl, body)
+    : await respond.apiHandler({ body }, { json: r => r })
+
+  const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
+
+  if (getter.useCache) cache?.set(body, response)
+  return response
+}
+
+
+
+
+
+export const createApiHandler = ({ db, log = true, context = {} }) => {
+  db = flattenDatabase(db)
+
+  return async (req, res) => {
+    const { table, method, focusedBranch, branch } = reviveApiServer(db)(req.body)
+    
+    if (log) console.log(`request.request: db.${table}.${method}`, req.body)
+      
+    const T = resolveTable(db, focusedBranch, branch, table) // eg: db['admin.foo'].user
+    if (!T) return res.json({ error: 'table-absent', params: req.body })
+    const r = await new T().call(req, context)
+
+    if (log) console.log(`respond.response: db.${table}.${method}`, ...(isDev ? [] : [req.body, '=>']), r) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
+  
+    return res.json(r === undefined ? __undefined__ : r)
+  }
+}
+
+
+
+
+const resolveTable = (db, fb, branch, table) => {
+  const k = fb + '_' + branch + '_' + table
+  if (cache[k]) return cache[k]
+
+  const t = fb === branch // may need to use original db without props
+    ? db[fb].original[table] // use original for top focused db, as props variant is stored in branches at branches[fb][table] (absolute top w)
+    : db[branch][table]
+
+  
+  function Table() {}
+  Table.prototype = t // table methods available on an instance (similar to controllers) so that this.context and this.user is available (but only to the initially called table query/mutation method; on the other hand, when called within this method, the `this` context won't exist)
+  return cache[k] = Table
+}
+
+const cache = {}
+
+
+
+
+
+
+const createBody = (table, method, args, respond) => {
+  const { token, userId, adminUserId, basename, basenameFull, __dbFirstCall } = respond.getStore()
+  const { state, focusedBranch, replays } = respond
+  const branch = isDev
+    ? respond.branch === 'replayTools'
+      ? prepend(focusedBranch, 'replayTools') // make server think replayTools is attached to possibly focused branch
+      : replays.db.branchAbsolute // db may be inherited, so we actually need to pass the branch inherited from
+    : respond.mod.branchAbsolute
+
+  const body = respond.options.getBody?.call(state, table, method, args)
+  const first = !__dbFirstCall
+
+  return { branch, table, method, args, token, userId, adminUserId, basename, basenameFull, focusedBranch, first, ...body }
+}
+
+
+
+
+const createResponse = (respond, body, response) => {
+  const { branch, table, method, args } = body
+
+  const { state, models } = respond
+  respond.getStore().__dbFirstCall = true
 
   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
     const type = `=> db.${table}.${method}`
@@ -95,6 +128,9 @@ const handleResponse = (state, branch, table, method, args, response, models) =>
 
   return response
 }
+
+
+
 
 
 const singularPlural = {
@@ -120,94 +156,3 @@ const singularPlural = {
   searchSafe: 'plural',
   searchGeoSafe: 'plural',
 }
-
-const keyNamesByMethod2 = {
-  findOne: true,
-  find: true,
-  insertOne: true,
-  updateOne: true,
-  upsert: true,
-  save: true,
-  findAll: true,
-  findLike: true,
-  search: true,
-  searchGeo: true,
-  
-  findOneSafe: true,
-  findManySafe: true,
-  insertOneSafe: true,
-  updateOneSafe: true,
-  upsertSafe: true,
-  saveSafe: true,
-  findAllSafe: true,
-  findLikeSafe: true,
-  searchSafe: true,
-  searchGeoSafe: true,
-}
-
-
-
-
-
-
-
-// import fetch from './fetch.js'
-
-
-// class Respond {
-//   call(table, method) {
-//     if (method === 'make')   return this.mod.db.make
-//     if (method === 'create') return this.mod.db.create
-  
-//     const meth = (...args) => {
-//       const { apiUrl } = this.options
-//       const body = this.createBody(table, method, args)
-//       return fetch(apiUrl, body, meth, this)
-//     }
-
-//     meth.cache  = (...args) => (meth.useCache  = true) && meth(...args)
-//     meth.server = (...args) => (meth.useServer = true) && meth(...args)
-
-//     return meth
-//   }
-  
-//   dbCache = createApiCache(state)
-
-//   db = new Proxy({}, {
-//     get: (_, table) => {
-//       const get = (_, method) => this.call(table, method)
-//       return new Proxy({}, { get })
-//     }
-//   })
-// }
-
-
-// // development fetch
-// // revival
-
-// // simulate latency
-// // full context creation
-// // cacheByBranch
-// // external model.create/make
-
-
-
-// const handleResponse = (branch, table, method, args, response) => {
-//   const { state, models } = this
-//   state.__dbFirstCall = true
-
-//   Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
-//     const type = `=> db.${table}.${method}`
-//     state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
-//   })
-
-//   if (singularPlural[method]) {
-//     if (!response) return response // eg: arg.user will be undefined anyway by the time it reaches reducers
-//     const model = models[table].prototype
-//     const value = singularPlural[method] === 'plural' ? model._namePlural : model._name
-//     if (response.hasOwnProperty(value) && (response.__branchType || Array.isArray(response[value]))) return response // overriden method that returns nested objects/arrays, and therefore doesn't need this
-//     Object.defineProperty(response, '__argName', { value, enumerable: false })
-//   }
-
-//   return response
-// }

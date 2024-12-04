@@ -27,7 +27,7 @@ export default function createBranches(mod, focusedBranch, branches = [], b = ''
     createBranches(v, focusedBranch, branches, b ? `${b}.${k}` : k)
   })
 
-  if (b === '' && isDev && !isTest) {
+  if (b === focusedBranch && isDev && !isTest) {
     mod.replayTools = replayToolsModule
     mod.moduleKeys.push('replayTools')
     createBranches(replayToolsModule, focusedBranch, branches, 'replayTools')

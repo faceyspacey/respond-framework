@@ -18,7 +18,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   const { id = genId(), ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
 
   const respond = new Respond({ state, id, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_parent]: parent, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_parent]: parent, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
@@ -35,7 +35,6 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   createReducers(deps,  reducers,  propReducers )
   createSelectors(deps, selectors, propSelectors)
   
-  createClientDatabase(deps)
   createClientModels(deps)
   createBasename(deps)
   createPlugins(deps)

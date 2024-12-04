@@ -11,32 +11,35 @@ export default (state, k = 'dbCache') => {
       return userId ? `${JSON.stringify(args)}:${userId}` : JSON.stringify(args)
     },
     get(body) {
-      const { table, method } = body
+      const { branch, table, method } = body
       const k = this.key(body)
   
       this.keygen.set(body, k)                          // key generated once per request on cache.get (optimization)  
   
-      return this.calls[table]?.[method]?.[k]
+      return this.calls[branch]?.[table]?.[method]?.[k]
     },
     set(body, v) {
-      const { table, method } = body
+      const { branch, table, method } = body
       const k = this.keygen.get(body) ?? this.key(body) // key reused if already generated per request
   
       this.keygen.delete(body)
   
-      this.calls[table] ??= {}
-      this.calls[table][method] ??= {}
-      this.calls[table][method][k] = v
+      this.calls[branch] ??= {}
+      this.calls[branch][table] ??= {}
+      this.calls[branch][table][method] ??= {}
+      this.calls[branch][table][method][k] = v
     },
-    clear({ table, method, args, userId }) {
+    clear(respond, { table, method, args, userId }) {
+      const { branch } = respond
+      
       if (table && method && args && userId) {
-        const items = this.calls[table]?.[method] ?? {}
+        const items = this.calls[branch]?.[table]?.[method] ?? {}
         const key = this.key({ args, userId })
   
         delete items[key]
       }
       else if (table && method && args) {
-        const items = this.calls[table]?.[method] ?? {}
+        const items = this.calls[branch]?.[table]?.[method] ?? {}
         const key = this.key({ args })
   
         Object.keys(items).forEach(k => {
@@ -44,15 +47,15 @@ export default (state, k = 'dbCache') => {
         })
       } 
       else if (table && method) {
-        if (this.calls[table]) {
-          this.calls[table][method] = {}
+        if (this.calls[branch][table]) {
+          this.calls[branch][table][method] = {}
         }
       }
       else if (table) {
-        this.calls[table] = {}
+        this.calls[branch][table] = {}
       }
       else {
-        this.calls = {}
+        this.calls[branch] = {}
       }
     }
   }

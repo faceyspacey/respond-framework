@@ -42,6 +42,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   if (mod.db) {
     replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
+    replays.db.branchAbsolute = mod.branchAbsolute
     replays.settings = defaultCreateSettings(replays.config, input)
     replays.config = cloneDeep(replays.config)
   }

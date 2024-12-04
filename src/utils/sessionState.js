@@ -1,6 +1,5 @@
 import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'
-import snapshot from '../proxy/snapshot.js'
 import { isProd } from './bools.js'
 import { createStateReviver, createReplacer } from './revive.js'
 import { idCounterRef } from './objectIdDevelopment.js'

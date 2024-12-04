@@ -18,6 +18,9 @@ import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import { branch as branchSymol } from '../reserved.js'
+import createApiCache from '../../db/utils/createApiCache.js'
+import { createApiHandler } from '../../db/createClientDatabase.mock.js'
+import callDatabase from '../../db/createClientDatabase.mock.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
@@ -47,10 +50,23 @@ export default (top, session, branchesAll, focusedModule) => {
   const eventsByPattern = {}
   function Respond(props) {
     Object.assign(this, props)
+
     this.overridenReducers = new Map
+
+    this.dbCache = createApiCache(this.state)
+    this.apiHandler = createApiHandler({ db: top.db, log: false })
+    
+    this.db = new Proxy({}, {
+      get: (_, table) => {
+        const get = (_, method) => this.callDatabase(table, method)
+        return new Proxy({}, { get })
+      }
+    })
   }
 
   Respond.prototype = {
+    callDatabase,
+
     top,
     ctx,
     prev: window.state?.respond,
@@ -124,6 +140,11 @@ export default (top, session, branchesAll, focusedModule) => {
       return getSessionState(this)
     },
   
+    simulateLatency() {
+      if (this.ctx.isFastReplay || isTest || !this.options.simulatedApiLatency) return
+      return timeout(this.options.simulatedApiLatency)
+    },
+
     awaitInReplaysOnly(f, onError) {           
       const promise = typeof f === 'function' ? f() : f // can be function
       if (!(promise instanceof Promise)) return
