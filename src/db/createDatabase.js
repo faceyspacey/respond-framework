@@ -1,7 +1,7 @@
 import tableDefault from '../db/index.js'
 import modelDefault from '../db/model.js'
 
-import call from './utils/call.js'
+import callMethod from './utils/callMethod.js'
 import { createModel } from './createModels.js'
 
 
@@ -9,7 +9,7 @@ export default (options = {}) => {
   const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const base = { make, call, config, ...table, ...mixin }
+  const base = { make, callMethod, config, ...table, ...mixin }
 
   const [shared, client] = sharedClientModels(models)
 

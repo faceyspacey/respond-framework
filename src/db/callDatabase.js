@@ -34,7 +34,7 @@ const fetch = async (apiUrl, body, getter, respond, cache) => {
   if (cached) return cached
 
   const r = isProd || getter.useServer
-    ? await _fetch(apiUrl, body)
+    ? await _fetch(apiUrl, body, respond)
     : await respond.apiHandler({ body }, { json: r => r })
 
   const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
@@ -55,35 +55,23 @@ export const createApiHandler = ({ db, log = true, context = {} }) => {
     
     if (log) console.log(`request.request: db.${table}.${method}`, req.body)
       
-    const T = resolveTable(db, focusedBranch, branch, table) // eg: db['admin.foo'].user
-    if (!T) return res.json({ error: 'table-absent', params: req.body })
-    const r = await new T().call(req, context)
+    const Table = resolveTable(db, focusedBranch, branch, table) // eg: db['admin.foo'].user
+    if  (!Table)  return res.json({ error: 'table-absent', params: req.body })
+    const respo = await Object.create(Table).callMethod(req, context)
 
-    if (log) console.log(`respond.response: db.${table}.${method}`, ...(isDev ? [] : [req.body, '=>']), r) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
+    if (log) console.log(`respond.response: db.${table}.${method}`, ...(isDev ? [] : [req.body, '=>']), respo) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
   
-    return res.json(r === undefined ? __undefined__ : r)
+    return res.json(respo === undefined ? __undefined__ : respo)
   }
 }
 
 
 
 
-const resolveTable = (db, fb, branch, table) => {
-  const k = fb + '_' + branch + '_' + table
-  if (cache[k]) return cache[k]
-
-  const t = fb === branch // may need to use original db without props
+const resolveTable = (db, fb, branch, table) =>
+  fb === branch // may need to use original db without props
     ? db[branch].original[table] // use original for top focused db, as props variant is stored in branches at branches[fb][table] (absolute top w)
     : db[branch][table]
-
-  return t.__cached ??= Object.create(t)
-  
-  function Table() {}
-  Table.prototype = t // table methods available on an instance (similar to controllers) so that this.context and this.user is available (but only to the initially called table query/mutation method; on the other hand, when called within this method, the `this` context won't exist)
-  return cache[k] = Table
-}
-
-const cache = {}
 
 
 

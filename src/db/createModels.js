@@ -40,7 +40,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
     Model.create = doc => {
       const model = new Model(doc)
       model.__branchType = key
-      mod.id = doc?.id || generateId()
+      model.id = doc?.id || generateId()
       return model
     }
   }

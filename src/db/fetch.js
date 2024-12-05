@@ -2,17 +2,30 @@ import { defaultOrigin } from '../utils/constants.js'
 import fetchWithTimeout from './fetchWithTimeout.js'
 
 
-export default async (apiUrl = defaultApiUrl, body = {}) => { 
+export default async function fetch(apiUrl = defaultApiUrl, body, respond) { 
   const { table, method } = body
   const url = `${apiUrl}/${table}/${method}`
 
-  const res = await fetchWithTimeout(url, {
-    headers,
-    method: 'POST',
-    body: JSON.stringify(body)
-  })
+  try {
+    const res = await fetchWithTimeout(url, {
+      headers,
+      method: 'POST',
+      body: JSON.stringify(body)
+    })
 
-  return res.json()
+    if (respond.state._serverDown) {
+      respond.state._serverDown = false
+      respond.options.onServerUp?.(respond.state)
+    }
+
+    return res.json()
+  }
+  catch { // timeout exceeded
+    respond.state._serverDown = true
+    respond.options.onServerDown?.(respond.state)
+    const retry = respond.options.retry ?? fetch
+    return retry(apiUrl, body, respond) 
+  }
 }
 
 

@@ -19,8 +19,7 @@ import { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import { branch as branchSymol } from '../reserved.js'
 import createApiCache from '../../db/utils/createApiCache.js'
-import { createApiHandler } from '../../db/createClientDatabase.mock.js'
-import callDatabase from '../../db/createClientDatabase.mock.js'
+import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {

@@ -1,6 +1,6 @@
 import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
 import { isDev } from '../utils.js'
-import { createApiHandler } from './createClientDatabase.mock.js'
+import { createApiHandler } from './callDatabase.js'
 import replayTools from '../modules/replayTools/db.js'
 
 

@@ -1,4 +1,3 @@
-import createClientDatabase from '../db/createClientDatabase.js'
 import createClientModels from '../db/createModels.js'
 import createBasename from './createBasename.js'
 import createEvents from './createEvents.js'
