@@ -702,6 +702,8 @@ use a map to see whats inside, and be able to clear it!
 #built in cache reducers for all tables
 #use only e.event.name etc
 
+#finalize implementation of respond object etc
+
 
 
 nesting settings for events.reload when already in a child module not working
@@ -711,5 +713,4 @@ isChanged(prevState, prevPrevState)
 
 
 make all tools replacable by user (including reviver)
-re-organize files
-finalize implementation of respond object etc, better nameing for mod vs state, top vs topModule/state, etc
+re-organize files, better nameing for mod vs state, top vs topModule/state, etc

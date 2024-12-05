@@ -42,7 +42,7 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
   if (mod.db) {
     replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
-    replays.db.branchAbsolute = mod.branchAbsolute
+    replays.db.branchAbsolute = mod.branchAbsolute // callDatabase uses this to determine inherited db's *actual* absolute branch
     replays.settings = defaultCreateSettings(replays.config, input)
     replays.config = cloneDeep(replays.config)
   }

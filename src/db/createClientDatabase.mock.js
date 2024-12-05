@@ -73,9 +73,10 @@ const resolveTable = (db, fb, branch, table) => {
   if (cache[k]) return cache[k]
 
   const t = fb === branch // may need to use original db without props
-    ? db[fb].original[table] // use original for top focused db, as props variant is stored in branches at branches[fb][table] (absolute top w)
+    ? db[branch].original[table] // use original for top focused db, as props variant is stored in branches at branches[fb][table] (absolute top w)
     : db[branch][table]
 
+  return t.__cached ??= Object.create(t)
   
   function Table() {}
   Table.prototype = t // table methods available on an instance (similar to controllers) so that this.context and this.user is available (but only to the initially called table query/mutation method; on the other hand, when called within this method, the `this` context won't exist)

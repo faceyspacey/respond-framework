@@ -1,6 +1,4 @@
-import { flattenModels } from '../db/utils/flattenDatabase.js'
 import { canProxy } from '../proxy/utils/helpers.js'
-import { isServer } from './bools.js'
 import { e } from '../store/createEvents.js'
 
 
@@ -36,47 +34,6 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 
 
 
-export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) => {
-  const createObject = v => {
-    const obj = {}
-    keys(v).forEach(k => obj[k] = revive(v[k], k))
-    
-    const Model = v.__type && modelsByBranchType[branch + '_' + v.__type]
-    return Model ? new Model(obj) : obj
-  }
-
-  function revive(v, k) {
-    if (v?.__event)     return eventsByType[v.type] ?? v
-    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-  
-    return isArray(v) ? v.map(revive) : createObject(v)
-  }
-
-  return revive
-}
-
-
-
-export const reviveApiServer = ({ modelsByBranchType }) => {
-  const createObject = v => {
-    const obj = {}
-    keys(v).forEach(k => obj[k] = revive(v[k], k))
-    
-    const Model = v.__branchType && modelsByBranchType[v.__branchType]
-    return Model ? new Model(obj) : obj
-  }
-
-  function revive(v, k) {
-    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-
-    return isArray(v) ? v.map(revive) : createObject(v)
-  }
-
-  return revive
-}
-
-
-
 export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
   if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
   // if (v.__e)          return Object.assign(Object.create(e.prototype), v)
@@ -101,31 +58,40 @@ export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds },
 
 
 
-export const createApiReviverForClient = (respond, branch = '') => (k, v) => {
-  if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
-  // if (v.__e)         return Object.assign(Object.create(e.prototype), v)
-  if (v.__event)     return respond.eventsByType[v.type] ?? v
 
-  const Model = respond.models[v.__type]
-  return Model ? new Model(v, branch) : v // important: only clients care about tagging model's with v.__branch, as each db module only ever deals with one branch
+
+export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) => {
+  function createObject(v) {
+    const obj = {}
+    keys(v).forEach(k => obj[k] = revive(v[k], k))
+    
+    const Model = v.__type && modelsByBranchType[branch + '_' + v.__type]
+    return Model ? new Model(obj) : obj
+  }
+
+  return function revive(v, k) {
+    if (v?.__event)     return eventsByType[v.type] ?? v
+    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+  
+    return isArray(v) ? v.map(revive) : createObject(v)
+  }
 }
 
 
 
-// in userland only createReviver will ever be used
-export const createReviver = function createApiReviverForServer(db) {
-  db = isServer ? db : { modelsByBranchType: flattenModels(db) }
-  let b = ''
+export const reviveApiServer = ({ modelsByBranchType }) => {
+  function createObject(v) {
+    const obj = {}
+    keys(v).forEach(k => obj[k] = revive(v[k], k))
+    
+    const Model = v.__branchType && modelsByBranchType[v.__branchType]
+    return Model ? new Model(obj) : obj
+  }
 
-  return (k, v) => {
-    if (k === 'focusedBranch') {
-      return b = v
-    }
+  return function revive(v, k) {
+    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
 
-    if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
-
-    const Model = v.__branchType && db.modelsByBranchType[b ? `${b}.${v.__branchType}` : v.__branchType] // models brought to the client will always have v.__branchType tags by virture of createApiReviverForClient above
-    return Model ? new Model(v) : v
+    return isArray(v) ? v.map(revive) : createObject(v)
   }
 }
 
@@ -138,6 +104,8 @@ export const createReplacer = ({ refIds }) => (k, v) =>
       ? { __refId: refIds.get(v), __arr: v.slice() }
       : { __refId: refIds.get(v), ...v }
     : v
+
+
 
 
 const isArray = Array.isArray
