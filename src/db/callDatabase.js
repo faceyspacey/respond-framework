@@ -1,8 +1,7 @@
 import { isProd, isDev } from '../utils.js'
 import _fetch, { __undefined__, argsIn } from './fetch.js'
 import { reviveApiClient, reviveApiServer } from '../utils/revive.js'
-import flattenDatabase from './utils/flattenDatabase.js'
-import { prepend } from '../utils/sliceBranch.js'
+import flattenDatabase, { flattenModels } from './utils/flattenDatabase.js'
 
 
 export default function(table, method) {
@@ -48,10 +47,11 @@ const fetch = async (apiUrl, body, getter, respond, cache) => {
 
 
 export const createApiHandler = ({ db, log = true, context = {} }) => {
+  const modelsByBranchType = flattenModels(db)
   db = flattenDatabase(db)
 
   return async (req, res) => {
-    const { table, method, focusedBranch, branch } = reviveApiServer(db)(req.body)
+    const { table, method, focusedBranch, branch } = reviveApiServer({ modelsByBranchType })(req.body)
     
     if (log) console.log(`request.request: db.${table}.${method}`, req.body)
       
@@ -76,16 +76,11 @@ const resolveTable = (db, fb, branch, table) =>
 
 
 
-
-
 const createBody = (table, method, args, respond) => {
   const { token, userId, adminUserId, basename, basenameFull, __dbFirstCall } = respond.getStore()
   const { state, focusedBranch, replays } = respond
-  const branch = isDev
-    ? respond.branch === 'replayTools'
-      ? prepend(focusedBranch, 'replayTools') // make server think replayTools is attached to possibly focused branch
-      : replays.db.branchAbsolute // db may be inherited, so we actually need to pass the branch inherited from
-    : respond.mod.branchAbsolute
+
+  const branch = respond.moduleName === 'replayTools' ? 'replayTools' : replays.db.branchAbsolute // replayTools always at top even when child branches focused : db may be inherited, so we actually need to pass the branch inherited from
 
   const body = respond.options.getBody?.call(state, table, method, args)
   const first = !__dbFirstCall

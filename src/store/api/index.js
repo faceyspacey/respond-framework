@@ -52,19 +52,18 @@ export default (top, session, branchesAll, focusedModule) => {
 
     this.overridenReducers = new Map
 
-    this.dbCache = createApiCache(this.state)
-    this.apiHandler = createApiHandler({ db: top.db, log: false })
-    
-    this.db = new Proxy({}, {
-      get: (_, table) => {
-        const get = (_, method) => this.callDatabase(table, method)
-        return new Proxy({}, { get })
-      }
-    })
+    const get = (_, table) => {
+      const get = (_, method) => this.callDatabase(table, method)
+      return new Proxy({}, { get })
+    }
+
+    this.db = new Proxy({}, { get })
   }
 
   Respond.prototype = {
     callDatabase,
+    dbCache: createApiCache(session.apiCache),
+    apiHandler: createApiHandler({ db: top.db, log: false }),
 
     top,
     ctx,
@@ -95,7 +94,6 @@ export default (top, session, branchesAll, focusedModule) => {
     branches,
     branchLocatorsById: {},
 
-    modelsByBranch: {},
     modelsByBranchType: {},
 
     eventsByPattern,

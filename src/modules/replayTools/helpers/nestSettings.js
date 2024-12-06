@@ -2,7 +2,7 @@
 import { nestAtBranch } from '../../../utils/sliceBranch.js'
 
 
-export default (settings, branches) => {
+export default settings => {
   const references = new Map
 
   return Object.keys(settings).reduce((acc, k) => {
@@ -15,10 +15,6 @@ export default (settings, branches) => {
     if (Object.keys(clean).length === 0) return acc
 
     if (k === '') return { ...clean } // top module's settings becomes the root object, and it will be first, as settings form is pre-sorted ancestors first
-
-    if (branches[k].moduleKeys.find(k => clean[k] !== undefined)) {
-      throw new Error(`respond: setting "${k}" is already used by a child module`)
-    }
 
     nestAtBranch(k, clean, acc) // if a parent reference is ignored because it shares the same replay settings as the grand parent, a grand child with its own replays will be nested in an empty parent object by this function
     return acc

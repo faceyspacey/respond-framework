@@ -67,7 +67,7 @@ export const ModuleDropdown = ({ style }, { events, focusedBranch, respond }) =>
 
 
 const RespondSettingForm = ({ Component, name, options, ...props }, state) => {
-  const { errors, events } = state
+  const { errors, events, config } = state
 
   if (errors[name]) {
     const props = { event: events.removeError, name, message: errors[name] }
@@ -78,8 +78,8 @@ const RespondSettingForm = ({ Component, name, options, ...props }, state) => {
     ...props,
     name,
     event: events.editConfig,
-    value: state.config[name],
-    options: typeof options === 'function' ? options(state.config, state) : options || bools
+    value: config[name],
+    options: typeof options === 'function' ? options(config, state) : options || bools
   })
 }
 

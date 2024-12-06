@@ -18,7 +18,7 @@ export default (notify, subs, refIds, cache, snapCache) => ({
     const prev = o[k]
 
     if (prev === v || cache.has(v) && prev === cache.get(v)) return true
-
+    
     subs.get(prev)?.remove(notify)
     o[k] = canProxy(v) ? createProxy(v, subs, refIds, notify, cache, snapCache) : v // note: will need to simply add listener if assigning existing proxy
 

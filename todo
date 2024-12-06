@@ -655,10 +655,8 @@ use a map to see whats inside, and be able to clear it!
 
 
 #is there any need for done/error/data events to have their own callbacks?
-#done/error/data go direct to reducer
 
 #mark cache in E constructor
-#in createSnapHandler, events shouldn't be crawled
 #make kind an object like Namespace, with methods
 #this.parent.find()
 #configurable redirect plugin that returns false instead of finishing pipeline
@@ -680,7 +678,7 @@ use a map to see whats inside, and be able to clear it!
 #why !v.__event in replacer?
 #reduceModuleInit + mod.reduce -- depth-first truly default?
 
-#e in state, dispatchPlugins copies non e object, maybe make immutable, and not proxify in state? 
+
 #e.event.moduleName
 
 #!make tests pass, remove 3 args, remove respond.state, switch e + state arguments
@@ -698,15 +696,21 @@ use a map to see whats inside, and be able to clear it!
 #replayTools added like any other module
 
 
-
 #built in cache reducers for all tables
-#use only e.event.name etc
 
 #finalize implementation of respond object etc
 
+#nesting settings for events.reload when already in a child module not working
 
 
-nesting settings for events.reload when already in a child module not working
+
+#use only e.event.name etc (remove .name/etc from e)
+#in createSnapHandler, events shouldn't be crawled
+#done/error/data go direct to reducer
+#e in state, dispatchPlugins copies non e object, maybe make mutable, and not proxify in state? -- fromEvent can't use cache without mutable refs to e maintained
+#revive e
+
+
 isChanged(prevState, prevPrevState)
 
 

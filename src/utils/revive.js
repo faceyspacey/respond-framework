@@ -12,9 +12,9 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
   }
 
   function revive(v, k) {
-    if (v?.__event)      return eventsByType[v.type] ?? v
+    if (v?.__event)     return eventsByType[v.type] ?? v
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-    // if (v.__e)          return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.type] })
+    // if (v.__e)       return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.type] })
   
     const id = v.__refId
   
@@ -35,9 +35,9 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 
 
 export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
+  if (v?.__event)      return eventsByType[v.type] ?? v
   if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
   // if (v.__e)          return Object.assign(Object.create(e.prototype), v)
-  if (v.__event)      return eventsByType[v.type] ?? v
 
   const id = v.__refId
 
@@ -66,15 +66,17 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
     keys(v).forEach(k => obj[k] = revive(v[k], k))
     
     const Model = v.__type && modelsByBranchType[branch + '_' + v.__type]
-    return Model ? new Model(obj) : obj
+    return Model ? Model.make(obj) : obj
   }
 
-  return function revive(v, k) {
+  function revive(v, k) {
     if (v?.__event)     return eventsByType[v.type] ?? v
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
   
     return isArray(v) ? v.map(revive) : createObject(v)
   }
+
+  return revive
 }
 
 
@@ -88,11 +90,13 @@ export const reviveApiServer = ({ modelsByBranchType }) => {
     return Model ? new Model(obj) : obj
   }
 
-  return function revive(v, k) {
+  function revive(v, k) {
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
 
     return isArray(v) ? v.map(revive) : createObject(v)
   }
+
+  return revive
 }
 
 

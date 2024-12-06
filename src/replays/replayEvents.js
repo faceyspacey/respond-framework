@@ -3,7 +3,7 @@ import { isTest } from '../utils/bools.js'
 import revive from '../utils/revive.js'
 
 
-export default async function(events, delay = 0, { settings, branch } = this.replayState) {
+export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
   const start = performance.now()
     
   this.playing = false // stop possible previous running replay

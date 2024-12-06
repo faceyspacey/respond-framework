@@ -1,5 +1,4 @@
 export default function flattenDatabase(db) {
-  db.modelsByBranchType = flattenModels(db)
   db.original = db
   return flattenDb(db)
 }
@@ -12,7 +11,7 @@ function flattenDb(db = {}, branches = {}, b = '') {
 }
 
 
-function flattenModels(db, modelsByBranchType = {}, b = '') {
+export function flattenModels(db, modelsByBranchType = {}, b = '') {
   const models = db.models ?? {}
 
   Object.keys(models).forEach(k => {

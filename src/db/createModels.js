@@ -3,13 +3,15 @@ import { generateId } from '../utils/objectIdDevelopment.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
-  const branch = mod.branchAbsolute
   let { models } = mod
 
   if (!models) {
     if (parent.models) return respond.models = proto.models = parent.models
-    models = respond.findInClosestAncestor('models', branchRelative) ?? {}
+    mod = respond.findClosestAncestorWith('db', branchRelative)
+    models = mod.models ?? {} // db and models must be paired together on same module
   }
+
+  const branch = mod.branchAbsolute
 
   const { db } = respond
 

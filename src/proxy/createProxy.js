@@ -1,4 +1,4 @@
-import { canProxy } from './utils/helpers.js'
+import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 
 
@@ -6,8 +6,10 @@ export default function createProxy(o, subs = new WeakMap, refIds, notifyParent 
   const found = findExistingProxyOrObject(o, notifyParent, subs, refIds, cache)
   if (found) return found
 
-  const sub = new Subscription(o, subs, snapCache)
-  const proxy = new Proxy(o, createHandler(sub.notify, subs, refIds,cache, snapCache))
+  const orig = isArray(o) ? [] : create(getProto(o))
+
+  const sub = new Subscription(orig, subs, snapCache)
+  const proxy = new Proxy(orig, createHandler(sub.notify, subs, refIds,cache, snapCache))
 
   cache.set(o, proxy)
   subs.set(proxy, sub)
@@ -16,7 +18,7 @@ export default function createProxy(o, subs = new WeakMap, refIds, notifyParent 
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    o[k] = canProxy(v) ? createProxy(v, subs, refIds, sub.notify, cache, snapCache) : v
+    orig[k] = canProxy(v) ? createProxy(v, subs, refIds, sub.notify, cache, snapCache) : v
   })
 
   return proxy
@@ -31,7 +33,7 @@ class Subscription {
   version = highestVersion
   listeners = new Set
 
-  constructor(orig, subs,cache) {
+  constructor(orig, subs, cache) {
     this.orig = orig
     this.subs = subs
     this.cache = cache

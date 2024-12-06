@@ -16,7 +16,7 @@ const fetchWithNavigationCache = {
   },
 
   load(state) {
-    state.respond.cache = createCache(state) 
+    state.respond.cache = createCache(state.respond.session.urlCache, state.respond) 
     Object.getPrototypeOf(state).cache = state.respond.cache
   }
 } 

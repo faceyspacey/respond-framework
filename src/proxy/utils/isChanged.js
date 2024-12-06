@@ -9,7 +9,10 @@ export default function isChanged(prev, next, affected, cache = new WeakMap) {
   if (!used) return true
   
   const hit = cache.get(prev)
-  if (hit === next) return false
+  if (hit === next) {
+    console.log('isChanged.cache.hit', next)
+    return false
+  }
 
   cache.set(prev, next) // for object references with cycles (and perf on refs appearing in sibling branches)
   

@@ -1,5 +1,5 @@
 import { isDev, isTest } from '../utils.js'
-import { canProxy } from './utils/helpers.js'
+import { canProxy, isArray, keys, getProto, create } from './utils/helpers.js'
 
 
 export default function snapshot(proxy, subs = this.subscribers) {
@@ -31,9 +31,3 @@ export const cloneDeep = o => {
 
 
 export const cloneDeepDevelopmentOnly = isDev && !isTest ? cloneDeep : o => o
-
-
-const isArray = Array.isArray
-const keys = Object.keys
-const getProto = Object.getPrototypeOf
-const create = Object.create

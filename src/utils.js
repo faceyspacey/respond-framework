@@ -1,6 +1,7 @@
 export { isProd, isTest, isDev, isServer, hasLocalStorage, hasSessionStorage, isNative, isNative as useNativeDriver } from './utils/bools.js'
 export { addToCache, addToCacheDeep, addOneToCache, addOneToCacheSlug } from './utils/addToCache.js'
 export { memo, isEqualDeepPartial } from './utils/isEqual.js'
+export { reviveApiClient, reviveApiServer } from './utils/revive.js'
 export { default as kinds } from './store/kinds.js'
 export { default as mergeDeep } from './utils/mergeDeep.js'
 export { default as timeout } from './utils/timeout.js'

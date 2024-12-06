@@ -182,8 +182,8 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch: branch, top, errors, respond }) => {
-      settings = gatherAllSettings(settings, branch, top, respond)
+    before: async ({ settings, config, focusedBranch: branch, top, errors }) => {
+      settings = gatherAllSettings(settings, branch, top)
       const { url = '/' } = config
       
       const start = performance.now()
@@ -216,8 +216,8 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, focusedBranch, top, config, respond }) => {
-      settings = gatherAllSettings(settings, focusedBranch, top, respond)
+    before: async ({ settings, focusedBranch, top, config }) => {
+      settings = gatherAllSettings(settings, focusedBranch, top)
       const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'
@@ -240,8 +240,8 @@ const uniqueDragId = () => ++id + ''
 
 
 
-const gatherAllSettings = (settings, branch, top, respond) => {
-  const nestedSettings = nestSettings(settings, respond.branches)
+const gatherAllSettings = (settings, branch, top) => {
+  const nestedSettings = nestSettings(settings)
 
   const mod = sliceBranch(top, branch)
   const hasDb = mod.db || mod.replays?.standalone
@@ -250,7 +250,7 @@ const gatherAllSettings = (settings, branch, top, respond) => {
     settings = sliceBranch(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
   }
   else {
-    branch = findClosestAncestorWith('db', branch, top)?.branch ?? ''
+    branch = findClosestAncestorWith('db', branch, top)?.branchAbsolute ?? ''
     settings = sliceBranch(nestedSettings, branch) ?? {}
     settings.branch = branch
   }

@@ -4,9 +4,9 @@ import { ScrollView, View, StyleSheet } from 'react-native'
 import { colors } from '../styles.js'
 import Event from '../widgets/Event.js'
 import Button from '../widgets/Button.js'
-import { branch as branchSymbol } from '../../../store/reserved.js'
 
-export default (props, events, { evs, evsIndex, divergentIndex, playing }) => {
+
+export default (props, { events, evs, evsIndex, divergentIndex, playing }) => {
   const [scrollEnabled, toggleScroll] = useState(true)
   const [potentialNewIndex, setIndex] = useState(null)
 
