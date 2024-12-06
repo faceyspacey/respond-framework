@@ -6,26 +6,25 @@ import createReducers from './createReducers.js'
 import createSelectors from './createSelectors.js'
 
 import extractModuleAspects from './extractModuleAspects.js'
-import { _parent } from './reserved.js'
+import { _parent, _module } from './reserved.js'
 import kinds from './kinds.js'
 import { is, thisIn } from '../utils/inIs.js'
 import genId from '../utils/objectIdDevelopment.js'
-import { cloneDeepDevelopmentOnly as cloneDeep } from '../proxy/snapshot.js'
 
 
 export default function addModule(Respond, mod, parent = {}, name = '', state = Object.create({})) {
   const { id = genId(), ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
 
   const respond = new Respond({ state, id, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_parent]: parent, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, _module: true, [_parent]: parent, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
   respond.branchLocatorsById[id] = branch
   respond.branches[branch] = state
 
-  mod.build?.  (deps, cloneDeep)
-  props.build?.(deps, cloneDeep)
+  mod.build?.  (deps)
+  props.build?.(deps)
 
   const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
@@ -38,8 +37,8 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   createBasename(deps)
   createPlugins(deps)
   
-  mod.buildAfter?.  (deps, cloneDeep)
-  props.buildAfter?.(deps, cloneDeep)
+  mod.buildAfter?.  (deps)
+  props.buildAfter?.(deps)
 
   moduleKeys.forEach(k => addModule(Respond, mod[k], state, k))
 

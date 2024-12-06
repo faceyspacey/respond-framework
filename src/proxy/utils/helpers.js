@@ -6,7 +6,7 @@ export const equal = Object.is
 export const isArray = Array.isArray
 export const keys = Object.keys
 export const getProto = Object.getPrototypeOf
-export const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors
+export const getOpd = Object.getOwnPropertyDescriptors
 export const create = Object.create
 
 export const isObj = x => typeof x === object && x

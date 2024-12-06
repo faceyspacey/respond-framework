@@ -1,20 +1,12 @@
 import { isObj, isOwnKeysChanged } from './helpers.js'
 
 
-export default function isChanged(prev, next, affected, cache = new WeakMap) {
+export default function isChanged(prev, next, affected) {
   if (prev === next) return false
   if (!isObj(prev) || !isObj(next)) return true // heuristic: if one isn't an object, and already not equal from line above, we know they are not equal without recursive checking
 
   const used = affected.get(prev)
   if (!used) return true
-  
-  const hit = cache.get(prev)
-  if (hit === next) {
-    console.log('isChanged.cache.hit', next)
-    return false
-  }
-
-  cache.set(prev, next) // for object references with cycles (and perf on refs appearing in sibling branches)
   
   if (used.get)
     for (const k of used.get)
@@ -30,8 +22,6 @@ export default function isChanged(prev, next, affected, cache = new WeakMap) {
   else if (used.gopd)
     for (const k of used.gopd)
       if (!!gopd(prev, k) !== !!gopd(next, k)) return true
-
-  return false
 }
 
 
