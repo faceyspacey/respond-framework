@@ -9,18 +9,17 @@ import extractModuleAspects from './extractModuleAspects.js'
 import { _parent, _module } from './reserved.js'
 import kinds from './kinds.js'
 import { is, thisIn } from '../utils/inIs.js'
-import genId from '../utils/objectIdDevelopment.js'
 
 
 export default function addModule(Respond, mod, parent = {}, name = '', state = Object.create({})) {
-  const { id = genId(), ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
+  const { ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
 
-  const respond = new Respond({ state, id, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, _module: true, [_parent]: parent, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, id, mod, components })
+  const respond = new Respond({ state, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, mod, components })
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
-  respond.branchLocatorsById[id] = branch
+  respond.branchLocatorsById[mod.id] = branch
   respond.branches[branch] = state
 
   mod.build?.  (deps)

@@ -56,7 +56,7 @@ export const popListener = async () => {
   
     if (e) {
       bs.pop = back ? 'back' : 'forward'                  // trigger changePath to queue any dispatched URLs (only taking the last one) for replacement *after* reversing below
-      await state.respond.dispatch(e, { trigger: true, pop: bs.pop })
+      await state.respond.trigger(e, { pop: bs.pop })
       delete bs.pop
 
       if (!back) {
@@ -64,8 +64,6 @@ export const popListener = async () => {
         tail = !eFromPotentialSubsequentForward
       }
     }
-
-    console.log(back ? 'back' : 'forward', tail ? 'tail' : '', history.state.index, e)
   }
   else if (isDev) {
     alert('Add a `pop` event to your top module to enable browser history back/forward.\n\nSee RespondFramework.com/docs/history for usage.')

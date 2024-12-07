@@ -19,7 +19,7 @@ const batch = callback => {
     if (syncRef.sync) return callback()
     if (pending) return
 
-    pending = Promise.resolve().then(() => {
+    pending = queueMicrotask(() => {
       pending = undefined
       callback()
     })

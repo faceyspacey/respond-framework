@@ -10,13 +10,13 @@ export default (deps, events, propEvents) => {
   const { proto, respond } = deps
 
   proto.events = createEvents(respond, events, propEvents)
-  proto.events.init = respond.eventsByType.init ?? createEvent(respond, { kind: init }, init)
+  proto.events.init = respond.eventsByType.init ?? createEvent(respond, { kind: init }, init, proto.events)
   
   extractedEvents.clear()
 }
 
 
-const createEvents = (respond, events, propEvents, namespace = '') => {
+const createEvents = (respond, events, propEvents, namespace = new Namespace(respond)) => {
   const evs = { edit, ...events }
   const keys = propEvents ? Object.keys({ ...evs, ...propEvents }) : Object.keys(evs)
 
@@ -24,39 +24,39 @@ const createEvents = (respond, events, propEvents, namespace = '') => {
 
   const cache = respond.eventsCache
 
-  return keys.reduce((ns, name) => {
+  return keys.reduce((namespace, name) => {
     const config = evs[name]
     const propConfig = propEvents[name]
 
     const eventOrNamespaceFromAncestor = cache.get(propConfig)
 
     if (eventOrNamespaceFromAncestor) {
-      ns[name] = eventOrNamespaceFromAncestor
+      namespace[name] = eventOrNamespaceFromAncestor
     }
     else if (isNamespace(propConfig ?? config)) {
-      ns[name] = createEvents(respond, config, propConfig, namespace ? `${namespace}.${name}` : name)
+      namespace[name] = createEvents(respond, config, propConfig, new Namespace(respond, prepend(namespace.name, name)))
     }
     else if (propConfig) {
-      ns[name] = createEvent(respond, propConfig, name, namespace, ns) // fresh event passed as prop
+      namespace[name] = createEvent(respond, propConfig, name, namespace) // fresh event passed as prop
     }
     else if (config) {
-      ns[name] = createEvent(respond, config, name, namespace, ns)
+      namespace[name] = createEvent(respond, config, name, namespace)
     }
 
-    if (config) cache.set(config, ns[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
-    return ns
-  }, new Namespace)
+    if (config) cache.set(config, namespace[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
+    return namespace
+  }, namespace)
 }
 
 
 
-const createEvent = (respond, config, name, _namespace = '', namespace) => {
+const createEvent = (respond, config, name, namespace) => {
   const { branch, state } = respond
 
-  const type = prepend(branch, prepend(_namespace, name))
+  const type = prepend(branch, prepend(namespace.name, name))
   const event = respond.prevEventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
-  event.construct(branch, { config, name, _namespace, namespace, respond, type })
+  event.construct(branch, { config, name, namespace, respond, type })
 
   if (respond.eventsByType[type]) throw new Error(`respond: adjacent namespaces + modules can't share the same name: "${type}"`)
   respond.eventsByType[type] = event
@@ -75,7 +75,7 @@ const createEvent = (respond, config, name, _namespace = '', namespace) => {
 }
 
 
-const new_Event = () => { // like new Event, except the instance is a function instead of an object (so we can do events.foo()), and we set its prototype manually
+const new_Event = () => { // like `new Event`, except the instance is a function instead of an object (so we can do events.foo()), and we set its prototype manually
   const event = (arg, meta) => event.create(arg, meta)
   Object.setPrototypeOf(event, Event.prototype)
   Object.defineProperty(event, 'name', { writable: true })
@@ -85,12 +85,24 @@ const new_Event = () => { // like new Event, except the instance is a function i
 
 
 export class Namespace {
+  constructor(respond, name = '') {
+    this[branchSymbol] = respond.branch
+    this.name = name
+  }
+
   is(namespace) {
     return this === namespace
   }
 
   in(...namespaces) {
     return namespaces.includes(this)
+  }
+
+  id(respondOrState) {
+    if (respondOrState === undefined) return this.name
+    const branch = respondOrState.respond?.branch ?? respondOrState.branch
+    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    return prepend(b, this.name)
   }
 }
 
@@ -101,7 +113,7 @@ export class Event {
       Object.keys(this.config).forEach(k => delete this[k]) // dont preserve through HMR, in case deleted (eg a callback like event.submit was deleted and you expect it to not be to run when HMR replays last event)
     }
     
-    if (props.respond.reuseEvents){
+    if (props.respond.reuseEvents) {
       delete this.done
       delete this.error
       delete this.data
@@ -112,30 +124,28 @@ export class Event {
     Object.assign(this, props.config, props)
 
     this[branchSymbol] = branch
-    this._id = prepend(this._namespace, this.name)
     this.kind ??= this.pattern ? navigation : submission
     this.moduleName = props.respond.moduleName
     this.__event = true
   }
 
   get done() {
-    const value = createEvent(this.respond, { ...this.config.done, kind: done }, done, prepend(this._namespace, this.name), this.namespace) // lazy
-    value._namespace = this._namespace // nested built-ins share parent namespace for consistent matching
-    Object.defineProperty(this, done, { value, configurable: true }) // override proto getter, i.e. createEvent only once when first used
-    return value
+    return this._once(done)
   }
 
   get error() {
-    const value = createEvent(this.respond, { ...this.config.error, kind: error }, error, prepend(this._namespace, this.name), this.namespace)
-    value._namespace = this._namespace 
-    Object.defineProperty(this, error, { value, configurable: true })
-    return value
+    return this._once(error)
   }
 
   get data() {
-    const value = createEvent(this.respond, { ...this.config.data, kind: data }, data, prepend(this._namespace, this.name), this.namespace)
-    value._namespace = this._namespace
-    Object.defineProperty(this, data, { value, configurable: true })
+    return this._once(data)
+  }
+
+  _once(kind) {
+    const config = { ...this.config[kind], kind }
+    const name = prepend(kind, this.name)
+    const value = createEvent(this.respond, config, name, this.namespace) // lazy
+    Object.defineProperty(this, kind, { value, configurable: true }) // override proto getter, i.e. createEvent only once when first used
     return value
   }
 
@@ -168,17 +178,13 @@ export class Event {
     return { __event: true, type: this.type }
   }
 
-  id(respondOrStateOrBranch, namespaceOnly) {
-    const id = namespaceOnly ? this._namespace : this._id
-
+  id(respondOrState) {
+    const id = this._id ??= prepend(this.namespace.name, this.name)
     if (respondOrState === undefined) return id
 
-    const branch = typeof respondOrStateOrBranch === 'string'
-      ? respondOrStateOrBranch
-      : respondOrStateOrBranch.respond?.branch ?? respondOrStateOrBranch.branch
-
+    const branch = respondOrState.respond?.branch ?? respondOrState.branch
     const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
-
+    
     return prepend(b, id)
   }
 
@@ -202,8 +208,8 @@ export class e {
 
     this.payload = event.transform?.call(event.module, event.module, this.arg, this) ?? { ...this.arg }
 
-    const { kind, name, _namespace: namespace } = event
-    Object.assign(this, this.payload, { event, kind, name, namespace, __e: true })
+    const { kind, name, namespace } = event
+    Object.assign(this, this.payload, { event, kind, name, namespace: namespace.name, __e: true })
 
     if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url
@@ -218,6 +224,10 @@ export class e {
   trigger(arg, meta) {
     mergeArgMeta(arg, meta, this) // 2nd chance to supply meta/arg
     return this.event.respond.trigger(this)
+  }
+
+  toJSON() {
+    return { ...this, __e: true, event: this.event.type }
   }
 }
 

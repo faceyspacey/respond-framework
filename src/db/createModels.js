@@ -1,5 +1,4 @@
 import mixin from './model.client.js'
-import { generateId } from '../utils/objectIdDevelopment.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
@@ -42,7 +41,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
     Model.create = doc => {
       const model = new Model(doc)
       model.__branchType = key
-      model.id = doc?.id || generateId()
+      model.id = doc?.id ?? respond.generateId()
       return model
     }
   }

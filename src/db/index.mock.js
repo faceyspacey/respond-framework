@@ -4,7 +4,6 @@ import sortDocs from './utils/sortDocs.js'
 import { pickAndCreate as pick } from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
 import createAggregatePaginatedSelector from './utils/createAggregatePaginatedSelector.js'
-import { isServer } from '../utils/bools.js'
 import safeMethods from './safeMethods.js'
 
 
@@ -300,10 +299,6 @@ export default {
 
   insertSeed(docsObject = {}) {
     const name = this._name
-
-    if (!isServer && window.opener) {
-      return this.docs = window.opener.state.respond.replays.db[name].docs ?? {} // child window shares db/seed with parent
-    }
 
     this.docs ??= {}
 

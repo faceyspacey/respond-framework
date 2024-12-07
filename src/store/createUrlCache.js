@@ -1,22 +1,27 @@
-export default (urls = {}, respond) => ({
-  urls,
+export default (cache = {}, fromEvent) => ({
+  cache,
+  
+  toJSON() {
+    return this.cache
+  },
+
   get(e) {
-    const k = respond.fromEvent(e).url
-    return urls[k] ? k : null
+    const k = fromEvent(e).url
+    return cache[k] ? k : null
   },
 
   set(e) {
-    const k = respond.fromEvent(e).url
-    urls[k] = true
+    const k = fromEvent(e).url
+    cache[k] = true
   },
 
   delete(e) {
-    const k = respond.fromEvent(e).url
-    delete urls[k]
+    const k = fromEvent(e).url
+    delete cache[k]
   },
 
   clear() {
-    for (const k in urls) delete urls[k]
+    for (const k in cache) delete cache[k]
   },
 
   has(e) {

@@ -12,9 +12,9 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
   }
 
   function revive(v, k) {
-    if (v?.__event)     return eventsByType[v.type] ?? v
-    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-    // if (v.__e)       return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.type] })
+    if (v?.__event)                            return eventsByType[v.type] ?? v
+    if (!canProxy(v))                          return dateKeyReg.test(k) && v ? new Date(v) : v
+    // if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
   
     const id = v.__refId
   
@@ -35,9 +35,9 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
 
 
 export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
-  if (v?.__event)      return eventsByType[v.type] ?? v
-  if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-  // if (v.__e)          return Object.assign(Object.create(e.prototype), v)
+  if (v?.__event)                            return eventsByType[v.type] ?? v
+  if (!canProxy(v))                          return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
 
   const id = v.__refId
 
@@ -72,7 +72,8 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
   function revive(v, k) {
     if (v?.__event)     return eventsByType[v.type] ?? v
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-  
+    if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
+
     return isArray(v) ? v.map(revive) : createObject(v)
   }
 
@@ -92,7 +93,6 @@ export const reviveApiServer = ({ modelsByBranchType }) => {
 
   function revive(v, k) {
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-
     return isArray(v) ? v.map(revive) : createObject(v)
   }
 
@@ -103,7 +103,7 @@ export const reviveApiServer = ({ modelsByBranchType }) => {
 
 
 export const createReplacer = ({ refIds }) => (k, v) =>
-  typeof v === 'object' && refIds.has(v) && !v.__event
+  typeof v === 'object' && refIds.has(v)
     ? isArray(v)
       ? { __refId: refIds.get(v), __arr: v.slice() }
       : { __refId: refIds.get(v), ...v }

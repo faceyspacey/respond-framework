@@ -11,10 +11,6 @@ export { default as db } from './db.js'
 
 export { default as events } from './events.js'
 
-export const branch = 'replayTools'
-
-export const branchAbsolute = 'replayTools'
-
 export { id } from './respond.js'
 
 export * as reducers from './reducers.js'

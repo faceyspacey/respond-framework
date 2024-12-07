@@ -1,6 +1,9 @@
-export default (calls = {}) => ({
-  calls,
+export default (cache = {}) => ({
+  cache,
   keygen: new Map,
+  toJSON() {
+    return this.cache
+  },
   key({ args, userId }) {
     return userId ? `${JSON.stringify(args)}:${userId}` : JSON.stringify(args)
   },
@@ -10,7 +13,7 @@ export default (calls = {}) => ({
 
     this.keygen.set(body, k)                          // key generated once per request on cache.get (optimization)  
 
-    return this.calls[branch]?.[table]?.[method]?.[k]
+    return this.cache[branch]?.[table]?.[method]?.[k]
   },
   set(body, v) {
     const { branch, table, method } = body
@@ -18,22 +21,22 @@ export default (calls = {}) => ({
 
     this.keygen.delete(body)
 
-    this.calls[branch] ??= {}
-    this.calls[branch][table] ??= {}
-    this.calls[branch][table][method] ??= {}
-    this.calls[branch][table][method][k] = v
+    this.cache[branch] ??= {}
+    this.cache[branch][table] ??= {}
+    this.cache[branch][table][method] ??= {}
+    this.cache[branch][table][method][k] = v
   },
   clear(respond, { table, method, args, userId }) {
     const { branch } = respond
     
     if (table && method && args && userId) {
-      const items = this.calls[branch]?.[table]?.[method] ?? {}
+      const items = this.cache[branch]?.[table]?.[method] ?? {}
       const key = this.key({ args, userId })
 
       delete items[key]
     }
     else if (table && method && args) {
-      const items = this.calls[branch]?.[table]?.[method] ?? {}
+      const items = this.cache[branch]?.[table]?.[method] ?? {}
       const key = this.key({ args })
 
       Object.keys(items).forEach(k => {
@@ -41,15 +44,15 @@ export default (calls = {}) => ({
       })
     } 
     else if (table && method) {
-      if (this.calls[branch][table]) {
-        this.calls[branch][table][method] = {}
+      if (this.cache[branch][table]) {
+        this.cache[branch][table][method] = {}
       }
     }
     else if (table) {
-      this.calls[branch][table] = {}
+      this.cache[branch][table] = {}
     }
     else {
-      this.calls[branch] = {}
+      this.cache[branch] = {}
     }
   }
 })

@@ -3,7 +3,7 @@ import defaultCreateSeed from './utils/createSeed.js'
 
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
 import { nestAtBranch } from '../utils/sliceBranch.js'
-import { cloneDeep } from '../proxy/snapshot.js'
+import { createCounterRef } from '../utils/objectIdDevelopment.js'
 
 
 export default ({ state, respond }) => {
@@ -17,7 +17,7 @@ export default ({ state, respond }) => {
   Object.assign(state, createState(top, branches, depth, replayState)) // // const replayTools = replayState.status === 'hmr' ? Object.assign(Object.create({}), session.replayTools) : Object.assign(Object.create({}), createState(top, branches, depth, replayState)) // todo: caching by still calling createState if conf changed, and removing configs/settings from session.replayTools -- also HMR also needs replays assigned, so i guess we can't do this
   replayState.settings ??= nestSettings(state.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
-  const nextSeed = session.seed = {}
+  const nextSeed = session.seed = { __idCount: createCounterRef(seed) }
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
   console.log('createReplaySettings', performance.now() - start)
@@ -44,13 +44,11 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
     replays.db = mod.db
     replays.db.branchAbsolute = mod.branchAbsolute // callDatabase uses this to determine inherited db's *actual* absolute branch
     replays.settings = defaultCreateSettings(replays.config, input)
-    replays.config = cloneDeep(replays.config)
   }
   else if (mod.replays) {
     mod.replays.db = replays.db // db inherited (but not replays)
     replays = mod.replays
     replays.settings = defaultCreateSettings(mod.replays.config, input)
-    replays.config = cloneDeep(replays.config)
   }
 
   configs[mod.branchAbsolute] = replays.config
@@ -83,7 +81,12 @@ const createDbWithSeed = (nextSeed, seed, shared = {}) => ([mod, replays]) => {
 
 
 const mergeTable = (nextSeed, seed, shared, key, table) => {
-  if (table.share === false) return
+  if (table.share === false) {
+    table.docs ??= {}
+    table.docs = seed ? Object.assign(table.docs, seed[k]) : table.docs
+    nextSeed[k] = table.docs
+    return
+  }
 
   const k = table.shareKey ?? key
   const docs = shared[k]?.docs

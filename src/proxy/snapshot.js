@@ -1,5 +1,4 @@
-import { isDev, isTest } from '../utils.js'
-import { canProxy, isArray, keys, getProto, create } from './utils/helpers.js'
+import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 
 export default function snapshot(proxy, subs = this.subscribers) {
@@ -19,15 +18,3 @@ function createSnapshot({ orig: o, version, cache }, subs) {
 
   return snap // Object.preventExtensions(snap) -- todo: need to find why we needed this, and bring this back (and writable: true)
 }
-
-
-
-export const cloneDeep = o => {
-  if (!canProxy(o)) return o
-  const snap = isArray(o) ? [] : create(getProto(o))
-  keys(o).forEach(k => snap[k] = cloneDeep(o[k]))
-  return snap
-}
-
-
-export const cloneDeepDevelopmentOnly = isDev && !isTest ? cloneDeep : o => o

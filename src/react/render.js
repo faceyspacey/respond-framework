@@ -7,6 +7,8 @@ import createProxy from '../proxy/createProxy.js'
 
 
 export default function render(props = {}) {
+  if (props.startTime) console.log('replayEvents.run', performance.now() - props.startTime)
+    
   const start = performance.now()
 
   const app = createApp(this, props)
@@ -17,7 +19,7 @@ export default function render(props = {}) {
   if (!isNative) renderWeb(ctx, app)
   else renderNative(ctx, app, props)
 
-  console.log('render', performance.now() - start)
+  queueMicrotask(() => console.log('render', performance.now() - start))
 }
 
 

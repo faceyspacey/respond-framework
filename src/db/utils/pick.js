@@ -15,7 +15,10 @@ export default function pick(doc, project) {
   }
 
   if (id !== undefined) {
-    proj._id = id
+    proj.id = id // id is the only field that can be the opposite of the rest
+  }
+  else {
+    proj.id = 1
   }
 
   return isExclude ? exclude(doc, proj) : include(doc, proj)
@@ -33,7 +36,7 @@ const exclude = (doc, project) =>
 
 const include = (doc, project) =>
   Object.keys(project).reduce((acc, field) => {
-    if (project[field] === 0) return acc // could be _id, which is allowed to be excluded in an include
+    if (project[field] === 0) return acc // could be id, which is allowed to be excluded in an include
     acc[field] = doc[field]
     return acc
   }, {})

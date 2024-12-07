@@ -1,4 +1,4 @@
-import { isProd, isDev } from '../utils.js'
+import { isProd, isDev, isServer } from '../utils.js'
 import _fetch, { __undefined__, argsIn } from './fetch.js'
 import { reviveApiClient, reviveApiServer } from '../utils/revive.js'
 import flattenDatabase, { flattenModels } from './utils/flattenDatabase.js'
@@ -9,12 +9,8 @@ export default function(table, method) {
   if (method === 'create') return this.models[table].create
 
   const getter = async (...args) => {
-    const { apiUrl } = this.options
-    const body = createBody(table, method, argsIn(args), this)
-    const response = await fetch(apiUrl, body, getter, this, this.dbCache)
-
-    if (!getter.useServer) await this.simulateLatency()
-
+    const body = createBody(table, method, args, this)
+    const response = await fetch(this.options.apiUrl, body, getter, this, this.dbCache)
     return createResponse(this, body, response)
   }
 
@@ -29,7 +25,7 @@ export default function(table, method) {
 
 
 const fetch = async (apiUrl, body, getter, respond, cache) => {
-  const cached = cache?.get(body)
+  const cached = cache.get(body)
   if (cached) return cached
 
   const r = isProd || getter.useServer
@@ -38,7 +34,7 @@ const fetch = async (apiUrl, body, getter, respond, cache) => {
 
   const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
 
-  if (getter.useCache) cache?.set(body, response)
+  if (getter.useCache) cache.set(body, response)
   return response
 }
 
@@ -48,14 +44,14 @@ const fetch = async (apiUrl, body, getter, respond, cache) => {
 
 export const createApiHandler = ({ db, log = true, context = {} }) => {
   const modelsByBranchType = flattenModels(db)
-  db = flattenDatabase(db)
+  const branches = flattenDatabase(db)
 
   return async (req, res) => {
     const { table, method, focusedBranch, branch } = reviveApiServer({ modelsByBranchType })(req.body)
     
     if (log) console.log(`request.request: db.${table}.${method}`, req.body)
       
-    const Table = resolveTable(db, focusedBranch, branch, table) // eg: db['admin.foo'].user
+    const Table = resolveTable(branches, focusedBranch, branch, table) // eg: branches['admin.foo'].user
     if  (!Table)  return res.json({ error: 'table-absent', params: req.body })
     const respo = await Object.create(Table).callMethod(req, context)
 
@@ -76,12 +72,13 @@ const resolveTable = (db, fb, branch, table) =>
 
 
 
-const createBody = (table, method, args, respond) => {
+const createBody = (table, method, argsRaw, respond) => {
   const { token, userId, adminUserId, basename, basenameFull, __dbFirstCall } = respond.getStore()
   const { state, focusedBranch, replays } = respond
 
-  const branch = respond.moduleName === 'replayTools' ? 'replayTools' : replays.db.branchAbsolute // replayTools always at top even when child branches focused : db may be inherited, so we actually need to pass the branch inherited from
+  const branch = respond.moduleName === 'replayTools' ? 'replayTools' : replays.db.branchAbsolute // replayTools always at top even when child branch focused : db may be inherited, so we actually need to pass the branch inherited from
 
+  const args = argsIn(argsRaw)
   const body = respond.options.getBody?.call(state, table, method, args)
   const first = !__dbFirstCall
 

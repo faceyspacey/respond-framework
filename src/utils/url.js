@@ -42,9 +42,9 @@ export const createRelativeUrl = (pathname, search, hash) =>
 export const urlToLocation = urlOrLoc => {
   if (typeof urlOrLoc === 'object') return browserLocationToRespondLocation(urlOrLoc)
 
-  const pathname = urlOrLoc.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
-  const search = ''
-  const hash = ''
+  let pathname = urlOrLoc.replace(/^.*\/\/[^/?#]+/, '') // remove possible domain
+  let search = ''
+  let hash = ''
 
   const hashIndex = pathname.indexOf('#')
 

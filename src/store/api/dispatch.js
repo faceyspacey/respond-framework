@@ -25,5 +25,6 @@ export default async function(e, meta) {
 
 
 export function trigger(ev, meta) {
-  return this.dispatch(ev, { ...meta, trigger: true })
+  ev.meta = { ...meta, trigger: true }
+  return this.dispatch(ev)
 }

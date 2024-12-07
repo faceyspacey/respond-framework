@@ -4,7 +4,7 @@
 export { default as trigger } from '../../replays/triggerPlugin.js'
 export { default as edit } from './edit/index.js'
 export { markPop } from './history.js'
-export { markCached } from './fetch/index.js'
+export { markCached } from './fetch.js'
 export { default as before } from './before.js'
 export { default as validate } from './validate.js'
 export { default as reduce } from './reduce.js'
@@ -12,7 +12,7 @@ export { default as reduce } from './reduce.js'
 // event.mutateAfter (built-in to reduce)
 export { default as changePath } from './changePath.js'
 export { default as optimistic } from './optimistic.js'
-export { default as fetch } from './fetch/index.js'
+export { default as fetch } from './fetch.js'
 // event.cache (built-in to fetch)
 export { default as tap } from './tap.js'
 export { default as submit } from './submit.js'

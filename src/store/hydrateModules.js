@@ -1,10 +1,9 @@
-import { cloneDeep } from '../proxy/snapshot.js'
 import reduce from './plugins/reduce.js'
 import createToken from '../replays/utils/createToken.js'
 
 
 export default (state, session) => {
-  let { replayState, seed, basenames, prevState, ...sesh } = session
+  let { replayState, seed, basenames, prevState, ...hydration } = session
 
   if (replayState.status === 'session') {
     const [prev, curr] = state.respond.getSessionState()
@@ -13,7 +12,7 @@ export default (state, session) => {
   }
   else {
     state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
-    reviveModules(state, cloneDeep(sesh))
+    reviveModules(state, hydration) // hydration either server hydration or HMR prevState
   }
 
   if (prevState) { // hmr/session have prevState already
@@ -33,12 +32,12 @@ export function mergePrevState(state, prev) {
 
 
 
-const reviveModules = (state, session) => {
+const reviveModules = (state, hydration) => {
   state.moduleKeys.forEach(k => {                   // depth-first
-    if (!session[k]) return
-    reviveModules(state[k], session[k])
-    delete session[k]                               // delete to prevent overwriting child modules..
+    if (!hydration[k]) return
+    reviveModules(state[k], hydration[k])
+    delete hydration[k]                               // delete to prevent overwriting child modules..
   })
   
-  Object.assign(state, session)             // ...so parent receives shallow merge of everything except already assign child modules
+  Object.assign(state, hydration)             // ...so parent receives shallow merge of everything except already assign child modules
 }

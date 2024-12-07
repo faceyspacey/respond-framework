@@ -1,12 +1,6 @@
-export default function flattenDatabase(db) {
-  db.original = db
-  return flattenDb(db)
-}
-
-
-function flattenDb(db = {}, branches = {}, b = '') {
+export default function flattenDatabase(db = {}, branches = {}, b = '') {
   branches[b] = db
-  db.moduleKeys.forEach(k => flattenDb(db[k], branches, b ? `${b}.${k}` : k))
+  db.moduleKeys.forEach(k => flattenDatabase(db[k], branches, b ? `${b}.${k}` : k))
   return branches // 2d: branches[branch][table]
 }
 

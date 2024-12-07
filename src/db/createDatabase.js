@@ -29,7 +29,6 @@ export default (options = {}) => {
 
     db[k] = child
     child.parent = db
-    child.original = modules[k] // when a module is focused during development, we may need to select original without props
     db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
 
     if (props?.tables) {
@@ -53,8 +52,8 @@ export default (options = {}) => {
       }
     }
   }
-  
-  return db
+
+  return db.original = db // when a module is focused during development, we may need to select original without props
 }
 
 

@@ -1,15 +1,16 @@
 import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
+import { ObjectId } from 'bson'
 
 
-export default function createProxy(o, subs = new WeakMap, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
+export default function createProxy(o, subs, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
   const found = findExistingProxyOrObject(o, notifyParent, subs, refIds, cache)
   if (found) return found
 
   const orig = isArray(o) ? [] : create(getProto(o))
 
   const sub = new Subscription(orig, subs, snapCache)
-  const proxy = new Proxy(orig, createHandler(sub.notify, subs, refIds,cache, snapCache))
+  const proxy = new Proxy(orig, createHandler(sub.notify, subs, refIds, cache, snapCache))
 
   cache.set(o, proxy)
   subs.set(proxy, sub)
@@ -61,7 +62,7 @@ const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
     sub.listeners.add(notifyParent)
 
     if (!refIds.has(sub.orig)) {
-      refIds.set(sub.orig, counter++)
+      refIds.set(sub.orig, new ObjectId().toString())
     }
 
     return po
@@ -74,12 +75,12 @@ const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
     sub.listeners.add(notifyParent)
 
     if (!refIds.has(po)) {
-      refIds.set(po, counter++)
+      refIds.set(po, new ObjectId().toString())
     }
 
     return proxy
   }
 }
 
-let counter = 0
+
 export const refIds = new WeakMap

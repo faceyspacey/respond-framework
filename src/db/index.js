@@ -1,7 +1,6 @@
 import { isProd } from '../utils/bools.js'
 import { MongoClient, ObjectId } from 'mongodb'
 import mock from './index.mock.js'
-import pick from './utils/pick.js'
 
 import createJoin from './utils/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds, toProject } from './utils/toFromObjectIds.js'
@@ -40,13 +39,13 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async insertOne({ id, ...doc }, { project } = {}) {
+  async insertOne({ id, ...doc }) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(pick(doc, project))
+    return this._create(doc)
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
@@ -407,13 +406,13 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async _insertOne({ id, ...doc }, { project } = {}) {
+  async _insertOne({ id, ...doc }) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(pick(doc, project))
+    return this._create(doc)
   },
 
   async _updateOne(selector, newDoc, { project } = {}) {

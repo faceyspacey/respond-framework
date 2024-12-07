@@ -16,9 +16,9 @@ export default (snap, state) => ({
     recordUsage(state.affected, gopd, snap, k)
     return Reflect.getOwnPropertyDescriptor(snap, k)
   },
-  get: state[_module] ? getModule(state, getOpd(getProto(snap)))
-     : state.__type   ? getModel (state, getOpd(getProto(snap)))
-     :                  get(state)
+  get: snap[_module] ? getModule(state, getOpd(getProto(snap)))
+     : snap.__type   ? getModel (state, getOpd(getProto(snap)))
+     :                 get(state)
 })
 
 
@@ -41,9 +41,7 @@ const getModule = (state, protoDescriptors) => (snap, k, proxy) => {
     return get ? get.call(proxy) : value                // getter -- needs proxy assigned to `this` and called now (as expected by getters), as getter function is otherwise not bound to proxy
   }
 
-  recordUsage(state.affected, g, snap, k)
-  const v = Reflect.get(snap, k)
-  return canProxy(v) ? createSnapProxy(v, state) : v
+  return get(state)(snap, k)
 }
 
 
@@ -53,15 +51,13 @@ const getModel = (state, protoDescriptors) => (snap, k, proxy) => {
     const { get, value } = protoDescriptors[k]
     
     if (get) return get.call(proxy)                     // getter -- needs proxy assigned to `this` and called now (as expected by getters), as getter function is otherwise not bound to proxy
-    if (typeof value === func) return value             // will automatically be called as method with proxy as `this` by virtue of being called on an object in userland, eg: foo.bar()
+    if (typeof value === 'function') return value       // will automatically be called as method with proxy as `this` by virtue of being called on an object in userland, eg: foo.bar()
 
     recordUsage(state.affected, g, snap, k)             // record usage, as value may be assigned to state, overriding proto, in the future -- could also be proto.prevState, which is made into a snapshot separately and benefits from the same immutable isChanged/affected reactivity
     return value
   }
 
-  recordUsage(state.affected, g, snap, k)
-  const v = Reflect.get(snap, k)
-  return canProxy(v) ? createSnapProxy(v, state) : v
+  return get(state)(snap, k)
 }
 
 
@@ -71,5 +67,3 @@ const ownKeys = 'ownKeys'
 const has = 'has'
 const gopd = 'getOwnPropertyDescriptor'
 const g = 'get'
-
-const func = 'function'

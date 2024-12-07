@@ -555,6 +555,11 @@ if (possibleDuplicate) {
 
 #eventsByBranch -> eventsById
 
+    if (!isServer && window.opener?.dbBranches) {
+      const docs = window.opener.dbBranches[this.branchAbsolute][name].docs 
+      if (docs) return this.docs = docs
+    }
+
 
 // state[k].addModule = async (mod, k2) => { // todo: put code in createProxy to detect mod[_module] assignment, and automatically call this function
 //   const b = branch ? `${branch}.${k2}` : k2
@@ -703,17 +708,24 @@ use a map to see whats inside, and be able to clear it!
 #nesting settings for events.reload when already in a child module not working
 
 
+#done/error/data go direct to reducer
+#in createSnapHandler, events shouldn't be crawled
+
 
 #use only e.event.name etc (remove .name/etc from e)
-#in createSnapHandler, events shouldn't be crawled
-#done/error/data go direct to reducer
+
 #e in state, dispatchPlugins copies non e object, maybe make mutable, and not proxify in state? -- fromEvent can't use cache without mutable refs to e maintained
 #revive e
 
 
-isChanged(prevState, prevPrevState)
 
+#make e not care about duplicate refs
+#replayEvents.render duration tracking
+#remove ErrorBoundary
 
+remove cloneDeep
+
+#isChanged(prevState, prevPrevState)
 
 
 make all tools replacable by user (including reviver)

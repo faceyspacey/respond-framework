@@ -9,9 +9,9 @@ export default ({ state, Error = state.components?.Error, App = state.components
 
   return (
     <RespondContext.Provider value={state}>
-      <ErrorBoundary state={state} Error={Error}>
+      {/* <ErrorBoundary state={state} Error={Error}> */}
         <App />
-      </ErrorBoundary>
+      {/* </ErrorBoundary> */}
       
       {!hide && <ReplayTools />}
     </RespondContext.Provider>

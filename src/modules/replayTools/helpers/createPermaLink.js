@@ -1,5 +1,4 @@
 import { parseSearch, stringifyQuery } from '../../../utils/searchQuery.js'
-import { idCounterRef } from '../../../utils/objectIdDevelopment.js'
 
 
 export default function settingsToHash({ ...query }, branch) {
@@ -20,7 +19,7 @@ export const hashToSettings = () => {
     const branch = settings.branch ?? ''
     const status = 'reload'
 
-    return { settings, branch, idCounterRef, status }
+    return { settings, branch, status }
   }
 }
 

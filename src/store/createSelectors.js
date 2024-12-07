@@ -6,7 +6,9 @@ import curr from './selectors/curr.js'
 export default ({ respond, proto, state }, selectorDescriptors, propSelectorDescriptors) => {
   const { reducers } = proto
 
-  selectorDescriptors.curr ??= { get: curr }
+  if (!reducers.curr) {
+    selectorDescriptors.curr ??= { get: curr }
+  }
 
   Object.keys(selectorDescriptors).forEach(k => {
     const descriptor = selectorDescriptors[k]

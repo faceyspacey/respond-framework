@@ -17,13 +17,16 @@ import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
-import { branch as branchSymol } from '../reserved.js'
-import createApiCache from '../../db/utils/createApiCache.js'
+import { _parent, branch as branchSymol } from '../reserved.js'
+import createDbCache from '../../db/utils/createDbCache.js'
+import createUrlCache from '../createUrlCache.js'
 import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
+import { ObjectId } from 'bson'
+import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
-  const { replayState, seed, basenames = {} } = session
+  const { replayState, basenames = {} } = session
   const focusedBranch = focusedModule.branchAbsolute
   
   const branches = { get undefined() { return this[''] } }
@@ -51,7 +54,8 @@ export default (top, session, branchesAll, focusedModule) => {
     Object.assign(this, props)
 
     this.overridenReducers = new Map
-
+    this.mod.id ??= this.generateId()
+    
     const get = (_, table) => {
       const get = (_, method) => this.callDatabase(table, method)
       return new Proxy({}, { get })
@@ -60,10 +64,17 @@ export default (top, session, branchesAll, focusedModule) => {
     this.db = new Proxy({}, { get })
   }
 
+  const apiHandler = createApiHandler({ db: top.db, log: false })
+
   Respond.prototype = {
     callDatabase,
-    dbCache: createApiCache(session.apiCache),
-    apiHandler: createApiHandler({ db: top.db, log: false }),
+    async apiHandler(req, res) {
+      await this.simulateLatency()
+      return apiHandler(req, res)
+    },
+
+    dbCache: createDbCache(session.dbCache),
+    urlCache: createUrlCache(session.urlCache, fromEvent),
 
     top,
     ctx,
@@ -79,7 +90,6 @@ export default (top, session, branchesAll, focusedModule) => {
     eventsByType: {},
 
     replayState,
-    seed,
     basenames,
 
     devtools: createDevtools(),
@@ -112,7 +122,7 @@ export default (top, session, branchesAll, focusedModule) => {
     eventFrom,
   
     subscribers: new WeakMap,
-    refIds: new WeakMap,
+    refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
     snapshot,
     subscribeAll,
 
@@ -123,14 +133,10 @@ export default (top, session, branchesAll, focusedModule) => {
   
     getStore,
 
-    replaceWithProxies: function replaceWithProxies(proxy, b = '') {
-      proxy.respond.state = Object.getPrototypeOf(proxy).state = branches[b] = proxy // replace module states with proxy
-      proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], b ? `${b}.${k}` : k))
-    },
-    
-    saveSessionState() {
-      const snap = this.snapshot(getStore())
-      return saveSessionState(snap)
+    replaceWithProxies: function replaceWithProxies(proxy, parent = {}, b = '') {
+      Object.getPrototypeOf(proxy)[_parent] = parent
+      proxy.respond.state = branches[b] = proxy // replace module states with proxy
+      proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
     },
 
     getSessionState() {
@@ -138,7 +144,7 @@ export default (top, session, branchesAll, focusedModule) => {
     },
   
     simulateLatency() {
-      if (this.ctx.isFastReplay || isTest || !this.options.simulatedApiLatency) return
+      if (isTest || this.ctx.isFastReplay || !this.options.simulatedApiLatency) return
       return timeout(this.options.simulatedApiLatency)
     },
 
@@ -151,19 +157,25 @@ export default (top, session, branchesAll, focusedModule) => {
       await Promise.all(promises)
       promises.length = 0
       ctx.changedPath = false
+      this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
       this.queueSaveSession()
+    },
+
+    saveSessionState(e) {
+      const snap = this.snapshot(getStore())
+      return saveSessionState(e, snap)
     },
 
     queueSaveSession() {
       if (isProd || isTest) return
       if (ctx.saveQueued || getStore().replayTools?.playing) return
-      if (window.state !== getStore()) return // ensure replayEvents saves new state
+      if (window.state !== getStore()) return // ensure replayEvents saves new state instead of old state when recreating state for replays
 
       ctx.saveQueued = true
 
       setTimeout(() => {
         requestAnimationFrame(() => {
-          this.saveSessionState()
+          this.saveSessionState(this.lastTriggerEvent)
           ctx.saveQueued = false
         })
       }, 500)
@@ -176,6 +188,10 @@ export default (top, session, branchesAll, focusedModule) => {
       if (b.kind !== kinds.navigation) return false
       if (!a.event.pattern || !a.event.pattern) return false
       return this.fromEvent(a).url === this.fromEvent(b).url
+    },
+
+    generateId() {
+      return isProd ? new ObjectId().toString() : objectIdDevelopment()
     },
 
     changeBasename(basename) {

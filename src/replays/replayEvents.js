@@ -11,25 +11,25 @@ export default async function(events, delay = 0, { settings, branch } = this.res
   const state = createState(window.state.respond.top, { settings, branch, status: 'replay' })
   console.log('replayEvents.createModule', performance.now() - start)
 
-  const last = performance.now()
+  const startTime = performance.now()
+
   // const e = events[0]
   // const { eventsByType } = state.respond
   // if (typeof e.event !== 'function' || eventsByType[e.type] !== e.event) {
   //   events = revive(state.respond)(events)
   // }
 
+  
   events = revive(state.respond)(events)
-  console.log('events', events)
 
-  await run(events, delay, state)
-  console.log('replayEvents.run', performance.now() - last)
+  await run(events, delay, state, startTime)
 
   return state
 }
 
 
 
-const run = async (events, delay, { respond, replayTools }) => {           // keep in mind we will now be in the context of a new state
+const run = async (events, delay, { respond, replayTools }, startTime) => {           // keep in mind we will now be in the context of a new state
   const { ctx, options } = respond
   
   replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
@@ -43,7 +43,7 @@ const run = async (events, delay, { respond, replayTools }) => {           // ke
     await event.trigger(arg,  meta)
 
     if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
-    if (delay ? first : last) respond.render()                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
+    if (delay ? first : last) respond.render({ startTime })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
     await timeout(delay, meta, last, options.testDelay)
   }
