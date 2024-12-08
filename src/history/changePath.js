@@ -45,7 +45,7 @@ export const replace = async url => {
 
   bs.prevIndex = index
   history.replaceState({ index }, '', url)
-  window.state.respond.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
+  window.state.respond.prevUrl = url
 }
 
 export const push = url => {
@@ -55,7 +55,7 @@ export const push = url => {
   bs.maxIndex = index
   bs.linkedOut = false
   history.pushState({ index }, '', url)
-  window.state.respond.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
+  window.state.respond.prevUrl = url
 }
 
 
