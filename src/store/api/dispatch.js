@@ -27,7 +27,7 @@ export default async function(e, meta, start = performance.now()) {
 
 
 
-export function trigger(ev, meta) {
-  ev.meta = { ...meta, trigger: true }
-  return this.dispatch(ev)
+export function trigger(e, meta) {
+  e.meta = { ...e.meta, ...meta, trigger: true }
+  return this.dispatch(e)
 }
