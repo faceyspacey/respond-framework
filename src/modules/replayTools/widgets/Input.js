@@ -28,7 +28,7 @@ export default memo(forwardRef(({
     const next = formatOut(v) || undefined
     if (next === value) return
 
-    event.dispatch({ [name]: next }, { name, input: true, trigger: true })
+    event.trigger({ [name]: next }, { name, input: true })
   }
 
   return React.createElement(TextInput, {

@@ -49,7 +49,7 @@ export default {
     const model = await this._findOne(id || selector)
     if (!model) return
 
-    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
+    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc))
     model.updatedAt = new Date
     this.docs[model.id] = model
 
@@ -361,7 +361,7 @@ export default {
     const model = await this._findOne(id || selector)
     if (!model) return
 
-    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc)) // todo: make deep merge (maybe)
+    Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc))
     model.updatedAt = new Date
     this.docs[model.id] = model
 

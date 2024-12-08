@@ -1,40 +1,41 @@
+
 import bs from './browserState.js'
 import { createTrap } from './createTrap.js'
 
 
-export default (e, redirect) => {
+export default e => {
   if (e.changePath === false) return
 
   if (bs.pop) {
-    bs.queuedNavigation = e
+    bs.queuedNavigation = e // trap will dequeue
   }
-  else if (window.state.replayTools?.playing) {
-    debounce(() => changePath(e, true))
+  else {
+    const useReplace = e.event.respond.getStore().replayTools?.playing
+    const change = () => changePath(e, useReplace)
+    debounce(change)
   }
-  else changePath(e, redirect)
 }
 
 
-const changePath = (e, redirect) => {
-  const { respond } = window.state
-  const { ctx } = respond
-  const { url } = respond.fromEvent(e)
+const changePath = (e, useReplace) => {
+  const { fromEvent, mem } = e.event.respond
+  const { url } = fromEvent(e)
 
-  change(url, ctx.changedPath || redirect)
-  ctx.changedPath = true
+  change(url, useReplace || mem.changedPath)
+  mem.changedPath = true
 
   createTrap()
 }
 
 
 
-const change = (url, redirect) => {
+const change = (url, useReplace) => {
   const index = history.state?.index
 
   if (index === undefined) replace(url) // first visit
-  else if (!bs.hasTrap) replace(url)    // return visit in same session when not cached by browser (index will be defined, but trap not yet setup)
-  else if (redirect) replace(url)       // subsequent redirects in single dispatch pipeline must both be treated as a replace
-  else push(url)                        // new links (only one per user-triggered dispatch pipeline)
+  else if (useReplace)     replace(url) // subsequent redirects in single dispatch pipeline must both be treated as a replace
+  else if (!bs.hasTrap)    replace(url) // return visit in same session when not cached by browser (index will be defined, but trap not yet setup)
+  else                     push(url)    // new links (only one per user-triggered dispatch pipeline)
 }
 
 
@@ -44,7 +45,7 @@ export const replace = async url => {
 
   bs.prevIndex = index
   history.replaceState({ index }, '', url)
-  window.state.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
+  window.state.respond.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
 }
 
 export const push = url => {
@@ -54,7 +55,7 @@ export const push = url => {
   bs.maxIndex = index
   bs.linkedOut = false
   history.pushState({ index }, '', url)
-  window.state.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
+  window.state.respond.prevUrl = url // saves in sessionState -- todo: move to a single object for such things
 }
 
 

@@ -38,7 +38,7 @@ const debounce = (func, ms = 300) => {
   let timer
   
   return (...args) => {
-    if (window.state?.respond.ctx.isFastReplay) {
+    if (window.state?.respond.mem.isFastReplay) {
       return func.call(this, ...args)
     }
     

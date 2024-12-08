@@ -192,7 +192,7 @@ export class Event {
     const branch = this[branchSymbol]
     const state = this.respond.branches[branch]
 
-    if (this.respond.ctx.rendered) {
+    if (this.respond.mem.rendered) {
       Object.defineProperty(this, 'module', { value: state, configurable: true }) // optimization: override getter once proxified
     }
 

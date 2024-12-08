@@ -4,14 +4,9 @@ import revive from '../utils/revive.js'
 
 
 export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
-  const start = performance.now()
-    
   this.playing = false // stop possible previous running replay
 
   const state = createState(window.state.respond.top, { settings, branch, status: 'replay' })
-  console.log('replayEvents.createModule', performance.now() - start)
-
-  const startTime = performance.now()
 
   // const e = events[0]
   // const { eventsByType } = state.respond
@@ -19,21 +14,22 @@ export default async function(events, delay = 0, { settings, branch } = this.res
   //   events = revive(state.respond)(events)
   // }
 
-  
+  const start = performance.now()
   events = revive(state.respond)(events)
+  console.log('replayEvents.revive', performance.now() - start)
 
-  await run(events, delay, state, startTime)
+  await run(events, delay, state)
 
   return state
 }
 
 
 
-const run = async (events, delay, { respond, replayTools }, startTime) => {           // keep in mind we will now be in the context of a new state
-  const { ctx, options } = respond
+const run = async (events, delay, { respond, replayTools }, startTime = performance.now()) => {           // keep in mind we will now be in the context of a new state
+  const { mem, options } = respond
   
   replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
-  ctx.isFastReplay = !delay                    // turn animations + timeouts off
+  mem.isFastReplay = !delay                    // turn animations + timeouts off
 
   for (let i = 0; i < events.length && replayTools.playing; i++) {
     const first = i === 0
@@ -42,14 +38,14 @@ const run = async (events, delay, { respond, replayTools }, startTime) => {     
     const { event, arg, meta } = events[i]
     await event.trigger(arg,  meta)
 
-    if (last) ctx.isFastReplay = false                  // allow last event to trigger animations
+    if (last) mem.isFastReplay = false                  // allow last event to trigger animations
     if (delay ? first : last) respond.render({ startTime })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
     await timeout(delay, meta, last, options.testDelay)
   }
 
   respond.state.replayTools.playing = false // proxy, whereas until render it wasn't a proxy, but now we need it reactive to display STOP REPLAY
-  ctx.isFastReplay = false
+  mem.isFastReplay = false
 
   respond.queueSaveSession()                                                      // concurrent React 18 renders asyncronously, and this is the recommended substitute for the old ReactDOM.render(,,CALLBACK)
 }

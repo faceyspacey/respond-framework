@@ -6,7 +6,7 @@ import hydrateModules from './hydrateModules.js'
 import sliceBranch from '../utils/sliceBranch.js'
 
 
-export default (top, opts = {}) => {
+export default (top, opts = {}, start = performance.now()) => {
   const session = sessionState(opts)
   const focusedBranch = session.replayState.branch
 
@@ -18,5 +18,6 @@ export default (top, opts = {}) => {
 
   hydrateModules(state, session)
 
+  console.log('createModule', parseFloat((performance.now() - start).toFixed(3)))
   return window.state = state
 }

@@ -48,7 +48,7 @@ export default (index, height, event, setIndex, openSlot, toggleScroll, longPres
         y.current.setValue(0)                       // put back (didn't drag far enough)
       }
       else {
-        event.dispatch({ index, delta }, { trigger: true })
+        event.trigger({ index, delta })
       }
     },
   })

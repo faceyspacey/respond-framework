@@ -39,11 +39,11 @@ const handleDispatch = async (storeOld, message, triggerIndexes) => {
       return storeOld.events.replayTools.replayEventsToIndex.dispatch({ index })
     }
 
-    case 'PAUSE_RECORDING': // devtools doesn't have API to remember status on refresh, so it's hard to put this button to use, todo: find something else
+    case 'PAUSE_RECORDING': // devtools doesn't have API to remember status on refresh, so it's hard to put this button to use
       break
 
     case 'REORDER_ACTION': {
-      const { actionId, beforeActionId } = message.payload // todo: reorder
+      const { actionId, beforeActionId } = message.payload
       break
     }
 

@@ -18,11 +18,11 @@ export const back = async () => {
 
 
 export const forward = async () => {
-  if (!bs.linkedOut) {
+  if (!bs.linkedOut) { // go to tail, but hasn't linked out yet, so won't leave site
     const delta = bs.maxIndex - getIndex()
     await buttons.go(delta)
     bs.prevIndex = bs.maxIndex
-    history.replaceState(history.state, '', window.state.prevUrl) // ensure the same/previous url appears on our placeholder tail entry
+    history.replaceState(history.state, '', window.state.respond.prevUrl) // ensure the same/previous url appears on our placeholder tail entry
     return
   }
 

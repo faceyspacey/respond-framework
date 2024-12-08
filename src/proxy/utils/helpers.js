@@ -31,7 +31,7 @@ export const isOwnKeysChanged = (prev, next) => {
 }
 
 
-export const recordUsage = (affected, trap, snap, k) => {
+export const recordUsage = ({ affected }, snap, k, trap = defaultTrap) => {
   let used = affected.get(snap)
   
   if (!used) {
@@ -48,3 +48,6 @@ export const recordUsage = (affected, trap, snap, k) => {
 
   set.add(k)
 }
+
+
+const defaultTrap = 'get'

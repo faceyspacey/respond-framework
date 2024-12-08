@@ -46,18 +46,18 @@ const createPluginObject = p => {
 /** example dual plugin w/ shared context
 
 export default () => {
-  const ctx = {}
+  const mem = {}
 
   return {
     start: {
       enter(state, e) {
-        ctx.startTime = new Date
+        mem.startTime = new Date
       },
     },
 
     end: { 
       enter(state, e) {
-        const duration = new Date - ctx.startTime
+        const duration = new Date - mem.startTime
         console.log(duration)
       },
     }

@@ -7,7 +7,7 @@ import { memo } from '../../../utils/isEqual.js'
 export default memo(forwardRef(({ event, arg, children, disabled, styleHover, onPress, testKey, name, ...props }, ref) => {
   const callback = event
     ? () => {
-        event.dispatch(arg, { trigger: true, testKey, name })
+        event.trigger(arg, { testKey, name })
         onPress?.()
       }
     : onPress

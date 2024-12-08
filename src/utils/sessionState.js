@@ -64,7 +64,7 @@ export const getSessionState = respond => {
 
 
 export const saveSessionState = (e, state) => {
-  const { replayState, basenames, dbCache, urlCache, session } = state.respond
+  const { replayState, basenames, prevUrl, dbCache, urlCache, session } = state.respond
   const replacer = createReplacer(state.respond)
 
   if (e.event.module.id !== 'replayTools') {
@@ -72,7 +72,7 @@ export const saveSessionState = (e, state) => {
     sessionStorage.setItem('seed', JSON.stringify(session.seed))
   }
 
-  sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, dbCache, urlCache }))
+  sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, dbCache, urlCache }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
   sessionStorage.setItem('sessionState', stringifyState(state, replacer))
 }

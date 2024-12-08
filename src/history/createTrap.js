@@ -22,7 +22,11 @@ export const removeTrap = () => {
 
 export const popListener = async () => {
   const i = history.state?.index
+
   const back = i < bs.prevIndex
+  const forward = !back
+
+  console.log('trap.start', back ? 'back' : 'forward', bs.prevIndex, i)
 
   const { events, respond } = window.state
 
@@ -52,16 +56,17 @@ export const popListener = async () => {
 
   if (events.pop) {
     const handler = back ? events.pop.back : events.pop.forward
-    const e = await handler.call(state, state)
+    const e = await handler?.call(state, state)
   
     if (e) {
       bs.pop = back ? 'back' : 'forward'                  // trigger changePath to queue any dispatched URLs (only taking the last one) for replacement *after* reversing below
       await state.respond.trigger(e, { pop: bs.pop })
       delete bs.pop
 
-      if (!back) {
-        const eFromPotentialSubsequentForward = await events.pop.forward.call(state, state) // call forward handler again after state has changed to see if there's yet another entry to forward to -- if there isn't the pop won't be reversed/backed, thereby properly displaying the forwrad button in its disabled state
+      if (forward) {
+        const eFromPotentialSubsequentForward = await events.pop.forward.call(state, state, { attempt: true }) // call forward handler again after state has changed to see if there's yet another entry to forward to -- if there isn't the pop won't be reversed/backed, thereby properly displaying the forwrad button in its disabled state
         tail = !eFromPotentialSubsequentForward
+        console.log('tail', tail)
       }
     }
   }
@@ -99,24 +104,38 @@ export const popListener = async () => {
   
   // The main takeaway for users/developers is not to expect your pop handlers to fire when the user expects to exit the site :)
 
+  // back
   if (back) {
     const distanceFromTail = bs.maxIndex - i
     if (distanceFromTail >= 2) await buttons.forward() // trap user by reversing
+    if (distanceFromTail >= 2) console.log('reverse.forward')
   }
-  else if (!tail) {
+
+  // forward
+  else if (!tail) { // user not at developer-defined tail
     const distanceFromHead = i
     if (distanceFromHead >= 2) await buttons.back()    // trap user by reversing
+    if (distanceFromHead >= 2) console.log('reverse.back')
+  }
+  else if (i === bs.maxIndex) {
+    // default (no reversal necessary): actual history matches developer-defined tail
+  }
+  else if (i < bs.maxIndex) { // actual history needs to be moved forward (due to backing off the site and returning, resulting in being trapped in an earlier index)
+    const delta = bs.maxIndex - i
+    bs.prevIndex = bs.maxIndex
+    await buttons.go(delta)
   }
   
 
   // 4) REPLACE URL -- note: draining + replacing are broken up into 2 separate steps so `replace` can happen on the index resolved by the the trap in step 3
 
+  console.log('trap', bs.queuedNavigation ? 'queued' : 'not queued', back ? 'back' : 'forward', bs.prevIndex, i)
   if (bs.queuedNavigation) {
-    window.state.prevUrl = respond.fromEvent(bs.queuedNavigation).url
-    replace(window.state.prevUrl)
+    replace(respond.fromEvent(bs.queuedNavigation).url)
     delete bs.queuedNavigation
   }
   else {
+    console.log('out.', back ? 'back' : 'forward')
     back ? await out.back() : await out.forward()  // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
   }
 }

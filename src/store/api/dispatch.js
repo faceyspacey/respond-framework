@@ -3,11 +3,13 @@ import dispatchPlugins from '../../utils/dispatchPlugins.js'
 import loadPluginsOnce from '../../utils/loadPlugins.js'
 
 
-export default async function(e, meta) {
+export default async function(e, meta, start = performance.now()) {
   if (meta) e.meta = { ...e.meta, ...meta }
+  if (e.meta.trigger) this.mem.changedPath = false
+
   const state = e.event.module
 
-  const prom = loadPluginsOnce(this.getStore())
+  const prom = loadPluginsOnce(this)
   if (prom instanceof Promise) await prom
 
   try {
@@ -19,6 +21,7 @@ export default async function(e, meta) {
 
   if (!e.meta.trigger) return
   await this.promisesCompleted(e)
+  console.log('trigger', parseFloat((performance.now() - start).toFixed(3)), e.event.type)
 }
 
 

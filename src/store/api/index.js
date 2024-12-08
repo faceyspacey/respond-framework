@@ -26,7 +26,7 @@ import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
-  const { replayState, basenames = {} } = session
+  const { replayState, prevUrl, basenames = {} } = session
   const focusedBranch = focusedModule.branchAbsolute
   
   const branches = { get undefined() { return this[''] } }
@@ -35,8 +35,8 @@ export default (top, session, branchesAll, focusedModule) => {
 
   const prev = window.state?.respond
 
-  const ctx = prev?.ctx ?? {}
-  ctx.rendered = false
+  const mem = prev?.mem ?? {}
+  mem.rendered = false
 
   const {
     createDevtools = defaultCreateDevtools,
@@ -77,7 +77,10 @@ export default (top, session, branchesAll, focusedModule) => {
     urlCache: createUrlCache(session.urlCache, fromEvent),
 
     top,
-    ctx,
+
+    mem,
+    ctx: {},
+
     prev: window.state?.respond,
 
     session,
@@ -91,7 +94,8 @@ export default (top, session, branchesAll, focusedModule) => {
 
     replayState,
     basenames,
-
+    prevUrl,
+    
     devtools: createDevtools(),
     history: createHistory(),
     cookies: createCookies(),
@@ -144,7 +148,7 @@ export default (top, session, branchesAll, focusedModule) => {
     },
   
     simulateLatency() {
-      if (isTest || this.ctx.isFastReplay || !this.options.simulatedApiLatency) return
+      if (isTest || this.mem.isFastReplay || !this.options.simulatedApiLatency) return
       return timeout(this.options.simulatedApiLatency)
     },
 
@@ -156,7 +160,6 @@ export default (top, session, branchesAll, focusedModule) => {
     async promisesCompleted(e) {
       await Promise.all(promises)
       promises.length = 0
-      ctx.changedPath = false
       this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
       this.queueSaveSession()
     },
@@ -168,15 +171,15 @@ export default (top, session, branchesAll, focusedModule) => {
 
     queueSaveSession() {
       if (isProd || isTest) return
-      if (ctx.saveQueued || getStore().replayTools?.playing) return
+      if (mem.saveQueued || getStore().replayTools?.playing) return
       if (window.state !== getStore()) return // ensure replayEvents saves new state instead of old state when recreating state for replays
 
-      ctx.saveQueued = true
+      mem.saveQueued = true
 
       setTimeout(() => {
         requestAnimationFrame(() => {
           this.saveSessionState(this.lastTriggerEvent)
-          ctx.saveQueued = false
+          mem.saveQueued = false
         })
       }, 500)
     },
@@ -219,7 +222,7 @@ export default (top, session, branchesAll, focusedModule) => {
 
       Object.assign(eventsByPattern, next)
 
-      this.history.changePath(e, true)
+      this.history.changePath(e)
       this.queueSaveSession()
     },
   

@@ -6,21 +6,19 @@ import { nestAtBranch } from '../utils/sliceBranch.js'
 import { createCounterRef } from '../utils/objectIdDevelopment.js'
 
 
-export default ({ state, respond }) => {
-  const start = performance.now()
-
+export default ({ state, respond }, start = performance.now()) => {
   const { session, top, branches } = respond
   const { replayState, seed } = session
 
   const depth = []
 
-  Object.assign(state, createState(top, branches, depth, replayState)) // // const replayTools = replayState.status === 'hmr' ? Object.assign(Object.create({}), session.replayTools) : Object.assign(Object.create({}), createState(top, branches, depth, replayState)) // todo: caching by still calling createState if conf changed, and removing configs/settings from session.replayTools -- also HMR also needs replays assigned, so i guess we can't do this
+  Object.assign(state, createState(top, branches, depth, replayState))
   replayState.settings ??= nestSettings(state.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
   const nextSeed = session.seed = { __idCount: createCounterRef(seed) }
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
-  console.log('createReplaySettings', performance.now() - start)
+  console.log('createReplaySettings', parseFloat((performance.now() - start).toFixed(3)))
 }
 
 

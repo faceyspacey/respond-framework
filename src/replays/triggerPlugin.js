@@ -20,7 +20,7 @@ export default function (state, e) {
 
   if (respond.replayState.status === 'session') {
     respond.replayState.status = 'reload'
-    const refresh = window.state.prevUrl === respond.fromEvent(e).url
+    const refresh = respond.prevUrl === respond.fromEvent(e).url
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 

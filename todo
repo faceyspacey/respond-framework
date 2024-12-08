@@ -723,7 +723,7 @@ use a map to see whats inside, and be able to clear it!
 #replayEvents.render duration tracking
 #remove ErrorBoundary
 
-remove cloneDeep
+#remove cloneDeep
 
 #isChanged(prevState, prevPrevState)
 
