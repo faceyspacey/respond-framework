@@ -26,8 +26,6 @@ export const popListener = async () => {
   const back = i < bs.prevIndex
   const forward = !back
 
-  console.log('trap.start', back ? 'back' : 'forward', bs.prevIndex, i)
-
   const { events, respond } = window.state
 
 
@@ -66,7 +64,6 @@ export const popListener = async () => {
       if (forward) {
         const eFromPotentialSubsequentForward = await events.pop.forward.call(state, state, { attempt: true }) // call forward handler again after state has changed to see if there's yet another entry to forward to -- if there isn't the pop won't be reversed/backed, thereby properly displaying the forwrad button in its disabled state
         tail = !eFromPotentialSubsequentForward
-        console.log('tail', tail)
       }
     }
   }
@@ -108,14 +105,12 @@ export const popListener = async () => {
   if (back) {
     const distanceFromTail = bs.maxIndex - i
     if (distanceFromTail >= 2) await buttons.forward() // trap user by reversing
-    if (distanceFromTail >= 2) console.log('reverse.forward')
   }
 
   // forward
   else if (!tail) { // user not at developer-defined tail
     const distanceFromHead = i
     if (distanceFromHead >= 2) await buttons.back()    // trap user by reversing
-    if (distanceFromHead >= 2) console.log('reverse.back')
   }
   else if (i === bs.maxIndex) {
     // default (no reversal necessary): actual history matches developer-defined tail
@@ -129,13 +124,11 @@ export const popListener = async () => {
 
   // 4) REPLACE URL -- note: draining + replacing are broken up into 2 separate steps so `replace` can happen on the index resolved by the the trap in step 3
 
-  console.log('trap', bs.queuedNavigation ? 'queued' : 'not queued', back ? 'back' : 'forward', bs.prevIndex, i)
   if (bs.queuedNavigation) {
     replace(respond.fromEvent(bs.queuedNavigation).url)
     delete bs.queuedNavigation
   }
   else {
-    console.log('out.', back ? 'back' : 'forward')
     back ? await out.back() : await out.forward()  // missing pop handler or nothing left for pop handler to do -- fallback to default behavior of leaving site
   }
 }
