@@ -23,4 +23,4 @@ const plugins = [
   end
 ]
 
-export const syncRef = {} // used so proxy/subscribeAll.js can render sync events syncronously so input cursors don't jump
+export const syncRef = {} // used so valtio/listen.js can render sync events syncronously so input cursors don't jump

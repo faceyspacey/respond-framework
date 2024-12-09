@@ -1,6 +1,8 @@
 import createSnapProxy from '../createSnapProxy.js'
 import { canProxy, recordUsage, getProto, getOpd } from './helpers.js'
 import { _module, _parent } from '../../store/reserved.js'
+import useSnapshot from '../useSnapshot.js'
+import sliceBranch from '../../utils/sliceBranch.js'
 
 
 export default (snap, state) => {
@@ -42,9 +44,9 @@ const gopd = 'getOwnPropertyDescriptor'
 
 // variants for get handler:
 
-
 const getModule = (state, protoDescriptors) => (snap, k, proxy) => {
   if (k === _parent) return state.parentProxy
+  if (k === 'prevState') return sliceBranch(useSnapshot(snap.respond.getStore().prevState, true), snap.respond.branch)
 
   if (protoDescriptors[k]) {
     const { get, value } = protoDescriptors[k]

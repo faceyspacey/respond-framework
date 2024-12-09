@@ -1,6 +1,6 @@
 import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'
-import { isProd } from './bools.js'
+import { isDev, isProd } from './bools.js'
 import { createStateReviver, createReplacer } from './revive.js'
 
 
@@ -50,16 +50,16 @@ const getSystemStateForSession = () => {
 
 
 export const getSessionState = respond => {
-  const jc = sessionStorage.getItem('sessionState')
-  if (!jc) return
+  const json = sessionStorage.getItem('sessionState')
+  if (!json) return
 
-  const jp = sessionStorage.getItem('prevState')
-  const re = createStateReviver(respond)
+  const reviver = createStateReviver(respond)
 
-  const prev = JSON.parse(jp, re)
-  const curr = JSON.parse(jc, re)
+  const prev = JSON.parse(sessionStorage.getItem('prevState'), reviver)
+  const curr = JSON.parse(json, reviver)
+  const prevPrev = isDev && JSON.parse(sessionStorage.getItem('prevPrevState'), reviver)
 
-  return [prev, curr]
+  return [prev, curr, prevPrev]
 }
 
 
@@ -73,6 +73,7 @@ export const saveSessionState = (e, state) => {
   }
 
   sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, dbCache, urlCache }))
+  if (isDev) sessionStorage.setItem('prevPrevState', sessionStorage.getItem('prevState'))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
   sessionStorage.setItem('sessionState', stringifyState(state, replacer))
 }

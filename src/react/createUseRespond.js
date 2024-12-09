@@ -46,21 +46,31 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useStoreSubscribe = (listener, deps) => {
+  const useSubscribe = (subscriber, deps) => {
+    const state = useStore()
+  
+    useEffect(() => {
+      subscriber(state)
+      return state.respond.subscribe(subscriber)
+    }, [state, ...deps])
+  }
+
+  const useListen = (listener, deps) => {
     const state = useStore()
   
     useEffect(() => {
       listener(state)
-      return state.respond.subscribe(listener)
+      return state.respond.listen(listener)
     }, [state, ...deps])
   }
 
-
+  
   return {
     id,
     useStore,
     useRespond,
-    useStoreSubscribe,
+    useSubscribe,
+    useListen,
     respond: (...args) => memo(respond(...args)),
   }
 }

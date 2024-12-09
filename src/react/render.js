@@ -24,7 +24,7 @@ export default function render(props = {}) {
 
 
 const createApp = (respond, props) => {
-  const state = window.state = createProxy(respond.getStore(), respond.subscribers, respond.refIds)
+  const state = window.state = createProxy(respond.getStore(), respond.versionListeners, respond.refIds)
   respond.replaceWithProxies(state)
   respond.mem.rendered = true
 

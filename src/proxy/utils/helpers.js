@@ -1,7 +1,6 @@
 import { Namespace, e } from '../../store/createEvents.js'
 
 
-export const subs = new WeakMap // subscribers
 export const equal = Object.is
 export const isArray = Array.isArray
 export const keys = Object.keys

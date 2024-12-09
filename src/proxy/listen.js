@@ -2,8 +2,8 @@ import { isTest } from '../utils/bools.js'
 import { syncRef } from '../store/plugins/edit/index.js'
 
 
-export default function subscribeAll(proxy, callback) {  
-  const { listeners } = this.subscribers.get(proxy)
+export default function listen(callback, proxy = this.state) {  
+  const { listeners } = this.versionListeners.get(proxy)
   const batched = isTest ? callback : batch(callback)
 
   listeners.add(batched)

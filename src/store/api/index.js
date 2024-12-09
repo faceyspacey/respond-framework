@@ -4,7 +4,7 @@ import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
 
 import snapshot from '../../proxy/snapshot.js'
-import subscribeAll from '../../proxy/subscribeAll.js'
+import listen from '../../proxy/listen.js'
 import render from '../../react/render.js'
 
 import defaultCreateDevtools from '../../devtools/index.mock.js'
@@ -30,7 +30,7 @@ export default (top, session, branchesAll, focusedModule) => {
   const focusedBranch = focusedModule.branchAbsolute
   
   const branches = { get undefined() { return this[''] } }
-  const listeners = []
+  const subscribers = []
   const promises = []
 
   const prev = window.state?.respond
@@ -112,7 +112,7 @@ export default (top, session, branchesAll, focusedModule) => {
 
     eventsByPattern,
 
-    listeners,
+    subscribers,
     promises,
     refs: {},
     eventsCache: new Map,
@@ -125,10 +125,10 @@ export default (top, session, branchesAll, focusedModule) => {
     fromEvent,
     eventFrom,
   
-    subscribers: new WeakMap,
+    versionListeners: new WeakMap,
     refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
     snapshot,
-    subscribeAll,
+    listen,
 
     render,
 
@@ -138,7 +138,9 @@ export default (top, session, branchesAll, focusedModule) => {
     getStore,
 
     replaceWithProxies: function replaceWithProxies(proxy, parent = {}, b = '') {
-      Object.getPrototypeOf(proxy)[_parent] = parent
+      const proto = Object.getPrototypeOf(proxy)
+      proto[_parent] = parent
+
       proxy.respond.state = branches[b] = proxy // replace module states with proxy
       proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
     },
@@ -236,15 +238,16 @@ export default (top, session, branchesAll, focusedModule) => {
       return findClosestAncestorWith(key, b2, top)
     },
   
-    subscribe(send) {
+    subscribe(send, triggerOnly) {
       send.module = this.state
       send.branch = this.state.branch // branch of module attached to `respond` object unique to each module
-
-      listeners.push(send)
+      send.triggerOnly = triggerOnly
+      
+      subscribers.push(send)
     
       return () => {
-        const index = listeners.findIndex(l => l === send)
-        listeners.splice(index, 1)
+        const index = subscribers.findIndex(l => l === send)
+        subscribers.splice(index, 1)
       }
     },
     
@@ -253,12 +256,12 @@ export default (top, session, branchesAll, focusedModule) => {
 
       const { event } = e
 
-      if (event.sync && !event.notify) return
+      if (event.sync && !event.notifyReduce) return // by default sync events don't trigger notifyReduce
       if (event === this.state.events.init) return
 
-      const sent = listeners
+      const sent = subscribers
         .filter(send => e.event[branchSymol].indexOf(send.branch) === 0) // event is child of subscribed module or the same module
-        .map(send => send(send.module, e))
+        .map(send => (!send.triggerOnly || e.meta.trigger) && send(send.module, e))
 
       if (sent.length > 0) promises.push(sent)
     },

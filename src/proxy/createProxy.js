@@ -3,23 +3,23 @@ import createHandler from './utils/createHandler.js'
 import { ObjectId } from 'bson'
 
 
-export default function createProxy(o, subs, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
-  const found = findExistingProxyOrObject(o, notifyParent, subs, refIds, cache)
+export default function createProxy(o, vls, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
+  const found = findExistingProxyOrObject(o, notifyParent, vls, refIds, cache)
   if (found) return found
 
   const orig = isArray(o) ? [] : create(getProto(o))
 
-  const sub = new Subscription(orig, subs, snapCache)
-  const proxy = new Proxy(orig, createHandler(sub.notify, subs, refIds, cache, snapCache))
+  const vl = new VersionListener(orig, vls, snapCache)
+  const proxy = new Proxy(orig, createHandler(vl.notify, vls, refIds, cache, snapCache))
 
   cache.set(o, proxy)
-  subs.set(proxy, sub)
+  vls.set(proxy, vl)
 
-  sub.listeners.add(notifyParent)
+  vl.listeners.add(notifyParent)
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    orig[k] = canProxy(v) ? createProxy(v, subs, refIds, sub.notify, cache, snapCache) : v
+    orig[k] = canProxy(v) ? createProxy(v, vls, refIds, vl.notify, cache, snapCache) : v
   })
 
   return proxy
@@ -30,13 +30,13 @@ export default function createProxy(o, subs, refIds, notifyParent = function() {
 let highestVersion = 0
 
 
-class Subscription {
+class VersionListener {
   version = highestVersion
   listeners = new Set
 
-  constructor(orig, subs, cache) {
+  constructor(orig, vls, cache) {
     this.orig = orig
-    this.subs = subs
+    this.vls = vls
     this.cache = cache
   }
 
@@ -49,20 +49,20 @@ class Subscription {
   remove = notifyParent => {
     this.listeners.delete(notifyParent)
     if (this.listeners.size) return // proxy is assigned elsewhere and therefore has other listeners
-    Object.values(this.orig).forEach(v => this.subs.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
+    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
   }
 }
 
 
 
-const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
-  const sub = subs.get(po)
+const findExistingProxyOrObject = (po, notifyParent, vls, refIds, cache) => {
+  const vl = vls.get(po)
 
-  if (sub) {                          // proxy assigned that exists elsewhere
-    sub.listeners.add(notifyParent)
+  if (vl) {                          // proxy assigned that exists elsewhere
+    vl.listeners.add(notifyParent)
 
-    if (!refIds.has(sub.orig)) {
-      refIds.set(sub.orig, new ObjectId().toString())
+    if (!refIds.has(vl.orig)) {
+      refIds.set(vl.orig, new ObjectId().toString())
     }
 
     return po
@@ -71,8 +71,8 @@ const findExistingProxyOrObject = (po, notifyParent, subs, refIds, cache) => {
   const proxy = cache.get(po)
 
   if (proxy) {                         // object assigned that exists somewhere else as a proxy
-    const sub = subs.get(proxy)
-    sub.listeners.add(notifyParent)
+    const vl = vls.get(proxy)
+    vl.listeners.add(notifyParent)
 
     if (!refIds.has(po)) {
       refIds.set(po, new ObjectId().toString())
