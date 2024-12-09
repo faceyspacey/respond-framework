@@ -46,7 +46,7 @@ const gopd = 'getOwnPropertyDescriptor'
 
 const getModule = (state, protoDescriptors) => (snap, k, proxy) => {
   if (k === _parent) return state.parentProxy
-  if (k === 'prevState') return sliceBranch(useSnapshot(snap.respond.getStore().prevState, true), snap.respond.branch)
+  if (k === 'prevState') return sliceBranch(useSnapshot(snap.respond.getStore(), true), snap.respond.branch)
 
   if (protoDescriptors[k]) {
     const { get, value } = protoDescriptors[k]
