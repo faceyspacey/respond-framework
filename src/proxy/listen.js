@@ -4,11 +4,11 @@ import { syncRef } from '../store/plugins/edit/index.js'
 
 export default function listen(callback, proxy = this.state) {  
   const { listeners } = this.versionListeners.get(proxy)
-  const batched = isTest ? callback : batch(callback)
+  const cb = isTest ? callback : batch(callback)
 
-  listeners.add(batched)
+  listeners.add(cb)
   
-  return () => listeners.delete(batched)
+  return () => listeners.delete(cb)
 }
 
 
@@ -19,7 +19,7 @@ const batch = callback => {
     if (syncRef.sync) return callback()
     if (pending) return
 
-    pending = Promise.resolve().then(() => {
+    pending = queueMicrotask(() => {
       pending = undefined
       callback()
     })

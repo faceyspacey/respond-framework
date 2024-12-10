@@ -8,10 +8,10 @@ export default (proxy, snapPrevState) => {
   const respond = proxy.respond
 
   const subscribe = snapPrevState
-    ? useCallback(cb => respond.subscribe(cb, true), [respond])
-    : useCallback(cb => respond.listen(cb, proxy), [proxy])
+    ? useCallback(cb => respond.subscribe(cb, true), [respond]) // subscribe to only reduces of trigger events, as prevState only changes then
+    : useCallback(cb => respond.listen(cb, proxy), [proxy]) // standard listening to all proxy state changes
 
-  const createSnapshot = snapPrevState ? () => proxy.prevState : () => respond.snapshot(proxy)
+  const createSnapshot = snapPrevState ? () => proxy.prevState : () => respond.snapshot(proxy) // proxy.prevState is already a snapshot, created in triggerPlugin.js
 
   const getSnapshot = () => {
     const next = createSnapshot()

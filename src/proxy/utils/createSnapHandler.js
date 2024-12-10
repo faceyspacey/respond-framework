@@ -46,7 +46,11 @@ const gopd = 'getOwnPropertyDescriptor'
 
 const getModule = (state, protoDescriptors) => (snap, k, proxy) => {
   if (k === _parent) return state.parentProxy
-  if (k === 'prevState') return sliceBranch(useSnapshot(snap.respond.getStore(), true), snap.respond.branch)
+
+  if (k === 'prevState') {
+    const topSnapPrevState = useSnapshot(snap.respond.getStore(), true) // need to treverse from top to facilitate props reactivity from parents which possibly gets passed from top
+    return sliceBranch(topSnapPrevState, snap.respond.branch) // slice to current module prevState
+  }
 
   if (protoDescriptors[k]) {
     const { get, value } = protoDescriptors[k]
