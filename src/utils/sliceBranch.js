@@ -17,10 +17,15 @@ export const prepend = (a = '', b = '') =>
     
 export const stripBranchWithUnknownFallback = (a, b) =>
   a
-    ? b.indexOf(a) === 0  // a is parent of b
+    ? b.indexOf(a) === 0  // a is ancestor of b
       ? strip(a, b)
       : 'unknown.' + b
     : b 
+
+
+
+export const isAncestorOrSelf = (a, b) => b.indexOf(a) === 0
+export const isChildOrSelf = (a, b) => a.indexOf(b) === 0
 
 
 

@@ -14,16 +14,15 @@ import { is, thisIn } from '../utils/inIs.js'
 export default function addModule(Respond, mod, parent = {}, name = '', state = Object.create({})) {
   const { ignoreParents, components, reduce, options = {}, moduleKeys = [], branch } = mod
 
-  const respond = new Respond({ state, mod, branch, moduleKeys, components, reduce, options, moduleName: name })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, mod, components })
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
+  const respond = new Respond({ branch, moduleKeys, state, mod, props, components, reduce, options, moduleName: name, ignoreParents })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, mod, components })
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
   respond.branchLocatorsById[mod.id] = branch
   respond.branches[branch] = state
 
-  mod.build?.  (deps)
-  props.build?.(deps)
+  respond.build?.(deps)
 
   const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
@@ -36,8 +35,9 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   createBasename(deps)
   createPlugins(deps)
   
-  mod.buildAfter?.  (deps)
-  props.buildAfter?.(deps)
+  respond.buildAfter?.(deps)
+
+  respond.isolated = Object.keys(propReducers).length === 0 && Object.keys(propSelectors).length === 1 // optimize rendering to not crawl parent state when not necessary
 
   moduleKeys.forEach(k => addModule(Respond, mod[k], state, k))
 

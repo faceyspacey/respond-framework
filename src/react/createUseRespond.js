@@ -7,19 +7,24 @@ import RespondContext from './context.js'
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
     const top = useContext(RespondContext)
-    const branch = top.respond.branchLocatorsById[id]
-    return top.respond.branches[branch]
+
+    const { branchLocatorsById, branches } = top.respond
+    const branch = branchLocatorsById[id]
+
+    return branches[branch]
   }
 
 
-  const useRespond = () => {
+  const useRespond = (NAME) => {
     const top = useContext(RespondContext)
-    const branch = top.respond.branchLocatorsById[id]
-    const isolated = top.respond.isolatedBranches[branch]
+    const { branchLocatorsById, branches } = top.respond
+    
+    const branch = branchLocatorsById[id]
+    const mod = branches[branch]
 
-    return isolated
-      ? useSnapshot(sliceBranch(top, branch)) // optimization: reactive crawl from top on state changes is not necessary in useSnapshot, so we can pre-slice
-      : sliceBranch(useSnapshot(top), branch) // props depend on parent state, accessed via this[_parentSymbol] in generated selectors
+    return mod.respond.isolated
+      ? useSnapshot(mod, undefined, NAME) // optimization: reactive crawl from top on state changes is not necessary in useSnapshot, so we can pre-slice
+      : sliceBranch(useSnapshot(top, undefined, NAME), branch) // props depend on parent state, accessed via this[_parentSymbol] in generated selectors
   }
 
 
@@ -31,7 +36,7 @@ export default (id = createUniqueModuleId()) => {
     if (length === 3) {
       const { [name]: ComponentWithName } = {
         [name]: forwardRef(function(props, ref) {
-          return Component(props, useRespond(), ref)
+          return Component(props, useRespond(name), ref)
         })
       }
   
@@ -40,7 +45,7 @@ export default (id = createUniqueModuleId()) => {
 
     const { [name]: ComponentWithName } = {
       [name]: function(props) {
-        return Component(props, useRespond())
+        return Component(props, useRespond(name))
       }
     }
 
@@ -48,22 +53,22 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useSubscribe = (subscriber, deps, triggerOnly) => {
+  const useSubscribe = (subscriber, deps = [], triggerOnly) => {
     const state = useStore()
   
     useEffect(() => {
       subscriber(state)
       return state.respond.subscribe(subscriber, triggerOnly)
-    }, [state, ...deps])
+    }, deps)
   }
 
-  const useListen = (listener, deps) => {
+  const useListen = (listener, deps = []) => {
     const state = useStore()
   
     useEffect(() => {
       listener(state)
-      return state.respond.listen(listener)
-    }, [state, ...deps])
+      return state.respond.listen(() => listener(state), state)
+    }, deps)
   }
 
   

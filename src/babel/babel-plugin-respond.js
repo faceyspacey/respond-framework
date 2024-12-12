@@ -7,12 +7,12 @@ function respondBabelPlugin(babel) {
 
   const visited = Symbol('visited')
 
-  const temp = template(`props => {
-    return FUNC(props, USE_RESPOND())
-  }`)
+  const temp = template(`MEMO(function NAME(props) {
+    return FUNC(props, USE_RESPOND("NAME"))
+  })`)
 
   const tempWithRef = template(`FORWARD_REF(function NAME(props, ref) {
-    return FUNC(props, USE_RESPOND(), ref)
+    return FUNC(props, USE_RESPOND("NAME"), ref)
   })`)
 
   const isComponentCase = name => name[0] === name[0].toUpperCase()
@@ -133,16 +133,18 @@ function respondBabelPlugin(babel) {
 
         if (args === 3) {
           path.replaceWith(tempWithRef({
-            FORWARD_REF: addNamed(path, 'forwardRef', 'react', { nameHint: 'react' }),
             USE_RESPOND: t.cloneDeep(this.useRespond),
             FUNC: path.node,
-            NAME: /App\d*$/.test(name) ? this.defaultExportDisplayName : name,
+            NAME: (/App\d*$/.test(name) ? this.defaultExportDisplayName : name) ?? 'Anonymous',
+            FORWARD_REF: addNamed(path, 'forwardRef', 'react', { nameHint: 'react' }),
           }))
         }
         else {       
           path.replaceWith(temp({
             USE_RESPOND: t.cloneDeep(this.useRespond),
             FUNC: path.node,
+            NAME: (/App\d*$/.test(name) ? this.defaultExportDisplayName : name) ?? 'Anonymous',
+            MEMO: addNamed(path, 'memo', 'react', { nameHint: 'react' }),
           }))
         }
       },

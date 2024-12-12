@@ -15,7 +15,7 @@ import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/find
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { traverseModuleChildren } from '../../utils/sliceBranch.js'
+import { isAncestorOrSelf, isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import { _parent, branch as branchSymol } from '../reserved.js'
 import createDbCache from '../../db/utils/createDbCache.js'
@@ -23,6 +23,7 @@ import createUrlCache from '../createUrlCache.js'
 import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
 import { ObjectId } from 'bson'
 import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
+import { queueNotificationReplayTools } from '../../proxy/utils/queueNotification.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
@@ -52,6 +53,8 @@ export default (top, session, branchesAll, focusedModule) => {
   const eventsByPattern = {}
   function Respond(props) {
     Object.assign(this, props)
+
+    this.build = this.mod.build ?? this.props.build
 
     this.overridenReducers = new Map
     this.mod.id ??= this.generateId()
@@ -166,11 +169,6 @@ export default (top, session, branchesAll, focusedModule) => {
       this.queueSaveSession()
     },
 
-    saveSessionState(e) {
-      const snap = this.snapshot(getStore())
-      return saveSessionState(e, snap)
-    },
-
     queueSaveSession() {
       if (isProd || isTest) return
       if (mem.saveQueued || getStore().replayTools?.playing) return
@@ -180,7 +178,11 @@ export default (top, session, branchesAll, focusedModule) => {
 
       setTimeout(() => {
         requestAnimationFrame(() => {
-          this.saveSessionState(this.lastTriggerEvent)
+          const snap = this.snapshot(getStore())
+          const e = this.lastTriggerEvent
+
+          saveSessionState(snap, e)
+
           mem.saveQueued = false
         })
       }, 500)
@@ -260,10 +262,41 @@ export default (top, session, branchesAll, focusedModule) => {
       if (event === this.state.events.init) return
 
       const sent = subscribers
-        .filter(send => e.event[branchSymol].indexOf(send.branch) === 0) // event is child of subscribed module or the same module
-        .map(send => (!send.triggerOnly || e.meta.trigger) && send(send.module, e))
+        .filter(send =>
+          e.event[branchSymol].indexOf(send.branch) === 0 && // event is child of subscribed module or the same module
+          !send.triggerOnly || e.meta.trigger
+        )
+        .map(send => send(send.module, e))
 
-      if (sent.length > 0) promises.push(sent)
+      if (sent.length > 0) promises.push(...sent)
+    },
+
+    notifyListeners(ignoreParents = true) {
+      if (isChildOrSelf(this.branch, 'replayTools')) {
+        const start = performance.now()
+        this.replayToolsListeners.forEach(listener => listener())
+        queueMicrotask(() => console.log('replayTools.render.sync', parseFloat((performance.now() - start).toFixed(3))))
+        return
+      }
+
+      const top = getStore()
+      const vl = this.versionListeners.get(top)
+
+      const start = performance.now()
+
+      vl.pending = 0
+      vl.listeners.forEach(listener => {
+        if (ignoreParents && !isChildOrSelf(listener.respond.branch, this.branch)) return
+        listener()
+      })
+
+      queueMicrotask(() => console.log('render.sync', parseFloat((performance.now() - start).toFixed(3))))
+    },
+
+    replayToolsListeners: new Set,
+
+    notifyReplayTools() {
+      queueNotificationReplayTools(this)
     },
   
     onError(err)  {

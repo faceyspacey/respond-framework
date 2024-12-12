@@ -1,11 +1,15 @@
 import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 
-export default function snapshot(proxy, vls = this.versionListeners) {
+export default function(proxy = this.state, vls = this.versionListeners) {
   const vl = vls.get(proxy)
   return vl ? createSnapshot(vl, vls) : proxy // proxy : primitive value
 }
 
+function snapshot(proxy, vls) {
+  const vl = vls.get(proxy)
+  return vl ? createSnapshot(vl, vls) : proxy // proxy : primitive value
+}
 
 function createSnapshot({ orig: o, version, cache }, vls) {
   const { version: v, snap: s } = cache.get(o) ?? {}

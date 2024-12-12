@@ -68,7 +68,7 @@ const createEvent = (respond, config, name, namespace) => {
 
   if (extractedEvents.has(config)) {
     const key = extractedEvents.get(config)
-    state[key] = event
+    state[key] = event // assign event originally extracted from state.fooEvent back to its original key -- see extractModuleAspects.js where the inverse occurs and its assigned to state.events by the same name -- the goal is to have it available as state.fooEvent, but created here as part of the standard events creation process as if it existed on state.events.fooEvent
   }
 
   return event

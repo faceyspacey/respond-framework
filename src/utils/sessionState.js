@@ -5,12 +5,12 @@ import { createStateReviver, createReplacer } from './revive.js'
 
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
-  const { prevState, prevPrevState, replayTools = {} } = window.state ?? {}
-  const { settings: _, configs: __, tests, selectedTestId, ...rt } = replayTools.respond?.snapshot(replayTools) ?? {}
+  const { prevState, prevPrevState, respond, replayTools = {} } = window.state ?? {}
+  const { settings: _, configs: __, tests, selectedTestId, ...rt } = respond?.snapshot(replayTools) ?? {}
   const prt = prevState?.replayTools ?? {}
 
   let replayState = status === 'hmr'
-    ? { ...prevState.respond.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
+    ? { ...respond.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
     : { settings, branch, status }
 
   if (status === 'reload' || status === 'replay') {
@@ -63,7 +63,7 @@ export const getSessionState = respond => {
 }
 
 
-export const saveSessionState = (e, state) => {
+export const saveSessionState = (state, e) => {
   const { replayState, basenames, prevUrl, dbCache, urlCache, session } = state.respond
   const replacer = createReplacer(state.respond)
 

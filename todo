@@ -727,6 +727,16 @@ use a map to see whats inside, and be able to clear it!
 
 #isChanged(prevState, prevPrevState)
 
+#chain pending queue
+
+#intersection of: ignoreParents, isolated (no props) x !isAncestorOrSelf
+
+
+
+mergePrevState: admin.foo not working
+hmr lastEvent not always available (probably has to do with session or replay)
+
+
 
 make all tools replacable by user (including reviver)
 re-organize files, better nameing for mod vs state, top vs topModule/state, etc

@@ -1,9 +1,13 @@
 import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 import { ObjectId } from 'bson'
+import { syncRef } from '../store/plugins/edit/index.js'
+import { isAncestorOrSelf, isChildOrSelf } from '../utils/sliceBranch.js'
+import { _module } from '../store/reserved.js'
+import queueNotification from './utils/queueNotification.js'
 
 
-export default function createProxy(o, vls, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
+export default function createProxy(o, vls, refIds, notifyParent, cache =  new WeakMap, snapCache = new WeakMap) {
   const found = findExistingProxyOrObject(o, notifyParent, vls, refIds, cache)
   if (found) return found
 
@@ -15,7 +19,7 @@ export default function createProxy(o, vls, refIds, notifyParent = function() {}
   cache.set(o, proxy)
   vls.set(proxy, vl)
 
-  vl.listeners.add(notifyParent)
+  if (notifyParent) vl.listeners.add(notifyParent)
 
   Object.keys(o).forEach(k => {
     const v = o[k]
@@ -33,25 +37,41 @@ let highestVersion = 0
 class VersionListener {
   version = highestVersion
   listeners = new Set
+  pending = 0
 
   constructor(orig, vls, cache) {
     this.orig = orig
     this.vls = vls
     this.cache = cache
+
+    if (orig[_module]) {
+      this.isTop = orig.moduleName === ''
+      this.branch = orig.respond.branch
+      this.respond = orig.respond
+    }
   }
 
-  notify = (next = ++highestVersion) => {
-    if (this.version === next) return
-    this.version = next
-    this.listeners.forEach(listener => listener(this.version))
-  }
-
-  remove = notifyParent => {
+  remove(notifyParent) {
     this.listeners.delete(notifyParent)
     if (this.listeners.size) return // proxy is assigned elsewhere and therefore has other listeners
     Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
   }
+
+  notify = (branch = this.branch, version = ++highestVersion) => {
+    if (this.version === version) return console.log('version match', this.orig)
+
+    this.version = version
+
+    if (!this.isTop)  return this.listeners.forEach(listener => listener(branch, version)) // if not top, must always notify parents so version stored -- only top notifies component listeners
+    if (syncRef.sync) return
+    if (isChildOrSelf(branch, 'replayTools')) return this.respond.notifyReplayTools()
+
+    queueNotification(this, branch)
+  }
 }
+
+
+
 
 
 
