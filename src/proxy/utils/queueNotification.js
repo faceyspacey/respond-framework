@@ -35,7 +35,6 @@ export default function(vl, queuedBranch) {
     }
 
     delete vl.queuedBranch
-    delete vl.queuedRpt
 
     queueMicrotask(() => console.log('createProxy.render', parseFloat((performance.now() - start).toFixed(3))))
   }

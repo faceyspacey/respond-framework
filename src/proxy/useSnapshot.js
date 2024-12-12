@@ -16,9 +16,8 @@ export default (proxy, snappingPrevState, NAME) => {
   const getSnapshot = () => {
     console.log('getSnapshot', snappingPrevState ? 'prevState' : NAME)
     const next = createSnapshot()
-    const { snapshot, affected } = last.current ?? {}
-    const changed = inRender || !last.current || isChanged(snapshot, next, affected)
-    return changed ? next : snapshot // not changed -- referentially equal
+    const changed = inRender || !last.snapshot || isChanged(last.snapshot, next, last.affected)
+    return changed ? next : last.snapshot // not changed -- referentially equal
   }
 
   let inRender = true
@@ -29,7 +28,8 @@ export default (proxy, snappingPrevState, NAME) => {
   const cache = useMemo(() => new WeakMap, []) // per-hook proxy cache
 
   useLayoutEffect(() => {
-    last.current = { snapshot, affected }
+    last.snapshot = snapshot
+    last.affected = affected
   })
 
   return createSnapProxy(snapshot, { affected, cache })
