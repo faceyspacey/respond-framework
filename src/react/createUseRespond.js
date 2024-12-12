@@ -15,9 +15,11 @@ export default (id = createUniqueModuleId()) => {
   const useRespond = () => {
     const top = useContext(RespondContext)
     const branch = top.respond.branchLocatorsById[id]
+    const isolated = top.respond.isolatedBranches[branch]
 
-    const snap = useSnapshot(top)
-    return sliceBranch(snap, branch) // selector props require slicing top.state to crawl to top of state tree
+    return isolated
+      ? useSnapshot(sliceBranch(top, branch)) // optimization: reactive crawl from top on state changes is not necessary in useSnapshot, so we can pre-slice
+      : sliceBranch(useSnapshot(top), branch) // props depend on parent state, accessed via this[_parentSymbol] in generated selectors
   }
 
 
@@ -46,12 +48,12 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useSubscribe = (subscriber, deps) => {
+  const useSubscribe = (subscriber, deps, triggerOnly) => {
     const state = useStore()
   
     useEffect(() => {
       subscriber(state)
-      return state.respond.subscribe(subscriber)
+      return state.respond.subscribe(subscriber, triggerOnly)
     }, [state, ...deps])
   }
 

@@ -6,6 +6,7 @@ import { push } from '../history/changePath.js'
 import { hasHistory } from '../utils/bools.js'
 import bs from '../history/browserState.js'
 import { branch as branchSymbol } from '../store/reserved.js'
+import { urlToLocation } from '../utils/url.js'
 
 
 export default function (state, e) {
@@ -15,7 +16,8 @@ export default function (state, e) {
   const { respond, replayTools } = top
 
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
-    push(window.location.href) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
+    const { url } = urlToLocation(window.location)
+    push(url) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
   }
 
   if (respond.replayState.status === 'session') {
