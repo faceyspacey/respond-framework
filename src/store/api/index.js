@@ -15,7 +15,7 @@ import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/find
 
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { isAncestorOrSelf, isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
+import { isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
 import { _parent, branch as branchSymol } from '../reserved.js'
 import createDbCache from '../../db/utils/createDbCache.js'
@@ -23,7 +23,7 @@ import createUrlCache from '../createUrlCache.js'
 import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
 import { ObjectId } from 'bson'
 import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
-import { queueNotificationReplayTools } from '../../proxy/utils/queueNotification.js'
+import { clearPending } from '../../proxy/utils/queueNotification.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
@@ -272,31 +272,22 @@ export default (top, session, branchesAll, focusedModule) => {
     },
 
     notifyListeners(ignoreParents = true) {
-      if (isChildOrSelf(this.branch, 'replayTools')) {
-        const start = performance.now()
-        this.replayToolsListeners.forEach(listener => listener())
-        queueMicrotask(() => console.log('replayTools.render.sync', parseFloat((performance.now() - start).toFixed(3))))
-        return
-      }
-
       const top = getStore()
       const vl = this.versionListeners.get(top)
 
       const start = performance.now()
 
-      vl.pending = 0
-      vl.listeners.forEach(listener => {
-        if (ignoreParents && !isChildOrSelf(listener.respond.branch, this.branch)) return
-        listener()
-      })
+      clearPending()
+
+      if (ignoreParents) {
+        const br = this.branch
+        vl.listeners.forEach(l => isChildOrSelf(l.branch, br) && l())
+      }
+      else {
+        vl.listeners.forEach(l => l())
+      }
 
       queueMicrotask(() => console.log('render.sync', parseFloat((performance.now() - start).toFixed(3))))
-    },
-
-    replayToolsListeners: new Set,
-
-    notifyReplayTools() {
-      queueNotificationReplayTools(this)
     },
   
     onError(err)  {

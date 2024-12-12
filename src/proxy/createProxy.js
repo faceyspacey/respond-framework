@@ -1,10 +1,8 @@
 import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
-import { ObjectId } from 'bson'
-import { syncRef } from '../store/plugins/edit/index.js'
-import { isAncestorOrSelf, isChildOrSelf } from '../utils/sliceBranch.js'
 import { _module } from '../store/reserved.js'
 import queueNotification from './utils/queueNotification.js'
+import { syncRef } from '../store/plugins/edit/index.js'
 
 
 export default function createProxy(o, vls, refIds, notifyParent, cache =  new WeakMap, snapCache = new WeakMap) {
@@ -13,13 +11,15 @@ export default function createProxy(o, vls, refIds, notifyParent, cache =  new W
 
   const orig = isArray(o) ? [] : create(getProto(o))
 
-  const vl = new VersionListener(orig, vls, snapCache)
+  const Vl = orig[_module] ? VersionListenerModule : VersionListener
+
+  const vl = new Vl(orig, vls, snapCache)
   const proxy = new Proxy(orig, createHandler(vl.notify, vls, refIds, cache, snapCache))
 
   cache.set(o, proxy)
   vls.set(proxy, vl)
 
-  if (notifyParent) vl.listeners.add(notifyParent)
+  if (notifyParent) vl.parents.add(notifyParent)
 
   Object.keys(o).forEach(k => {
     const v = o[k]
@@ -36,53 +36,74 @@ let highestVersion = 0
 
 class VersionListener {
   version = highestVersion
+  parents = new Set
+
+  constructor(orig, vls, cache, snapToOrig) {
+    this.orig = orig
+    this.vls = vls
+    this.cache = cache
+    this.snapToOrig = snapToOrig
+  }
+
+  remove(notifyParent) {
+    this.parents.delete(notifyParent)
+    if (this.parents.size) return // proxy is assigned elsewhere and therefore has other parents
+    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
+  }
+
+  notify = (version = ++highestVersion, branch) => {
+    if (this.version === version) return console.log('version match', this.orig)
+    this.version = version
+    updatedObjects.add(this.orig)
+    this.parents.forEach(parent => parent(version, branch))
+  }
+}
+
+
+class VersionListenerModule {
+  version = highestVersion
+  parents = new Set
   listeners = new Set
-  pending = 0
 
   constructor(orig, vls, cache) {
     this.orig = orig
     this.vls = vls
     this.cache = cache
 
-    if (orig[_module]) {
-      this.isTop = orig.moduleName === ''
-      this.branch = orig.respond.branch
-      this.respond = orig.respond
-    }
+    this.isTop = orig.moduleName === ''
+    this.branch = orig.respond.branch
   }
 
   remove(notifyParent) {
-    this.listeners.delete(notifyParent)
-    if (this.listeners.size) return // proxy is assigned elsewhere and therefore has other listeners
-    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more listeners, attempt to recursively remove listeners from children if they also aren't assigned elsewhere
+    this.parents.delete(notifyParent)
+    if (this.parents.size) return // proxy is assigned elsewhere and therefore has other parents
+    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
   }
 
-  notify = (branch = this.branch, version = ++highestVersion) => {
+  notify = (version = ++highestVersion, branch = this.branch) => {
     if (this.version === version) return console.log('version match', this.orig)
-
     this.version = version
-
-    if (!this.isTop)  return this.listeners.forEach(listener => listener(branch, version)) // if not top, must always notify parents so version stored -- only top notifies component listeners
+    updatedObjects.add(this.orig)
+    this.parents.forEach(parent => parent(version, branch)) // if not top, must always notify parents so version stored -- only top notifies component parents
+    
     if (syncRef.sync) return
-    if (isChildOrSelf(branch, 'replayTools')) return this.respond.notifyReplayTools()
-
-    queueNotification(this, branch)
+    queueNotification(this, branch, this.isTop)
   }
 }
 
 
 
-
+export const updatedObjects = new Set
 
 
 const findExistingProxyOrObject = (po, notifyParent, vls, refIds, cache) => {
   const vl = vls.get(po)
 
   if (vl) {                          // proxy assigned that exists elsewhere
-    vl.listeners.add(notifyParent)
+    vl.parents.add(notifyParent)
 
     if (!refIds.has(vl.orig)) {
-      refIds.set(vl.orig, new ObjectId().toString())
+      refIds.set(vl.orig, generateId())
     }
 
     return po
@@ -92,10 +113,10 @@ const findExistingProxyOrObject = (po, notifyParent, vls, refIds, cache) => {
 
   if (proxy) {                         // object assigned that exists somewhere else as a proxy
     const vl = vls.get(proxy)
-    vl.listeners.add(notifyParent)
+    vl.parents.add(notifyParent)
 
     if (!refIds.has(po)) {
-      refIds.set(po, new ObjectId().toString())
+      refIds.set(po, generateId())
     }
 
     return proxy
@@ -104,3 +125,7 @@ const findExistingProxyOrObject = (po, notifyParent, vls, refIds, cache) => {
 
 
 export const refIds = new WeakMap
+
+const generateId = () => start++
+
+let start = new Date().getTime() // use time as initial count instead of 0 to avoid collisions between new and existing references after refreshes (where sessionStorage restores old references)

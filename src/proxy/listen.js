@@ -1,12 +1,7 @@
-export default function listen(callback, proxy = this.getStore()) {  
-  if (this.moduleName === 'replayTools') {
-    this.replayToolsListeners.add(callback)
-    return () => this.replayToolsListeners.delete(callback)
-  }
-
+export default function listen(callback, proxy = this.state) {  
   const { listeners } = this.versionListeners.get(proxy)
 
-  callback.respond = this
+  callback.branch = this.branch
 
   listeners.add(callback)
   return () => listeners.delete(callback)

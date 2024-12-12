@@ -67,7 +67,7 @@ export default (id = createUniqueModuleId()) => {
   
     useEffect(() => {
       listener(state)
-      return state.respond.listen(() => listener(state), state)
+      return state.respond.listen(() => listener(state))
     }, deps)
   }
 
