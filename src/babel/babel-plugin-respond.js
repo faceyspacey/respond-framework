@@ -8,11 +8,11 @@ function respondBabelPlugin(babel) {
   const visited = Symbol('visited')
 
   const temp = template(`MEMO(function NAME(props) {
-    return FUNC(props, USE_RESPOND("NAME"))
+    return FUNC(props, USE_RESPOND())
   })`)
 
   const tempWithRef = template(`FORWARD_REF(function NAME(props, ref) {
-    return FUNC(props, USE_RESPOND("NAME"), ref)
+    return FUNC(props, USE_RESPOND(), ref)
   })`)
 
   const isComponentCase = name => name[0] === name[0].toUpperCase()

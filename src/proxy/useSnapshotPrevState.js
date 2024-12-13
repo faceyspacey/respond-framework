@@ -7,16 +7,16 @@ export default proxy => {
   const last = useRef()
   const respond = proxy.respond
 
-  const subscribe = useCallback(cb => respond.listen(cb), [])
+  const subscribe = useCallback(cb => respond.subscribe(cb, true), [])
 
   const getSnapshot = () => {
-    const next = respond.snapshot()
+    const next = proxy.prevState 
     const { snapshot, affected } = last.current ?? {}
     return inRender || isChanged(snapshot, next, affected) ? next : snapshot // not changed -- referentially equal
   }
 
   let inRender = true
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, respond.snapshot)
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => proxy.prevState)
   inRender = false
 
   const affected = new WeakMap

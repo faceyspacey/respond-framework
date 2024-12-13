@@ -30,16 +30,7 @@ export const isOwnKeysChanged = (prev, next) => {
 }
 
 
-export const recordUsage = ({ affected, callback, componentListeners, snapToOrig }, snap, k, trap = defaultTrap) => {
-  const orig = snapToOrig.get(snap)
-  let listeners = componentListeners.get(orig)
-
-  if (!listeners) {
-    listeners = componentListeners.set(orig, new Set)
-  }
-
-  listeners.add(callback.current)
-
+export const recordUsage = ({ affected }, snap, k, trap = defaultTrap) => {
   let used = affected.get(snap)
   
   if (!used) {

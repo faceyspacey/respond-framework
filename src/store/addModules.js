@@ -22,7 +22,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   respond.branchLocatorsById[mod.id] = branch
   respond.branches[branch] = state
 
-  respond.build?.(deps)
+  respond.build(deps)
 
   const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
@@ -35,9 +35,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   createBasename(deps)
   createPlugins(deps)
   
-  respond.buildAfter?.(deps)
-
-  respond.isolated = Object.keys(propReducers).length === 0 && Object.keys(propSelectors).length === 1 // optimize rendering to not crawl parent state when not necessary
+  respond.buildAfter(deps)
 
   moduleKeys.forEach(k => addModule(Respond, mod[k], state, k))
 

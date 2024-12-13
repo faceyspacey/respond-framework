@@ -1,9 +1,11 @@
 import { _parent } from './reserved.js'
 import stack from './reducers/stack.js'
+import token from './reducers/token.js'
 
 
-export default ({ respond, proto, state, parent, name }, reducers, propReducers) => {
-  reducers = reducers.stack ? { ...reducers } : { stack, ...reducers } // preserve reducer order if stack or curr already exists
+export default ({ respond, proto, state, parent, name, branch }, reducers, propReducers) => {
+  reducers = reducers.hasOwnProperty('stack') ? { ...reducers } : { stack, ...reducers } // preserve reducer order if stack or curr already exists
+  if (!branch) reducers.token ??= token // token reducer only assigned to top module, children use selector to access it
 
   proto.reducers = reducers
   
@@ -14,7 +16,7 @@ export default ({ respond, proto, state, parent, name }, reducers, propReducers)
     const reducer = propReducers[k]
     const parentK = parentKeys.find(k => parentReducers[k] === reducer)
 
-    const k2 = parentK ?? name + '_' + k                                  // reuse existing reducer state if available (perf optimization)
+    const k2 = parentK ?? name + '_' + k                                  // optimization: reuse existing reducer state if available
 
     parentReducers[k2] = reducer                                          // if parent reducer doesn't exist, assign new reducer to parent
 
@@ -22,6 +24,8 @@ export default ({ respond, proto, state, parent, name }, reducers, propReducers)
     Object.defineProperty(proto, k, { get, configurable: true })
 
     if (reducers[k]) respond.overridenReducers.set(reducers[k], true)     // disable possible child reducer mock, so reduce prop's selector takes precedence
-    if (state.hasOwnProperty(k)) delete state[k]    // delete possible selector or initialState
+    if (state.hasOwnProperty(k)) delete state[k]                          // delete possible initialState
+
+    respond.dependsOnParent = true
   })
 }

@@ -1,0 +1,1 @@
+export default (state = '', e) => e.token ?? state

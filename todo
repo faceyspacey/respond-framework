@@ -642,6 +642,23 @@ use a map to see whats inside, and be able to clear it!
 
 
 
+
+import { useRef, useMemo } from 'react'
+import createSnapProxy from './createSnapProxy.js'
+
+
+export default proxy => {
+  const [, setState] = useState()
+  const callback = useRef(setState).current
+  const respond = proxy.respond
+
+  const cache = useMemo(() => new WeakMap, []) // per-hook proxy cache
+
+  return createSnapProxy(respond.snapshot(), { cache, callback })
+}
+
+
+
 #make controllers a proxy that passes thru to db, and if not available, checks controller method -- then use solution for not having to nest controller returns
 #api returns need to be check for undefined
 

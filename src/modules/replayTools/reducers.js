@@ -128,3 +128,6 @@ export const filter = (state = 'tests', e, { events }) => {
 
   return state
 }
+
+
+export const stack = null

@@ -51,10 +51,9 @@ export default (top, session, branchesAll, focusedModule) => {
   const reuseEvents = prev?.focusedBranch === focusedBranch
 
   const eventsByPattern = {}
+
   function Respond(props) {
     Object.assign(this, props)
-
-    this.build = this.mod.build ?? this.props.build
 
     this.overridenReducers = new Map
     this.mod.id ??= this.generateId()
@@ -65,11 +64,56 @@ export default (top, session, branchesAll, focusedModule) => {
     }
 
     this.db = new Proxy({}, { get })
+
+    this.listeners = new Set
+
+    let b = ''
+    this.ancestors = !this.branch
+      ? ['']
+      : ['', ...this.branch.split('.').map(k =>  b = b ? b + '.' + k : k)].reverse()
+    
+    this.responds[this.branch] = this
+
+    this.snapshot = snapshot.bind(this)
   }
 
   const apiHandler = createApiHandler({ db: top.db, log: false })
 
   Respond.prototype = {
+    build(deps) {
+      (this.mod.build ?? this.props.build)?.(deps)
+    },
+    buildAfter(deps) {
+      (this.mod.buildAfter ?? this.props.buildAfter)?.(deps)
+      this.assignRenderingDependencies(deps)
+    },
+    
+    assignRenderingDependencies({ branch, parent }) {
+      const { ignoreParents, dependsOnAllAncestors, dependsOnParent } = this
+
+      if (!ignoreParents) {
+        if (dependsOnAllAncestors) {
+          this.dependedBranch = '' 
+          this.branchDiff = branch
+        }
+        else if (dependsOnParent) {
+          this.dependedBranch = parent.respond.branch
+          this.branchDiff = this.moduleName
+        }
+      }
+
+      this.ancestorsListening = {} // includes self
+
+      for (const b of this.ancestors) {
+        const respond = this.responds[b]
+        const dependedBranch = respond.dependedBranch ?? respond.branch
+
+        this.ancestorsListening[dependedBranch] = true
+        
+        if (this.responds[b].ignoreParents) break
+      }
+    },
+
     callDatabase,
     async apiHandler(req, res) {
       await this.simulateLatency()
@@ -115,6 +159,7 @@ export default (top, session, branchesAll, focusedModule) => {
 
     eventsByPattern,
 
+    responds: {},
     subscribers,
     promises,
     refs: {},
@@ -130,7 +175,6 @@ export default (top, session, branchesAll, focusedModule) => {
   
     versionListeners: new WeakMap,
     refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
-    snapshot,
     listen,
 
     render,
@@ -272,19 +316,20 @@ export default (top, session, branchesAll, focusedModule) => {
     },
 
     notifyListeners(ignoreParents = true) {
-      const top = getStore()
-      const vl = this.versionListeners.get(top)
-
       const start = performance.now()
 
       clearPending()
 
+      this.listeners.forEach(l => l())
+      
       if (ignoreParents) {
-        const br = this.branch
-        vl.listeners.forEach(l => isChildOrSelf(l.branch, br) && l())
+        this.listeners.forEach(l => l())
       }
       else {
-        vl.listeners.forEach(l => l())
+        Object.keys(this.ancestorsListening).forEach(b => {
+          const respond = this.responds[b]
+          respond.listeners.forEach(l => l())
+        })
       }
 
       queueMicrotask(() => console.log('render.sync', parseFloat((performance.now() - start).toFixed(3))))

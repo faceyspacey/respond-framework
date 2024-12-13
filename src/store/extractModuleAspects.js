@@ -3,8 +3,8 @@ import { extractedEvents } from './createEvents.js'
 
 
 export default (mod, state) => {
-  const events = mod.events ?? {}
-  const reducers = mod.reducers ?? {}
+  const events = mod.events ? { ...mod.events } : {}
+  const reducers = mod.reducers ? { ...mod.reducers } : {}
 
   const descriptors = Object.getOwnPropertyDescriptors(mod)
 

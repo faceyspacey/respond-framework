@@ -38,11 +38,10 @@ class VersionListener {
   version = highestVersion
   parents = new Set
 
-  constructor(orig, vls, cache, snapToOrig) {
+  constructor(orig, vls, cache) {
     this.orig = orig
     this.vls = vls
     this.cache = cache
-    this.snapToOrig = snapToOrig
   }
 
   remove(notifyParent) {
@@ -54,7 +53,6 @@ class VersionListener {
   notify = (version = ++highestVersion, branch) => {
     if (this.version === version) return console.log('version match', this.orig)
     this.version = version
-    updatedObjects.add(this.orig)
     this.parents.forEach(parent => parent(version, branch))
   }
 }
@@ -63,7 +61,6 @@ class VersionListener {
 class VersionListenerModule {
   version = highestVersion
   parents = new Set
-  listeners = new Set
 
   constructor(orig, vls, cache) {
     this.orig = orig
@@ -72,6 +69,7 @@ class VersionListenerModule {
 
     this.isTop = orig.moduleName === ''
     this.branch = orig.respond.branch
+    this.respond = orig.respond
   }
 
   remove(notifyParent) {
@@ -83,17 +81,14 @@ class VersionListenerModule {
   notify = (version = ++highestVersion, branch = this.branch) => {
     if (this.version === version) return console.log('version match', this.orig)
     this.version = version
-    updatedObjects.add(this.orig)
     this.parents.forEach(parent => parent(version, branch)) // if not top, must always notify parents so version stored -- only top notifies component parents
     
     if (syncRef.sync) return
-    queueNotification(this, branch, this.isTop)
+    if (this.isTop) queueNotification(branch, this.respond)
   }
 }
 
 
-
-export const updatedObjects = new Set
 
 
 const findExistingProxyOrObject = (po, notifyParent, vls, refIds, cache) => {

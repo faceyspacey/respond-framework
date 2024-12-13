@@ -64,6 +64,7 @@ const reduceTree = (e, mod, prevState = {}) => {
 const reduceModule = (state, e, mod, reducers, init) => {
   for (const k in reducers) {
     const reduce = reducers[k]
+    if (!reduce) continue // possibly assigned null to a built-in reducer to disable it
 
     if (mod.respond.overridenReducers.get(reduce)) {
       continue

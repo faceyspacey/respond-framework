@@ -15,18 +15,21 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useRespond = (NAME) => {
+  const useRespond = () => {
     const top = useContext(RespondContext)
     const { branchLocatorsById, branches } = top.respond
     
     const branch = branchLocatorsById[id]
     const mod = branches[branch]
 
-    return mod.respond.isolated
-      ? useSnapshot(mod, undefined, NAME) // optimization: reactive crawl from top on state changes is not necessary in useSnapshot, so we can pre-slice
-      : sliceBranch(useSnapshot(top, undefined, NAME), branch) // props depend on parent state, accessed via this[_parentSymbol] in generated selectors
-  }
+    const { dependedBranch, branchDiff } = mod.respond
+    if (dependedBranch === undefined) return useSnapshot(mod)
 
+    const depMod = branches[dependedBranch]
+    const snap = useSnapshot(depMod)
+
+    return sliceBranch(snap, branchDiff)
+  }
 
   const respond = (Component, name = Component.name) => {
     const { length } = Component
@@ -36,7 +39,7 @@ export default (id = createUniqueModuleId()) => {
     if (length === 3) {
       const { [name]: ComponentWithName } = {
         [name]: forwardRef(function(props, ref) {
-          return Component(props, useRespond(name), ref)
+          return Component(props, useRespond(), ref)
         })
       }
   
@@ -45,7 +48,7 @@ export default (id = createUniqueModuleId()) => {
 
     const { [name]: ComponentWithName } = {
       [name]: function(props) {
-        return Component(props, useRespond(name))
+        return Component(props, useRespond())
       }
     }
 

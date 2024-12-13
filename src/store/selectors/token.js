@@ -1,3 +1,5 @@
+import { _parent } from '../reserved.js'
+
 export default function () {
-  return this.token
+  return this[_parent].token
 }

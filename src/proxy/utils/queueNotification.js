@@ -1,84 +1,70 @@
-import { syncRef } from '../../store/plugins/edit/index.js'
-import { updatedObjects } from '../createProxy.js'
-
-
-export default (vl, branch, isTop) => {
-  modulateUpdates[branch] ??= vl
-  if (isTop) queueNotification(vl, branch)
+export default (branch, respond) => {
+  updated[branch] = true
+  enqueue(respond)
 }
 
-
-// let modulateUpdates = {}
-let pending = 0
-
-export const clearPending = () => pending = 0
-
-
-const queueNotification = () => {
+const enqueue = respond => {
   if (pending) return pending = 2 // every time more are queued, we set pending status to 2 to signal to prolong capture time below, as there's a high possibility for more consecutive near instant changes
 
   pending = 1
 
-  const queued = () => {
+  const notify = () => {
     if (!pending) return // a subsequent sync event notified listeners before dequeued (see respond.notifyListeners + edit plugin)
 
     if (pending === 2) { // batch subsequent dispatches + event callbacks/plugins that are essentially instant and will only require a single notification to listeners/components
       pending = 1
-      allowGracePeriod(queued) // allow sufficient "time" for batching, catpuring several microtasks (ie near-instant promises)
-      return
+      return dequeue(notify) // allow sufficient "time" for batching, catpuring several microtasks (ie near-instant promises)
     }
 
     pending = 0
-    notify()
+    commit(respond)
   }
 
-  allowGracePeriod(queued)
+  dequeue(notify)
 }
 
+const commit = (respond, start = performance.now()) => {
+  const { responds } = respond
+  const listeningBranches = createListeningBranches(responds)
 
-const allowGracePeriod = fn => Promise.resolve().then().then().then().then().then(fn)
-
-
-const notify = () => {
-  const start = performance.now()
-  const uniqueComponents = new Set
-
-  updatedObjects.forEach(orig => {
-    componentListeners.get(orig)?.forEach(listener => uniqueComponents.add(listener))
+  const hasReplayTools = listeningBranches.replayTools
+  delete listeningBranches.replayTools
+  
+  Object.values(responds).forEach(respond => {
+    const { branch, listeners } = respond
+    if (!listeningBranches[branch]) return
+    listeners.forEach(listener => listener())
   })
 
-  uniqueComponents.forEach(listener => listener())
+  updated = {}
+  log(start, listeningBranches)
 
-  updatedObjects.clear()
-  log(start)
-}
-
-
-
-const queueNotificationReplayTools2 = function(vl) {
-  if (syncRef.sync) return
-  if (vl.pending) return vl.pending++
-
-  vl.pending = 1
-
-  const queued = () => {
-    if (!vl.pending) return // a subsequent sync event notified listeners before dequeued (see respond.notifyListeners + edit plugin)
-
-    if (vl.pending > 1) { // batch subsequent dispatches + event callbacks/plugins that are essentially instant and will only require a single notification to listeners/components
-      vl.pending = 1
-      return Promise.resolve().then().then().then().then().then(queued) // allow sufficient "time" for batching, catpuring several microtasks (ie near-instant promises)
-    }
-
-    vl.pending = 0
-    
-    const start = performance.now()
-    vl.replayToolsListeners.forEach(listener => listener())
-    log(start)
+  if (hasReplayTools) {
+    queueMicrotask(() => {
+      const st = performance.now()
+      responds.replayTools.listeners.forEach(listener => listener())
+      log(st, undefined, '.replayTools')
+    })
   }
-
-  Promise.resolve().then().then().then().then().then(queued)
 }
 
 
+let updated = {}
+let pending = 0
 
-const log = start => queueMicrotask(() => console.log('queueNotification.render', parseFloat((performance.now() - start).toFixed(3))))
+export const clearPending = () => pending = 0
+
+const dequeue = fn => Promise.resolve().then().then().then().then().then(fn)
+
+const log = (start, listeningBranches, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start, listeningBranches))
+
+const createListeningBranches = responds => {
+  const branches = {}
+  
+  Object.keys(updated).forEach(branch => {
+    const respond = responds[branch]
+    Object.assign(branches, respond.ancestorsListening)
+  })
+
+  return branches
+}
