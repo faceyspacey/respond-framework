@@ -56,22 +56,24 @@ const createListeningBranches = responds => {
     Object.assign(branches, respond.ancestorsListening)
   })
 
+  queueReplayToolsSeparately(responds, branches)
+
   updated.clear() // clear for next batch
 
-  queueReplayToolsSeparately(responds, branches)
-  
   return branches
 }
 
 
 const queueReplayToolsSeparately = (responds, listeningBranches) => {
-  // if (!listeningBranches.replayTools) return
+  if (!listeningBranches.replayTools) return
 
-  // delete listeningBranches.replayTools
+  if (syncRef.sync && updated.size === 1) return // must be handled sync if replayTools is the only branch updated, as it means one of its inputs is being edited -- note: however, if sync, but the main application's inputs are edited, we can still queue a microtask to render replayTools separately
 
-  // queueMicrotask(() => queueMicrotask(() => {
-  //   const start = performance.now()
-  //   responds.replayTools.listeners.forEach(listener => listener())
-  //   log(start, undefined, '.replayTools')
-  // }))
+  delete listeningBranches.replayTools
+
+  queueMicrotask(() => queueMicrotask(() => {
+    const start = performance.now()
+    responds.replayTools.listeners.forEach(listener => listener())
+    log(start, undefined, '.replayTools')
+  }))
 }

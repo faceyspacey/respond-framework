@@ -750,9 +750,10 @@ export default proxy => {
 
 
 
-mergePrevState: admin.foo not working
+#mergePrevState: admin.foo not working
 hmr lastEvent not always available (probably has to do with session or replay)
 
+preventExtension, assign _parent to proto
 
 
 make all tools replacable by user (including reviver)

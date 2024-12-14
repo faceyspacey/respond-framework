@@ -2,6 +2,7 @@ import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'
 import { isDev, isProd } from './bools.js'
 import { createStateReviver, createReplacer } from './revive.js'
+import cloneDeep, { cloneDeepModulesOnly } from '../proxy/utils/cloneDeep.js'
 
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
@@ -20,7 +21,7 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
     case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState, replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }, prevState: prevPrevState, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
+    case 'hmr':     return { ...cloneDeepModulesOnly(prevState), replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }, prevState: prevPrevState, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
   }
 
   replayState = !isProd && permalinkReplayState()

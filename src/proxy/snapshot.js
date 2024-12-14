@@ -2,8 +2,7 @@ import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 
 export default function(proxy = this.state, vls = this.versionListeners) {
-  const vl = vls.get(proxy)
-  return vl ? createSnapshot(vl, vls) : proxy // proxy : primitive value
+  return snapshot(proxy, vls)
 }
 
 function snapshot(proxy, vls) {

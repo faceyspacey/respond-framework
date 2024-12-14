@@ -160,7 +160,7 @@ export default {
   },
 
   deleteEvent: {
-    before: async ({ state }, { index: i }) => {
+    before: async (state, { index: i }) => {
       state.evs.splice(i, 1)
 
       if (state.divergentIndex && i < state.divergentIndex) {

@@ -16,7 +16,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
 
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
   const respond = new Respond({ branch, moduleKeys, state, mod, props, components, reduce, options, moduleName: name, ignoreParents })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, state, options, branch, moduleName: name, mod, components })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, options, branch, moduleName: name, mod, components })
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
   respond.branchLocatorsById[mod.id] = branch

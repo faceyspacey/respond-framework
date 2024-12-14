@@ -7,7 +7,7 @@ export default proxy => {
   const last = useRef()
   const respond = proxy.respond
 
-  const subscribe = useCallback(cb => respond.subscribe(cb, true), [])
+  const subscribe = useCallback(cb => respond.subscribe(cb), [respond])
 
   const getSnapshot = () => {
     const next = proxy.prevState 

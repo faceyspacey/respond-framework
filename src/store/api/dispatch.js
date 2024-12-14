@@ -5,8 +5,7 @@ import loadPluginsOnce from '../../utils/loadPlugins.js'
 
 export default async function(e, meta, start = performance.now()) {
   if (meta) e.meta = { ...e.meta, ...meta }
-  if (e.meta.trigger) this.mem.changedPath = false
-
+  
   const state = e.event.module
 
   const prom = loadPluginsOnce(this)

@@ -14,7 +14,7 @@ export default (state, session) => {
   }
   else {
     state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
-    reviveModules(state, hydration) // hydration either server hydration or HMR prevState
+    Object.assign(state, reviveModules(state, hydration)) // hydration either server hydration or HMR prevState
   }
 
   if (prevState) { // hmr/session have prevState already

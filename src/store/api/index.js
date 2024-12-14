@@ -290,7 +290,7 @@ export default (top, session, branchesAll, focusedModule) => {
       return findClosestAncestorWith(key, b2, top)
     },
   
-    subscribe(send, triggerOnly) {
+    subscribe(send, triggerOnly = true) {
       send.module = this.state
       send.branch = this.state.branch // branch of module attached to `respond` object unique to each module
       send.triggerOnly = triggerOnly

@@ -15,6 +15,8 @@ export default function (state, e) {
   const top = state.respond.getStore()
   const { respond, replayTools } = top
 
+  respond.mem.changedPath = false
+
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
     const { url } = urlToLocation(window.location)
     push(url) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)

@@ -7,3 +7,15 @@ export default function cloneDeep(o) {
   keys(o).forEach(k => snap[k] = cloneDeep(o[k]))
   return snap
 }
+
+
+export function cloneDeepModulesOnly(o) {
+  const snap = create(getProto(o))
+  Object.assign(snap, o)
+
+  o.moduleKeys.forEach(k => { 
+    snap[k] = cloneDeepModulesOnly(o[k])
+  })
+
+  return snap
+}
