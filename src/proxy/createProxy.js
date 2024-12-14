@@ -2,7 +2,6 @@ import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
 import { _module } from '../store/reserved.js'
 import queueNotification from './utils/queueNotification.js'
-import { syncRef } from '../store/plugins/edit/index.js'
 
 
 export default function createProxy(o, vls, refIds, notifyParent, cache =  new WeakMap, snapCache = new WeakMap) {
@@ -42,6 +41,8 @@ class VersionListener {
     this.orig = orig
     this.vls = vls
     this.cache = cache
+
+    this.notify = this.notify.bind(this) // needs unique ref with `this` context to be passed as callback to children
   }
 
   remove(notifyParent) {
@@ -50,7 +51,7 @@ class VersionListener {
     Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
   }
 
-  notify = (version = ++highestVersion, branch) => {
+  notify(version = ++highestVersion, branch) {
     if (this.version === version) return console.log('version match', this.orig)
     this.version = version
     this.parents.forEach(parent => parent(version, branch))
@@ -58,32 +59,17 @@ class VersionListener {
 }
 
 
-class VersionListenerModule {
-  version = highestVersion
-  parents = new Set
-
+class VersionListenerModule extends VersionListener {
   constructor(orig, vls, cache) {
-    this.orig = orig
-    this.vls = vls
-    this.cache = cache
+    super(orig, vls, cache)
 
-    this.isTop = orig.moduleName === ''
-    this.branch = orig.respond.branch
     this.respond = orig.respond
+    this.branch = orig.respond.branch
+    this.isTop = orig.moduleName === ''
   }
 
-  remove(notifyParent) {
-    this.parents.delete(notifyParent)
-    if (this.parents.size) return // proxy is assigned elsewhere and therefore has other parents
-    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
-  }
-
-  notify = (version = ++highestVersion, branch = this.branch) => {
-    if (this.version === version) return console.log('version match', this.orig)
-    this.version = version
-    this.parents.forEach(parent => parent(version, branch)) // if not top, must always notify parents so version stored -- only top notifies component parents
-    
-    if (syncRef.sync) return
+  notify(version = ++highestVersion, branch = this.branch) {
+    super.notify(version, branch)
     if (this.isTop) queueNotification(branch, this.respond)
   }
 }

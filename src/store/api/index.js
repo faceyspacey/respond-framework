@@ -23,7 +23,7 @@ import createUrlCache from '../createUrlCache.js'
 import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
 import { ObjectId } from 'bson'
 import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
-import { clearPending } from '../../proxy/utils/queueNotification.js'
+import createProxy from '../../proxy/createProxy.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
@@ -184,6 +184,12 @@ export default (top, session, branchesAll, focusedModule) => {
   
     getStore,
 
+    proxify() {
+      const proxy = createProxy(branches[''], this.versionListeners, this.refIds)
+      this.replaceWithProxies(proxy)
+      return window.state = proxy
+    },
+
     replaceWithProxies: function replaceWithProxies(proxy, parent = {}, b = '') {
       const proto = Object.getPrototypeOf(proxy)
       proto[_parent] = parent
@@ -313,26 +319,6 @@ export default (top, session, branchesAll, focusedModule) => {
         .map(send => send(send.module, e))
 
       if (sent.length > 0) promises.push(...sent)
-    },
-
-    notifyListeners(ignoreParents = true) {
-      const start = performance.now()
-
-      clearPending()
-
-      this.listeners.forEach(l => l())
-      
-      if (ignoreParents) {
-        this.listeners.forEach(l => l())
-      }
-      else {
-        Object.keys(this.ancestorsListening).forEach(b => {
-          const respond = this.responds[b]
-          respond.listeners.forEach(l => l())
-        })
-      }
-
-      queueMicrotask(() => console.log('render.sync', parseFloat((performance.now() - start).toFixed(3))))
     },
   
     onError(err)  {

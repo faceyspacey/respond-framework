@@ -64,7 +64,7 @@ export default {
     submit: async (state, { id, index, delay }) => {
       const { events, name, ...test } = state.tests[id]
 
-      state.evs = events
+      state.evs = events.slice()
       state.divergentIndex = events.length // purple event rows will appear at end of event list if new events manually triggered by using app
     
       state.selectedTestId = id

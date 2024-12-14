@@ -17,16 +17,13 @@ export default function edit(state, e) {
 edit.sync = true // mark event as sync, so createPlugins can shift em to front of dispatch pipeline before potentially async events
 
 
-const notify = ({ respond }, e) => {
-  respond.notifyListeners(e.event.ignoreParents !== false) // directly notify listening components syncronously
-  syncRef.sync = false
-}
-
 
 const plugins = [
   before,
   reduce,
-  notify,
+  () => {
+    syncRef.sync = false
+  },
   debounce,
   end
 ]

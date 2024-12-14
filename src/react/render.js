@@ -3,7 +3,6 @@ import { AppRegistry } from 'react-native'
 import { createRoot } from 'react-dom/client'
 import { isNative, isTest } from '../utils/bools.js'
 import RespondProvider from './Provider.js'
-import createProxy from '../proxy/createProxy.js'
 
 
 export default function render(props = {}) {
@@ -24,13 +23,13 @@ export default function render(props = {}) {
 
 
 const createApp = (respond, props) => {
-  const state = window.state = createProxy(respond.getStore(), respond.versionListeners, respond.refIds)
-  respond.replaceWithProxies(state)
-  respond.mem.rendered = true
+  const state = respond.proxify()
 
   const Provider = props.Provider || state.components?.Provider || RespondProvider
   const { App, Error } = state.components ?? {}
 
+  respond.mem.rendered = true
+  
   return React.createElement(Provider, { state, App, Error, ...props })
 }
 

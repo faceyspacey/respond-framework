@@ -14,10 +14,7 @@ export default async function(events, delay = 0, { settings, branch } = this.res
   //   events = revive(state.respond)(events)
   // }
 
-  const start = performance.now()
   events = revive(state.respond)(events)
-  console.log('replayEvents.revive', performance.now() - start)
-
   await run(events, delay, state)
 
   return state
