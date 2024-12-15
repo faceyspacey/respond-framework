@@ -7,13 +7,12 @@ export default (snap, parentState) => {
   let state = cache.get(snap)
 
   if (!state) {
-    state = {}
+    state = { cache }
     state.proxy = new Proxy(snap, createSnapHandler(snap, state))
     cache.set(snap, state)
   }
 
   state.affected = affected
-  state.cache = cache
   state.parentProxy = proxy
 
   return state.proxy
