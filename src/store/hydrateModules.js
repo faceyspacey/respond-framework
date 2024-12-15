@@ -5,15 +5,16 @@ import { _parent } from './reserved.js'
 
 export default (state, session) => {
   let { replayState, seed, basenames, prevState, ...hydration } = session
+  const { status } = replayState
 
-  if (replayState.status === 'session') {
+  if (status === 'session') {
     const [prev, curr, prevPrev] = state.respond.getSessionState()
     reviveModules(state, curr)
     prevState = prev
     if (prevPrev) Object.getPrototypeOf(state).prevPrevState = prevPrev // only available during HMR in development
   }
   else {
-    state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
+    if (status !== 'hmr') state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
     Object.assign(state, reviveModules(state, hydration)) // hydration either server hydration or HMR prevState
   }
 
@@ -29,8 +30,8 @@ export default (state, session) => {
 
 export function mergePrevState(state, prev, parent = {}) {
   state.moduleKeys.forEach(k => mergePrevState(state[k], prev[k], prev))
-  Object.getPrototypeOf(state).prevState = prev
-  prev[_parent] = parent
+  const proto = Object.getPrototypeOf(state)
+  proto.prevState = Object.assign(Object.create(proto), prev, { [_parent]: parent }) // need to create new object because snapshot has Object.preventExtensions
 }
 
 

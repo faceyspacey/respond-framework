@@ -1,5 +1,6 @@
 import { isModule, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
+import cloneDeep from '../proxy/utils/cloneDeep.js'
 
 
 export default (mod, state) => {
@@ -41,6 +42,6 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
     else selectorDescriptors[k] = descriptor
   }
   else {
-    state[k] = v
+    state[k] = cloneDeep(v)
   }
 }

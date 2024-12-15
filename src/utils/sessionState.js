@@ -6,12 +6,12 @@ import cloneDeep, { cloneDeepModulesOnly } from '../proxy/utils/cloneDeep.js'
 
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
-  const { prevState, prevPrevState, respond, replayTools = {} } = window.state ?? {}
+  const { prevState, prevPrevState, respond, replayTools: { configs: ___, ...replayTools } = {} } = window.state ?? {}
   const { settings: _, configs: __, tests, selectedTestId, ...rt } = respond?.snapshot(replayTools) ?? {}
   const prt = prevState?.replayTools ?? {}
 
   let replayState = status === 'hmr'
-    ? { ...respond.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
+    ? { ...respond.replayState, lastEvent: cloneDeep(rt.evs[rt.evsIndex]), status: 'hmr' }
     : { settings, branch, status }
 
   if (status === 'reload' || status === 'replay') {
@@ -19,9 +19,9 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   }
 
   switch (status) {
-    case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
-    case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 } }
-    case 'hmr':     return { ...cloneDeepModulesOnly(prevState), replayState, replayTools: { ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }, prevState: prevPrevState, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
+    case 'reload':  return { ...hydration, replayState, replayTools: cloneDeep({ ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }) }
+    case 'replay':  return { ...hydration, replayState, replayTools: cloneDeep({ ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 }) }
+    case 'hmr':     return { ...cloneDeep(prevState), replayState, replayTools: cloneDeep({ ...replayTools, evs: prt.evs, evsIndex: prt.evsIndex, divergentIndex: prt.divergentIndex, playing: false }), prevState: cloneDeep(prevPrevState), seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
   }
 
   replayState = !isProd && permalinkReplayState()

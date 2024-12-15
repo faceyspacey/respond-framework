@@ -1,7 +1,9 @@
+import cloneDeep from './utils/cloneDeep.js'
 import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 
 export default function(proxy = this.state, vls = this.versionListeners) {
+  if (!vls.get(proxy)) return cloneDeep(proxy) // because snapshots before proxication otherwise return the entire original object, and need to be separate references
   return snapshot(proxy, vls)
 }
 
@@ -19,5 +21,5 @@ function createSnapshot({ orig: o, version, cache }, vls) {
 
   keys(o).forEach(k => snap[k] = snapshot(o[k], vls))
 
-  return snap // Object.preventExtensions(snap) -- todo: need to find why we needed this, and bring this back (and writable: true)
+  return Object.preventExtensions(snap)
 }
