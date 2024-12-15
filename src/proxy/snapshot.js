@@ -3,8 +3,8 @@ import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 
 export default function(proxy = this.state, vls = this.versionListeners) {
-  if (!vls.get(proxy)) return cloneDeep(proxy) // because snapshots before proxication otherwise return the entire original object, and need to be separate references
-  return snapshot(proxy, vls)
+  const vl = vls.get(proxy)
+  return vl ? createSnapshot(vl, vls) : cloneDeep(proxy) // because snapshots before proxication otherwise return the entire original object, and need to be separate references
 }
 
 function snapshot(proxy, vls) {
