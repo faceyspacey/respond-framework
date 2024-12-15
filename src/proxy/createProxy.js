@@ -4,7 +4,7 @@ import { _module } from '../store/reserved.js'
 import queueNotification from './utils/queueNotification.js'
 
 
-export default function createProxy(o, vls, refIds, notifyParent, cache =  new WeakMap, snapCache = new WeakMap) {
+export default function createProxy(o, vls, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {
   const found = findExistingProxyOrObject(o, notifyParent, vls, refIds, cache)
   if (found) return found
 
@@ -18,7 +18,7 @@ export default function createProxy(o, vls, refIds, notifyParent, cache =  new W
   cache.set(o, proxy)
   vls.set(proxy, vl)
 
-  if (notifyParent) vl.parents.add(notifyParent)
+  vl.parents.add(notifyParent)
 
   Object.keys(o).forEach(k => {
     const v = o[k]

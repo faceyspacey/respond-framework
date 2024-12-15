@@ -1,13 +1,6 @@
-import { syncRef } from '../../store/plugins/edit/index.js'
-
-
-let updated = new Set
-let pending = 0
-
-
 export default (branch, respond) => {
-  updated.add(branch)
-  syncRef.sync ? commit(respond) : enqueue(respond)
+  updated.add(branch) // add branch to set -- branch rendered once, no matter how many changes made to it in a single batch
+  respond.ctx.sync ? commit(respond) : enqueue(respond)
 }
 
 const enqueue = respond => {
@@ -29,23 +22,25 @@ const enqueue = respond => {
 }
 
 const commit = (respond, start = performance.now()) => {
-  pending = 0
-
   const { responds } = respond
   const listeningBranches = createListeningBranches(responds)
   
+  scheduleReplayToolsSeparately(listeningBranches, respond)
+
   listeningBranches.forEach(branch => { // note: React is smart enough to always render from top to bottom, regardless of the tree position / order that these callbacks are fired (note: `listener' is the callback function passed to `subscribe` in `useSyncExternalStore(subscribe, getSnapshot)` in `useSnapshot`); also ordering is still correct even in non-syncronous separate microtasks, which is the basis for React's "time slicing" capabilities
     const { listeners } = responds[branch]
     listeners.forEach(listener => listener())
   })
 
-  log(start, listeningBranches)
+  pending = 0
+  updated.clear() // clear for next batch
+  log(start)
 }
 
 
 const dequeue = fn => Promise.resolve().then().then().then().then().then(fn)
 
-const log = (start, listeningBranches, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start, listeningBranches))
+const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
 
 const createListeningBranches = responds => {
   const branches = {}
@@ -55,24 +50,23 @@ const createListeningBranches = responds => {
     Object.assign(branches, respond.ancestorsListening)
   })
 
-  queueReplayToolsSeparately(responds, branches)
-
-  updated.clear() // clear for next batch
-
   return Object.keys(branches).reverse() // notify top to bottom, in case there's any marginal perf benefits internal to React (note: respond.ancestorsListening was originally ordered bottom up)
 }
 
 
-const queueReplayToolsSeparately = (responds, listeningBranches) => {
+const scheduleReplayToolsSeparately = (listeningBranches, respond) => {
   if (!listeningBranches.replayTools) return
-
-  if (syncRef.sync && updated.size === 1) return // must be handled sync if replayTools is the only branch updated, as it means one of its inputs is being edited -- note: however, if sync, but the main application's inputs are edited, we can still queue a microtask to render replayTools separately
+  if (respond.ctx.sync && updated.size === 1) return // must be handled sync if replayTools is the only branch updated, as it means one of its inputs is being edited -- note: however, if sync, but the main application's inputs are edited, we can still queue a microtask to render replayTools separately
 
   delete listeningBranches.replayTools
 
   queueMicrotask(() => queueMicrotask(() => { // needs 2 tasks to hop over main render log
     const start = performance.now()
-    responds.replayTools.listeners.forEach(listener => listener())
-    log(start, undefined, '.replayTools')
+    respond.responds.replayTools.listeners.forEach(listener => listener())
+    log(start, '.replayTools')
   }))
 }
+
+
+let updated = new Set
+let pending = 0
