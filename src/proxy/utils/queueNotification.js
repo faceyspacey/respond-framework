@@ -23,22 +23,24 @@ const enqueue = respond => {
 
 const commit = (respond, start = performance.now()) => {
   const { responds } = respond
+
   const listeningBranches = createListeningBranches(responds)
+  const branches = Object.keys(listeningBranches).reverse()  // notify top to bottom, in case there's any marginal perf benefits internal to React (note: respond.ancestorsListening was originally ordered bottom up)
   
   scheduleReplayToolsSeparately(listeningBranches, respond)
 
-  listeningBranches.forEach(branch => { // note: React is smart enough to always render from top to bottom, regardless of the tree position / order that these callbacks are fired (note: `listener' is the callback function passed to `subscribe` in `useSyncExternalStore(subscribe, getSnapshot)` in `useSnapshot`); also ordering is still correct even in non-syncronous separate microtasks, which is the basis for React's "time slicing" capabilities
+  branches.forEach(branch => { // note: React is smart enough to always render from top to bottom, regardless of the tree position / order that these callbacks are fired (note: `listener' is the callback function passed to `subscribe` in `useSyncExternalStore(subscribe, getSnapshot)` in `useSnapshot`); also ordering is still correct even in non-syncronous separate microtasks, which is the basis for React's "time slicing" capabilities
     const { listeners } = responds[branch]
     listeners.forEach(listener => listener())
   })
 
   pending = 0
   updated.clear() // clear for next batch
-  log(start)
+  if (branches.length > 0) log(start)
 }
 
 
-const dequeue = fn => Promise.resolve().then().then().then().then().then(fn)
+const dequeue = fn => Promise.resolve().then().then().then().then().then().then(fn)
 
 const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
 
@@ -50,7 +52,7 @@ const createListeningBranches = responds => {
     Object.assign(branches, respond.ancestorsListening)
   })
 
-  return Object.keys(branches).reverse() // notify top to bottom, in case there's any marginal perf benefits internal to React (note: respond.ancestorsListening was originally ordered bottom up)
+  return branches
 }
 
 
