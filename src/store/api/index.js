@@ -24,6 +24,7 @@ import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
 import { ObjectId } from 'bson'
 import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
 import createProxy from '../../proxy/createProxy.js'
+import { commit } from '../../proxy/utils/queueNotification.js'
 
 
 export default (top, session, branchesAll, focusedModule) => {
@@ -219,6 +220,10 @@ export default (top, session, branchesAll, focusedModule) => {
       this.queueSaveSession()
     },
 
+    commit() {
+      commit(this)
+    },
+    
     queueSaveSession() {
       if (isProd || isTest) return
       if (mem.saveQueued || getStore().replayTools?.playing) return

@@ -24,6 +24,7 @@ const plugins = [
   reduce,
   state => {
     state.respond.ctx.sync = false
+    state.respond.commit()
   },
   debounce,
   end

@@ -1,6 +1,7 @@
 export default (branch, respond) => {
   updated.add(branch) // add branch to set -- branch rendered once, no matter how many changes made to it in a single batch
-  respond.ctx.sync ? commit(respond) : enqueue(respond)
+  if (respond.ctx.sync) return // sync events dispatch as a batch in edit plugin
+  enqueue(respond)
 }
 
 const enqueue = respond => {
@@ -21,7 +22,7 @@ const enqueue = respond => {
   }
 }
 
-const commit = (respond, start = performance.now()) => {
+export const commit = (respond, start = performance.now()) => {
   const { responds } = respond
 
   const listeningBranches = createListeningBranches(responds)
@@ -36,11 +37,11 @@ const commit = (respond, start = performance.now()) => {
 
   pending = 0
   updated.clear() // clear for next batch
-  if (branches.length > 0) log(start)
+  if (branches.length > 0) log(start) // replayTools removed and was only branch
 }
 
 
-const dequeue = fn => Promise.resolve().then().then().then().then().then().then(fn)
+const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
 
 const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
 
