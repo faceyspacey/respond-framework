@@ -1,56 +1,87 @@
 import sessionStorage from './sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'
-import { isDev, isProd } from './bools.js'
 import { createStateReviver, createReplacer } from './revive.js'
-import cloneDeep, { cloneDeepModulesOnly } from '../proxy/utils/cloneDeep.js'
+import cloneDeep from '../proxy/utils/cloneDeep.js'
 
 
-export default ({ status, settings, branch = '', hydration } = {}) => {
-  const { prevState, respond, replayTools: r } = window.state ?? {}
-
-  const { settings: _, configs: __, ...replayTools } = r ?? {}
-  const { tests, selectedTestId, ...rt } = respond?.snapshot(replayTools) ?? {}
-
-  const prt = prevState?.replayTools ?? {}
-
-  let replayState = status === 'hmr'
-    ? { ...respond.replayState, lastEvent: rt.evs[rt.evsIndex], status: 'hmr' }
-    : { settings, branch, status }
-
-  if (status === 'reload' || status === 'replay') {
-    sessionStorage.setItem('seed', null)
-  }
-
-  hydration = cloneDeep(hydration)
+export default (opts = {}) => {
+  const { status, settings, branch = '', hydration } = opts
+  const { prevState, respond, replayTools } = window.state ?? {}
 
   switch (status) {
-    case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
-    case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: prt.evsIndex, evs: prt.evs, divergentIndex: prt.divergentIndex, playing: false }, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
+    case 'reload': {
+      sessionStorage.setItem('seed', null)
+
+      const { tests, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
+
+      return {
+        ...cloneDeep(hydration),
+        replayState: { settings, branch, status },
+        replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }
+      }
+    }
+
+    case 'replay': {
+      sessionStorage.setItem('seed', null)
+
+      const { tests: t, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
+      const tests = { [selectedTestId]: t[selectedTestId] }
+
+      return {
+        ...cloneDeep(hydration),
+        replayState: { settings, branch, status },
+        replayTools: { ...rt, selectedTestId, tests, evsIndex: -1 }
+      }
+    }
+
+    case 'hmr': {
+      const { tests: t, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
+      const tests = { [selectedTestId]: t[selectedTestId] }
+
+      const lastEvent = rt.evs[rt.evsIndex]
+      const { evsIndex, evs, divergentIndex } = prevState.replayTools
+
+      return {
+        ...prevState,
+        seed: JSON.parse(sessionStorage.getItem('prevSeed')),
+        replayState: { ...respond.replayState, lastEvent, status },
+        replayTools: { ...rt, selectedTestId, tests, evsIndex, evs, divergentIndex, playing: false },
+      }
+    }
   }
 
-  replayState = !isProd && permalinkReplayState()
-  if (replayState) return { ...hydration, replayState }
+  let permalink, session
 
-  const system = getSystemStateForSession()
-  if (system) return system
+  switch (true) {
+    // case 'permalink':
+    case !!(permalink = permalinkReplayState()): {
+      const branch = permalink.branch ?? ''
 
-  replayState = { settings: undefined, branch: '', status: 'reload' }
-  return { ...hydration, replayState }
-}
+      return {
+        ...cloneDeep(hydration),
+        replayState: { settings: permalink, branch, status: 'reload' }
+      }
+    }
 
+    // case 'session':
+    case !!(session = sessionStorage.getItem('systemState')): {
+      const system = JSON.parse(session)
 
+      return {
+        ...system,
+        seed: JSON.parse(sessionStorage.getItem('seed')),
+        replayState: { ...system.replayState, status: 'session' },
+      }
+    }
 
-const getSystemStateForSession = () => {
-  const sys = sessionStorage.getItem('systemState')
-  if (!sys) return // will only exist if sessionState also exists, therefore status === 'session' if exists
-
-  const system = JSON.parse(sys)
-
-  system.seed = JSON.parse(sessionStorage.getItem('seed'))
-  system.replayState.status = 'session'
-
-  return system
+    // 1st visit/open:
+    default: {
+      return {
+        ...cloneDeep(hydration),
+        replayState: { settings: undefined, branch: '', status: 'reload' }
+      }
+    }
+  } 
 }
 
 
@@ -71,15 +102,15 @@ export const getSessionState = respond => {
 }
 
 
-export const saveSessionState = (state, e) => {
+export const setSessionState = (state, e) => {
   const { replayState, basenames, prevUrl, dbCache, urlCache, session } = state.respond
   const replacer = createReplacer(state.respond)
 
   sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, dbCache, urlCache }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
-  sessionStorage.setItem('sessionState', stringifyState(state, replacer))
+  sessionStorage.setItem('sessionState', stringify(state, replacer))
 
-  if (e.event.module.id === 'replayTools') return
+  if (e.event.module.id === 'replayTools') return // no need to save latest seed state when triggering events in replayTools
 
   sessionStorage.setItem('prevSeed', sessionStorage.getItem('seed')) // HMR needs prevSeed to properly replay last event
   sessionStorage.setItem('seed', JSON.stringify(session.seed))
@@ -88,7 +119,7 @@ export const saveSessionState = (state, e) => {
 
 
 
-const stringifyState = (state, replacer) => {
+const stringify = (state, replacer) => {
   if (!state.replayTools) return JSON.stringify(state, replacer)
 
   const { tests, selectedTestId } = state.replayTools

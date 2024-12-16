@@ -1,3 +1,4 @@
+import { isProd } from '../../../utils.js'
 import { parseSearch, stringifyQuery } from '../../../utils/searchQuery.js'
 
 
@@ -9,17 +10,14 @@ export default function settingsToHash({ ...query }, branch) {
 
 
 export const hashToSettings = () => {
+  if (isProd) return
+
   const h = typeof window !== undefined && window.location?.hash
 
   if (h && h[1] === '!') {
     const search = stripUserHash(h.slice(2)) // strip possible second hash by user, eg: #!userId=123#foo
-
     const { module, ...settings } = parseSearch(search) // use hash so search can still be used unobstructed in userland (as hash can easily used for both purposes as handled in this file)
-    
-    const branch = settings.branch ?? ''
-    const status = 'reload'
-
-    return { settings, branch, status }
+    return settings
   }
 }
 

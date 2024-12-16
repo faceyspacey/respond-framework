@@ -19,7 +19,8 @@ export default (state, session) => {
       break
     }
       
-    default: { // replay || reload
+    case 'replay':
+    case 'reload': {
       reviveModules(state, hydration) // hydration is server hydration if available
       state.token = createToken(state.respond)
       reduce(state, state.events.init())

@@ -16,7 +16,7 @@ import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/find
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
-import { getSessionState, saveSessionState } from '../../utils/sessionState.js'
+import { getSessionState, setSessionState } from '../../utils/sessionState.js'
 import { _parent, branch as branchSymol } from '../reserved.js'
 import createDbCache from '../../db/utils/createDbCache.js'
 import createUrlCache from '../createUrlCache.js'
@@ -236,7 +236,7 @@ export default (top, session, branchesAll, focusedModule) => {
           const snap = this.snapshot(getStore())
           const e = this.lastTriggerEvent
 
-          saveSessionState(snap, e)
+          setSessionState(snap, e)
 
           mem.saveQueued = false
         })
