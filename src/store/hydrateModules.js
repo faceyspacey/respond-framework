@@ -4,25 +4,26 @@ import { _parent } from './reserved.js'
 
 
 export default (state, session) => {
-  let { replayState, seed, basenames, prevState, ...hydration } = session
-  const { status } = replayState
+  const { replayState, seed, basenames, ...hydration } = session
 
-  if (status === 'session') {
-    const [prev, curr, prevPrev] = state.respond.getSessionState()
-    reviveModules(state, curr)
-    prevState = prev
-    if (prevPrev) Object.getPrototypeOf(state).prevPrevState = prevPrev // only available during HMR in development
-  }
-  else {
-    if (status !== 'hmr') state.token = createToken(state.respond) // (top replays just asssigned in finalize) // const createToken = top.replays.createToken ?? defaultCreateToken
-    Object.assign(state, reviveModules(state, hydration)) // hydration either server hydration or HMR prevState
-  }
+  switch (replayState.status) {
+    case 'hmr': {
+      reviveModules(state, hydration) // hydration is HMR prevState, as last event will be replayed on top of it
+      break
+    }
 
-  if (prevState) { // hmr/session have prevState already
-    mergePrevState(state, prevState)
-  }
-  else {
-    reduce(state, state.events.init())
+    case 'session': {
+      const [curr, prev] = state.respond.getSessionState()
+      reviveModules(state, curr)
+      mergePrevState(state, prev)
+      break
+    }
+      
+    default: { // replay || reload
+      reviveModules(state, hydration) // hydration is server hydration if available
+      state.token = createToken(state.respond)
+      reduce(state, state.events.init())
+    }
   }
 }
 

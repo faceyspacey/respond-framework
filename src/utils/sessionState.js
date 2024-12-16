@@ -6,7 +6,7 @@ import cloneDeep, { cloneDeepModulesOnly } from '../proxy/utils/cloneDeep.js'
 
 
 export default ({ status, settings, branch = '', hydration } = {}) => {
-  const { prevState, prevPrevState, respond, replayTools: r } = window.state ?? {}
+  const { prevState, respond, replayTools: r } = window.state ?? {}
 
   const { settings: _, configs: __, ...replayTools } = r ?? {}
   const { tests, selectedTestId, ...rt } = respond?.snapshot(replayTools) ?? {}
@@ -26,7 +26,7 @@ export default ({ status, settings, branch = '', hydration } = {}) => {
   switch (status) {
     case 'reload':  return { ...hydration, replayState, replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined } }
     case 'replay':  return { ...hydration, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: -1 } }
-    case 'hmr':     return { ...prevState, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: prt.evsIndex, evs: prt.evs, divergentIndex: prt.divergentIndex, playing: false }, prevState: prevPrevState, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
+    case 'hmr':     return { ...prevState, replayState, replayTools: { ...rt, selectedTestId, tests: { [selectedTestId]: tests[selectedTestId] }, evsIndex: prt.evsIndex, evs: prt.evs, divergentIndex: prt.divergentIndex, playing: false }, seed: JSON.parse(sessionStorage.getItem('prevSeed')) }
   }
 
   replayState = !isProd && permalinkReplayState()
@@ -61,11 +61,10 @@ export const getSessionState = respond => {
 
   const reviver = createStateReviver(respond)
 
-  const prev = JSON.parse(sessionStorage.getItem('prevState'), reviver)
   const curr = JSON.parse(json, reviver)
-  const prevPrev = isDev && JSON.parse(sessionStorage.getItem('prevPrevState'), reviver)
+  const prev = JSON.parse(sessionStorage.getItem('prevState'), reviver)
 
-  return [prev, curr, prevPrev]
+  return [curr, prev]
 }
 
 
@@ -79,7 +78,6 @@ export const saveSessionState = (state, e) => {
   }
 
   sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, dbCache, urlCache }))
-  if (isDev) sessionStorage.setItem('prevPrevState', sessionStorage.getItem('prevState'))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
   sessionStorage.setItem('sessionState', stringifyState(state, replacer))
 }

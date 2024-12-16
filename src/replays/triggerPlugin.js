@@ -29,13 +29,11 @@ export default function (state, e) {
   }
 
   if (e.event[branchSymbol] === 'replayTools' && !replayTools.config.log) {
-    Object.getPrototypeOf(top).prevPrevState = top.prevState
     mergePrevState(replayTools, respond.snapshot(replayTools))
     return
   }
 
   if (!e.meta.skipped) {
-    Object.getPrototypeOf(top).prevPrevState = top.prevState
     mergePrevState(top, respond.snapshot(top))
   }
 
