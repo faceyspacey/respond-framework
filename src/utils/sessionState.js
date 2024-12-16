@@ -55,6 +55,9 @@ const getSystemStateForSession = () => {
 
 
 
+
+
+
 export const getSessionState = respond => {
   const json = sessionStorage.getItem('sessionState')
   if (!json) return
@@ -72,34 +75,34 @@ export const saveSessionState = (state, e) => {
   const { replayState, basenames, prevUrl, dbCache, urlCache, session } = state.respond
   const replacer = createReplacer(state.respond)
 
-  if (e.event.module.id !== 'replayTools') {
-    sessionStorage.setItem('prevSeed', sessionStorage.getItem('seed')) // HMR needs prevSeed to properly replay last event
-    sessionStorage.setItem('seed', JSON.stringify(session.seed))
-  }
-
   sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, dbCache, urlCache }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
   sessionStorage.setItem('sessionState', stringifyState(state, replacer))
+
+  if (e.event.module.id === 'replayTools') return
+
+  sessionStorage.setItem('prevSeed', sessionStorage.getItem('seed')) // HMR needs prevSeed to properly replay last event
+  sessionStorage.setItem('seed', JSON.stringify(session.seed))
 }
 
 
 
 
-
 const stringifyState = (state, replacer) => {
-  const s = { ...state }
-      
-  if (s.replayTools) {
-    const { tests, selectedTestId } = s.replayTools
-    const t = selectedTestId ? { [selectedTestId]: tests[selectedTestId] } : undefined // preserve selected test, as it may be used without the Tests tab first visited
+  if (!state.replayTools) return JSON.stringify(state, replacer)
 
-    s.replayTools = {
-      ...s.replayTools,
-      tests: t,                   // don't waste cycles on tons of tests with their events  
+  const { tests, selectedTestId } = state.replayTools
+
+  state = {
+    ...state,
+    replayTools: {
+      ...state.replayTools,
+      tests: selectedTestId ? { [selectedTestId]: tests[selectedTestId] } : undefined, // don't waste cycles on tons of tests with their events -- preserve selected test, as it may be used without the Tests tab first visited
+      configs: undefined,         // will be reset to last "checkpoint" by createReplays
       settings: undefined,        // will be reset to last "checkpoint" by createReplays
       focusedbranch: undefined,   // will be reset to last "checkpoint" by createReplays
     }
   }
-  
-  return JSON.stringify(s, replacer)
+
+  return JSON.stringify(state, replacer)
 }
