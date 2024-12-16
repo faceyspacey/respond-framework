@@ -3,8 +3,8 @@ import createToken from '../replays/utils/createToken.js'
 import { _parent } from './reserved.js'
 
 
-export default (state, session) => {
-  const { replayState, seed, basenames, ...hydration } = session
+export default (state, system) => {
+  const { replayState, seed, basenames, ...hydration } = system
 
   switch (replayState.status) {
     case 'hmr': {
@@ -30,7 +30,7 @@ export default (state, session) => {
 
 
 
-export function mergePrevState(state, prev, parent = {}) {
+export function mergePrevState(state, prev = {}, parent = {}) {
   state.moduleKeys.forEach(k => mergePrevState(state[k], prev[k], prev))
   const proto = Object.getPrototypeOf(state)
   proto.prevState = Object.assign(Object.create(proto), prev, { [_parent]: parent }) // need to create new object because snapshot has Object.preventExtensions
@@ -38,7 +38,7 @@ export function mergePrevState(state, prev, parent = {}) {
 
 
 
-const reviveModules = (state, hydration) => {
+const reviveModules = (state, hydration = {}) => {
   state.moduleKeys.forEach(k => {                   // depth-first
     if (!hydration[k]) return
     reviveModules(state[k], hydration[k])

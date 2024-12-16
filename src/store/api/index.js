@@ -16,7 +16,7 @@ import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/find
 import { isTest, isProd, kinds} from '../../utils.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
-import { getSessionState, setSessionState } from '../../utils/sessionState.js'
+import { getSessionState, setSessionState } from '../../utils/getSessionState.js'
 import { _parent, branch as branchSymol } from '../reserved.js'
 import createDbCache from '../../db/utils/createDbCache.js'
 import createUrlCache from '../createUrlCache.js'
@@ -27,8 +27,8 @@ import createProxy from '../../proxy/createProxy.js'
 import { commit } from '../../proxy/utils/queueNotification.js'
 
 
-export default (top, session, branchesAll, focusedModule) => {
-  const { replayState, prevUrl, basenames = {} } = session
+export default (top, system, branchesAll, focusedModule) => {
+  const { replayState, prevUrl, basenames = {} } = system
   const focusedBranch = focusedModule.branchAbsolute
   
   const branches = { get undefined() { return this[''] } }
@@ -121,8 +121,8 @@ export default (top, session, branchesAll, focusedModule) => {
       return apiHandler(req, res)
     },
 
-    dbCache: createDbCache(session.dbCache),
-    urlCache: createUrlCache(session.urlCache, fromEvent),
+    dbCache: createDbCache(system.dbCache),
+    urlCache: createUrlCache(system.urlCache, fromEvent),
 
     top,
 
@@ -131,7 +131,7 @@ export default (top, session, branchesAll, focusedModule) => {
 
     prev: window.state?.respond,
 
-    session,
+    system,
 
     hmr: replayState.status === 'hmr',
 

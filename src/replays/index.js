@@ -7,15 +7,15 @@ import { createCounterRef } from '../utils/objectIdDevelopment.js'
 
 
 export default ({ state, respond }, start = performance.now()) => {
-  const { session, top, branches } = respond
-  const { replayState, seed } = session
+  const { system, top, branches } = respond
+  const { replayState, seed } = system
 
   const depth = []
 
   Object.assign(state, createState(top, branches, depth, replayState))
   replayState.settings ??= nestSettings(state.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
-  const nextSeed = session.seed = { __idCount: createCounterRef(seed) }
+  const nextSeed = system.seed = { __idCount: createCounterRef(seed) }
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 
   console.log('createReplaySettings', parseFloat((performance.now() - start).toFixed(3)))
