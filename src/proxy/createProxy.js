@@ -1,6 +1,6 @@
 import { canProxy, isArray, create, getProto } from './utils/helpers.js'
 import createHandler from './utils/createHandler.js'
-import { _module } from '../store/reserved.js'
+import { _module, _top } from '../store/reserved.js'
 import queueNotification from './utils/queueNotification.js'
 
 
@@ -9,8 +9,7 @@ export default function createProxy(o, vls, refIds, notifyParent = function() {}
   if (found) return found
 
   const orig = isArray(o) ? [] : create(getProto(o))
-
-  const Vl = orig[_module] ? VersionListenerModule : VersionListener
+  const Vl = o[_module] ? (o[_top] ? VLTop : VLModule) : VersionListener
 
   const vl = new Vl(orig, vls, snapCache)
   const proxy = new Proxy(orig, createHandler(vl.notify, vls, refIds, cache, snapCache))
@@ -51,7 +50,7 @@ class VersionListener {
     Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
   }
 
-  notify(version = ++highestVersion, branch) {
+  notify(version = ++highestVersion, branch = this.branch) {
     if (this.version === version) return console.log('version match', this.orig)
     this.version = version
     this.parents.forEach(parent => parent(version, branch))
@@ -59,21 +58,26 @@ class VersionListener {
 }
 
 
-class VersionListenerModule extends VersionListener {
+class VLModule extends VersionListener {
   constructor(orig, vls, cache) {
     super(orig, vls, cache)
-
-    this.respond = orig.respond
     this.branch = orig.respond.branch
-    this.isTop = orig.moduleName === ''
-  }
-
-  notify(version = ++highestVersion, branch = this.branch) {
-    super.notify(version, branch)
-    if (this.isTop) queueNotification(branch, this.respond)
   }
 }
 
+
+class VLTop extends VersionListener {
+  constructor(orig, vls, cache) {
+    super(orig, vls, cache)
+    this.branch = orig.respond.branch
+    this.respond = orig.respond
+  }
+
+  notify(version = ++highestVersion, branch = this.branch) {
+    this.version = version
+    queueNotification(branch, this.respond)
+  }
+}
 
 
 

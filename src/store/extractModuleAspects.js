@@ -1,6 +1,7 @@
 import { isModule, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
 import cloneDeep from '../proxy/utils/cloneDeep.js'
+import { isProd } from '../utils.js'
 
 
 export default (mod, state) => {
@@ -42,6 +43,6 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
     else selectorDescriptors[k] = descriptor
   }
   else {
-    state[k] = cloneDeep(v)
+    state[k] = isProd ? cloneDeep(v) : v // clone during development, so refs aren't changed for next replay
   }
 }

@@ -1,5 +1,6 @@
 export const _parent = Symbol('_parent')
 export const _module = Symbol('_module')
+export const _top = Symbol('_top')
 export const isModule = Symbol('isModule')
 export const branch = Symbol('branch')
 

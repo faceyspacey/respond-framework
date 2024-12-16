@@ -70,9 +70,12 @@ const reduceModule = (state, e, mod, reducers, init) => {
       continue
     }
     else if (typeof reduce === 'object') {
-      reduceModule(state[k] ??= {}, e, mod, reduce)
+      state[k] ??= {}
+      reduceModule(state[k], e, mod, reduce)
     }
     else {
+      if (init && state[k] && !state.hasOwnProperty(k)) console.log('INIT.REDUCE.HAS_OWN_PROP', k)
+        
       const prev = init && state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto on init : prevState as normal in subsequence reductions
       const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
       if (next !== undefined) state[k] = next

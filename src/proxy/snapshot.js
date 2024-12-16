@@ -4,7 +4,7 @@ import { isArray, keys, getProto, create } from './utils/helpers.js'
 
 export default function(proxy = this.state, vls = this.versionListeners) {
   const vl = vls.get(proxy)
-  return vl ? createSnapshot(vl, vls) : cloneDeep(proxy) // because snapshots before proxication otherwise return the entire original object, and need to be separate references
+  return vl ? createSnapshot(vl, vls) : cloneDeep(proxy) // because snapshots before proxication otherwise return the entire original object, and need to be separate references -- important for triggerPlugin's creation of prevState, which must not share references with the current state, or prevState will be the same as current state
 }
 
 function snapshot(proxy, vls) {
@@ -21,5 +21,5 @@ function createSnapshot({ orig: o, version, cache }, vls) {
 
   keys(o).forEach(k => snap[k] = snapshot(o[k], vls))
 
-  return Object.preventExtensions(snap)
+  return snap
 }

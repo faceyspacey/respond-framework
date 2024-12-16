@@ -6,7 +6,7 @@ import createReducers from './createReducers.js'
 import createSelectors from './createSelectors.js'
 
 import extractModuleAspects from './extractModuleAspects.js'
-import { _parent, _module } from './reserved.js'
+import { _parent, _module, _top } from './reserved.js'
 import kinds from './kinds.js'
 import { is, thisIn } from '../utils/inIs.js'
 
@@ -16,7 +16,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
 
   const props   = name ? mod.props ?? {} : {} // props disabled on top focused module
   const respond = new Respond({ branch, moduleKeys, state, mod, props, components, reduce, options, moduleName: name, ignoreParents })
-  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, options, branch, moduleName: name, mod, components })
+  const proto   = Object.assign(Object.getPrototypeOf(state), { ...options.merge, respond, [_module]: true, [_parent]: parent, [_top]: name === '', id: mod.id, db: respond.db, kinds, is, in: thisIn, top: respond.top, moduleKeys, ignoreParents, options, branch, moduleName: name, mod, components })
   const deps    = { respond, mod, parent, proto, state, props, branch, name }
 
   respond.branchLocatorsById[mod.id] = branch
