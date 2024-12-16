@@ -4,11 +4,11 @@ import { _parent } from './reserved.js'
 
 
 export default (state, system) => {
-  const { replayState, seed, basenames, ...hydration } = system
+  const { replayState, baseState } = system
 
   switch (replayState.status) {
     case 'hmr': {
-      reviveModules(state, hydration) // hydration is HMR prevState, as last event will be replayed on top of it
+      reviveModules(state, baseState) // baseState is HMR prevState, as last event will be replayed on top of it
       break
     }
 
@@ -21,7 +21,7 @@ export default (state, system) => {
       
     case 'replay':
     case 'reload': {
-      reviveModules(state, hydration) // hydration is server hydration if available
+      reviveModules(state, baseState) // baseState is standard server hydration if available
       state.token = createToken(state.respond)
       reduce(state, state.events.init())
     }
@@ -30,20 +30,20 @@ export default (state, system) => {
 
 
 
+
+const reviveModules = (state, baseState = {}) => {
+  state.moduleKeys.forEach(k => {                   // depth-first
+    if (!baseState[k]) return
+    reviveModules(state[k], baseState[k])
+    delete baseState[k]                               // delete to prevent overwriting child modules..
+  })
+  
+  Object.assign(state, baseState)             // ...so parent receives shallow merge of everything except already assign child modules
+}
+
+
 export function mergePrevState(state, prev = {}, parent = {}) {
   state.moduleKeys.forEach(k => mergePrevState(state[k], prev[k], prev))
   const proto = Object.getPrototypeOf(state)
   proto.prevState = Object.assign(Object.create(proto), prev, { [_parent]: parent }) // need to create new object because snapshot has Object.preventExtensions
-}
-
-
-
-const reviveModules = (state, hydration = {}) => {
-  state.moduleKeys.forEach(k => {                   // depth-first
-    if (!hydration[k]) return
-    reviveModules(state[k], hydration[k])
-    delete hydration[k]                               // delete to prevent overwriting child modules..
-  })
-  
-  Object.assign(state, hydration)             // ...so parent receives shallow merge of everything except already assign child modules
 }

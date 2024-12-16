@@ -5,12 +5,12 @@ import { isNative, isTest } from '../utils/bools.js'
 import RespondProvider from './Provider.js'
 
 
-export default function render(props = {}) {
-  if (props.startTime) console.log('replayEvents.run', parseFloat((performance.now() - props.startTime).toFixed(3)))
+export default function render(props = {}, { startTime, last } = {}) {
+  if (startTime) console.log('replayEvents.run', parseFloat((performance.now() - startTime).toFixed(3)))
 
   const start = performance.now()
 
-  const app = createApp(this, props)
+  const app = createApp(this, props, last)
   const { mem } = this
 
   if (isTest) return app
@@ -22,7 +22,9 @@ export default function render(props = {}) {
 }
 
 
-const createApp = (respond, props) => {
+const createApp = (respond, props, last) => {
+  if (last) respond.state.replayTools.playing = false 
+
   const state = respond.proxify()
 
   const Provider = props.Provider || state.components?.Provider || RespondProvider

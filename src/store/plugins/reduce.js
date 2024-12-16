@@ -15,7 +15,7 @@ export default wrapInActForTests((state, e) => {
       e.event.reduce.call(state, state, e)
     }
     else if (e.event === top.events.init) {
-      reduceTree(e, top)
+      reduceEntireTreeInit(e, top)
     }
     else {
       reduceBranch(e, top, respond.branch.split('.'))
@@ -32,7 +32,7 @@ export default wrapInActForTests((state, e) => {
 
 
 
-const reduceTree = (e, mod, prevState = {}) => {
+const reduceEntireTreeInit = (e, mod, prevState = {}) => {
   const proto = Object.getPrototypeOf(mod)
   proto.prevState = prevState
 
@@ -41,12 +41,12 @@ const reduceTree = (e, mod, prevState = {}) => {
 
   function next() {
     nexted = true
-    mod.moduleKeys.forEach(k => reduceTree(e, mod[k], prevState[k] = {}))
+    mod.moduleKeys.forEach(k => reduceEntireTreeInit(e, mod[k], prevState[k] = {}))
   }
 
   function reduce() {
     reduced = true
-    reduceModule(mod, e, mod, mod.reducers, true)
+    reduceModuleInit(mod, e, mod, mod.reducers)
   }
 
   if (mod.reduce) {
@@ -55,32 +55,6 @@ const reduceTree = (e, mod, prevState = {}) => {
   
   if (!nexted) next() // default is depth-first
   if (!reduced) reduce()
-}
-
-
-
-
-
-const reduceModule = (state, e, mod, reducers, init) => {
-  for (const k in reducers) {
-    const reduce = reducers[k]
-    if (!reduce) continue // possibly assigned null to a built-in reducer to disable it
-
-    if (mod.respond.overridenReducers.get(reduce)) {
-      continue
-    }
-    else if (typeof reduce === 'object') {
-      state[k] ??= {}
-      reduceModule(state[k], e, mod, reduce)
-    }
-    else {
-      if (init && state[k] && !state.hasOwnProperty(k)) console.log('INIT.REDUCE.HAS_OWN_PROP', k)
-        
-      const prev = init && state[k] && !state.hasOwnProperty(k) ? undefined : state[k] // clashing name on proto on init : prevState as normal in subsequence reductions
-      const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
-      if (next !== undefined) state[k] = next
-    }
-  }
 }
 
 
@@ -120,29 +94,46 @@ const reduceBranch = (e, mod, [...remainingBranches]) => {
 
 
 
+const reduceModule = (state, e, mod, reducers) => {
+  for (const k in reducers) {
+    const reduce = reducers[k]
 
-// here for reference in understanding the above reduceBranch function
+    if (mod.respond.overridenReducers.get(reduce)) {
+      continue
+    }
+    else if (typeof reduce === 'object') {
+      reduceModule(state[k], e, mod, reduce)
+    }
+    else {
+      const next = reduce.call(mod, state[k], e, mod, state) // 4th arg is reducer group
+      if (next !== undefined) state[k] = next
+    }
+  }
+}
 
 
-// const reduceBranchBreadthFirst = (e, mod, remainingBranches) => {
-//   const k = remainingBranches.shift()
-//   reduceModule(mod, e, mod, mod.reducers, mod[k]?.ignoreParents)
-
-//   if (!k) return
-
-//   reduceBranch(e, mod[k], remainingBranches)
-// }
 
 
+const reduceModuleInit = (state, e, mod, reducers) => {
+  for (const k in reducers) {
+    const reduce = reducers[k]
 
-// const reduceBranchDepthFirst = (e, mod, remainingBranches) => {
-//   const k = remainingBranches.shift()
+    if (!reduce) {
+      delete reducers[k]
+      continue // assigned null to a built-in reducer to disable it
+    }
 
-//   if (k) {
-
-//     const ignoreParents = reduceBranch(e, mod[k], remainingBranches)
-//     if (ignoreParents || mod[k].ignoreParents) return true
-//   }
-
-//   reduceModule(mod, e, mod, mod.reducers)
-// }
+    if (mod.respond.overridenReducers.get(reduce)) {
+      continue
+    }
+    else if (typeof reduce === 'object') {
+      state[k] ??= {}
+      reduceModule(state[k], e, mod, reduce)
+    }
+    else {
+      const prev = !state.hasOwnProperty(k) ? undefined : state[k] // potential clashing name on proto : prevState as normal
+      const next = reduce.call(mod, prev, e, mod, state) // 4th arg is reducer group
+      if (next !== undefined) state[k] = next
+    }
+  }
+}

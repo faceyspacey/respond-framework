@@ -36,7 +36,7 @@ const run = async (events, delay, { respond, replayTools }, startTime = performa
     await event.trigger(arg,  meta)
 
     if (last) mem.isFastReplay = false                  // allow last event to trigger animations
-    if (delay ? first : last) respond.render({ startTime })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
+    if (delay ? first : last) respond.render({}, { startTime, last })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
     await timeout(delay, meta, last, options.testDelay)
   }

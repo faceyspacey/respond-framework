@@ -6,7 +6,7 @@ import { nestAtBranch } from '../utils/sliceBranch.js'
 import { createCounterRef } from '../utils/objectIdDevelopment.js'
 
 
-export default ({ state, respond }, start = performance.now()) => {
+export default ({ state, respond }) => {
   const { system, top, branches } = respond
   const { replayState, seed } = system
 
@@ -17,8 +17,6 @@ export default ({ state, respond }, start = performance.now()) => {
   
   const nextSeed = system.seed = { __idCount: createCounterRef(seed) }
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
-
-  console.log('createReplaySettings', parseFloat((performance.now() - start).toFixed(3)))
 }
 
 

@@ -25,11 +25,9 @@ const enqueue = respond => {
 export const commit = (respond, start = performance.now()) => {
   const { responds } = respond
 
-  const listeningBranches = createListeningBranches(responds)
+  const listeningBranches = createListeningBranches(responds, respond)
   const branches = Object.keys(listeningBranches).reverse()  // notify top to bottom, in case there's any marginal perf benefits internal to React, i.e. not having to compare snapshots of parents again (note: respond.ancestorsListening is first ordered bottom up)
   
-  scheduleReplayToolsSeparately(listeningBranches, respond)
-
   branches.forEach(branch => { // note: React is smart enough to always render from top to bottom, regardless of the tree position of component and order that these callbacks are fired (note: `listener' is the callback function passed to `subscribe` in `useSyncExternalStore(subscribe, getSnapshot)` in `useSnapshot`); also ordering is still correct even in non-syncronous separate microtasks, which is the basis for React's "time slicing" capabilities
     const { listeners } = responds[branch]
     listeners.forEach(listener => listener())
@@ -46,13 +44,15 @@ const dequeue = fn => Promise.resolve().then().then().then().then().then().then(
 
 const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
 
-const createListeningBranches = responds => {
+const createListeningBranches = (responds, respond) => {
   const branches = {}
   
   updated.forEach(branch => {
     const respond = responds[branch]
     Object.assign(branches, respond.ancestorsListening)
   })
+
+  scheduleReplayToolsSeparately(branches, respond)
 
   return branches
 }

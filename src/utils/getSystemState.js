@@ -14,9 +14,11 @@ export default (opts = {}) => {
       const { tests, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
 
       return {
-        ...cloneDeep(hydration),
         replayState: { settings, branch, status },
-        replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined }
+        baseState: {
+          ...cloneDeep(hydration),
+          replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined },
+        },
       }
     }
 
@@ -27,9 +29,11 @@ export default (opts = {}) => {
       const tests = { [selectedTestId]: ts[selectedTestId] }
 
       return {
-        ...cloneDeep(hydration),
         replayState: { settings, branch, status },
-        replayTools: { ...rt, selectedTestId, tests, evsIndex: -1 }
+        baseState: {
+          ...cloneDeep(hydration),
+          replayTools: { ...rt, selectedTestId, tests, evsIndex: -1 },
+        },
       }
     }
 
@@ -41,10 +45,12 @@ export default (opts = {}) => {
       const { evsIndex, evs, divergentIndex } = prevState.replayTools
 
       return {
-        ...prevState,
         seed: JSON.parse(sessionStorage.getItem('prevSeed')),
         replayState: { ...respond.replayState, lastEvent, status },
-        replayTools: { ...rt, selectedTestId, tests, evsIndex, evs, divergentIndex, playing: false },
+        baseState: {
+          ...cloneDeep(hydration),
+          replayTools: { ...rt, selectedTestId, tests, evsIndex, evs, divergentIndex, playing: false },
+        },
       }
     }
   }
@@ -57,8 +63,8 @@ export default (opts = {}) => {
       const branch = permalink.branch ?? ''
 
       return {
-        ...cloneDeep(hydration),
-        replayState: { settings: permalink, branch, status: 'reload' }
+        replayState: { settings: permalink, branch, status: 'reload' },
+        baseState: cloneDeep(hydration),
       }
     }
 
@@ -76,8 +82,8 @@ export default (opts = {}) => {
     // 1st visit/open:
     default: {
       return {
-        ...cloneDeep(hydration),
-        replayState: { settings: undefined, branch: '', status: 'reload' }
+        replayState: { settings: undefined, branch: '', status: 'reload' },
+        baseState: cloneDeep(hydration),
       }
     }
   } 
