@@ -14,14 +14,13 @@ import { commit } from '../../proxy/utils/queueNotification.js'
 import { isTest, isProd, kinds} from '../../utils.js'
 import { _parent, _branch } from '../reserved.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { traverseModuleChildren } from '../../utils/sliceBranch.js'
 import { setSessionState } from '../../utils/getSessionState.js'
 import { createDb, createApiHandler } from '../../db/callDatabase.js'
-import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
 import createDbCache from '../../db/utils/createDbCache.js'
 import createUrlCache from '../createUrlCache.js'
 import createProxy from '../../proxy/createProxy.js'
 import createAncestors from '../helpers/createAncestors.js'
+import changeBasename from './changeBasename.js'
 
 
 export default (top, system, branchesAll, focusedModule) => {
@@ -47,8 +46,6 @@ export default (top, system, branchesAll, focusedModule) => {
     this.snapshot = snapshot.bind(this)
     this.ancestors = createAncestors(this.branch)
     this.db = createDb(this)
-    
-    if (!this.mod.id) throw new Error(`id missing for module "${this.branchAbsolute ?? 'top'}"`)
   }
 
 
@@ -94,6 +91,8 @@ export default (top, system, branchesAll, focusedModule) => {
     fromEvent,
     eventFrom,
   
+    changeBasename,
+
     render,
     commit,
     
@@ -173,45 +172,6 @@ export default (top, system, branchesAll, focusedModule) => {
       if (b.kind !== kinds.navigation) return false
       if (!a.event.pattern || !a.event.pattern) return false
       return this.fromEvent(a).url === this.fromEvent(b).url
-    },
-
-    changeBasename(basename) {
-      const e = this.eventFrom(window.location.href)
-      const { state, branch } = this
-
-      const prevBasename = state.basename
-      const prevBasenameFull = state.basenameFull
-      
-      state.basename = basenames[branch] = basename
-      state.basenameFull = prevBasenameFull.replace(new RegExp(prevBasename + '$'), basename)
-
-      traverseModuleChildren(state, (state, parent) => {
-        state.basenameFull = parent.basenameFull + state.basename
-      })
-
-      const next = {}
-
-      Object.keys(this.eventsByPattern).forEach(prevPattern => {
-        const event = this.eventsByPattern[prevPattern]
-        const pattern = event.module.basenameFull + event.pattern
-        next[pattern] = event
-        delete this.eventsByPattern[prevPattern]
-      })
-
-      Object.assign(this.eventsByPattern, next)
-
-      this.history.changePath(e)
-      this.queueSaveSession()
-    },
-  
-    findInClosestAncestor(key, b) {
-      const b2 = focusedBranch ? (b ? focusedBranch + '.' + b : focusedBranch) : b
-      return findInClosestAncestor(key, b2, top)
-    },
-
-    findClosestAncestorWith(key, b) {
-      const b2 = focusedBranch ? (b ? focusedBranch + '.' + b : focusedBranch) : b
-      return findClosestAncestorWith(key, b2, top)
     },
   
     listen(callback) {

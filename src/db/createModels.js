@@ -1,4 +1,5 @@
 import mixin from './model.client.js'
+import findClosestAncestorWith from '../store/helpers/findClosestAncestorWith.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
@@ -6,7 +7,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
   if (!models) {
     if (parent.models) return respond.models = proto.models = parent.models
-    mod = respond.findClosestAncestorWith('db', branchRelative)
+    mod = findClosestAncestorWith('db', branchRelative, respond)
     models = mod.models ?? {} // db and models must be paired together on same module
   }
 

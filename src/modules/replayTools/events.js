@@ -6,7 +6,7 @@ import { navigation } from '../../store/kinds.js'
 
 import nestSettings from './helpers/nestSettings.js'
 import sliceBranch from '../../utils/sliceBranch.js'
-import { findClosestAncestorWithObjectContaining, findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
+import findClosestAncestorWith from '../../store/helpers/findClosestAncestorWith.js'
 import { defaultOrigin } from '../../utils/constants.js'
 
 
@@ -182,8 +182,8 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch: branch, top, errors }) => {
-      settings = gatherAllSettings(settings, branch, top)
+    before: async ({ settings, config, focusedBranch: branch, respond, top, errors }) => {
+      settings = gatherAllSettings(settings, branch, respond)
       const { url = '/' } = config
       
       const state = createState(top, { settings, branch, status: 'reload' })
@@ -212,8 +212,8 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, focusedBranch, top, config }) => {
-      settings = gatherAllSettings(settings, focusedBranch, top)
+    before: async ({ settings, focusedBranch, respond, config }) => {
+      settings = gatherAllSettings(settings, focusedBranch, respond)
       const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'
@@ -236,17 +236,17 @@ const uniqueDragId = () => ++id + ''
 
 
 
-const gatherAllSettings = (settings, branch, top) => {
+const gatherAllSettings = (settings, branch, respond) => {
   const nestedSettings = nestSettings(settings)
 
-  const mod = sliceBranch(top, branch)
+  const mod = sliceBranch(respond.top, branch)
   const hasDb = mod.db || mod.replays?.standalone
 
   if (hasDb) {
     settings = sliceBranch(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
   }
   else {
-    branch = findClosestAncestorWith('db', branch, top)?.branchAbsolute ?? ''
+    branch = findClosestAncestorWith('db', branch, respond)?.branchAbsolute ?? ''
     settings = sliceBranch(nestedSettings, branch) ?? {}
     settings.branch = branch
   }
