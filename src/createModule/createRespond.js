@@ -36,7 +36,7 @@ import { _branch, _module, _top } from './reserved.js'
 export default (top, system, focusedModule, focusedBranch) => {
   const { replayState, prevUrl, basenames = {} } = system
   const prev = window.state?.respond
-  
+
   const {
     createHistory = defaultCreateHistory,
     createCookies = defaultCreateCookies,
@@ -118,7 +118,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     cookies: createCookies(),
     dbCache: createDbCache(system.dbCache),
     urlCache: createUrlCache(system.urlCache, fromEvent),
-    allBranchNames: createBranches(top, focusedBranch), // important: create branch names, assign moduleKeys array to each module, etc,
+    branchNames: createBranches(top, focusedBranch), // important: create branch names, assign moduleKeys array to each module, etc,
 
     get topState() {
       return this.branches['']

@@ -59,7 +59,7 @@ export const ModuleDropdown = ({ style }, { events, focusedBranch, respond }) =>
     name: 'focusedBranch',
     event: events.changeBranch,
     value: focusedBranch,
-    options: respond.allBranchNames.map(v => ({ value: v, label: v || 'top' })),
+    options: respond.branchNames.map(v => ({ value: v, label: v || 'top' })),
     createLabel: o => 'module: ' + (o?.value || 'top'),
     style
   })
