@@ -761,7 +761,10 @@ export default proxy => {
 
 #delete rt configs for hmr
 
+#make all tools replacable by user (including reviver)
+#re-organize files, better nameing for mod vs state, top vs topModule/state, etc
 
-
-make all tools replacable by user (including reviver)
-re-organize files, better nameing for mod vs state, top vs topModule/state, etc
+pass tests
+incorporate naked-css
+create website
+devtools

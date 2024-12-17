@@ -1,21 +1,18 @@
 
-import { isModule } from '../store/reserved.js'
+import { _module } from '../store/reserved.js'
 import { isDev, isTest } from '../utils.js'
 import { prepend, stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default function createBranches(mod, focusedBranch, branches = [], b = '') {
-  // const ancestorOrChild = focusedBranch.indexOf(b) === 0 || b.indexOf(focusedBranch) === 0
-  // if (!ancestorOrChild) return
-
-  mod[isModule] = true
+export default function createBranches(mod, focusedBranch, allBranchNames = [], b = '') {
+  mod[_module] = true
   mod.moduleKeys = []
   
   mod.branchAbsolute = b
   mod.branch = stripBranchWithUnknownFallback(focusedBranch, b) // ancestor branches of focused branch will be prefixed with '.unknown'
 
-  branches.push(b)
+  allBranchNames.push(b)
 
   Object.keys(mod).forEach(k => {
     const v = mod[k]
@@ -24,14 +21,14 @@ export default function createBranches(mod, focusedBranch, branches = [], b = ''
     if (!isMod) return
 
     mod.moduleKeys.push(k)
-    createBranches(v, focusedBranch, branches, b ? `${b}.${k}` : k)
+    createBranches(v, focusedBranch, allBranchNames, b ? `${b}.${k}` : k)
   })
 
   if (b === focusedBranch && isDev && !isTest) {
     mod.replayTools = replayToolsModule
     mod.moduleKeys.push('replayTools')
-    createBranches(replayToolsModule, focusedBranch, branches, prepend(focusedBranch, 'replayTools'))
+    createBranches(replayToolsModule, focusedBranch, allBranchNames, prepend(focusedBranch, 'replayTools'))
   }
 
-  return branches
+  return allBranchNames
 }

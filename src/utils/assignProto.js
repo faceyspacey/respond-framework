@@ -1,0 +1,1 @@
+export default (obj, props) => Object.assign(Object.getPrototypeOf(obj), props)

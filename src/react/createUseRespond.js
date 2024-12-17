@@ -6,9 +6,9 @@ import RespondContext from './context.js'
 
 export default (id = createUniqueModuleId()) => {
   const useStore = () => {
-    const top = useContext(RespondContext)
+    const { respond } = useContext(RespondContext)
 
-    const { branchLocatorsById, branches } = top.respond
+    const { branchLocatorsById, branches } = respond
     const branch = branchLocatorsById[id]
 
     return branches[branch]
@@ -16,8 +16,8 @@ export default (id = createUniqueModuleId()) => {
 
 
   const useRespond = () => {
-    const top = useContext(RespondContext)
-    const { branchLocatorsById, branches } = top.respond
+    const { respond } = useContext(RespondContext)
+    const { branchLocatorsById, branches } = respond
     
     const branch = branchLocatorsById[id]
     const mod = branches[branch]

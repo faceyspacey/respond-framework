@@ -4,6 +4,7 @@ export default (branch, respond) => {
   enqueue(respond)
 }
 
+
 const enqueue = respond => {
   if (pending) return pending = 2 // every time more are queued, we set pending status to 2 to signal to prolong capture time below, as there's a high possibility for more consecutive near instant changes
   
@@ -21,6 +22,7 @@ const enqueue = respond => {
     respond.commit()
   }
 }
+
 
 export function commit(start = performance.now()) {
   const { responds } = this
@@ -40,9 +42,6 @@ export function commit(start = performance.now()) {
 }
 
 
-const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
-
-const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
 
 const createListeningBranches = (responds, respond) => {
   const branches = {}
@@ -72,5 +71,10 @@ const scheduleReplayToolsSeparately = (listeningBranches, respond) => {
 }
 
 
+
 let updated = new Set
 let pending = 0
+
+const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
+
+const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))

@@ -63,7 +63,7 @@ const reduceEntireTreeInit = (e, mod, prevState = {}) => {
 const reduceBranch = (e, mod, [...remainingBranches]) => {
   const k = remainingBranches.shift()
 
-  let ignore = k && mod[k].ignoreParents
+  let ignore = k && mod[k].respond.ignoreParents
   let reduced
 
   function next() {

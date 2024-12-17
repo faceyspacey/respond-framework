@@ -182,11 +182,11 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch: branch, respond, top, errors }) => {
+    before: async ({ settings, config, focusedBranch: branch, respond, errors }) => {
       settings = gatherAllSettings(settings, branch, respond)
       const { url = '/' } = config
       
-      const state = createState(top, { settings, branch, status: 'reload' })
+      const state = createState(respond.top, { settings, branch, status: 'reload' })
 
       const e = state.respond.eventFrom(url)
 

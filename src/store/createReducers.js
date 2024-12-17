@@ -3,7 +3,7 @@ import stack from './reducers/stack.js'
 import token from './reducers/token.js'
 
 
-export default ({ respond, proto, state, parent, name, branch }, reducers, propReducers) => {
+export default ({ respond, proto, state, parent, moduleName, branch }, reducers, propReducers) => {
   reducers = reducers.hasOwnProperty('stack') ? { ...reducers } : { stack, ...reducers } // preserve reducer order if stack or curr already exists
   if (!branch) reducers.token ??= token // token reducer only assigned to top module, children use selector to access it
 
@@ -16,7 +16,7 @@ export default ({ respond, proto, state, parent, name, branch }, reducers, propR
     const reducer = propReducers[k]
     const parentK = parentKeys.find(k => parentReducers[k] === reducer)
 
-    const k2 = parentK ?? name + '_' + k                                  // optimization: reuse existing reducer state if available
+    const k2 = parentK ?? moduleName + '_' + k                            // optimization: reuse existing reducer state if available
 
     parentReducers[k2] = reducer                                          // if parent reducer doesn't exist, assign new reducer to parent
 

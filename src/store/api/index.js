@@ -3,31 +3,36 @@ import dispatch, { trigger } from './dispatch.js'
 import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
 
-import snapshot from '../../proxy/snapshot.js'
 import render from '../../react/render.js'
+import snapshot from '../../proxy/snapshot.js'
 
 import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
-import { commit } from '../../proxy/utils/queueNotification.js'
-import { isTest, isProd, kinds} from '../../utils.js'
-import { _branch } from '../reserved.js'
-import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { setSessionState } from '../../utils/getSessionState.js'
-import { createDb, createApiHandler } from '../../db/callDatabase.js'
+import createProxy from '../../proxy/createProxy.js'
 import createDbCache from '../../db/utils/createDbCache.js'
 import createUrlCache from '../createUrlCache.js'
-import createProxy from '../../proxy/createProxy.js'
 import createAncestors from '../helpers/createAncestors.js'
+
+import addToCache from '../../utils/addToCache.js'
+import assignProto from '../../utils/assignProto.js'
+import createBranches from '../../replays/createBranches.js'
 import changeBasename from './changeBasename.js'
 import replaceWithProxies from '../helpers/replaceWithProxies.js'
 
+import { commit } from '../../proxy/utils/queueNotification.js'
+import { is, thisIn } from '../../utils/inIs.js'
+import { setSessionState } from '../../utils/getSessionState.js'
+import { isTest, isProd, kinds } from '../../utils.js'
+import { _branch, _module, _top } from '../reserved.js'
+import { createDb, createApiHandler } from '../../db/callDatabase.js'
 
-export default (top, system, branchesAll, focusedModule) => {
-  const { replayState, prevUrl, basenames = {} } = system
-  const focusedBranch = focusedModule.branchAbsolute
 
+export default (top, system, focusedModule, focusedBranch) => {
   const prev = window.state?.respond
+  const { replayState, prevUrl, basenames = {} } = system
+
+  const allBranchNames = createBranches(top, focusedBranch) // important: name branches, assign moduleKeys array to each module, etc
   const apiHandler = createApiHandler({ db: top.db, log: false })
 
   const {
@@ -38,13 +43,17 @@ export default (top, system, branchesAll, focusedModule) => {
 
   function Respond(props) {
     Object.assign(this, props)
-    
+
     this.listeners = new Set
     this.overridenReducers = new Map
     this.responds[this.branch] = this
+    this.isTop = props.mod === top
+    this.eventFrom = eventFrom.bind(this)
     this.snapshot = snapshot.bind(this)
     this.ancestors = createAncestors(this.branch)
     this.db = createDb(this)
+
+    assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn })
   }
 
   Respond.prototype = {
@@ -52,15 +61,14 @@ export default (top, system, branchesAll, focusedModule) => {
     prev,
     system,
 
-    replayState,
-    basenames,
-    prevUrl,
-
-    focusedModule,
-    focusedBranch,
-
-    branchesAll,
     kinds,
+    prevUrl,
+    basenames,
+    replayState,
+    allBranchNames,
+
+    focusedBranch,
+    focusedModule,
 
     hmr: replayState.status === 'hmr',
     reuseEvents:      prev?.focusedBranch === focusedBranch,
@@ -68,34 +76,30 @@ export default (top, system, branchesAll, focusedModule) => {
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
     branches: { get undefined() { return this[''] } },
     mem: { ...prev?.mem, rendered: false },
+
     ctx: {},
-    branchLocatorsById: {},
-    modelsByBranchType: {},
+    refs: {},
+    responds: {},
     eventsByType: {},
     eventsByPattern: {},
-    responds: {},
-    refs: {},
-
-    subscribers: [],
+    branchLocatorsById: {},
+    modelsByBranchType: {},
+    
     promises: [],
+    subscribers: [],
 
     eventsCache: new Map,
     versionListeners: new WeakMap,
     refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
   
-    dispatch,
-    trigger,
-
-    fromEvent,
-    eventFrom,
-  
-    changeBasename,
-
     render,
     commit,
-    
+    trigger,
+    dispatch,
+
+    fromEvent,
     addToCache,
-    addToCacheDeep,
+    changeBasename,
   
     devtools: new Proxy({}, { get: () => () => undefined }),
 
@@ -109,13 +113,8 @@ export default (top, system, branchesAll, focusedModule) => {
       return this.branches['']
     },
 
-    async apiHandler(req, res) {
-      await this.simulateLatency()
-      return apiHandler(req, res)
-    },
-
     proxify() {
-      const proxy = createProxy(this.branches[''], this.versionListeners, this.refIds)
+      const proxy = createProxy(this.topState, this.versionListeners, this.refIds)
       replaceWithProxies(proxy)
       return window.state = proxy
     },
@@ -139,7 +138,7 @@ export default (top, system, branchesAll, focusedModule) => {
     },
     
     notify(e) {  
-      // this.devtools.send(e)
+      this.devtools.send(e)
 
       const { event } = e
 
@@ -170,38 +169,19 @@ export default (top, system, branchesAll, focusedModule) => {
       const ownOnError = this.state.options.onError
       if (ownOnError) return ownOnError({ ...err, state: this.state })
 
-      const state = this.branches['']
+      const state = this.topState
       return state.options.onError?.({ ...err, state })
     },
 
-    simulateLatency() {
-      if (isTest || this.mem.isFastReplay || !this.options.simulatedApiLatency) return
-      return timeout(this.options.simulatedApiLatency)
-    },
-
-    awaitInReplaysOnly(f, onError) {           
-      const promise = typeof f === 'function' ? f() : f // can be function
-      if (!(promise instanceof Promise)) return
-      this.promises.push(promise.catch(onError))
-    },
-    
-    async promisesCompleted(e) {
-      await Promise.all(this.promises)
-
-      this.promises.length = 0
-      this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
-      this.queueSaveSession()
-    },
-    
     queueSaveSession() {
       if (isProd || isTest) return
       if (this.mem.saveQueued || this.branches.replayTools?.playing) return
-      if (window.state !== this.branches['']) return // ensure replayEvents saves new state instead of old state when recreating state for replays
+      if (window.state !== this.topState) return // ensure replayEvents saves new state instead of old state when recreating state for replays
 
       this.mem.saveQueued = true
 
       setTimeout(() => {
-        const snap = this.snapshot(this.branches[''])
+        const snap = this.snapshot(this.topState)
         setSessionState(snap, this.lastTriggerEvent)
         this.mem.saveQueued = false
       }, 1000)
@@ -215,6 +195,30 @@ export default (top, system, branchesAll, focusedModule) => {
       if (!a.event.pattern || !a.event.pattern) return false
 
       return this.fromEvent(a).url === this.fromEvent(b).url
+    },
+
+    awaitInReplaysOnly(f, onError) {           
+      const promise = typeof f === 'function' ? f() : f // can be function
+      if (!(promise instanceof Promise)) return
+      this.promises.push(promise.catch(onError))
+    },
+
+    simulateLatency() {
+      if (isTest || this.mem.isFastReplay || !this.options.simulatedApiLatency) return
+      return timeout(this.options.simulatedApiLatency)
+    },
+
+    async apiHandler(req, res) {
+      await this.simulateLatency()
+      return apiHandler(req, res)
+    },
+    
+    async promisesCompleted(e) {
+      await Promise.all(this.promises)
+
+      this.promises.length = 0
+      this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
+      this.queueSaveSession()
     },
   }
 

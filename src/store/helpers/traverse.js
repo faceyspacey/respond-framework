@@ -15,10 +15,10 @@ export const traverseModules = (state, callback, parent, b = '') => {
 }
 
 
-export const traverseModulesAsyncParallel = (top, callback) => {
+export const traverseModulesAsyncParallel = (state, callback) => {
   const promises = []
 
-  traverseModules(top, state => {
+  traverseModules(state, state => {
     const promise = callback(state)
     promises.push(promise)
   })

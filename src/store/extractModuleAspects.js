@@ -1,4 +1,4 @@
-import { isModule, moduleApi } from './reserved.js'
+import { _module, moduleApi } from './reserved.js'
 import { extractedEvents } from './createEvents.js'
 import cloneDeep from '../proxy/utils/cloneDeep.js'
 import { isProd } from '../utils.js'
@@ -31,7 +31,7 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
   else if (!v) {
     state[k] = v
   }
-  else if (v[isModule]) {
+  else if (v[_module]) {
     return
   }
   else if (v.event === true) {
