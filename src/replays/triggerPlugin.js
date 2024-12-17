@@ -1,5 +1,5 @@
 import revive from '../utils/revive.js'
-import combineInputEvents from '../devtools/utils/combineInputEvents.js'
+import combineInputEvents from '../modules/replayTools/helpers/combineInputEvents.js'
 import { isEqualDeepPartial } from '../utils/isEqual.js'
 import { mergePrevState } from '../store/hydrateModules.js'
 import { push } from '../history/changePath.js'

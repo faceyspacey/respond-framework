@@ -1,5 +1,5 @@
 import { Linking } from 'react-native'
-import combineInputEvents from '../../devtools/utils/combineInputEvents.js'
+import combineInputEvents from './helpers/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createState from '../../store/createState.js'
 import { navigation } from '../../store/kinds.js'

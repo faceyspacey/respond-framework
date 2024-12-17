@@ -106,10 +106,10 @@ const createResponse = (respond, body, response) => {
   const { state, models } = respond
   respond.getStore().__dbFirstCall = true
 
-  Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
-    const type = `=> db.${table}.${method}`
-    state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
-  })
+  // Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
+  //   const type = `=> db.${table}.${method}`
+  //   state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
+  // })
 
   if (singularPlural[method]) {
     if (!response) return response // eg: arg.user will be undefined anyway by the time it reaches reducers

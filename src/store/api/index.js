@@ -6,7 +6,6 @@ import eventFrom from './eventFrom.js'
 import snapshot from '../../proxy/snapshot.js'
 import render from '../../react/render.js'
 
-import defaultCreateDevtools from '../../devtools/index.mock.js'
 import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
@@ -31,7 +30,6 @@ export default (top, system, branchesAll, focusedModule) => {
   const apiHandler = createApiHandler({ db: top.db, log: false })
 
   const {
-    createDevtools = defaultCreateDevtools,
     createHistory = defaultCreateHistory,
     createCookies = defaultCreateCookies,
     ...options
@@ -99,7 +97,8 @@ export default (top, system, branchesAll, focusedModule) => {
     addToCache,
     addToCacheDeep,
   
-    devtools: createDevtools(),
+    devtools: new Proxy({}, { get: () => () => undefined }),
+    
     history: createHistory(),
     cookies: createCookies(),
 
@@ -193,7 +192,7 @@ export default (top, system, branchesAll, focusedModule) => {
     },
     
     notify(e) {  
-      this.devtools.send(e)
+      // this.devtools.send(e)
 
       const { event } = e
 
