@@ -1,4 +1,4 @@
-import createWallabySocketsServer from '../wallaby/createWallabySocketsServer.js'
+import createWallabySocketsServer from '../integrations/wallaby/createWallabySocketsServer.js'
 import { isDev } from '../utils.js'
 import { createApiHandler } from './callDatabase.js'
 import replayTools from '../modules/replayTools/db.js'

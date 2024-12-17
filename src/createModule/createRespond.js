@@ -34,9 +34,9 @@ import { _branch, _module, _top } from './reserved.js'
 
 
 export default (top, system, focusedModule, focusedBranch) => {
-  const prev = window.state?.respond
   const { replayState, prevUrl, basenames = {} } = system
-
+  const prev = window.state?.respond
+  
   const {
     createHistory = defaultCreateHistory,
     createCookies = defaultCreateCookies,
