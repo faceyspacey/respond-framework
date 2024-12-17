@@ -3,7 +3,7 @@ import wrapInActForTests from '../../utils/wrapInActForTests.js'
 
 export default wrapInActForTests((state, e) => {
   const { respond } = state
-  const top = respond.getStore()
+  const { topState } = respond
 
   try {
     e.event.beforeReduce?.call(state, state, e)
@@ -14,11 +14,11 @@ export default wrapInActForTests((state, e) => {
     else if (e.event.reduce) {
       e.event.reduce.call(state, state, e)
     }
-    else if (e.event === top.events.init) {
-      reduceEntireTreeInit(e, top)
+    else if (e.event === topState.events.init) {
+      reduceEntireTreeInit(e, topState)
     }
     else {
-      reduceBranch(e, top, respond.branch.split('.'))
+      reduceBranch(e, topState, respond.branch.split('.'))
     }
 
     e.event.afterReduce?.call(state, state, e)

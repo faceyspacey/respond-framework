@@ -24,8 +24,6 @@ export const stripBranchWithUnknownFallback = (a, b) =>
 
 
 
-export const isAncestorOrSelf = (a, b) => b.indexOf(a) === 0
-export const isChildOrSelf = (a, b) => a.indexOf(b) === 0
 
 
 
@@ -43,51 +41,4 @@ export const nestAtBranch = (branch, value, top = {}) => {
   Object.assign(slice, value)
 
   return top
-}
-
-
-
-export const traverseModuleChildren = (state, callback) => {
-  for (const k of state.moduleKeys) {
-    callback(state[k], state)
-    traverseModuleChildren(state[k], callback)
-  }
-}
-
-
-export const traverseModules = (state, callback, parent, b = '') => {
-  callback(state, parent, b)
-
-  for (const k of state.moduleKeys) {
-    traverseModules(state[k], callback, state, b ? `${b}.${k}` : k)
-  }
-}
-
-
-export const traverseModulesDepthFirst = (state, callback, parent) => {
-  for (const k of state.moduleKeys) {
-    traverseModules(state[k], callback, state)
-  }
-
-  callback(state, parent)
-}
-
-export const traverseModulesAsync = async (state, callback) => {
-  await callback(state)
-
-  for (const k of state.moduleKeys) {
-    await traverseModulesAsync(state[k], callback)
-  }
-}
-
-
-export const traverseModulesAsyncParallel = (top, callback) => {
-  const promises = []
-
-  traverseModules(top, state => {
-    const promise = callback(state)
-    promises.push(promise)
-  })
-
-  return Promise.all(promises)
 }

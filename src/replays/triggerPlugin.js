@@ -12,8 +12,8 @@ import { urlToLocation } from '../utils/url.js'
 export default function (state, e) {
   if (!e.meta.trigger) return
 
-  const top = state.respond.getStore()
-  const { respond, replayTools } = top
+  const { topState } = state.respond
+  const { respond, replayTools } = topState
 
   respond.mem.changedPath = false
 
@@ -34,12 +34,12 @@ export default function (state, e) {
   }
 
   if (!e.meta.skipped) {
-    mergePrevState(top, respond.snapshot(top))
+    mergePrevState(topState, respond.snapshot(topState))
   }
 
   if (!replayTools) return
 
-  sendTrigger(e, replayTools, top)
+  sendTrigger(e, replayTools, topState)
 
   if (e.meta.skipped) {
     // respond.devtools.forceNotification({ ...e, __prefix: '-- ' })
@@ -49,7 +49,7 @@ export default function (state, e) {
 
 
 
-const sendTrigger = (e, state, top) => {
+const sendTrigger = (e, state, topState) => {
   const index = ++state.evsIndex
 
   if (state.playing) {
@@ -60,7 +60,7 @@ const sendTrigger = (e, state, top) => {
   const events = state.evs
 
   const prev = events[index - 1]
-  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e, top)
+  const dispatchedSameAsSkippedEvent = prev?.meta?.skipped && isEqual(prev, e, topState)
 
   if (dispatchedSameAsSkippedEvent) {
     delete prev.meta.skipped // ux optimization: user desired to unskip it by manually performing the same event
@@ -71,7 +71,7 @@ const sendTrigger = (e, state, top) => {
   const shouldClipTail = index <= lastEntryIndex
 
   if (shouldClipTail) {
-    const dispatchedSameEvent = clipTail(e, state, events, index, top)
+    const dispatchedSameEvent = clipTail(e, state, events, index, topState)
     if (dispatchedSameEvent) return // ux optimization: do nothing, as index increment resolves this automatically
   }
 
@@ -84,9 +84,9 @@ const sendTrigger = (e, state, top) => {
 
 // helpers
 
-const clipTail = (e, state, events, index, top) => {
+const clipTail = (e, state, events, index, topState) => {
   const next = events[index]
-  if (isEqual(next, e, top)) return true // user manually performed next event in sequence, so act as if there was no divergence
+  if (isEqual(next, e, topState)) return true // user manually performed next event in sequence, so act as if there was no divergence
 
   events.splice(index)
   state.divergentIndex = index
@@ -94,9 +94,9 @@ const clipTail = (e, state, events, index, top) => {
 
 
 
-const isEqual = (a, b, top) => {
+const isEqual = (a, b, topState) => {
   if (a.type !== b.type) return false
-  const arg = revive(top.respond)(a.arg || {})   // revive possible event function references in test arg
+  const arg = revive(topState.respond)(a.arg || {})   // revive possible event function references in test arg
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
 

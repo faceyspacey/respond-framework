@@ -10,7 +10,7 @@ export default e => {
     bs.queuedNavigation = e // trap will dequeue
   }
   else {
-    const useReplace = e.event.respond.getStore().replayTools?.playing
+    const useReplace = e.event.respond.topState.replayTools?.playing
     const change = () => changePath(e, useReplace)
     debounce(change)
   }

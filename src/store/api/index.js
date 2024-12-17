@@ -98,7 +98,7 @@ export default (top, system, branchesAll, focusedModule) => {
     addToCacheDeep,
   
     devtools: new Proxy({}, { get: () => () => undefined }),
-    
+
     history: createHistory(),
     cookies: createCookies(),
 
@@ -110,7 +110,7 @@ export default (top, system, branchesAll, focusedModule) => {
       return apiHandler(req, res)
     },
 
-    getStore() {
+    get topState() {
       return this.branches['']
     },
 
@@ -120,12 +120,12 @@ export default (top, system, branchesAll, focusedModule) => {
       return window.state = proxy
     },
 
-    replaceWithProxies: function replaceWithProxies(proxy, parent = {}, b = '') {
+    replaceWithProxies(proxy, parent = {}, b = '') {
       const proto = Object.getPrototypeOf(proxy)
       proto[_parent] = parent
 
-      proxy.respond.state = proxy.respond.branches[b] = proxy // replace module states with proxy
-      proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
+      proxy.respond.state = this.branches[b] = proxy // replace module states with proxy
+      proxy.moduleKeys.forEach(k => this.replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
     },
   
     simulateLatency() {

@@ -85,7 +85,7 @@ const resolveTable = (db, fb, branch, table) =>
 
 
 const createBody = (table, method, argsRaw, respond) => {
-  const { token, userId, adminUserId, basename, basenameFull, __dbFirstCall } = respond.getStore()
+  const { token, userId, adminUserId, basename, basenameFull, __dbFirstCall } = respond.topState
   const { state, focusedBranch, replays } = respond
 
   const branch = respond.moduleName === 'replayTools' ? 'replayTools' : replays.db.branchAbsolute // replayTools always at top even when child branch focused : db may be inherited, so we actually need to pass the branch inherited from
@@ -104,7 +104,7 @@ const createResponse = (respond, body, response) => {
   const { branch, table, method, args } = body
 
   const { state, models } = respond
-  respond.getStore().__dbFirstCall = true
+  respond.topState.__dbFirstCall = true
 
   // Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
   //   const type = `=> db.${table}.${method}`

@@ -1,4 +1,4 @@
-import { traverseModuleChildren } from '../../utils/sliceBranch.js'
+import { traverseModuleChildren } from '../helpers/traverse.js'
 
 
 export default function changeBasename(basename) {
