@@ -6,6 +6,7 @@ import createReducers from './createReducers.js'
 import createSelectors from './createSelectors.js'
 
 import extractModuleAspects from './extractModuleAspects.js'
+import assignRenderingDependencies from './helpers/assignRenderingDependencies.js'
 import { _parent, _module, _top } from './reserved.js'
 import kinds from './kinds.js'
 import { is, thisIn } from '../utils/inIs.js'
@@ -22,7 +23,7 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   respond.branchLocatorsById[mod.id] = branch
   respond.branches[branch] = state
 
-  respond.build(deps)
+  ;(mod.build ?? props.build)?.(deps)
 
   const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
@@ -34,10 +35,11 @@ export default function addModule(Respond, mod, parent = {}, name = '', state = 
   createClientModels(deps)
   createBasename(deps)
   createPlugins(deps)
-  
-  respond.buildAfter(deps)
 
+  assignRenderingDependencies(deps)
   moduleKeys.forEach(k => addModule(Respond, mod[k], state, k))
+
+  ;(mod.buildAfter ?? props.buildAfter)?.(deps)
 
   return parent[name] = state
 }

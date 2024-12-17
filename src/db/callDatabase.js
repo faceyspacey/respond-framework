@@ -4,14 +4,26 @@ import { reviveApiClient, reviveApiServer } from '../utils/revive.js'
 import flattenDatabase, { flattenModels } from './utils/flattenDatabase.js'
 
 
-export default function(table, method) {
-  if (method === 'make')   return this.models[table].make
-  if (method === 'create') return this.models[table].create
+export const createDb = respond => {
+  const get = (_, table) => {
+    const get = (_, method) => callDatabase(respond, table, method)
+    return new Proxy({}, { get })
+  }
 
+  return new Proxy({}, { get })
+}
+
+
+const callDatabase = (respond, table, method) => {
+  if (method === 'make')   return respond.models[table].make
+  if (method === 'create') return respond.models[table].create
+
+  const url = respond.options.apiUrl
+  
   const getter = async (...args) => {
-    const body = createBody(table, method, args, this)
-    const response = await fetch(this.options.apiUrl, body, getter, this, this.dbCache)
-    return createResponse(this, body, response)
+    const body = createBody(table, method, args, respond)
+    const response = await fetch(url, body, getter, respond)
+    return createResponse(respond, body, response)
   }
 
   getter.cache  = (...args) => (getter.useCache  = true) && getter(...args)
@@ -24,8 +36,8 @@ export default function(table, method) {
 
 
 
-const fetch = async (apiUrl, body, getter, respond, cache) => {
-  const cached = cache.get(body)
+const fetch = async (apiUrl, body, getter, respond) => {
+  const cached = respond.dbCache.get(body)
   if (cached) return cached
 
   const r = isProd || getter.useServer
@@ -34,7 +46,7 @@ const fetch = async (apiUrl, body, getter, respond, cache) => {
 
   const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
 
-  if (getter.useCache) cache.set(body, response)
+  if (getter.useCache) respond.dbCache.set(body, response)
   return response
 }
 

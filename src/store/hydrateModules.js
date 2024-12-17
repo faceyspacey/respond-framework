@@ -1,3 +1,4 @@
+import { getSessionState } from '../utils/getSessionState.js'
 import reduce from './plugins/reduce.js'
 import createToken from '../replays/utils/createToken.js'
 import { _parent } from './reserved.js'
@@ -13,7 +14,7 @@ export default (state, system) => {
     }
 
     case 'session': {
-      const [curr, prev] = state.respond.getSessionState()
+      const [curr, prev] = getSessionState(state.respond)
       reviveModules(state, curr)
       mergePrevState(state, prev)
       break

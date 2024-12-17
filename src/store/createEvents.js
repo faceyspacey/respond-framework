@@ -2,7 +2,7 @@ import isNamespace from '../utils/isNamespace.js'
 import { prepend } from '../utils/sliceBranch.js'
 import mergeArgMeta from './helpers/mergeArgMeta.js'
 import { init, navigation, submission, done, error, data } from './kinds.js'
-import { branch as branchSymbol } from './reserved.js'
+import { _branch } from './reserved.js'
 import { stripBranchWithUnknownFallback } from '../utils/sliceBranch.js'
 
 
@@ -86,7 +86,7 @@ const new_Event = () => { // like `new Event`, except the instance is a function
 
 export class Namespace {
   constructor(respond, name = '') {
-    this[branchSymbol] = respond.branch
+    this[_branch] = respond.branch
     this.name = name
   }
 
@@ -101,7 +101,7 @@ export class Namespace {
   id(respondOrState) {
     if (respondOrState === undefined) return this.name
     const branch = respondOrState.respond?.branch ?? respondOrState.branch
-    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    const b = stripBranchWithUnknownFallback(branch, this[_branch])
     return prepend(b, this.name)
   }
 }
@@ -123,7 +123,7 @@ export class Event {
 
     Object.assign(this, props.config, props)
 
-    this[branchSymbol] = branch
+    this[_branch] = branch
     this.kind ??= this.pattern ? navigation : submission
     this.moduleName = props.respond.moduleName
     this.__event = true
@@ -183,13 +183,13 @@ export class Event {
     if (respondOrState === undefined) return id
 
     const branch = respondOrState.respond?.branch ?? respondOrState.branch
-    const b = stripBranchWithUnknownFallback(branch, this[branchSymbol])
+    const b = stripBranchWithUnknownFallback(branch, this[_branch])
     
     return prepend(b, id)
   }
 
   get module() {
-    const branch = this[branchSymbol]
+    const branch = this[_branch]
     const state = this.respond.branches[branch]
 
     if (this.respond.mem.rendered) {

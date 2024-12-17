@@ -4,41 +4,32 @@ import fromEvent from './fromEvent.js'
 import eventFrom from './eventFrom.js'
 
 import snapshot from '../../proxy/snapshot.js'
-import listen from '../../proxy/listen.js'
 import render from '../../react/render.js'
 
 import defaultCreateDevtools from '../../devtools/index.mock.js'
 import defaultCreateHistory from '../../history/index.js'
 import defaultCreateCookies from '../../cookies/index.js'
 
-import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
-
+import { commit } from '../../proxy/utils/queueNotification.js'
 import { isTest, isProd, kinds} from '../../utils.js'
+import { _parent, _branch } from '../reserved.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
-import { isChildOrSelf, traverseModuleChildren } from '../../utils/sliceBranch.js'
-import { getSessionState, setSessionState } from '../../utils/getSessionState.js'
-import { _parent, branch as branchSymol } from '../reserved.js'
+import { traverseModuleChildren } from '../../utils/sliceBranch.js'
+import { setSessionState } from '../../utils/getSessionState.js'
+import { createDb, createApiHandler } from '../../db/callDatabase.js'
+import findInClosestAncestor, { findClosestAncestorWith } from '../../utils/findInClosestAncestor.js'
 import createDbCache from '../../db/utils/createDbCache.js'
 import createUrlCache from '../createUrlCache.js'
-import callDatabase, { createApiHandler } from '../../db/callDatabase.js'
-import { ObjectId } from 'bson'
-import objectIdDevelopment from '../../utils/objectIdDevelopment.js'
 import createProxy from '../../proxy/createProxy.js'
-import { commit } from '../../proxy/utils/queueNotification.js'
+import createAncestors from '../helpers/createAncestors.js'
 
 
 export default (top, system, branchesAll, focusedModule) => {
   const { replayState, prevUrl, basenames = {} } = system
   const focusedBranch = focusedModule.branchAbsolute
-  
-  const branches = { get undefined() { return this[''] } }
-  const subscribers = []
-  const promises = []
 
   const prev = window.state?.respond
-
-  const mem = prev?.mem ?? {}
-  mem.rendered = false
+  const apiHandler = createApiHandler({ db: top.db, log: false })
 
   const {
     createDevtools = defaultCreateDevtools,
@@ -47,126 +38,55 @@ export default (top, system, branchesAll, focusedModule) => {
     ...options
   } = top.options ?? {}
 
-  const getStore = () => branches['']
-
-  const reuseEvents = prev?.focusedBranch === focusedBranch
-
-  const eventsByPattern = {}
-
   function Respond(props) {
     Object.assign(this, props)
-
-    this.overridenReducers = new Map
-    this.mod.id ??= this.generateId()
     
-    const get = (_, table) => {
-      const get = (_, method) => this.callDatabase(table, method)
-      return new Proxy({}, { get })
-    }
-
-    this.db = new Proxy({}, { get })
-
     this.listeners = new Set
-
-    let b = ''
-    this.ancestors = !this.branch
-      ? ['']
-      : ['', ...this.branch.split('.').map(k =>  b = b ? b + '.' + k : k)].reverse()
-    
+    this.overridenReducers = new Map
     this.responds[this.branch] = this
-
     this.snapshot = snapshot.bind(this)
+    this.ancestors = createAncestors(this.branch)
+    this.db = createDb(this)
+    
+    if (!this.mod.id) throw new Error(`id missing for module "${this.branchAbsolute ?? 'top'}"`)
   }
 
-  const apiHandler = createApiHandler({ db: top.db, log: false })
 
   Respond.prototype = {
-    build(deps) {
-      (this.mod.build ?? this.props.build)?.(deps)
-    },
-    buildAfter(deps) {
-      (this.mod.buildAfter ?? this.props.buildAfter)?.(deps)
-      this.assignRenderingDependencies(deps)
-    },
-    
-    assignRenderingDependencies({ branch, parent }) {
-      const { ignoreParents, dependsOnAllAncestors, dependsOnParent } = this
-
-      if (!ignoreParents) {
-        if (dependsOnAllAncestors) {
-          this.dependedBranch = '' 
-          this.branchDiff = branch
-        }
-        else if (dependsOnParent) {
-          this.dependedBranch = parent.respond.branch
-          this.branchDiff = this.moduleName
-        }
-      }
-
-      this.ancestorsListening = {} // includes self
-
-      for (const b of this.ancestors) {
-        const respond = this.responds[b]
-        const dependedBranch = respond.dependedBranch ?? respond.branch
-
-        this.ancestorsListening[dependedBranch] = true
-        
-        if (this.responds[b].ignoreParents) break
-      }
-    },
-
-    callDatabase,
-    async apiHandler(req, res) {
-      await this.simulateLatency()
-      return apiHandler(req, res)
-    },
-
-    dbCache: createDbCache(system.dbCache),
-    urlCache: createUrlCache(system.urlCache, fromEvent),
-
     top,
-
-    mem,
-    ctx: {},
-
-    prev: window.state?.respond,
-
+    prev,
     system,
-
-    hmr: replayState.status === 'hmr',
-
-    reuseEvents,
-
-    prevEventsByType: reuseEvents ? prev.eventsByType : {},
-    eventsByType: {},
 
     replayState,
     basenames,
     prevUrl,
-    
-    devtools: createDevtools(),
-    history: createHistory(),
-    cookies: createCookies(),
 
     focusedModule,
     focusedBranch,
 
     branchesAll,
-    
-    branches,
-    branchLocatorsById: {},
-
-    modelsByBranchType: {},
-
-    eventsByPattern,
-
-    responds: {},
-    subscribers,
-    promises,
-    refs: {},
-    eventsCache: new Map,
-
     kinds,
+
+    hmr: replayState.status === 'hmr',
+    reuseEvents:      prev?.focusedBranch === focusedBranch,
+
+    prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
+    branches: { get undefined() { return this[''] } },
+    mem: { ...prev?.mem, rendered: false },
+    ctx: {},
+    branchLocatorsById: {},
+    modelsByBranchType: {},
+    eventsByType: {},
+    eventsByPattern: {},
+    responds: {},
+    refs: {},
+
+    subscribers: [],
+    promises: [],
+
+    eventsCache: new Map,
+    versionListeners: new WeakMap,
+    refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
   
     dispatch,
     trigger,
@@ -174,19 +94,30 @@ export default (top, system, branchesAll, focusedModule) => {
     fromEvent,
     eventFrom,
   
-    versionListeners: new WeakMap,
-    refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development
-    listen,
-
     render,
-
+    commit,
+    
     addToCache,
     addToCacheDeep,
   
-    getStore,
+    devtools: createDevtools(),
+    history: createHistory(),
+    cookies: createCookies(),
+
+    dbCache: createDbCache(system.dbCache),
+    urlCache: createUrlCache(system.urlCache, fromEvent),
+
+    async apiHandler(req, res) {
+      await this.simulateLatency()
+      return apiHandler(req, res)
+    },
+
+    getStore() {
+      return this.branches['']
+    },
 
     proxify() {
-      const proxy = createProxy(branches[''], this.versionListeners, this.refIds)
+      const proxy = createProxy(this.branches[''], this.versionListeners, this.refIds)
       this.replaceWithProxies(proxy)
       return window.state = proxy
     },
@@ -195,12 +126,8 @@ export default (top, system, branchesAll, focusedModule) => {
       const proto = Object.getPrototypeOf(proxy)
       proto[_parent] = parent
 
-      proxy.respond.state = branches[b] = proxy // replace module states with proxy
+      proxy.respond.state = proxy.respond.branches[b] = proxy // replace module states with proxy
       proxy.moduleKeys.forEach(k => replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
-    },
-
-    getSessionState() {
-      return getSessionState(this)
     },
   
     simulateLatency() {
@@ -211,34 +138,30 @@ export default (top, system, branchesAll, focusedModule) => {
     awaitInReplaysOnly(f, onError) {           
       const promise = typeof f === 'function' ? f() : f // can be function
       if (!(promise instanceof Promise)) return
-      promises.push(promise.catch(onError))
+      this.promises.push(promise.catch(onError))
     },
     async promisesCompleted(e) {
-      await Promise.all(promises)
-      promises.length = 0
+      await Promise.all(this.promises)
+      this.promises.length = 0
       this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
       this.queueSaveSession()
-    },
-
-    commit() {
-      commit(this)
     },
     
     queueSaveSession() {
       if (isProd || isTest) return
-      if (mem.saveQueued || getStore().replayTools?.playing) return
-      if (window.state !== getStore()) return // ensure replayEvents saves new state instead of old state when recreating state for replays
+      if (this.mem.saveQueued || this.branches.replayTools?.playing) return
+      if (window.state !== this.branches['']) return // ensure replayEvents saves new state instead of old state when recreating state for replays
 
-      mem.saveQueued = true
+      this.mem.saveQueued = true
 
       setTimeout(() => {
         requestAnimationFrame(() => {
-          const snap = this.snapshot(getStore())
+          const snap = this.snapshot(this.branches[''])
           const e = this.lastTriggerEvent
 
           setSessionState(snap, e)
 
-          mem.saveQueued = false
+          this.mem.saveQueued = false
         })
       }, 500)
     },
@@ -250,10 +173,6 @@ export default (top, system, branchesAll, focusedModule) => {
       if (b.kind !== kinds.navigation) return false
       if (!a.event.pattern || !a.event.pattern) return false
       return this.fromEvent(a).url === this.fromEvent(b).url
-    },
-
-    generateId() {
-      return isProd ? new ObjectId().toString() : objectIdDevelopment()
     },
 
     changeBasename(basename) {
@@ -272,14 +191,14 @@ export default (top, system, branchesAll, focusedModule) => {
 
       const next = {}
 
-      Object.keys(eventsByPattern).forEach(prev => {
-        const event = eventsByPattern[prev]
+      Object.keys(this.eventsByPattern).forEach(prevPattern => {
+        const event = this.eventsByPattern[prevPattern]
         const pattern = event.module.basenameFull + event.pattern
         next[pattern] = event
-        delete eventsByPattern[prev]
+        delete this.eventsByPattern[prevPattern]
       })
 
-      Object.assign(eventsByPattern, next)
+      Object.assign(this.eventsByPattern, next)
 
       this.history.changePath(e)
       this.queueSaveSession()
@@ -295,16 +214,21 @@ export default (top, system, branchesAll, focusedModule) => {
       return findClosestAncestorWith(key, b2, top)
     },
   
+    listen(callback) {
+      this.listeners.add(callback)
+      return () => this.listeners.delete(callback)
+    },
+
     subscribe(send, triggerOnly = true) {
       send.module = this.state
       send.branch = this.state.branch // branch of module attached to `respond` object unique to each module
       send.triggerOnly = triggerOnly
       
-      subscribers.push(send)
+      this.subscribers.push(send)
     
       return () => {
-        const index = subscribers.findIndex(l => l === send)
-        subscribers.splice(index, 1)
+        const index = this.subscribers.findIndex(l => l === send)
+        this.subscribers.splice(index, 1)
       }
     },
     
@@ -316,14 +240,14 @@ export default (top, system, branchesAll, focusedModule) => {
       if (event.sync && !event.notifyReduce) return // by default sync events don't trigger notifyReduce
       if (event === this.state.events.init) return
 
-      const sent = subscribers
+      const sent = this.subscribers
         .filter(send =>
-          e.event[branchSymol].indexOf(send.branch) === 0 && // event is child of subscribed module or the same module
+          e.event[_branch].indexOf(send.branch) === 0 && // event is child of subscribed module or the same module
           !send.triggerOnly || e.meta.trigger
         )
         .map(send => send(send.module, e))
 
-      if (sent.length > 0) promises.push(...sent)
+      if (sent.length > 0) this.promises.push(...sent)
     },
   
     onError(err)  {
@@ -340,7 +264,7 @@ export default (top, system, branchesAll, focusedModule) => {
       const ownOnError = this.state.options.onError
       if (ownOnError) return ownOnError({ ...err, state: this.state })
 
-      const state = getStore()
+      const state = this.branches['']
       return state.options.onError?.({ ...err, state })
     }
   }

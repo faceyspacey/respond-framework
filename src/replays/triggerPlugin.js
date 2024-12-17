@@ -5,7 +5,7 @@ import { mergePrevState } from '../store/hydrateModules.js'
 import { push } from '../history/changePath.js'
 import { hasHistory } from '../utils/bools.js'
 import bs from '../history/browserState.js'
-import { branch as branchSymbol } from '../store/reserved.js'
+import { _branch } from '../store/reserved.js'
 import { urlToLocation } from '../utils/url.js'
 
 
@@ -28,7 +28,7 @@ export default function (state, e) {
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
-  if (e.event[branchSymbol] === 'replayTools' && !replayTools.config.log) {
+  if (e.event[_branch] === 'replayTools' && !replayTools.config.log) {
     mergePrevState(replayTools, respond.snapshot(replayTools))
     return
   }
