@@ -1,7 +1,7 @@
 import tableDefault from '../db/index.js'
 import modelDefault from '../db/model.js'
 
-import callMethod from './utils/callMethod.js'
+import callMethod from './helpers/callMethod.js'
 import { createModel } from './createModels.js'
 
 

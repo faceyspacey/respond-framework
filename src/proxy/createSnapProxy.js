@@ -1,4 +1,4 @@
-import createSnapHandler from './utils/createSnapHandler.js'
+import createSnapHandler from './helpers/createSnapHandler.js'
 
 
 export default (snap, parentState) => {

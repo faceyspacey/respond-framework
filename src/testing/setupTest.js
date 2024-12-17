@@ -1,8 +1,8 @@
-import createRenderer from './utils/createRenderer.js'
-import createDispatch from './utils/createDispatch.js'
-import createSnap from './utils/createSnap.js'
-import createReplayEventsToIndex from './utils/createReplayEventsToIndex.js'
-import createModule from '../store/createState.js'
+import createRenderer from './helpers/createRenderer.js'
+import createDispatch from './helpers/createDispatch.js'
+import createSnap from './helpers/createSnap.js'
+import createReplayEventsToIndex from './helpers/createReplayEventsToIndex.js'
+import createModule from '../createModule/index.js'
 
 
 export default async ({ top, config, settings, rendererOptions } = {}) => {

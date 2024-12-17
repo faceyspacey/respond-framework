@@ -1,5 +1,5 @@
 import * as io from 'socket.io-client'
-import { isDev, isNative } from '../utils/bools.js'
+import { isDev, isNative } from '../helpers/constants.js'
 
 
 export default () => {

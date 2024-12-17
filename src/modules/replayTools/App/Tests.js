@@ -5,7 +5,7 @@ import { colors } from '../styles.js'
 import Radio from '../widgets/Radio.js'
 import Test from '../widgets/Test.js'
 import SearchInputForm, { s as rs } from '../components/SearchInputForm.js'
-import { isNative } from '../../../utils/bools.js'
+import { isNative } from '../../../helpers/constants.js'
 import { ModuleDropdown } from './Settings.js'
 
 

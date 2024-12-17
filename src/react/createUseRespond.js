@@ -1,5 +1,5 @@
 import { useContext, memo, forwardRef, useEffect } from 'react'
-import sliceBranch from '../utils/sliceBranch.js'
+import sliceBranch from '../createModule/helpers/sliceBranch.js'
 import useSnapshot from '../proxy/useSnapshot.js'
 import RespondContext from './context.js'
 

@@ -1,11 +1,10 @@
-
-import { addPopListener, removePopListener } from './utils/popListener.js'
+import { addPopListener, removePopListener } from './helpers/popListener.js'
 import bs from './browserState.js'
-import * as buttons from './utils/buttons.js'
-import * as out from './utils/out.js'
+import * as buttons from './helpers/buttons.js'
+import * as out from './helpers/out.js'
 import { isDev } from '../utils.js'
 import { replace } from './changePath.js'
-import handleHashChange from './utils/handleHashChange.js'
+import handleHashChange from './helpers/handleHashChange.js'
 
 
 export const createTrap = () => {

@@ -1,4 +1,4 @@
-import { canProxy } from '../proxy/utils/helpers.js'
+import { canProxy } from '../proxy/helpers/utils.js'
 
 // this is for deep merge in reducers (model arrays containing matching ids are deep merged)
 

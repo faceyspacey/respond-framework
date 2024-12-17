@@ -1,7 +1,7 @@
-import * as plugins from './store/plugins/index.js'
+import * as plugins from './createModule/plugins/index.js'
 
 
-export * from './store/plugins/index.js'
+export * from './createModule/plugins/index.js'
 
 export const defaultSyncPlugins = [
   plugins.edit,

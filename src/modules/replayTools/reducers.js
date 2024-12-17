@@ -1,4 +1,4 @@
-import addToCache from '../../utils/addToCache.js'
+import addToCache from '../../createModule/methods/addToCache.js'
 import cascadeSetting from './helpers/cascadeSetting.js'
 
 

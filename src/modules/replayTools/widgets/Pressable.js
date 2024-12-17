@@ -1,6 +1,6 @@
 import { forwardRef, useState, createElement } from 'react'
 import { View, TouchableOpacity } from 'react-native'
-import { isNative } from '../../../utils/bools.js'
+import { isNative } from '../../../helpers/constants.js'
 import { memo } from '../../../utils/isEqual.js'
 
 

@@ -1,6 +1,6 @@
 import { useSyncExternalStore, useRef, useCallback, useLayoutEffect, useMemo } from 'react'
 import createSnapProxy from './createSnapProxy.js'
-import isChanged from './utils/isChanged.js'
+import isChanged from './helpers/isChanged.js'
 
 
 export default (func, respond, dependencies = []) => {

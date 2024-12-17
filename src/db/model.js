@@ -1,6 +1,6 @@
-import { isProd } from '../utils/bools.js'
+import { isProd } from '../helpers/constants.js'
 import mock from './model.mock.js'
-import { toObjectIds, toObjectIdsSelector } from './utils/toFromObjectIds.js'
+import { toObjectIds, toObjectIdsSelector } from './helpers/toFromObjectIds.js'
 
 
 export default !isProd ? mock : {

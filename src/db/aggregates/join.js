@@ -1,5 +1,5 @@
 import dateStringToDate from '../utils/dateStringToDate.js'
-import { resolveId, toObjectIdsSelector } from '../utils/toFromObjectIds.js'
+import { resolveId, toObjectIdsSelector } from '../helpers/toFromObjectIds.js'
 
 
 export default ({ ...spec }, parentSelector, collection) => {

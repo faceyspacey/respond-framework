@@ -1,5 +1,5 @@
 import mixin from './model.client.js'
-import findClosestAncestorWith from '../store/helpers/findClosestAncestorWith.js'
+import findClosestAncestorWith from '../createModule/helpers/findClosestAncestorWith.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {

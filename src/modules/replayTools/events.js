@@ -1,13 +1,13 @@
 import { Linking } from 'react-native'
 import combineInputEvents from './helpers/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
-import createState from '../../store/createState.js'
-import { navigation } from '../../store/kinds.js'
+import createState from '../../createModule/index.js'
+import { navigation } from '../../createModule/kinds.js'
 
 import nestSettings from './helpers/nestSettings.js'
-import sliceBranch from '../../utils/sliceBranch.js'
-import findClosestAncestorWith from '../../store/helpers/findClosestAncestorWith.js'
-import { defaultOrigin } from '../../utils/constants.js'
+import sliceBranch from '../../createModule/helpers/sliceBranch.js'
+import findClosestAncestorWith from '../../createModule/helpers/findClosestAncestorWith.js'
+import { defaultOrigin } from '../../helpers/constants.js'
 
 
 export default {

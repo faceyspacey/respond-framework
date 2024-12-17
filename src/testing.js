@@ -5,4 +5,4 @@ export { default as mockIncrementingNumber } from './testing/utils/mockIncrement
 export { default as mockMongoId } from './testing/utils/mockMongoId.js'
 export { default as mockGlobals } from './testing/utils/mockGlobals.js'
 
-export { suffix } from './utils/objectIdDevelopment.js'
+export { suffix } from './helpers/objectIdDevelopment.js'

@@ -5,7 +5,7 @@ import Input from '../widgets/Input.js'
 import Radio from '../widgets/Radio.js'
 import Dropdown from '../widgets/Dropdown.js'
 import Link from '../widgets/Link.js'
-import respondConfig from '../../../replays/config.default.js'
+import respondConfig from '../config.default.js'
 import ErrorField from '../widgets/ErrorField.js'
 
 

@@ -1,11 +1,11 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
 import defaultPlugins from '../../plugins.js'
-import { _parent } from '../../store/reserved.js'
+import { _parent } from '../../createModule/reserved.js'
 
-export { default as build } from '../../replays/index.js'
+export { default as build } from './build.js'
 
-export { default as replayEvents } from '../../replays/replayEvents.js'
+export { default as replayEvents } from './replayEvents.js'
 
 export { default as db } from './db.js'
 

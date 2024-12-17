@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { AppRegistry } from 'react-native'
 import { createRoot } from 'react-dom/client'
-import { isNative, isTest } from '../utils/bools.js'
+import { isNative, isTest } from '../helpers/constants.js'
 import RespondProvider from './Provider.js'
 
 

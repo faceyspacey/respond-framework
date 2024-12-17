@@ -1,1 +1,0 @@
-export const defaultOrigin = (typeof window !== 'undefined' && window.location?.origin) ?? 'http://localhost:3000'

@@ -1,4 +1,4 @@
-import { isProd, isNative as useNativeDriver } from '../../../utils/bools.js'
+import { isProd, isNative as useNativeDriver } from '../../../helpers/constants.js'
 
 
 export default Animated => {

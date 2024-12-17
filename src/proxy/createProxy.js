@@ -1,7 +1,7 @@
-import { canProxy, isArray, create, getProto } from './utils/helpers.js'
-import createHandler from './utils/createHandler.js'
-import { _module, _top } from '../store/reserved.js'
-import queueNotification from './utils/queueNotification.js'
+import { canProxy, isArray, create, getProto } from './helpers/utils.js'
+import createHandler from './helpers/createHandler.js'
+import { _module, _top } from '../createModule/reserved.js'
+import queueNotification from './helpers/queueNotification.js'
 
 
 export default function createProxy(o, vls, refIds, notifyParent = function() {}, cache =  new WeakMap, snapCache = new WeakMap) {

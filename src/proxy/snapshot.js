@@ -1,5 +1,5 @@
-import cloneDeep from './utils/cloneDeep.js'
-import { isArray, keys, getProto, create } from './utils/helpers.js'
+import cloneDeep from './helpers/cloneDeep.js'
+import { isArray, keys, getProto, create } from './helpers/utils.js'
 
 
 export default function(proxy = this.state, vls = this.versionListeners) {

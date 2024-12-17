@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { isNative } from './bools.js'
+import { isNative } from '../helpers/constants.js'
 
 const key = '__respond_session.'
 
