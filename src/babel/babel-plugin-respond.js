@@ -157,15 +157,12 @@ module.exports = respondBabelPlugin
 
 
 
-// uncomment below to run in quokka
+// uncomment to run in quokka
 
 // const code = `
-// export default (props, events, state) => null
-
-
-// // const Hello = (props, events, state) => null
-
-// // const Yolo = (props, events, state, store, ref) => null
+// export default (props, state) => null
+// const Hello = (props, state) => null
+// const HelloRef = (props, state, ref) => null
 // `
 
 // const output = require('@babel/core').transformSync(code, {

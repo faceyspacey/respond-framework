@@ -11,7 +11,7 @@ import defaultCreateCookies from '../../cookies/index.js'
 
 import { commit } from '../../proxy/utils/queueNotification.js'
 import { isTest, isProd, kinds} from '../../utils.js'
-import { _parent, _branch } from '../reserved.js'
+import { _branch } from '../reserved.js'
 import { addToCache, addToCacheDeep } from '../../utils/addToCache.js'
 import { setSessionState } from '../../utils/getSessionState.js'
 import { createDb, createApiHandler } from '../../db/callDatabase.js'
@@ -20,6 +20,7 @@ import createUrlCache from '../createUrlCache.js'
 import createProxy from '../../proxy/createProxy.js'
 import createAncestors from '../helpers/createAncestors.js'
 import changeBasename from './changeBasename.js'
+import replaceWithProxies from '../helpers/replaceWithProxies.js'
 
 
 export default (top, system, branchesAll, focusedModule) => {
@@ -45,7 +46,6 @@ export default (top, system, branchesAll, focusedModule) => {
     this.ancestors = createAncestors(this.branch)
     this.db = createDb(this)
   }
-
 
   Respond.prototype = {
     top,
@@ -105,72 +105,19 @@ export default (top, system, branchesAll, focusedModule) => {
     dbCache: createDbCache(system.dbCache),
     urlCache: createUrlCache(system.urlCache, fromEvent),
 
+    get topState() {
+      return this.branches['']
+    },
+
     async apiHandler(req, res) {
       await this.simulateLatency()
       return apiHandler(req, res)
     },
 
-    get topState() {
-      return this.branches['']
-    },
-
     proxify() {
       const proxy = createProxy(this.branches[''], this.versionListeners, this.refIds)
-      this.replaceWithProxies(proxy)
+      replaceWithProxies(proxy)
       return window.state = proxy
-    },
-
-    replaceWithProxies(proxy, parent = {}, b = '') {
-      const proto = Object.getPrototypeOf(proxy)
-      proto[_parent] = parent
-
-      proxy.respond.state = this.branches[b] = proxy // replace module states with proxy
-      proxy.moduleKeys.forEach(k => this.replaceWithProxies(proxy[k], proxy, b ? `${b}.${k}` : k))
-    },
-  
-    simulateLatency() {
-      if (isTest || this.mem.isFastReplay || !this.options.simulatedApiLatency) return
-      return timeout(this.options.simulatedApiLatency)
-    },
-
-    awaitInReplaysOnly(f, onError) {           
-      const promise = typeof f === 'function' ? f() : f // can be function
-      if (!(promise instanceof Promise)) return
-      this.promises.push(promise.catch(onError))
-    },
-    async promisesCompleted(e) {
-      await Promise.all(this.promises)
-      this.promises.length = 0
-      this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
-      this.queueSaveSession()
-    },
-    
-    queueSaveSession() {
-      if (isProd || isTest) return
-      if (this.mem.saveQueued || this.branches.replayTools?.playing) return
-      if (window.state !== this.branches['']) return // ensure replayEvents saves new state instead of old state when recreating state for replays
-
-      this.mem.saveQueued = true
-
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          const snap = this.snapshot(this.branches[''])
-          const e = this.lastTriggerEvent
-
-          setSessionState(snap, e)
-
-          this.mem.saveQueued = false
-        })
-      }, 500)
-    },
-  
-    isEqualNavigations(a, b) {
-      if (!a || !b) return false
-      if (a.event !== b.event) return false
-      if (a.kind !== kinds.navigation) return false
-      if (b.kind !== kinds.navigation) return false
-      if (!a.event.pattern || !a.event.pattern) return false
-      return this.fromEvent(a).url === this.fromEvent(b).url
     },
   
     listen(callback) {
@@ -225,7 +172,50 @@ export default (top, system, branchesAll, focusedModule) => {
 
       const state = this.branches['']
       return state.options.onError?.({ ...err, state })
-    }
+    },
+
+    simulateLatency() {
+      if (isTest || this.mem.isFastReplay || !this.options.simulatedApiLatency) return
+      return timeout(this.options.simulatedApiLatency)
+    },
+
+    awaitInReplaysOnly(f, onError) {           
+      const promise = typeof f === 'function' ? f() : f // can be function
+      if (!(promise instanceof Promise)) return
+      this.promises.push(promise.catch(onError))
+    },
+    
+    async promisesCompleted(e) {
+      await Promise.all(this.promises)
+
+      this.promises.length = 0
+      this.lastTriggerEvent = e // seed will only be saved if not an event from replayTools
+      this.queueSaveSession()
+    },
+    
+    queueSaveSession() {
+      if (isProd || isTest) return
+      if (this.mem.saveQueued || this.branches.replayTools?.playing) return
+      if (window.state !== this.branches['']) return // ensure replayEvents saves new state instead of old state when recreating state for replays
+
+      this.mem.saveQueued = true
+
+      setTimeout(() => {
+        const snap = this.snapshot(this.branches[''])
+        setSessionState(snap, this.lastTriggerEvent)
+        this.mem.saveQueued = false
+      }, 1000)
+    },
+  
+    isEqualNavigations(a, b) {
+      if (!a || !b) return false
+      if (a.event !== b.event) return false
+      if (a.kind !== kinds.navigation) return false
+      if (b.kind !== kinds.navigation) return false
+      if (!a.event.pattern || !a.event.pattern) return false
+
+      return this.fromEvent(a).url === this.fromEvent(b).url
+    },
   }
 
   return Respond

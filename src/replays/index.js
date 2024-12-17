@@ -2,7 +2,7 @@ import defaultCreateSettings from './utils/createSettings.js'
 import defaultCreateSeed from './utils/createSeed.js'
 
 import nestSettings from '../modules/replayTools/helpers/nestSettings.js'
-import { nestAtBranch } from '../utils/sliceBranch.js'
+import nestAtBranch from '../store/helpers/nestAtBranch.js'
 import { createCounterRef } from '../utils/objectIdDevelopment.js'
 
 

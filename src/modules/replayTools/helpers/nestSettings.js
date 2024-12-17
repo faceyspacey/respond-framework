@@ -1,5 +1,4 @@
-
-import { nestAtBranch } from '../../../utils/sliceBranch.js'
+import nestAtBranch from '../../../store/helpers/nestAtBranch.js'
 
 
 export default settings => {
