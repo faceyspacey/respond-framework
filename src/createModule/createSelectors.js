@@ -18,7 +18,7 @@ export default ({ respond, proto, state }, selectorDescriptors, propSelectorDesc
 
     Object.defineProperty(proto, k, { [kind]: v, configurable: true })
 
-    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // selector takes precedence if both exist
+    if (reducers[k]) respond.overriden.set(reducers[k], true)   // selector takes precedence if both exist
     if (state.hasOwnProperty(k)) delete state[k]     // delete possible initialState for possible reducer
   })
 
@@ -34,7 +34,7 @@ export default ({ respond, proto, state }, selectorDescriptors, propSelectorDesc
 
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
-    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)   // disable potential child reducer mock (aka "defaultProp")
+    if (reducers[k]) respond.overriden.set(reducers[k], true)   // disable potential child reducer mock (aka "defaultProp")
     if (state.hasOwnProperty(k)) delete state[k]  // delete possible initialState
 
     respond.dependsOnAllAncestors = true

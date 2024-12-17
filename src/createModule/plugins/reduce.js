@@ -98,7 +98,7 @@ const reduceModule = (state, e, mod, reducers) => {
   for (const k in reducers) {
     const reduce = reducers[k]
 
-    if (mod.respond.overridenReducers.get(reduce)) {
+    if (mod.respond.overriden.get(reduce)) {
       continue
     }
     else if (typeof reduce === 'object') {
@@ -123,7 +123,7 @@ const reduceModuleInit = (state, e, mod, reducers) => {
       continue // assigned null to a built-in reducer to disable it
     }
 
-    if (mod.respond.overridenReducers.get(reduce)) {
+    if (mod.respond.overriden.get(reduce)) {
       continue
     }
     else if (typeof reduce === 'object') {

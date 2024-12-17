@@ -23,7 +23,7 @@ export default ({ respond, proto, state, parent, moduleName, branch }, reducers,
     const get = function() { return this[_parent][k2] }                   // the magic: simply select parent state (using reactive _parent symbol)
     Object.defineProperty(proto, k, { get, configurable: true })
 
-    if (reducers[k]) respond.overridenReducers.set(reducers[k], true)     // disable possible child reducer mock, so reduce prop's selector takes precedence
+    if (reducers[k]) respond.overriden.set(reducers[k], true)     // disable possible child reducer mock, so reduce prop's selector takes precedence
     if (state.hasOwnProperty(k)) delete state[k]                          // delete possible initialState
 
     respond.dependsOnParent = true

@@ -28,8 +28,8 @@ import createBranches from './createBranches.js'
 
 import kinds from './kinds.js'
 import { isProd } from '../helpers/constants.js'
-import createAncestors from './helpers/createAncestors.js'
 import assignProto from '../utils/assignProto.js'
+import createAncestors from './helpers/createAncestors.js'
 import { _branch, _module, _top } from './reserved.js'
 
 
@@ -47,13 +47,13 @@ export default (top, system, focusedModule, focusedBranch) => {
     Object.assign(this, props)
 
     this.listeners = new Set
-    this.overridenReducers = new Map
-    this.responds[this.branch] = this
+    this.overriden = new Map
     this.isTop = props.mod === top
-    this.eventFrom = eventFrom.bind(this)
-    this.snapshot = snapshot.bind(this)
-    this.ancestors = createAncestors(this.branch)
     this.db = createDb(this, Respond)
+    this.responds[this.branch] = this
+    this.snapshot = snapshot.bind(this)
+    this.eventFrom = eventFrom.bind(this)
+    this.ancestors = createAncestors(this.branch)
 
     assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn })
   }
@@ -122,7 +122,7 @@ export default (top, system, focusedModule, focusedBranch) => {
 
     get topState() {
       return this.branches['']
-    },
+    }
   }
 
   return Respond
