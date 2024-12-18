@@ -91,7 +91,7 @@ export default (opts = {}) => {
       }
     }
 
-    // 1st visit/open:
+    // case 'visit':
     default: {
       return {
         replayState: { settings: undefined, branch: '', status: 'reload' },

@@ -26,7 +26,7 @@ export default function render(props = {}, opts = {}) {
 const createApp = (respond, props, last) => {
   if (last) respond.state.replayTools.playing = false // optimization, so additional render isn't queued after main render -- see replayEvents.js
 
-  const state = props.state ? props.state.respond.proxify() : respond.proxify()
+  const state = props.state ? props.state.respond.proxify() : respond.proxify() // props.state passed in via App(props, state) in userland, but under the hood, for things like replayEvents we just call respond.render() with state already existing on respond.state; and in actuality, it will also exist when you do App(props, state), but will throw if you pass an incorrect object for state; it's really just a teaching mechanism that we offer App(props, state), i.e. to establish the proper mental model
 
   const Provider = props.Provider || state.components?.Provider || RespondProvider
   const { App, Error } = state.components ?? {}
