@@ -10,7 +10,7 @@ export default opts => {
 
   return async (req, res) => {
     try {
-      await apiHandler(req, res)
+      await apiHandler(req, res) // this function is used directly in development on the client as well
     }
     catch (error) {
       console.error('respond: the following error occurred in a table method', req.body, error)

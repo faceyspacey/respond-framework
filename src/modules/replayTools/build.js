@@ -1,6 +1,5 @@
-import defaultCreateSettings from './helpers/createSettings.js'
 import defaultCreateSeed from './helpers/createSeed.js'
-
+import createSettings from './helpers/createSettings.js'
 import nestSettings from './helpers/nestSettings.js'
 import nestAtBranch from '../../createModule/helpers/nestAtBranch.js'
 import { createCounterRef } from '../../helpers/objectIdDevelopment.js'
@@ -39,12 +38,12 @@ const createAllSettingsBreadth = (mod, input, branches, depth, configs, settings
     replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
     replays.db.branchAbsolute = mod.branchAbsolute // callDatabase uses this to determine inherited db's *actual* absolute branch
-    replays.settings = defaultCreateSettings(replays.config, input)
+    replays.settings = createSettings(replays.config, input)
   }
   else if (mod.replays) {
     mod.replays.db = replays.db // db inherited (but not replays)
     replays = mod.replays
-    replays.settings = defaultCreateSettings(mod.replays.config, input)
+    replays.settings = createSettings(mod.replays.config, input)
   }
 
   configs[mod.branchAbsolute] = replays.config

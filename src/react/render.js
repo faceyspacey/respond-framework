@@ -5,7 +5,8 @@ import { isNative, isTest } from '../helpers/constants.js'
 import RespondProvider from './Provider.js'
 
 
-export default function render(props = {}, { startTime, last } = {}) {
+export default function render(props = {}, opts = {}) {
+  const { startTime, last } = opts
   if (startTime) console.log('replayEvents.run', parseFloat((performance.now() - startTime).toFixed(3)))
 
   const start = performance.now()

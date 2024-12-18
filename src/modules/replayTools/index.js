@@ -27,10 +27,6 @@ export const divergentIndex = undefined
 
 export const errors = {}
 
-export function findLastEvent() {
-  return this.evs[this.evsIndex]
-}
-
 export function testsParams() {
   const { focusedBranch: branch, searched, filter } = this
   return { branch, searched, filter }

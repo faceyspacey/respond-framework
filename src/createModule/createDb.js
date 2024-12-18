@@ -45,7 +45,7 @@ const fetch = async (apiUrl, body, getter, respond) => {
 
   const r = isProd || getter.useServer
     ? await _fetch(apiUrl, body, respond)
-    : await respond.apiHandler({ body }, { json: r => r })
+    : await respond.apiHandler({ body }, { json: r => r }) // the magic: call server-side api handler directly on the client during development
 
   const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
 
@@ -57,7 +57,7 @@ const fetch = async (apiUrl, body, getter, respond) => {
 
 
 
-export const createApiHandler = ({ db, log = true, context = {} }) => {
+export const createApiHandler = ({ db, log = true, context = {} }) => { // used in this file on the client + wrapped within a thin express handler on the server in createApi.js
   const modelsByBranchType = flattenModels(db)
   const branches = flattenDatabase(db)
 
@@ -78,8 +78,7 @@ export const createApiHandler = ({ db, log = true, context = {} }) => {
 
 
 const createApiHandlerOnce = (respond, Respond) => {
-  if (isProd) return
-  if (respond.apiHandler) return
+  if (isProd || respond.apiHandler) return
 
   const apiHandler = createApiHandler({ db: respond.top.db, log: false })
 
