@@ -4,7 +4,7 @@ import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
 
 export default (opts = {}) => {
-  const { status, settings, branch = '', hydration = {} } = opts
+  const { status, settings, branch = '', hydration } = opts
   const { prevState, respond, replayTools } = window.state ?? {}
   const rt = replayTools && respond.snapshot(replayTools)
 
@@ -34,11 +34,13 @@ export default (opts = {}) => {
     }
 
     case 'hmr-replay': {
+      const lastEvents = rt.evs.slice(0, rt.evsIndex + 1)
+
       return {
-        replayState: { ...respond.replayState, lastEvents: rt.evs, status: 'replay', hmr: true },
+        replayState: { ...respond.replayState, lastEvents, status: 'replay', hmr: true },
         baseState: {
           ...cloneDeep(hydration),
-          replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined },
+          replayTools: { ...rt, evsIndex: -1 },
         },
       }
     }

@@ -37,7 +37,7 @@ import { _branch, _module, _top } from './reserved.js'
 
 
 export default (top, system, focusedModule, focusedBranch) => {
-  const { replayState, prevUrl, basenames = {} } = system
+  const { replayState, prevUrl = null, basenames = {} } = system
   const prev = window.state?.respond
 
   const {

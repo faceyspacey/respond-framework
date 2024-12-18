@@ -12,9 +12,12 @@ import { urlToLocation } from '../../helpers/url.js'
 export default function (state, e) {
   if (!e.meta.trigger) return
 
-  const { topState } = state.respond
+  const { topState, replayState } = state.respond
   const { respond, replayTools } = topState
 
+  const isSession = replayState.status === 'session'
+
+  replayState.status = 'reload'
   respond.mem.changedPath = false
 
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
@@ -22,9 +25,8 @@ export default function (state, e) {
     push(url) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
   }
 
-  if (respond.replayState.status === 'session') {
-    respond.replayState.status = 'reload'
-    const refresh = respond.prevUrl === respond.fromEvent(e).url
+  if (isSession) {
+    const refresh = respond.prevUrl === respond.fromEvent(e)?.url
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
