@@ -24,9 +24,9 @@ export default function render(props = {}, opts = {}) {
 
 
 const createApp = (respond, props, last) => {
-  if (last) respond.state.replayTools.playing = false 
+  if (last) respond.state.replayTools.playing = false // optimization, so additional render isn't queued after main render -- see replayEvents.js
 
-  const state = respond.proxify()
+  const state = props.state ? props.state.respond.proxify() : respond.proxify()
 
   const Provider = props.Provider || state.components?.Provider || RespondProvider
   const { App, Error } = state.components ?? {}

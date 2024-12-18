@@ -4,14 +4,13 @@ import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
 
 export default (opts = {}) => {
-  const { status, settings, branch = '', hydration } = opts
+  const { status, settings, branch = '', hydration = {} } = opts
   const { prevState, respond, replayTools } = window.state ?? {}
+  const rt = replayTools && respond.snapshot(replayTools)
 
   switch (status) {
     case 'reload': {
       sessionStorage.setItem('seed', null)
-
-      const { tests, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
 
       return {
         replayState: { settings, branch, status },
@@ -25,31 +24,42 @@ export default (opts = {}) => {
     case 'replay': {
       sessionStorage.setItem('seed', null)
 
-      const { tests: ts, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
-      const tests = { [selectedTestId]: ts[selectedTestId] }
-
       return {
         replayState: { settings, branch, status },
         baseState: {
           ...cloneDeep(hydration),
-          replayTools: { ...rt, selectedTestId, tests, evsIndex: -1 },
+          replayTools: { ...rt, evsIndex: -1 },
         },
       }
     }
 
     case 'hmr': {
-      const { tests: ts, selectedTestId, settings: _, configs: __, ...rt } = respond.snapshot(replayTools)
-      const tests = { [selectedTestId]: ts[selectedTestId] }
-
       const lastEvent = rt.evs[rt.evsIndex]
       const { evsIndex, evs, divergentIndex } = prevState.replayTools
 
+      const { trigger } = lastEvent
+
+      lastEvent.trigger = function(...args) {
+        trigger.apply(this, args)
+        this.event.respond.render()
+      }
+
       return {
         seed: JSON.parse(sessionStorage.getItem('prevSeed')),
-        replayState: { ...respond.replayState, lastEvent, status },
+        replayState: { ...respond.replayState, lastEvent, status, hmr: true },
+        baseState: {
+          ...prevState,
+          replayTools: { ...rt, evsIndex, evs, divergentIndex, playing: false },
+        },
+      }
+    }
+
+    case 'hmr-replay': {
+      return {
+        replayState: { ...respond.replayState, lastEvents: rt.evs, status: 'replay', hmr: true },
         baseState: {
           ...cloneDeep(hydration),
-          replayTools: { ...rt, selectedTestId, tests, evsIndex, evs, divergentIndex, playing: false },
+          replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined },
         },
       }
     }

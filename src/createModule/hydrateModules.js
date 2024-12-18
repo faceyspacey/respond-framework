@@ -7,22 +7,23 @@ import { _parent } from './reserved.js'
 export default (state, system) => {
   const { replayState, baseState } = system
 
+  
   switch (replayState.status) {
     case 'hmr': {
-      reviveModules(state, baseState) // baseState is HMR prevState, as last event will be replayed on top of it
+      hydrate(state, baseState) // baseState is HMR prevState + replayTools, as last event will be replayed on top of it
       break
     }
 
     case 'session': {
       const [curr, prev] = getSessionState(state.respond)
-      reviveModules(state, curr)
+      hydrate(state, curr)
       mergePrevState(state, prev)
       break
     }
       
     case 'replay':
     case 'reload': {
-      reviveModules(state, baseState) // baseState is standard server hydration if available
+      hydrate(state, baseState) // baseState is standard server hydration if available + replayTools
       state.token = createToken(state.respond)
       reduce(state, state.events.init())
     }
@@ -34,12 +35,21 @@ export default (state, system) => {
 
 
 
+const hydrate = (state, baseState = {}) => {
+  if (baseState.replayTools) { // don't overwrite these, as they're re-generated each time by replayTools/build.js
+    delete baseState.replayTools.configs
+    delete baseState.replayTools.settings
+  }
+
+  hydrateRecursive(state, baseState)
+}
 
 
-const reviveModules = (state, baseState = {}) => {
+
+const hydrateRecursive = (state, baseState = {}) => {
   state.moduleKeys.forEach(k => {                   // depth-first
     if (!baseState[k]) return
-    reviveModules(state[k], baseState[k])
+    hydrateRecursive(state[k], baseState[k])
     delete baseState[k]                               // delete to prevent overwriting child modules..
   })
   

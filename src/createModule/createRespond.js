@@ -1,4 +1,6 @@
 import dispatch, { trigger } from './methods/dispatch.js'
+import App from './methods/App.js'
+import reduce from './methods/reduce.js'
 import listen from './methods/listen.js'
 import onError from './methods/onError.js'
 import proxify from './methods/proxify.js'
@@ -13,6 +15,7 @@ import queueSaveSession from './methods/queueSaveSession.js'
 import promisesCompleted from './methods/promisesCompleted.js'
 import awaitInReplaysOnly from './methods/awaitInReplaysOnly.js'
 import isEqualNavigations from './methods/isEqualNavigations.js'
+
 
 import render from '../react/render.js'
 import snapshot from '../proxy/snapshot.js'
@@ -51,6 +54,9 @@ export default (top, system, focusedModule, focusedBranch) => {
     this.isTop = props.mod === top
     this.db = createDb(this, Respond)
     this.responds[this.branch] = this
+    this.App = App.bind(this)
+    this.reduce = reduce.bind(this)
+    this.render = render.bind(this)
     this.snapshot = snapshot.bind(this)
     this.eventFrom = eventFrom.bind(this)
     this.ancestors = createAncestors(this.branch)
@@ -69,7 +75,9 @@ export default (top, system, focusedModule, focusedBranch) => {
     focusedBranch,
     focusedModule,
 
-    render, // methods
+    App, // methods
+    reduce,
+    render,
     commit,
     notify,
     listen,
@@ -104,7 +112,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     versionListeners: new WeakMap,
     refIds: isProd ? new WeakMap : new Map,
 
-    hmr: replayState.status === 'hmr',
+    hmr: replayState.hmr,
     reuseEvents:      prev?.focusedBranch === focusedBranch,
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
     mem: { ...prev?.mem, rendered: false },

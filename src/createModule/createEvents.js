@@ -117,7 +117,6 @@ export class Event {
       delete this.done
       delete this.error
       delete this.data
-
       delete this.module
     }
 

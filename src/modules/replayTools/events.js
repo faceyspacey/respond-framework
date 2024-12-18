@@ -1,7 +1,7 @@
 import { Linking } from 'react-native'
 import combineInputEvents from './helpers/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
-import createState from '../../createModule/index.js'
+import createModule from '../../createModule/index.js'
 import { navigation } from '../../createModule/kinds.js'
 
 import nestSettings from './helpers/nestSettings.js'
@@ -186,16 +186,15 @@ export default {
       settings = gatherAllSettings(settings, branch, respond)
       const { url = '/' } = config
       
-      const state = createState(respond.top, { settings, branch, status: 'reload' })
-
-      const e = state.respond.eventFrom(url)
+      const resp = createModule(respond.top, { settings, branch, status: 'reload' })
+      const e = resp.eventFrom(url)
 
       if (e) {
-        state.replayTools.playing = true // trigger timeouts not to work like replayEvents
+        resp.state.replayTools.playing = true // trigger timeouts not to work like replayEvents
         await e.trigger()
-        state.replayTools.playing = false
-        state.respond.render()
-        state.respond.queueSaveSession()
+        resp.state.replayTools.playing = false
+        resp.render()
+        resp.queueSaveSession()
       }
       else {
         errors.url = `no event for url "${url}" in module`
