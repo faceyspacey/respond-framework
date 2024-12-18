@@ -2,7 +2,7 @@ import { canProxy } from '../../proxy/helpers/utils.js'
 import { e } from '../createEvents.js'
 
 
-export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) => {
+export default ({ modelsByBranchType, eventsByType } = {}) => {
   const createObject = v => {
     const obj = {}
     keys(v).forEach(k => obj[k] = revive(v[k], k))
@@ -12,21 +12,9 @@ export default ({ modelsByBranchType, eventsByType, refIds } = {}, refs = {}) =>
   }
 
   function revive(v, k) {
-    if (v?.__event)                            return eventsByType[v.type] ?? v
-    if (!canProxy(v))                          return dateKeyReg.test(k) && v ? new Date(v) : v
-    // if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
-  
-    const id = v.__refId
-  
-    if (id) {
-      if (refs[id]) return refs[id]
-      const obj = v.__arr?.map(revive) ?? createObject(v)
-      refIds.set(obj, id)
-      delete obj.__refId
-      return refs[id] = obj
-    }
-  
-    return isArray(v) ? v.map(revive) : createObject(v)
+    if (v?.__event)    return eventsByType[v.type] ?? v
+    if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
+                       return isArray(v) ? v.map(revive) : createObject(v)
   }
 
   return revive
@@ -72,7 +60,7 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
   function revive(v, k) {
     if (v?.__event)     return eventsByType[v.type] ?? v
     if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
-    if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
+    if (v.__e && typeof v.event === 'string') return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
 
     return isArray(v) ? v.map(revive) : createObject(v)
   }
