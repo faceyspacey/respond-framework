@@ -33,15 +33,25 @@ export default (opts = {}) => {
       }
     }
 
+    case 'hmr-replay': {
+      return {
+        replayState: { ...respond.replayState, lastEvents: rt.evs, status: 'replay', hmr: true },
+        baseState: {
+          ...cloneDeep(hydration),
+          replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined },
+        },
+      }
+    }
+
     case 'hmr': {
       const lastEvent = rt.evs[rt.evsIndex]
-      const { evsIndex, evs, divergentIndex } = prevState.replayTools
+      const { evsIndex, evs, divergentIndex } = prevState.replayTools // set state to previous state, as most recent event will be replayed on top of it
 
       const { trigger } = lastEvent
 
       lastEvent.trigger = function(...args) {
         trigger.apply(this, args)
-        this.event.respond.render()
+        this.event.respond.render() // dx: so you can just call e.trigger() in userland hmr routine without having to call render
       }
 
       return {
@@ -50,16 +60,6 @@ export default (opts = {}) => {
         baseState: {
           ...prevState,
           replayTools: { ...rt, evsIndex, evs, divergentIndex, playing: false },
-        },
-      }
-    }
-
-    case 'hmr-replay': {
-      return {
-        replayState: { ...respond.replayState, lastEvents: rt.evs, status: 'replay', hmr: true },
-        baseState: {
-          ...cloneDeep(hydration),
-          replayTools: { ...rt, evsIndex: -1, evs: [], divergentIndex: undefined },
         },
       }
     }
