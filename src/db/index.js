@@ -5,7 +5,7 @@ import mock from './index.mock.js'
 import createJoin from './aggregates/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds, toProject } from './helpers/toFromObjectIds.js'
 import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
-import createAggregatePaginatedSelector from './utils/createAggregatePaginatedSelector.js'
+import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
 import safeMethods from './safeMethods.js'
 
 

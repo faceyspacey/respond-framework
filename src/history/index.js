@@ -1,7 +1,7 @@
 import session from '../utils/sessionStorage.js'
 import bs from './browserState.js'
 import changePath, { end} from './changePath.js'
-import { linkOut } from './utils/out.js'
+import { linkOut } from './helpers/out.js'
 import { hasHistory } from '../helpers/constants.js'
 
 

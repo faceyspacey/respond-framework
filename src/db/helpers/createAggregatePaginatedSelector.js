@@ -1,5 +1,5 @@
 import stringToRegex, { isRegexString } from '../utils/stringToRegex.js'
-import dateStringToDate from './dateStringToDate.js'
+import dateStringToDate from '../utils/dateStringToDate.js'
 
 
 export default function({ ...selector }) {

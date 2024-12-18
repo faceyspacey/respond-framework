@@ -59,19 +59,17 @@ export default (top, system, focusedModule, focusedBranch) => {
   }
 
   Respond.prototype = {
-    top,
+    top, // core data
     prev,
-    system,
-
     kinds,
+    system,
     prevUrl,
     basenames,
     replayState,
-
     focusedBranch,
     focusedModule,
 
-    render,
+    render, // methods
     commit,
     notify,
     listen,
@@ -91,6 +89,9 @@ export default (top, system, focusedModule, focusedBranch) => {
     awaitInReplaysOnly,
     isEqualNavigations,
 
+    promises: [], // storage
+    subscribers: [],
+
     ctx: {},
     refs: {},
     responds: {},
@@ -98,30 +99,27 @@ export default (top, system, focusedModule, focusedBranch) => {
     eventsByPattern: {},
     branchLocatorsById: {},
     modelsByBranchType: {},
-    
-    promises: [],
-    subscribers: [],
 
     eventsCache: new Map,
     versionListeners: new WeakMap,
-    refIds: isProd ? new WeakMap : new Map, // enable peaking inside map during development  
+    refIds: isProd ? new WeakMap : new Map,
 
     hmr: replayState.status === 'hmr',
     reuseEvents:      prev?.focusedBranch === focusedBranch,
-
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
-    branches: { get undefined() { return this[''] } },
     mem: { ...prev?.mem, rendered: false },
   
-    devtools: new Proxy({}, { get: () => () => undefined }),
+    devtools: new Proxy({}, { get: () => () => undefined }), // tools
     history: createHistory(),
     cookies: createCookies(),
     dbCache: createDbCache(system.dbCache),
     urlCache: createUrlCache(system.urlCache, fromEvent),
-    branchNames: createBranches(top, focusedBranch), // important: create branch names, assign moduleKeys array to each module, etc,
+    branchNames: createBranches(top, focusedBranch),   // important: create branch names, assign moduleKeys array to each module, etc,
+
+    branches: { get undefined() { return this[''] } }, // important: modules by branch will be stored here when created in addModule.js
 
     get topState() {
-      return this.branches['']
+      return this.branches['']                         // escape hatch: any module can access the top if it really needs
     }
   }
 

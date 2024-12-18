@@ -1,4 +1,4 @@
-import { isProd } from '../../helpers/constants.js'
+import { isProd } from '../../../helpers/constants.js'
 
 
 export default (config = {}, settings = {}) =>

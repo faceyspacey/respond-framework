@@ -1,5 +1,5 @@
-import { isProd } from '../../../utils.js'
-import { parseSearch, stringifyQuery } from '../../../utils/searchQuery.js'
+import { isProd } from '../../../helpers/constants.js'
+import { parseSearch, stringifyQuery } from '../../../helpers/searchQuery.js'
 
 
 export default function settingsToHash({ ...query }, branch) {

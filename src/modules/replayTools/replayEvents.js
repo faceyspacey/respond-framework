@@ -1,6 +1,6 @@
-import createState from '../createModule/index.js'
-import { isTest } from '../helpers/constants.js'
-import revive from '../createModule/helpers/revive.js'
+import createState from '../../createModule/index.js'
+import { isTest } from '../../helpers/constants.js'
+import revive from '../../createModule/helpers/revive.js'
 
 
 export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {

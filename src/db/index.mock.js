@@ -3,7 +3,7 @@ import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import { pickAndCreate as pick } from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
-import createAggregatePaginatedSelector from './utils/createAggregatePaginatedSelector.js'
+import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
 import safeMethods from './safeMethods.js'
 
 

@@ -1,8 +1,8 @@
 import getSystemState from './getSystemState.js'
-import sliceBranch from './helpers/sliceBranch.js'
-import createRespond from './methods/createRespond.js'
+import createRespond from './createRespond.js'
 import addModule from './addModule.js'
 import hydrateModules from './hydrateModules.js'
+import sliceBranch from './helpers/sliceBranch.js'
 
 
 export default (top, opts = {}, start = performance.now()) => {

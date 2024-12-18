@@ -1,6 +1,6 @@
-import jwt from '../../helpers/jwt.js'
-import secret from '../../db/secret.mock.js'
-import { isProd } from '../../utils.js'
+import jwt from '../../../helpers/jwt.js'
+import secret from '../../../db/secret.mock.js'
+import { isProd } from '../../../helpers/constants.js'
 
 
 export default respond => {
