@@ -51,7 +51,7 @@ class VersionListener {
   }
 
   notify(version = ++highestVersion, branch = this.branch) {
-    if (this.version === version) return console.log('version match', this.orig)
+    if (this.version === version) return
     this.version = version
     this.parents.forEach(parent => parent(version, branch))
   }

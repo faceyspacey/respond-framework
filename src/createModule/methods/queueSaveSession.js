@@ -1,17 +1,19 @@
 import { setSessionState } from '../helpers/getSessionState.js'
-import { isProd, isTest } from '../../helpers/constants.js'
+import { isTest } from '../../helpers/constants.js'
 
 
-export default function() {
-  if (isProd || isTest) return
-  if (this.mem.saveQueued || this.branches.replayTools?.playing) return
-  if (window.state !== this.topState) return // ensure replayEvents saves new state instead of old state when recreating state for replays
+export default isTest ? function() {} : function() {
+  if (this.branches.replayTools?.playing) return
+  if (this.topState !== window.state) return // ensure replayEvents saves new state instead of old state when recreating state for replays
+  
+  if (timeout) clearTimeout(timeout)
 
-  this.mem.saveQueued = true
-
-  setTimeout(() => {
+  timeout = setTimeout(() => {
+    timeout = null
     const snap = this.snapshot(this.topState)
     setSessionState(snap, this.lastTriggerEvent)
-    this.mem.saveQueued = false
   }, 1000)
 }
+
+
+let timeout

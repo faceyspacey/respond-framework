@@ -13,7 +13,7 @@ import { _parent } from './reserved.js'
 
 
 export default function addModule(Respond, mod, parent = {}, moduleName = '', state = Object.create({})) {
-  const { branch, moduleKeys = [],  options = {}, components, reduce, ignoreParents } = mod
+  const { branch, moduleKeys = [], options = {}, components, reduce, ignoreParents } = mod
 
   const respond = new Respond({ branch, mod, state, moduleName, moduleKeys, options, ignoreParents })
   const proto   = assignProto(state, { ...options.merge, respond, moduleKeys, options, components, reduce, [_parent]: parent })

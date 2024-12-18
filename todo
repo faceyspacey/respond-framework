@@ -765,7 +765,7 @@ export default proxy => {
 #re-organize files, better nameing for mod vs state, top vs topModule/state, etc
 
 
-if (window.state !== this.topState) return
+#if (window.state !== this.topState) return
 
 
 pass tests

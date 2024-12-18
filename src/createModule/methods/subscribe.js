@@ -1,7 +1,10 @@
-export default function subscribe(send, triggerOnly = true) {
+import { _branch } from '../reserved.js'
+
+
+export default function subscribe(send, allReductions = false) { // notifications on trigger events only by default
   send.module = this.state
   send.branch = this.state.branch // branch of module attached to `respond` object unique to each module
-  send.triggerOnly = triggerOnly
+  send.allReductions = allReductions
   
   this.subscribers.push(send)
 
@@ -23,7 +26,7 @@ export function notify(e) {
   const sent = this.subscribers
     .filter(send =>
       e.event[_branch].indexOf(send.branch) === 0 && // event is child of subscribed module or the same module
-      !send.triggerOnly || e.meta.trigger
+      send.allReductions || e.meta.trigger
     )
     .map(send => send(send.module, e))
 

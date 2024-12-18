@@ -5,18 +5,9 @@ import revive from '../../createModule/helpers/revive.js'
 
 export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
   this.playing = false // stop possible previous running replay
-
   const state = createState(window.state.respond.top, { settings, branch, status: 'replay' })
-
-  // const e = events[0]
-  // const { eventsByType } = state.respond
-  // if (typeof e.event !== 'function' || eventsByType[e.type] !== e.event) {
-  //   events = revive(state.respond)(events)
-  // }
-
-  events = revive(state.respond)(events)
+  events = maybeRevive(events, state)
   await run(events, delay, state)
-
   return state
 }
 
@@ -56,4 +47,14 @@ const timeout = (delay, meta, last, testDelay = 1500) => {
   if (isTest || !delay || meta?.skipped || last) return
   const ms = delay !== true ? delay : testDelay
   return new Promise(res => setTimeout(res, ms))
+}
+
+
+
+const maybeRevive = (events, { respond }) => {
+  const e = events[0]
+
+  return typeof e.event !== 'function' || respond.eventsByType[e.event.type] !== e.event
+    ? console.log('maybeRevive') || revive(respond)(events)
+    : events
 }

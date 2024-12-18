@@ -56,12 +56,12 @@ export default (id = createUniqueModuleId()) => {
   }
 
 
-  const useSubscribe = (subscriber, deps = [], triggerOnly) => {
+  const useSubscribe = (subscriber, deps = [], allReductions) => {
     const state = useStore()
   
     useEffect(() => {
       subscriber(state)
-      return state.respond.subscribe(subscriber, triggerOnly)
+      return state.respond.subscribe(subscriber, allReductions)
     }, deps)
   }
 

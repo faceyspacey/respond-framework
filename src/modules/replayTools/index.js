@@ -35,7 +35,3 @@ export function testsParams() {
   const { focusedBranch: branch, searched, filter } = this
   return { branch, searched, filter }
 }
-
-export function topState() {
-  return this[_parent]
-}
