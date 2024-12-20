@@ -10,18 +10,19 @@ export default (respond, options = {}) => {
   let rendererInternal
   let prevJson = {}
 
-  const getInternal = () => {
-    if (rendererInternal) return rendererInternal
+  const getInternal = () => rendererInternal
+
+  const createOnce = async () => {
+    if (rendererInternal) return
     
-    act(() => {
+    await act(async () => {
       const app = respond.render()
       rendererInternal = create(app, { createNodeMock })
     })
-
-    return rendererInternal
   }
 
   return {
+    createOnce,
     getInternal,
     toJSON: () => getInternal().toJSON(),
     toNextJSON: () => prevJson = getInternal().toJSON(),

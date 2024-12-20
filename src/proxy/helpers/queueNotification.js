@@ -29,7 +29,7 @@ export function commit(start = performance.now()) {
 
   const listeningBranches = createListeningBranches(responds, this)
   const branches = Object.keys(listeningBranches).reverse()  // notify top to bottom, in case there's any marginal perf benefits internal to React, i.e. not having to compare snapshots of parents again (note: respond.ancestorsListening is first ordered bottom up)
-  
+
   branches.forEach(branch => { // note: React is smart enough to always render from top to bottom, regardless of the tree position of component and order that these callbacks are fired (note: `listener' is the callback function passed to `subscribe` in `useSyncExternalStore(subscribe, getSnapshot)` in `useSnapshot`); also ordering is still correct even in non-syncronous separate microtasks, which is the basis for React's "time slicing" capabilities
     const { listeners } = responds[branch]
     listeners.forEach(listener => listener())

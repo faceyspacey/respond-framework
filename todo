@@ -782,6 +782,8 @@ test('foo', () => {
   console.log('projectDir', process.cwd())
 })
 
+remove Object.getPrototypeOf(state).replays
+
 
 
 pass tests

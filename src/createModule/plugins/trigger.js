@@ -3,7 +3,7 @@ import combineInputEvents from '../../modules/replayTools/helpers/combineInputEv
 import { isEqualDeepPartial } from '../../utils/isEqual.js'
 import { mergePrevState } from '../hydrateModules.js'
 import { push } from '../../history/changePath.js'
-import { hasHistory } from '../../helpers/constants.js'
+import { hasHistory, isTest } from '../../helpers/constants.js'
 import bs from '../../history/browserState.js'
 import { _branch } from '../reserved.js'
 import { urlToLocation } from '../../helpers/url.js'
@@ -39,7 +39,7 @@ export default function (state, e) {
     mergePrevState(topState, respond.snapshot(topState))
   }
 
-  if (!replayTools) return
+  if (!replayTools || isTest) return
 
   sendTrigger(e, replayTools, topState)
 

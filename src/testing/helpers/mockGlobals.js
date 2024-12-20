@@ -31,6 +31,7 @@ export default () => {
   global.setImmediate = func => func()
   global.setInterval = func => func()
   global.setTimeout = func => func()
+  global.queueMicrotask = func => func()
 
   global.console = {
     ...console,

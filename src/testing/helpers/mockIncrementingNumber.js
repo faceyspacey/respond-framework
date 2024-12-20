@@ -1,12 +1,15 @@
 import * as path from 'path'
 
 
-export default (dir, digits = 4, suffix = '') => {
+export default (filename, digits = 4, suffix = '') => {
   let counter = 10 ** digits
 
-  const directory = path.resolve(dir)
+  filename = filename.replace(/^\./, '')
+  filename = filename.replace(/^\//, '')
 
-  jest.doMock(directory, () => ({
+  const absolutePath = path.resolve(filename)
+  
+  jest.doMock(absolutePath, () => ({
     __esModule: true,
     default: () => (counter++).toString().substring(1) + suffix,
   }))

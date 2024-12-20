@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as recursiveReadSync from 'recursive-readdir-sync'
+import { relativePathToBranch } from '../../../../../testing/helpers/getBranchFromTestPath.js'
 
 
 
@@ -81,10 +82,7 @@ const createId = filename => {
   const id = relative.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/dir/test.js -> child/dir/test.js
 
   const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/dir/some-test.js -> dir/some-test.js
-
-  const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'child/dir/some-test.js']
-  const [top_, ...moduleParts] = parts.map(p => p.split('/')[0])          // eg: ['', 'admin', 'child']
-  const branch = moduleParts.join('.')                                    // eg: 'admin.child'
+  const branch = relativePathToBranch(relative)                           // eg: /modules/child//modules/grandChild/__tests__/dir/test.js -> 'child.grandChild'
 
   return { id, name, branch }
 }

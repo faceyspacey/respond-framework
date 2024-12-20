@@ -2,19 +2,53 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 
-export default (dir, conf) => {
-  const ignored = conf?.ignored?.widgetMocks
+export default (dir, ignoreKey) => {
+  const moduleDirectories = createModuleDirectoriesRecursive()
+  
+  dir = dir.replace(/^\./, '') // strip possible leading .
+  dir = dir.replace(/^\//, '') // strip possible leading slash
 
-  const files = fs.readdirSync('./' + dir)
+  moduleDirectories.forEach(baseDir => {
+    mockDirectory(baseDir + '/' + dir, ignoreKey)
+  })
+}
+
+
+
+const createModuleDirectoriesRecursive = (baseDir = './', dirs = [baseDir]) => {
+  const modulesDir = baseDir === './' ? './modules' : baseDir + '/modules'
+  if (!fs.existsSync(modulesDir)) return
+
+  const moduleDirs = fs.readdirSync(modulesDir, { withFileTypes: true })
+    .filter(file => file.isDirectory())
+    .map(file => file.name)
+  
+  moduleDirs.forEach(dir => {
+    const moduleDir = modulesDir + '/' + dir
+    dirs.push(moduleDir)
+    createModuleDirectoriesRecursive(moduleDir, dirs)
+  })
+
+  return dirs
+}
+
+
+
+
+const mockDirectory = (dir, ignoreKey) => {
+  if (!fs.existsSync(dir)) return
+  const ignored = createIgnored(dir, ignoreKey)
+
+  const files = fs.readdirSync(dir)
     .filter(name => name.endsWith('.js'))
     .filter(name => !ignored?.includes(name))
 
   files.forEach(name => {
     const ComponentName = name.replace('.js', '')
-    const filename = path.resolve(dir, name)
+    const absolutePath = path.resolve(dir, name)
 
-    jest.doMock(filename, () => {
-      const mod = jest.requireActual(filename)
+    jest.doMock(absolutePath, () => {
+      const mod = jest.requireActual(absolutePath)
 
       const mock = {}
 
@@ -30,4 +64,14 @@ export default (dir, conf) => {
       return mock
     })
   })
+}
+
+
+
+
+const createIgnored = (dir, ignoreKey) => {
+  if (!ignoreKey) return
+  const filename = dir + '/configs/config.tests.js'
+  if (!fs.existsSync(filename)) return
+  return jest.requireActual(filename)[ignoreKey]
 }

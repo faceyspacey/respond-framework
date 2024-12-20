@@ -5,7 +5,7 @@ import { isEqualDeepPartial } from '../../utils/isEqual.js'
 
 export default (respond, renderer, e, conf) => {
   if (e.meta.ignoreEnsure) return
-  if (conf.ignored.events?.find(name => name === e.type)) return
+  if (conf.ignoredEvents?.find(name => name === e.type)) return
 
   const { testKey, testProps } = e.meta
 
