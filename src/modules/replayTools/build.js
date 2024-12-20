@@ -1,7 +1,7 @@
 import defaultCreateSeed from './helpers/createSeed.js'
 import createSettings from './helpers/createSettings.js'
 import nestSettings from './helpers/nestSettings.js'
-import nestAtBranch from '../../createModule/helpers/nestAtBranch.js'
+import nestAtBranch from './helpers/nestAtBranch.js'
 import { createCounterRef } from '../../helpers/objectIdDevelopment.js'
 
 
@@ -86,8 +86,10 @@ const mergeTable = (nextSeed, seed, shared, key, table) => {
   const k = table.shareKey ?? key
   const docs = shared[k]?.docs
 
+  if (k === 'round') console.log('mergeTable', seed, docs)
+    
   table.docs = seed
-    ? docs ? Object.assign(docs, seed[k]) : seed[k] // seed[k] will contain the same docs, but we must link the object reference so they continue to update together
+    ? docs ? Object.assign(docs, seed[k]) : seed[k] // seed[k] will contain the same docs, but we must link the object reference so they continue to update together (note: seed only exists for hmr + session satuses)
     : docs ?? {}
 
   nextSeed[k] = table.docs

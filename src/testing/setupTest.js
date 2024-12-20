@@ -1,19 +1,27 @@
+import createModule from '../createModule/index.js'
 import createRenderer from './helpers/createRenderer.js'
 import createDispatch from './helpers/createDispatch.js'
 import createSnap from './helpers/createSnap.js'
 import createReplayEventsToIndex from './helpers/createReplayEventsToIndex.js'
-import createModule from '../createModule/index.js'
+import getBranchFromTestPath from './helpers/getBranchFromTestPath.js'
 
 
-export default async ({ top, config, settings, rendererOptions } = {}) => {
-  const state = createModule(top, { settings })
-  const renderer = createRenderer(state, rendererOptions)
-  const dispatch = createDispatch(state)
-  const snap = createSnap(state, renderer, dispatch, config)
+export default ({ config, settings, rendererOptions, top } = {}) => {
+  top ??= jest.requireActual(process.cwd() + '/index.module.js')
+
+  const branch = getBranchFromTestPath
+
+  const respond = createModule(top, { settings, branch })
+  const renderer = createRenderer(respond, rendererOptions)
+  const dispatch = createDispatch(respond)
+  const snap = createSnap(respond, renderer, dispatch, config)
   const replayEventsToIndex = createReplayEventsToIndex(dispatch)
 
+  respond.proxify()
+
   return {
-    state,
+    state: respond.state,
+    respond,
     renderer,
     dispatch,
     snap,

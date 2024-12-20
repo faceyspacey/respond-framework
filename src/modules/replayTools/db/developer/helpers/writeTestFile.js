@@ -20,13 +20,12 @@ const createTest = (name, branch, settings, events) => {
 }
 
 
-const createModuleDir = branch => {
-  const projectDir = path.resolve()
+const projectDir = () => path.resolve()
 
-  return branch
-    ? branch.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir)
+const createModuleDir = branch =>
+  branch
+    ? branch.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir())
     : projectDir
-}
 
 
 const createFilename = (moduleDir, name) => {
@@ -37,19 +36,24 @@ const createFilename = (moduleDir, name) => {
 }
 
 
-const createTestFile = (moduleDir, length, settings, events) => {
+const createTestFile = (moduleDir, levels, settings, events) => {
   const setupTestFile = moduleDir + '/setupTest.js'
   const exists = fs.existsSync(setupTestFile)
 
-  const dotdots = Array.from({ length }).map(_ => '..').join('/')
+  const dotdot = Array.from({ length: levels }).map(_ => '..').join('/')
+
+  const levelsToRoot = moduleDir.replace(projectDir(), '').split('/').length - 1
+  const totalLevels = levelsToRoot + levels
+
+  const dotdotRoot = Array.from({ length: totalLevels }).map(_ => '..').join('/')
 
   const imports = exists
-    ? `import setupTest from '${dotdots}/setupTest.js'`
-    : `import { setupTest } from 'respond-framework/testing'\nimport top from '${dotdots}/index.js'`
-
-  const opts = exists ? `{ settings }` : `{ settings, top }`
+    ? `import setupTest from '${dotdot}/setupTest.js'`
+    : `import { setupTest } from 'respond-framework/testing'`
 
   return `${imports}
+
+import topFoo from '${dotdotRoot}/index.module.js'
 
 const settings = ${JSON.stringify(settings, null, 2)}
 
@@ -57,8 +61,8 @@ const events = ${JSON.stringify(events, null, 2)}
 
 let t
 
-beforeAll(async () => {
-  t = await setupTest(${opts})
+beforeAll(() => {
+  t = setupTest({ settings, top })
 })
 
 ${events.map(createIndividualTest).join('\n\n')}`

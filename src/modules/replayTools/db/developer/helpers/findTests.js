@@ -83,8 +83,8 @@ const createId = filename => {
   const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/dir/some-test.js -> dir/some-test.js
 
   const parts = relative.replace('__tests__/', '').split(/\/modules\//)   // eg: ['', 'admin', 'child/dir/some-test.js']
-  const [top_, ...moduleParts] = parts.map(a => a.split('/')[0])          // eg: ['', 'admin', 'child']
-  const branch = moduleParts.join('.')                                // eg: 'admin.child'
+  const [top_, ...moduleParts] = parts.map(p => p.split('/')[0])          // eg: ['', 'admin', 'child']
+  const branch = moduleParts.join('.')                                    // eg: 'admin.child'
 
   return { id, name, branch }
 }

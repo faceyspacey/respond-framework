@@ -247,7 +247,7 @@ const gatherAllSettings = (settings, branch, respond) => {
   else {
     branch = findClosestAncestorWith('db', branch, respond)?.branchAbsolute ?? ''
     settings = sliceBranch(nestedSettings, branch) ?? {}
-    settings.branch = branch
+    settings.branch = branch // branch needs to be assigned if branch can't be inferred by the module that the __tests__ folder is in -- due to inherting db from a parent module
   }
 
   return settings

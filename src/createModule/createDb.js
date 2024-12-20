@@ -125,41 +125,17 @@ const createResponse = (respond, body, response) => {
   //   state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
   // })
 
-  if (singularPlural[method]) {
-    if (!response) return response // eg: arg.user will be undefined anyway by the time it reaches reducers
-    const model = models[table].prototype
-    const value = singularPlural[method] === 'plural' ? model._namePlural : model._name
-    if (response.hasOwnProperty(value) && (response.__branchType || Array.isArray(response[value]))) return response // overriden method that returns nested objects/arrays, and therefore doesn't need this
-    Object.defineProperty(response, '__argName', { value, enumerable: false })
+  if (!response) {
+    return response // eg: e.arg.user will be undefined no matter what, so we don't need to do anything
+  }
+  else if (Array.isArray(response)) {
+    const value = models[table].prototype._namePlural // eg: 'users
+    Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.users
+  }
+  else if (response.__branchType) {
+    const value = models[table].prototype._name // eg: 'user'
+    Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.user
   }
 
   return response
-}
-
-
-
-
-
-const singularPlural = {
-  findOne: 'singular',
-  find: 'plural',
-  insertOne: 'singular',
-  updateOne: 'singular',
-  upsert: 'singular',
-  save: 'singular',
-  findAll: 'plural',
-  findLike: 'plural',
-  search: 'plural',
-  searchGeo: 'plural',
-
-  findOneSafe: 'singular',
-  findManySafe: 'singular',
-  insertOneSafe: 'singular',
-  updateOneSafe: 'singular',
-  upsertSafe: 'singular',
-  saveSafe: 'singular',
-  findAllSafe: 'plural',
-  findLikeSafe: 'plural',
-  searchSafe: 'plural',
-  searchGeoSafe: 'plural',
 }

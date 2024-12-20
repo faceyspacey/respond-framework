@@ -55,6 +55,6 @@ const maybeRevive = (events, respond) => {
   const e = events[0]
 
   return typeof e.event !== 'function' || respond.eventsByType[e.event.type] !== e.event
-    ? console.log('maybeRevive') || revive(respond)(events)
+    ? revive(respond)(events)
     : events
 }

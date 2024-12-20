@@ -58,20 +58,22 @@ export default (id = createUniqueModuleId()) => {
 
   const useSubscribe = (subscriber, deps = [], allReductions) => {
     const state = useStore()
-  
+    const { respond } = state
+
     useEffect(() => {
       subscriber(state)
-      return state.respond.subscribe(subscriber, allReductions)
-    }, deps)
+      return respond.subscribe(subscriber, allReductions)
+    }, [...deps, respond]) // trigger re-render on hmr
   }
 
   const useListen = (listener, deps = []) => {
     const state = useStore()
-  
+    const { respond } = state
+    
     useEffect(() => {
       listener(state)
-      return state.respond.listen(() => listener(state))
-    }, deps)
+      return respond.listen(() => listener(state))
+    }, [...deps, respond])
   }
 
   

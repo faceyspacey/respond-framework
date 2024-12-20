@@ -1,8 +1,8 @@
 export { default as setupTest } from './testing/setupTest.js'
 
-export { default as mockDirectory } from './testing/utils/mockDirectory.js'
-export { default as mockIncrementingNumber } from './testing/utils/mockIncrementingNumber.js'
-export { default as mockMongoId } from './testing/utils/mockMongoId.js'
-export { default as mockGlobals } from './testing/utils/mockGlobals.js'
+export { default as mockDirectory } from './testing/helpers/mockDirectory.js'
+export { default as mockIncrementingNumber } from './testing/helpers/mockIncrementingNumber.js'
+export { default as mockMongoId } from './testing/helpers/mockMongoId.js'
+export { default as mockGlobals } from './testing/helpers/mockGlobals.js'
 
 export { suffix } from './helpers/objectIdDevelopment.js'

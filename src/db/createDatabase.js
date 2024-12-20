@@ -61,10 +61,9 @@ export default (options = {}) => {
 
 const createTable = (k, db, base, model, descriptors, tables, shared, client, extra) => {
   const table = tables[k]
-  const docs = db[k]?.docs // preserve docs through HMR
   const Model = db.models[k] = createModel(k, model, shared[k], client[k], extra)
 
-  db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, docs, Model }
+  db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, Model }
   
   Object.defineProperties(db[k], descriptors)
   Object.defineProperties(db[k], userGetters)

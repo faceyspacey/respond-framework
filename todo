@@ -767,6 +767,22 @@ export default proxy => {
 
 #if (window.state !== this.topState) return
 
+find levels diff between test module folder and settings.branch
+import module from diff
+prefix all events with branch diff
+
+just find diff to top and import that
+then prefix all with branch diff
+
+
+test('foo', () => {
+  const filename = expect.getState().testPath;
+  console.log('filename', filename)
+  console.log('rootDir', expect.getState().rootDir)
+  console.log('projectDir', process.cwd())
+})
+
+
 
 pass tests
 incorporate naked-css

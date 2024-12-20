@@ -2,19 +2,19 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 
-export default (dir, tc) => {
-  const ignored = tc?.ignored?.widgetMocks
+export default (dir, conf) => {
+  const ignored = conf?.ignored?.widgetMocks
 
   const files = fs.readdirSync('./' + dir)
-    .filter(filename => filename.endsWith('.js'))
-    .filter(filename => !ignored?.includes(filename))
+    .filter(name => name.endsWith('.js'))
+    .filter(name => !ignored?.includes(name))
 
-  files.forEach(filename => {
-    const ComponentName = filename.replace('.js', '')
-    const branch = path.resolve(dir, filename)
+  files.forEach(name => {
+    const ComponentName = name.replace('.js', '')
+    const filename = path.resolve(dir, name)
 
-    jest.doMock(branch, () => {
-      const mod = jest.requireActual(branch)
+    jest.doMock(filename, () => {
+      const mod = jest.requireActual(filename)
 
       const mock = {}
 

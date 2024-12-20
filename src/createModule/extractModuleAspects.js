@@ -43,6 +43,6 @@ const extract = (k, descriptor, selectorDescriptors, events, reducers, state) =>
     else selectorDescriptors[k] = descriptor
   }
   else {
-    state[k] = isProd ? cloneDeep(v) : v // clone during development, so refs aren't changed for next replay
+    state[k] = isProd ? cloneDeep(v) : v // clone during development, so references aren't changed for next replay
   }
 }

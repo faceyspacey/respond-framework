@@ -1,4 +1,4 @@
-import nestAtBranch from '../../../createModule/helpers/nestAtBranch.js'
+import nestAtBranch from './nestAtBranch.js'
 
 
 export default settings => {

@@ -12,12 +12,10 @@ export default function render(props = {}, opts = {}) {
   const start = performance.now()
 
   const app = createApp(this, props, last)
-  const { mem } = this
 
   if (isTest) return app
-
-  if (!isNative) renderWeb(mem, app)
-  else renderNative(mem, app, props)
+  else if (!isNative) renderWeb(this.mem, app)
+  else renderNative(this.mem, app, props)
 
   queueMicrotask(() => console.log('render', parseFloat((performance.now() - start).toFixed(3))))
 }

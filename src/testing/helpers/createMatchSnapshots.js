@@ -3,56 +3,56 @@ import { findAllByPropsAndType, findByPropsAndType } from './finders.js'
 import logLongStrings from './logLongStrings.js'
 
 
-export default (state, renderer) => (e, o) => {
-  const suffix = o.suffix ? '-' + o.suffix : ''
-  const shouldLog = process.env.WALLABY ? o.logInWallaby : o.logInTerminal
+export default (respond, renderer) => (e, conf) => {
+  const suffix = conf.suffix ? '-' + conf.suffix : ''
+  const shouldLog = process.env.WALLABY ? conf.logInWallaby : conf.logInTerminal
 
-  if (o.snipes && e.snipes) {
+  if (conf.snipes && e.snipes) {
     matchSnipes(renderer.getInternal(), e.snipes)
   }
   
-  if (o.testIDs) {
+  if (conf.testIDs) {
     snapTestIDs(renderer.getInternal())
   }
   
-  if (o.snapState || o.logState) {
-    const prev = state.prevState
-    const next = state.respond.snapshot(state)
+  if (conf.snapState || conf.logState) {
+    const prev = respond.state.prevState
+    const next = respond.snapshot()
 
     const label = 'state' + suffix
 
-    if (o.snapState) {
+    if (conf.snapState) {
       expect(next).toMatchSnapshot(label)
     }
 
     if (shouldLog) {
-      if (o.logStateDiff) {
+      if (conf.logStateDiff) {
         const diff = snapshotDiff(prev, next, { stablePatchmarks: true })
         logLongStrings(diff, label)
       }
-      else if (o.logState) {
+      else if (conf.logState) {
         const all = JSON.stringify(next, undefined, '\t')
         logLongStrings(all, label)
       }
     }
   }
   
-  if (o.snapComponents || o.logComponents || o.logComponentsDiff) {
+  if (conf.snapComponents || conf.logComponents || conf.logComponentsDiff) {
     const { prev, next } = renderer.toPrevNextJSON()
     
 
     const label = 'components' + suffix
 
-    if (o.snapComponents) {
+    if (conf.snapComponents) {
       expect(next).toMatchSnapshot(label)
     }
 
     if (shouldLog) {
-      if (o.logComponentsDiff) {
+      if (conf.logComponentsDiff) {
         const diff = snapshotDiff(prev, next, { stablePatchmarks: true })
         logLongStrings(diff, label)
       }
-      else if (o.logComponents) {
+      else if (conf.logComponents) {
         logLongStrings(next, label)
       }
     }

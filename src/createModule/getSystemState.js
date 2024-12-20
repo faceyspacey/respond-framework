@@ -34,6 +34,8 @@ export default (opts = {}) => {
     }
 
     case 'hmr-replay': {
+      sessionStorage.setItem('seed', null)
+      
       const lastEvents = rt.evs.slice(0, rt.evsIndex + 1)
 
       return {

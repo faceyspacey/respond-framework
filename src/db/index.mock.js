@@ -5,6 +5,7 @@ import { pickAndCreate as pick } from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
 import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
 import safeMethods from './safeMethods.js'
+import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
 
 export default {
@@ -306,6 +307,8 @@ export default {
     const now = new Date().getTime() - (docs.length * 1000) // set clock back in time
 
     docs.forEach((doc, i) => {
+      doc = cloneDeep(doc)
+      
       doc.id ??= ObjectId()
       doc.__type = name
 
