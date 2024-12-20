@@ -51,7 +51,6 @@ export default (top, system, focusedModule, focusedBranch) => {
 
     this.listeners = new Set
     this.overriden = new Map
-    this.isTop = props.mod === top
     this.db = createDb(this, Respond)
     this.responds[this.branch] = this
     this.App = App.bind(this)
@@ -60,6 +59,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     this.snapshot = snapshot.bind(this)
     this.eventFrom = eventFrom.bind(this)
     this.ancestors = createAncestors(this.branch)
+    this.isTop = this.mod.branchAbsolute === focusedBranch
 
     assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn })
   }
