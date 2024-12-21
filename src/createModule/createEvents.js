@@ -205,10 +205,11 @@ export class e {
   constructor(arg, meta, event) {
     mergeArgMeta(arg, meta, this)
 
+    this.event = event
+    this.kind = event.kind
     this.payload = event.transform?.call(event.module, event.module, this.arg, this) ?? { ...this.arg }
 
-    const { kind, name, namespace } = event
-    Object.assign(this, this.payload, { event, kind, name, namespace: namespace.name, __e: true })
+    Object.assign(this, this.payload)
 
     if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url

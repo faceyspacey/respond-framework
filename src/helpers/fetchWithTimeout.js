@@ -1,4 +1,7 @@
-export default async (resource, options = {}, timeout = 12000) => {  
+import { isDev } from './constants.js'
+
+
+export default isDev ? fetch : async (resource, options = {}, timeout = 12000) => {  
   const co = new AbortController()
   const id = setTimeout(() => co.abort(), timeout)
 

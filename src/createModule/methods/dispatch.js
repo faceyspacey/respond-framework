@@ -1,15 +1,15 @@
 import triggerPlugin from '../plugins/trigger.js'
 import dispatchPlugins from '../helpers/dispatchPlugins.js'
 import loadPluginsOnce from '../helpers/loadPlugins.js'
+import { isTest } from '../../helpers/constants.js'
 
 
 export default async function(e, meta, start = performance.now()) {
-  if (meta) e.meta = { ...e.meta, ...meta }
-  
   const state = e.event.module
-
   const prom = loadPluginsOnce(this)
+
   if (prom instanceof Promise) await prom
+  if (meta) e.meta = { ...e.meta, ...meta }
 
   try {
     await dispatchPlugins([triggerPlugin, ...state.plugins], state, e)
@@ -20,7 +20,7 @@ export default async function(e, meta, start = performance.now()) {
 
   if (!e.meta.trigger) return
   await this.promisesCompleted(e)
-  console.log('trigger', parseFloat((performance.now() - start).toFixed(3)), e.event.type)
+  if (!isTest) console.log('trigger', parseFloat((performance.now() - start).toFixed(3)), e.event.type)
 }
 
 

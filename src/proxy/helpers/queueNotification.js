@@ -1,6 +1,10 @@
+import { isTest } from '../../helpers/constants.js'
+
+
 export default (branch, respond) => {
   updated.add(branch) // add branch to set -- branch rendered once, no matter how many changes made to it in a single batch
-  if (respond.ctx.sync) return // sync events dispatch as a batch in edit plugin
+  if (isTest) return // tests commit themselves to speed up tests
+  if (respond.ctx.sync) return // sync events dispatch as a batch in edit plugin so inputs dont jump
   enqueue(respond)
 }
 
@@ -77,4 +81,4 @@ let pending = 0
 
 const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
 
-const log = (start, postFix = '') => queueMicrotask(() => console.log('queueNotification.render' + postFix, performance.now() - start))
+const log = (start, postFix = '') => queueMicrotask(() => !isTest &&console.log('queueNotification.render' + postFix, performance.now() - start))

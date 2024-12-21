@@ -1,7 +1,4 @@
-import wrapInActForTests from '../../helpers/wrapInActForTests.js'
-
-
-export default wrapInActForTests((state, e) => {
+export default (state, e) => {
   const { respond } = state
   const { topState } = respond
 
@@ -28,7 +25,7 @@ export default wrapInActForTests((state, e) => {
   }
 
   return respond.notify(e)
-})
+}
 
 
 

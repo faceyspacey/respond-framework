@@ -2,21 +2,21 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 
-export default (dir, ignoreKey) => {
+export default (folder, ignoreKey) => {
   const moduleDirectories = createModuleDirectoriesRecursive()
   
-  dir = dir.replace(/^\./, '') // strip possible leading .
-  dir = dir.replace(/^\//, '') // strip possible leading slash
+  folder = folder.replace(/^\./, '') // strip possible leading .
+  folder = folder.replace(/^\//, '') // strip possible leading slash
 
   moduleDirectories.forEach(baseDir => {
-    mockDirectory(baseDir + '/' + dir, ignoreKey)
+    mockDirectory(baseDir, folder, ignoreKey)
   })
 }
 
 
 
 const createModuleDirectoriesRecursive = (baseDir = './', dirs = [baseDir]) => {
-  const modulesDir = baseDir === './' ? './modules' : baseDir + '/modules'
+  const modulesDir = path.resolve(baseDir, 'modules')
   if (!fs.existsSync(modulesDir)) return
 
   const moduleDirs = fs.readdirSync(modulesDir, { withFileTypes: true })
@@ -24,7 +24,7 @@ const createModuleDirectoriesRecursive = (baseDir = './', dirs = [baseDir]) => {
     .map(file => file.name)
   
   moduleDirs.forEach(dir => {
-    const moduleDir = modulesDir + '/' + dir
+    const moduleDir = path.resolve(modulesDir, dir)
     dirs.push(moduleDir)
     createModuleDirectoriesRecursive(moduleDir, dirs)
   })
@@ -35,9 +35,11 @@ const createModuleDirectoriesRecursive = (baseDir = './', dirs = [baseDir]) => {
 
 
 
-const mockDirectory = (dir, ignoreKey) => {
+const mockDirectory = (baseDir, folder, ignoreKey) => {
+  const dir = path.resolve(baseDir, folder)
+
   if (!fs.existsSync(dir)) return
-  const ignored = createIgnored(dir, ignoreKey)
+  const ignored = createIgnored(baseDir, ignoreKey)
 
   const files = fs.readdirSync(dir)
     .filter(name => name.endsWith('.js'))
@@ -69,9 +71,13 @@ const mockDirectory = (dir, ignoreKey) => {
 
 
 
+
 const createIgnored = (dir, ignoreKey) => {
   if (!ignoreKey) return
-  const filename = dir + '/configs/config.tests.js'
+  const filename = path.resolve(dir, 'config/config.tests.js')
   if (!fs.existsSync(filename)) return
-  return jest.requireActual(filename)[ignoreKey]
+
+  let mod = jest.requireActual(filename)
+  mod = mod.default ?? mod
+  return mod[ignoreKey]
 }

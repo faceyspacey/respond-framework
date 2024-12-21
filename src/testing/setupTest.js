@@ -1,12 +1,12 @@
 import createModule from '../createModule/index.js'
 import createRenderer from './helpers/createRenderer.js'
-import createTrigger from './helpers/createTrigger.js'
+import createTriggerDefault from './helpers/createTrigger.js'
 import createSnap from './helpers/createSnap.js'
 import createReplayEventsToIndex from './helpers/createReplayEventsToIndex.js'
 import getBranchFromTestPath from './helpers/getBranchFromTestPath.js'
 
 
-export default ({ config, settings, rendererOptions } = {}) => {
+export default ({ settings, rendererOptions, createTrigger = createTriggerDefault } = {}, config) => {
   const mod = jest.requireActual(process.cwd() + '/index.module.js')
   const top = mod.default ?? mod // can use individual exports or export default
 

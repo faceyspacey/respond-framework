@@ -782,9 +782,9 @@ test('foo', () => {
   console.log('projectDir', process.cwd())
 })
 
-remove Object.getPrototypeOf(state).replays
-
-
+#remove Object.getPrototypeOf(state).replays
+#remove kind, name, namespace from e
+#returned errors should stop dispatch pipeline, and call event.onError or respond.onError or topRespond.onError
 
 pass tests
 incorporate naked-css

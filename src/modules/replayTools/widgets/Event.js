@@ -45,7 +45,7 @@ export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type,
                   <Remove style={s.remove} color={color} strokeWidth={2} />
                 </Pressable> 
               : <View style={stylesIcon}>
-                  <Text style={{ color }}>{'>>'}</Text>
+                  <Text style={{ color, marginTop: 1 }}>{index}.</Text>
                 </View>
             }
             

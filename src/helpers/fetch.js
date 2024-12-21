@@ -22,9 +22,8 @@ export default async function fetch(apiUrl = defaultApiUrl, body, respond) {
   }
   catch { // timeout exceeded
     respond.state._serverDown = true
-    respond.options.onServerDown?.(respond.state)
-    const retry = respond.options.retry ?? fetch
-    return retry(apiUrl, body, respond) 
+    respond.options.onServerDown?.(respond.state, body)
+    return fetch(apiUrl, body, respond) // retry every 12 seconds -- see fetchWithTimeout.js
   }
 }
 

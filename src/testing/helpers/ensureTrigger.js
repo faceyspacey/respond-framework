@@ -4,6 +4,7 @@ import { isEqualDeepPartial } from '../../utils/isEqual.js'
 
 
 export default (respond, renderer, e, conf) => {
+  if (!conf.ensureTrigger) return
   if (e.meta.ignoreEnsure) return
   if (conf.ignoredEvents?.find(name => name === e.type)) return
 

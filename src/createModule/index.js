@@ -3,6 +3,7 @@ import createRespond from './createRespond.js'
 import addModule from './addModule.js'
 import hydrateModules from './hydrateModules.js'
 import sliceBranch from './helpers/sliceBranch.js'
+import { isTest } from '../helpers/constants.js'
 
 
 export default (top, opts = {}, start = performance.now()) => {
@@ -16,7 +17,7 @@ export default (top, opts = {}, start = performance.now()) => {
 
   hydrateModules(state, system)
 
-  console.log('createModule', parseFloat((performance.now() - start).toFixed(3)))
+  if (!isTest) console.log('createModule', parseFloat((performance.now() - start).toFixed(3)))
   window.state = state
   return state.respond
 }

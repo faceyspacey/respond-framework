@@ -1,34 +1,13 @@
-import createMatchSnapshots from './createMatchSnapshots.js'
+import matchSnapshots from './matchSnapshots.js'
 import revive from '../../createModule/helpers/revive.js'
 import ensureTrigger from './ensureTrigger.js'
 import configDefault from '../config.tests.default.js'
 
 
-export default (respond, renderer, trigger, config) => {
-  const matchSnapshots = createMatchSnapshots(respond, renderer)
-  
-  return async (e, config2) => {
-    if (e.arg) e.arg = revive(respond)(e.arg)
-    const conf = { ...configDefault, ...config, ...config2 }
-
-    if (conf.ensureTrigger && e.index !== 0) {
-      ensureTrigger(respond, renderer.getInternal(), e, conf)
-    }
-
-    const snapTrigger = !conf.snapTrigger ? undefined : () => matchSnapshots(e, {  ...conf, ...confTrigger })
-    const meta = snapTrigger ? { snapTrigger } : undefined
-
-    await trigger(e, meta, true)
-
-    matchSnapshots(e, conf)
-  }
-}
-
-
-const confTrigger = {
-  snapState: false,
-  logState: false,
-  snipes: false,
-  testIDs: false,
-  suffix: 'trigger'
+export default (respond, renderer, trigger, config) => async (e, config2) => {
+  if (e.arg) e.arg = revive(respond)(e.arg)
+  const conf = { ...configDefault, ...config, ...config2 }
+  if (e.index !== 0) ensureTrigger(respond, renderer, e, conf)
+  await trigger(e, undefined, conf, true)
+  matchSnapshots(respond, renderer, e, conf)
 }
