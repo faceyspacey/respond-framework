@@ -61,7 +61,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     this.ancestors = createAncestors(this.branch)
     this.isTop = this.mod.branchAbsolute === focusedBranch
 
-    assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn })
+    assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn, refs: this.refs })
   }
 
   Respond.prototype = {

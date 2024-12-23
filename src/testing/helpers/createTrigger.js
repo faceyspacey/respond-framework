@@ -7,11 +7,8 @@ export default (respond, renderer) => async (e, meta, conf = {}, revived) => {
   const event = respond.eventsByType[e.type]
   const arg = revived ? e.arg : (e.arg ? revive(respond)(e.arg) : undefined)
 
-  const unsub = conf.snapTrigger
-    ? respond.subscribe(() => snapIntermediate(respond, renderer, e, conf), false)
-    : conf.snapIntermediateStates
-      ? respond.subscribe((state, eReal) => snapIntermediate(respond, renderer, e, conf, eReal), true) // true for snapping all reductions/dispatches
-      : undefined
+  const snapMore = (conf.snapTrigger || conf.snapAll) && snap.bind(null, respond, renderer, e, conf)
+  const unsub = snapMore && respond.subscribe(snapMore, conf.snapAll) // subscribe(cb, true) for snapping all reductions/dispatches, subscribe(cb) for just trigger
 
   await act(async () => {
     await event.trigger(arg, meta)
@@ -26,11 +23,11 @@ export default (respond, renderer) => async (e, meta, conf = {}, revived) => {
 
 
 
-const snapIntermediate = (respond, renderer, e, conf, eReal) => {
+const snap = (respond, renderer, eTest, conf, state, e) => {
   if (!renderer._renderer) return // no need to snap trigger before initial render
 
-  if (eReal.meta.trigger) {
-    e = { ...e, snipes: e.triggerSnipes }
+  if (e.meta.trigger) {
+    eTest = { ...eTest, snipes: eTest.triggerSnipes }
 
     conf = {
       ...conf,
@@ -55,5 +52,5 @@ const snapIntermediate = (respond, renderer, e, conf, eReal) => {
   }
 
   act(() => respond.commit())
-  matchSnapshots(respond, renderer, e, conf)
+  matchSnapshots(respond, renderer, eTest, conf)
 }

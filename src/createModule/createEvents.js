@@ -142,7 +142,7 @@ export class Event {
 
   _once(kind) {
     const config = { ...this.config[kind], kind }
-    const name = prepend(kind, this.name)
+    const name = prepend(this.name, kind)
     const value = createEvent(this.respond, config, name, this.namespace) // lazy
     Object.defineProperty(this, kind, { value, configurable: true }) // override proto getter, i.e. createEvent only once when first used
     return value

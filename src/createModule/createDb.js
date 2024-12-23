@@ -1,11 +1,11 @@
 import { isProd, isDev } from '../utils.js'
 import _fetch, { __undefined__, argsIn } from '../helpers/fetch.js'
-import { reviveApiClient, reviveApiServer } from './helpers/revive.js'
-import flattenDatabase, { flattenModels } from '../db/helpers/flattenDatabase.js'
+import { reviveApiClient } from './helpers/revive.js'
+import createApiHandler from './createApiHandler.js'
 
 
 export default (respond, Respond) => {
-  createApiHandlerOnce(respond, Respond) // create only once for all respond objects (on Respond.prototype)
+  Respond.prototype.apiHandler ??= isDev && createApiHandler({ db: respond.top.db }) // create only once for all respond instances -- only dev needs apiHandler on client
 
   const get = (_, table) => {
     const get = (_, method) => callDatabase(respond, table, method)
@@ -43,6 +43,8 @@ const fetch = async (apiUrl, body, getter, respond) => {
   const cached = respond.dbCache.get(body)
   if (cached) return cached
 
+  isDev && await respond.simulateLatency()
+
   const r = isProd || getter.useServer
     ? await _fetch(apiUrl, body, respond)
     : await respond.apiHandler({ body }, { json: r => r }) // the magic: call server-side api handler directly on the client during development
@@ -52,48 +54,6 @@ const fetch = async (apiUrl, body, getter, respond) => {
   if (getter.useCache) respond.dbCache.set(body, response)
   return response
 }
-
-
-
-
-
-export const createApiHandler = ({ db, log = true, context = {} }) => { // used in this file on the client + wrapped within a thin express handler on the server in createApi.js
-  const modelsByBranchType = flattenModels(db)
-  const branches = flattenDatabase(db)
-
-  return async (req, res) => {
-    const { table, method, focusedBranch, branch } = reviveApiServer({ modelsByBranchType })(req.body)
-    
-    if (log) console.log(`request.request: db.${table}.${method}`, req.body)
-      
-    const Table = resolveTable(branches, focusedBranch, branch, table) // eg: branches['admin.foo'].user
-    if  (!Table)  return res.json({ error: 'table-absent', params: req.body })
-    const respo = await Object.create(Table).callMethod(req, context)
-
-    if (log) console.log(`respond.response: db.${table}.${method}`, ...(isDev ? [] : [req.body, '=>']), respo) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
-  
-    return res.json(respo === undefined ? __undefined__ : respo)
-  }
-}
-
-
-const createApiHandlerOnce = (respond, Respond) => {
-  if (isProd || respond.apiHandler) return
-
-  const apiHandler = createApiHandler({ db: respond.top.db, log: false })
-
-  Respond.prototype.apiHandler = async function(req, res) {
-    await this.simulateLatency()
-    return apiHandler(req, res)
-  }
-}
-
-
-
-const resolveTable = (db, fb, branch, table) =>
-  fb === branch // may need to use original db without props
-    ? db[branch].original[table] // use original for top focused db, as props variant is stored in branches at branches[fb][table] (absolute top w)
-    : db[branch][table]
 
 
 
@@ -117,23 +77,18 @@ const createBody = (table, method, argsRaw, respond) => {
 const createResponse = (respond, body, response) => {
   const { branch, table, method, args } = body
 
-  const { state, models } = respond
   respond.topState.__dbFirstCall = true
-
-  // Promise.resolve().then().then().then().then().then(() => { // rather than a queue/flush approach (which we had and had its own problems due different usages in userland), hopping over the calling event callback preserves the correct order in the devtools most the time, given this always runs very fast in the client (note only 2 .thens are needed most of the time, but it requires normally 8 to skip over a single basic subsequent event, so 5 .thens has a better chance of hopping over a more complicated callback with multiple async calls)
-  //   const type = `=> db.${table}.${method}`
-  //   state.respond.devtools.sendNotification({ type, branch, table, method, args, response })
-  // })
+  respond.devtools.sendNotification({ branch, table, method, args, response })
 
   if (!response) {
     return response // eg: e.arg.user will be undefined no matter what, so we don't need to do anything
   }
   else if (Array.isArray(response)) {
-    const value = models[table].prototype._namePlural // eg: 'users
+    const value = respond.models[table].prototype._namePlural // eg: 'users
     Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.users
   }
   else if (response.__branchType) {
-    const value = models[table].prototype._name // eg: 'user'
+    const value = respond.models[table].prototype._name // eg: 'user'
     Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.user
   }
 

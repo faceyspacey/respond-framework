@@ -773,7 +773,7 @@ prefix all events with branch diff
 
 just find diff to top and import that
 then prefix all with branch diff
-
+å
 
 test('foo', () => {
   const filename = expect.getState().testPath;
@@ -786,7 +786,14 @@ test('foo', () => {
 #remove kind, name, namespace from e
 #returned errors should stop dispatch pipeline, and call event.onError or respond.onError or topRespond.onError
 
-pass tests
+#pass tests
+
+make respond.revive a method
+
+
+
+
+
 incorporate naked-css
 create website
 devtools

@@ -81,4 +81,4 @@ let pending = 0
 
 const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
 
-const log = (start, postFix = '') => queueMicrotask(() => !isTest &&console.log('queueNotification.render' + postFix, performance.now() - start))
+const log = (start, postFix = '') => queueMicrotask(() => !isTest && console.log('queueNotification.render' + postFix, performance.now() - start))

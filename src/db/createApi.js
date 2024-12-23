@@ -1,7 +1,7 @@
+import replayTools from '../modules/replayTools/db.js'
+import createApiHandler from '../createModule/createApiHandler.js'
 import createWallabySocketsServer from '../integrations/wallaby/createWallabySocketsServer.js'
 import { isDev } from '../utils.js'
-import { createApiHandler } from '../createModule/createDb.js'
-import replayTools from '../modules/replayTools/db.js'
 
 
 export default opts => {
