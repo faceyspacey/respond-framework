@@ -6,9 +6,11 @@ export const isDev = !isProd
 
 export const isTest = process.env.NODE_ENV === 'test'
 
-export const isServer = typeof window === 'undefined'
+export const isServer = typeof window === 'undefined' && !isTest
 
-export const isNative = !isServer && !(typeof document !== 'undefined' && document.querySelector) && !isTest
+export const isClient = !isServer
+
+export const isNative = isClient && !isTest && !(typeof document !== 'undefined' && document.querySelector)
 
 export const hasHistory = !(isTest || isNative) && typeof history !== 'undefined' && history.pushState
 

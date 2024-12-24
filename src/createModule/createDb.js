@@ -65,7 +65,7 @@ const createBody = (table, method, argsRaw, respond) => {
   const branch = respond.moduleName === 'replayTools' ? 'replayTools' : replays.db.branchAbsolute // replayTools always at top even when child branch focused : db may be inherited, so we actually need to pass the branch inherited from
 
   const args = argsIn(argsRaw)
-  const body = respond.options.getBody?.call(state, table, method, args)
+  const body = respond.options.getBody?.call(state, table, method, args) // additional body data for api calls
   const first = !__dbFirstCall
 
   return { branch, table, method, args, token, userId, adminUserId, basename, basenameFull, focusedBranch, first, ...body }

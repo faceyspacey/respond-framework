@@ -3,10 +3,10 @@ export default (state, e) => {
   const { topState } = respond
 
   try {
-    e.event.beforeReduce?.call(state, state, e)
+    e.event.reduceBefore?.call(state, state, e)
 
     if (e.event.reduce === false) {
-      
+      // skip reduction
     }
     else if (e.event.reduce) {
       e.event.reduce.call(state, state, e)
@@ -18,7 +18,7 @@ export default (state, e) => {
       reduceBranch(e, topState, respond.branch.split('.'))
     }
 
-    e.event.afterReduce?.call(state, state, e)
+    e.event.reduceAfter?.call(state, state, e)
   }
   catch (error) {
     respond.onError({ error, kind: 'reduce', e })
@@ -33,25 +33,26 @@ const reduceEntireTreeInit = (e, mod, prevState = {}) => {
   const proto = Object.getPrototypeOf(mod)
   proto.prevState = prevState
 
-  let nexted
   let reduced
 
   function next() {
-    nexted = true
     mod.moduleKeys.forEach(k => reduceEntireTreeInit(e, mod[k], prevState[k] = {}))
   }
 
   function reduce() {
-    reduced = true
     reduceModuleInit(mod, e, mod, mod.reducers)
+    reduced = true
   }
 
   if (mod.reduce) {
-    mod.reduce(mod, e, next, reduce)
+    const should = mod.reduce(mod, e, next, reduce)
+    const shouldReduce = should !== false && !reduced
+    if (shouldReduce) reduce() // allow reducing by default, and only having to think about `next` (depth-first maintained as default) -- but since we want this default AND the ability to prevent reducing the current module, we introduce returning `false` to facilitate all scenarios
   }
-  
-  if (!nexted) next() // default is depth-first
-  if (!reduced) reduce()
+  else {
+    next() // default is depth-first
+    reduce()
+  }
 }
 
 

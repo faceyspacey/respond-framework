@@ -117,7 +117,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
     mem: { ...prev?.mem, rendered: false },
   
-    devtools: new Proxy({}, { get: () => () => undefined }), // tools
+    devtools: new Proxy({}, { get: () => () => {} }), // tools
     history: createHistory(),
     cookies: createCookies(),
     dbCache: createDbCache(system.dbCache),

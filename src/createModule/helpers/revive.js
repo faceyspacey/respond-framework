@@ -58,8 +58,8 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
   }
 
   function revive(v, k) {
-    if (v?.__event)     return eventsByType[v.type] ?? v
-    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+    if (v?.__event)                           return eventsByType[v.type] ?? v
+    if (!canProxy(v))                         return dateKeyReg.test(k) && v ? new Date(v) : v
     if (v.__e && typeof v.event === 'string') return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
 
     return isArray(v) ? v.map(revive) : createObject(v)
@@ -80,13 +80,33 @@ export const reviveApiServer = ({ modelsByBranchType }) => {
   }
 
   function revive(v, k) {
-    if (!canProxy(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+    if (!canProxy(v)) return dateKeyReg.test(k) && v ? new Date(v) : v
     return isArray(v) ? v.map(revive) : createObject(v)
   }
 
   return revive
 }
 
+
+
+
+export const reviveServerModelInSpecificModule = db => {
+  function createObject(v) {
+    const obj = {}
+    keys(v).forEach(k => obj[k] = revive(v[k]))
+    
+    const Model = v.__type && db.models[v.__type]
+    return Model ? new Model(obj) : obj
+  }
+
+  function revive(v) {
+    return canProxy(v)
+      ? isArray(v) ? v.map(revive) : createObject(v)
+      : v
+  }
+
+  return revive
+}
 
 
 

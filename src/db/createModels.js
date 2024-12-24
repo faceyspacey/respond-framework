@@ -1,5 +1,6 @@
 import mixin from './model.client.js'
 import findClosestAncestorWith from '../createModule/helpers/findClosestAncestorWith.js'
+import createSharedModels from './helpers/createSharedModels.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
@@ -15,8 +16,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
   const { db } = respond
 
-  const shared = Array.isArray(models) ? (models[0] ?? {}) : {}
-  const client = Array.isArray(models) ? (models[1] ?? {}) : models
+  const methods = createSharedModels(models)
 
   const extra = Object.defineProperties({}, {
     db: { enumerable: false, configurable: true, value: db },
@@ -26,11 +26,11 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
   const prevModels = window.state?.respond?.modelsByBranchType ?? {}
   const nextModels = {}
 
-  for (const k in { ...shared, ...client }) {
+  for (const k in methods) {
     const key = branch + '_' + k
     const prevModel = prevModels[key]
 
-    const Model = createModel(k, mixin, shared[k], client[k], extra, prevModel)
+    const Model = createModel(k, mixin, methods[k], extra, prevModel)
     respond.modelsByBranchType[key] = nextModels[k] = Model
 
     Model.make = doc => {
@@ -40,8 +40,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
     }
 
     Model.create = doc => {
-      const model = new Model(doc)
-      model.__branchType = key
+      const model = Model.make(doc)
       model.id = doc?.id ?? respond.generateId()
       return model
     }
@@ -52,9 +51,9 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
 
 
-export const createModel = (k, mixin, shared, serverOrClient, extra, Model) => {
+export const createModel = (k, mixin, methods, extra, Model) => {
   const base = { _name: k, _namePlural: k + 's' }
-  const descriptors = Object.assign(g(base), g(mixin), g(shared), g(serverOrClient), g(extra))
+  const descriptors = Object.assign(g(base), g(mixin), methods, g(extra))
 
   Model ??= function Model(doc) {
     this.__type = k

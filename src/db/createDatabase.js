@@ -3,6 +3,9 @@ import modelDefault from '../db/model.js'
 
 import callMethod from './helpers/callMethod.js'
 import { createModel } from './createModels.js'
+import createSharedModels from './helpers/createSharedModels.js'
+import { reviveServerModelInSpecificModule } from '../createModule/helpers/revive.js'
+
 
 
 export default (options = {}) => {
@@ -10,8 +13,7 @@ export default (options = {}) => {
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
   const base = { make, callMethod, config, ...table, ...mixin }
-
-  const [shared, client] = sharedClientModels(models)
+  const methods = createSharedModels(models)
 
   const descriptors = {
     db:      { enumerable: false, value: db },
@@ -20,8 +22,10 @@ export default (options = {}) => {
 
   const extra = Object.defineProperties(mixinModel, descriptors)
 
+  db.revive = reviveServerModelInSpecificModule(db)
+
   for (const k in tables) {
-    createTable(k, db, base, model, descriptors, tables, shared, client, extra)
+    createTable(k, db, base, model, descriptors, tables, methods, extra)
   }
 
   for (const k in modules) {
@@ -31,24 +35,24 @@ export default (options = {}) => {
     child.parent = db
     db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
 
-    if (props?.tables) {
-      const [shared, client] = sharedClientModels(props.models)
-      
-      for (const k2 in props.tables) {
-        const propTable = props.tables[k2]
-        let other
-  
-        if (propTable === tables[k2]) {  // original table same as in parent
-          child[k2] = db[k2]             // assign fully created table
-          child.models[k2] = child[k2].Model = db[k2].Model // assign fully created model
-        }
-        else if (other = Object.keys(tables).find(k3 => tables[k3] === propTable)) { // propTable is a name of another table
-          child[k2] = db[other]
-          child.models[k2] = child[k2].Model = db[other].Model
-        }
-        else {
-          createTable(k2, child, base, model, descriptors, props.tables, shared, client, extra)
-        }
+    if (!props?.tables) continue
+
+    const methods = createSharedModels(props.models)
+    
+    for (const k2 in props.tables) {
+      const propTable = props.tables[k2]
+      let other
+
+      if (propTable === tables[k2]) {  // original table same as in parent
+        child[k2] = db[k2]             // assign fully created table
+        child.models[k2] = child[k2].Model = db[k2].Model // assign fully created model
+      }
+      else if (other = Object.keys(tables).find(k3 => tables[k3] === propTable)) { // propTable is a name of another table
+        child[k2] = db[other]
+        child.models[k2] = child[k2].Model = db[other].Model
+      }
+      else {
+        createTable(k2, child, base, model, descriptors, props.tables, methods, extra)
       }
     }
   }
@@ -59,9 +63,9 @@ export default (options = {}) => {
 
 
 
-const createTable = (k, db, base, model, descriptors, tables, shared, client, extra) => {
+const createTable = (k, db, base, model, descriptors, tables, methods, extra) => {
   const table = tables[k]
-  const Model = db.models[k] = createModel(k, model, shared[k], client[k], extra)
+  const Model = db.models[k] = createModel(k, model, methods[k], extra)
 
   db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, Model }
   
@@ -100,13 +104,8 @@ const userGetters = {
 
 
 function make(doc) {
+  doc = this.db.revive(doc)
   return new this.Model(doc)
 }
 
-
-
-
-const sharedClientModels = models => [
-  Array.isArray(models) ? (models[0] ?? {}) : {},
-  Array.isArray(models) ? (models[1] ?? {}) : models ?? {}
-]
+// table.create must be defined by table or parent table, as they may have a custom way of dealing with creating IDs
