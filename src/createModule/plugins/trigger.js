@@ -1,4 +1,3 @@
-import revive from '../helpers/revive.js'
 import combineInputEvents from '../../modules/replayTools/helpers/combineInputEvents.js'
 import { isEqualDeepPartial } from '../../utils/isEqual.js'
 import { mergePrevState } from '../hydrateModules.js'
@@ -98,7 +97,7 @@ const clipTail = (e, state, events, index, topState) => {
 
 const isEqual = (a, b, topState) => {
   if (a.event.type !== b.event.type) return false
-  const arg = revive(topState.respond)(a.arg || {})   // revive possible event function references in test arg
+  const arg = topState.respond.revive(a.arg || {})   // revive possible event function references in test arg
   return isEqualDeepPartial(arg, b.arg)           // e.arg may have some unrelated nested functions -- matching everything in arg works well for this case
 }
 

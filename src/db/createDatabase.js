@@ -9,11 +9,11 @@ import { reviveServerModelInSpecificModule } from '../createModule/helpers/reviv
 
 
 export default (options = {}) => {
-  const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models = {}, replays = {}, config = {}, ...modules } = options
+  const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models: m = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
   const base = { make, callMethod, config, ...table, ...mixin }
-  const methods = createSharedModels(models)
+  const models = createSharedModels(m)
 
   const descriptors = {
     db:      { enumerable: false, value: db },
@@ -24,8 +24,8 @@ export default (options = {}) => {
 
   db.revive = reviveServerModelInSpecificModule(db)
 
-  for (const k in tables) {
-    createTable(k, db, base, model, descriptors, tables, methods, extra)
+  for (const k in { ...tables, ...models }) { // there may be be virtual models, which need unused tables so we can do db.fooVirtual.make()
+    createTable(k, db, base, model, descriptors, tables, models, extra)
   }
 
   for (const k in modules) {
@@ -37,9 +37,9 @@ export default (options = {}) => {
 
     if (!props?.tables) continue
 
-    const methods = createSharedModels(props.models)
+    const models = createSharedModels(props.models)
     
-    for (const k2 in props.tables) {
+    for (const k2 in { ...props.tables, ...models }) {
       const propTable = props.tables[k2]
       let other
 
@@ -52,7 +52,7 @@ export default (options = {}) => {
         child.models[k2] = child[k2].Model = db[other].Model
       }
       else {
-        createTable(k2, child, base, model, descriptors, props.tables, methods, extra)
+        createTable(k2, child, base, model, descriptors, props.tables, models, extra)
       }
     }
   }
@@ -63,9 +63,9 @@ export default (options = {}) => {
 
 
 
-const createTable = (k, db, base, model, descriptors, tables, methods, extra) => {
+const createTable = (k, db, base, model, descriptors, tables, models, extra) => {
   const table = tables[k]
-  const Model = db.models[k] = createModel(k, model, methods[k], extra)
+  const Model = db.models[k] = createModel(k, model, models[k], extra)
 
   db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, Model }
   

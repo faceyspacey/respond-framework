@@ -26,5 +26,10 @@ export default {
   async remove() {
     const { id } = this
     return this.db[this._name].deleteOne({ id })
+  },
+
+  super(method, ...args) {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    return proto[method].apply(this, args)
   }
 }

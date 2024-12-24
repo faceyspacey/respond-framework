@@ -1,6 +1,5 @@
 import createModule from '../../createModule/index.js'
 import { isTest } from '../../helpers/constants.js'
-import revive from '../../createModule/helpers/revive.js'
 
 
 export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
@@ -55,6 +54,6 @@ const maybeRevive = (events, respond) => {
   const e = events[0]
 
   return typeof e.event !== 'function' || respond.eventsByType[e.event.type] !== e.event
-    ? revive(respond)(events)
+    ? respond.revive(events)
     : events
 }

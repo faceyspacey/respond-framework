@@ -40,5 +40,10 @@ export default {
     const { docs } = this.db[this._name]
     delete docs[this.id]
     return { id: this.id }
+  },
+
+  super(method, ...args) {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    return proto[method].apply(this, args)
   }
 }

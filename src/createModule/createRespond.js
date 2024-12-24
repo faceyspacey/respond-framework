@@ -2,6 +2,7 @@ import dispatch, { trigger } from './methods/dispatch.js'
 import App from './methods/App.js'
 import reduce from './methods/reduce.js'
 import listen from './methods/listen.js'
+import revive from './methods/revive.js'
 import onError from './methods/onError.js'
 import proxify from './methods/proxify.js'
 import fromEvent from './methods/fromEvent.js'
@@ -81,6 +82,7 @@ export default (top, system, focusedModule, focusedBranch) => {
     commit,
     notify,
     listen,
+    revive,
     proxify,
     dispatch,
     trigger,

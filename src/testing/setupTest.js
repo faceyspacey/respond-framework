@@ -18,8 +18,6 @@ export default ({ settings, rendererOptions, createTrigger = createTriggerDefaul
   const snap = createSnap(respond, renderer, trigger, config)
   const replayEventsToIndex = createReplayEventsToIndex(trigger)
 
-  respond.proxify()
-
   return {
     state: respond.state,
     respond,

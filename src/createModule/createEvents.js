@@ -56,6 +56,8 @@ const createEvent = (respond, config, name, namespace) => {
   const type = prepend(branch, prepend(namespace.name, name))
   const event = respond.prevEventsByType[type] ?? new_Event() // optimization: preserve ref thru hmr + index changes in current replay so events stored in state are the correct references and cycles don't need to be wasted reviving them
 
+  if (typeof config === 'function') config = { ...custom, custom: config }
+
   event.construct(branch, { config, name, namespace, respond, type })
 
   if (respond.eventsByType[type]) throw new Error(`respond: adjacent namespaces + modules can't share the same name: "${type}"`)
@@ -205,11 +207,13 @@ export class e {
   constructor(arg, meta, event) {
     mergeArgMeta(arg, meta, this)
 
+    const payload = event.transform?.call(event.module, event.module, this.arg, this) ?? { ...this.arg }
+
+    Object.assign(this, payload)
+
     this.event = event
     this.kind = event.kind
-    this.payload = event.transform?.call(event.module, event.module, this.arg, this) ?? { ...this.arg }
-
-    Object.assign(this, this.payload)
+    this.payload = payload
 
     if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url

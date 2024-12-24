@@ -1,6 +1,5 @@
 import * as qs from 'qs' // we like the qs library because it handles nested objects in query strings
 import isNumber from '../utils/isNumber.js'
-import revive from '../createModule/helpers/revive.js'
 import { canProxy } from '../proxy/helpers/utils.js'
 
 
@@ -16,7 +15,7 @@ export const stringifyQuery = (query, state) => {
 
 
 const parse = (search, respond) => {
-  const rev = revive(respond) ?? (v => v)
+  const rev = respond ? v => respond.revive(v) : (v => v)
   let k
 
   const decoder = (v, defaultDecoder, charset, type) => {

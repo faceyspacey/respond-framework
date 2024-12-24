@@ -11,6 +11,7 @@ export { default as reduce } from './reduce.js'
 // event.mutate (built-in to reduce)
 // event.mutateAfter (built-in to reduce)
 export { default as changePath } from './changePath.js'
+export { default as custom } from './custom.js'
 export { default as optimistic } from './optimistic.js'
 export { default as fetch } from './fetch.js'
 // event.cache (built-in to fetch)

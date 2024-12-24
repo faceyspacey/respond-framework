@@ -436,5 +436,10 @@ export default !isProd ? mock : {
     return this.make(doc)
   },
 
+  super(method, ...args) {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    return proto[method].apply(this, args)
+  },
+
   ...safeMethods
 }

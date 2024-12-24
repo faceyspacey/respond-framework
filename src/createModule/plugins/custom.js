@@ -1,0 +1,1 @@
+export default (state, e) => e.event.custom?.(state, e)

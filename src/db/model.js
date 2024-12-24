@@ -40,5 +40,10 @@ export default !isProd ? mock : {
     const selector = toObjectIdsSelector({ id: this.id })
     await this.db[this._name].mongo().deleteOne(selector)
     return { id: this.id }
+  },
+
+  super(method, ...args) {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    return proto[method].apply(this, args)
   }
 }

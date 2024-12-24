@@ -1,11 +1,10 @@
 import { act } from 'react-test-renderer'
-import revive from '../../createModule/helpers/revive.js'
 import matchSnapshots from './matchSnapshots.js'
 
 
 export default (respond, renderer) => async (e, meta, conf = {}, revived) => {
   const event = respond.eventsByType[e.type]
-  const arg = revived ? e.arg : (e.arg ? revive(respond)(e.arg) : undefined)
+  const arg = revived ? e.arg : (e.arg ? respond.revive(e.arg) : undefined)
 
   const snapMore = (conf.snapTrigger || conf.snapAll) && snap.bind(null, respond, renderer, e, conf)
   const unsub = snapMore && respond.subscribe(snapMore, conf.snapAll) // subscribe(cb, true) for snapping all reductions/dispatches, subscribe(cb) for just trigger

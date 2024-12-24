@@ -8,15 +8,14 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
   if (!models) {
     if (parent.models) return respond.models = proto.models = parent.models
-    mod = findClosestAncestorWith('db', branchRelative, respond)
-    models = mod.models ?? {} // db and models must be paired together on same module
+    mod = findClosestAncestorWith('db', branchRelative, respond) // note: having a db defines the inherited ancestor when focusing a branch; therefore it's a requirement that models be paired with a db
+    models = mod.models ?? {}
   }
 
+  models = createSharedModels(models)
+
   const branch = mod.branchAbsolute
-
   const { db } = respond
-
-  const methods = createSharedModels(models)
 
   const extra = Object.defineProperties({}, {
     db: { enumerable: false, configurable: true, value: db },
@@ -26,11 +25,11 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
   const prevModels = window.state?.respond?.modelsByBranchType ?? {}
   const nextModels = {}
 
-  for (const k in methods) {
+  for (const k in models) {
     const key = branch + '_' + k
     const prevModel = prevModels[key]
 
-    const Model = createModel(k, mixin, methods[k], extra, prevModel)
+    const Model = createModel(k, mixin, models[k], extra, prevModel)
     respond.modelsByBranchType[key] = nextModels[k] = Model
 
     Model.make = doc => {
@@ -53,7 +52,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
 export const createModel = (k, mixin, methods, extra, Model) => {
   const base = { _name: k, _namePlural: k + 's' }
-  const descriptors = Object.assign(g(base), g(mixin), methods, g(extra))
+  const descriptors = Object.assign(g(base), methods, g(extra))
 
   Model ??= function Model(doc) {
     this.__type = k
@@ -62,6 +61,11 @@ export const createModel = (k, mixin, methods, extra, Model) => {
   }
 
   Object.defineProperty(Model, 'name', { value: k })
+
+  function Parent() {}
+  Object.defineProperties(Parent.prototype, g(mixin))
+
+  Model.prototype = new Parent
   Object.defineProperties(Model.prototype, descriptors)
 
   return Model

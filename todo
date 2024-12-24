@@ -781,6 +781,11 @@ test('foo', () => {
   console.log('rootDir', expect.getState().rootDir)
   console.log('projectDir', process.cwd())
 })
+f = models => [
+  Array.isArray(models) ? (models[0] ?? {}) : {},
+  Array.isArray(models) ? (models[1] ?? {}) : models ?? {}
+]
+
 
 #remove Object.getPrototypeOf(state).replays
 #remove kind, name, namespace from e
@@ -788,27 +793,23 @@ test('foo', () => {
 
 #pass tests
 
-make respond.revive a method
-events as raw functions
-e.kind
-event.skipReducers
-virtual models shouldnt need dummy tables made for them
-createModel/Table needs better handling/naming of mixin/parent/model/etc
+#make respond.revive a method
+
+#events as raw functions
+#event.skipReducers
+#virtual models shouldnt need dummy tables made for them
+
+#e.kind
+
+#createModel/Table needs better handling/naming of mixin/parent/model/etc
+
 
 optimistic isomorphic functions/eventCallbacks, automatic cache reducers
+db hooks: save, api call, ?
 
-
-#list no longer captures complete since it doesn't run unless model changes -- which means some events aren't being caught
-#teams needs fixing
-
-finish running calcs server side, use tap plugin, remove all the extra calls to complete
-
-move round/player methods that use state to client folder
-ensure calcGame has access to sufficient methods
-run calcGame on server
-remove completeHole from event.end callbacks
 
 old players and tees in mongo needs their __types assigned
+
 
 
 incorporate naked-css

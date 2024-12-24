@@ -376,5 +376,10 @@ export default {
     return this.make({ ...doc, id })
   },
 
+  super(method, ...args) {
+    const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
+    return proto[method].apply(this, args)
+  },
+
   ...safeMethods,
 }

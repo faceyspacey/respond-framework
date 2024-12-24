@@ -15,6 +15,7 @@ export const defaultAsyncPlugins = [
   plugins.auth,
   plugins.reduce,
   plugins.changePath,
+  plugins.custom,
   plugins.optimistic,
   plugins.fetch(),
   plugins.tap,
