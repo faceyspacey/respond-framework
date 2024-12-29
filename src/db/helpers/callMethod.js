@@ -4,7 +4,7 @@ import { argsOut as out } from '../../helpers/fetch.js'
 import secretMock from '../secret.mock.js'
 
 
-export default async function (req, context = {}) {
+export default function (req, context = {}) {
   this.req = req
   this.context = context
 
@@ -15,13 +15,32 @@ export default async function (req, context = {}) {
 
   this.identity = getIdentity(this.config, req.body, perms)
 
-  if (permitted(perms, method, this.identity)) return this[method](...out(args)) // eg db.user.findOne(id)
+  if (permitted(perms, method, this.identity)) return call(method, this, args)
 
   const allowed = perms[method]
   const roles = this.identity?.roles ?? []
   const params = { table, method, roles, allowed }
 
   return { error: 'denied', params }
+}
+
+
+
+
+const call = async (method, self, args) => {
+  if (self.beforeRequest) {
+    const ret = await self.beforeRequest(self.req.body)
+    if (ret) return ret
+  }
+
+  const res = await self[method](...args)// eg db.user.findOne(id)
+  
+  if (self.afterRequest) {
+    const ret = await self.afterRequest(res)
+    if (ret) return ret
+  }
+
+  return res
 }
 
 

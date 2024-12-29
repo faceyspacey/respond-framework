@@ -775,6 +775,25 @@ just find diff to top and import that
 then prefix all with branch diff
 
 
+main: {
+  pattern: '/',
+  step: 1,
+  // transform: ({ query }, e) => ({
+  //   query: { ...query, ...e.query }
+  // }),
+  // end: (state, { query, hash }) => {
+  //   state.query = query
+  //   state.hash = hash
+  // },
+},
+
+// clear: {
+//   pattern: '/home',
+//   transform: () => ({ query: {} }),
+//   before: state => state.query = {},
+// },
+
+
 test('foo', () => {
   const filename = expect.getState().testPath;
   console.log('filename', filename)
@@ -801,14 +820,26 @@ f = models => [
 
 #e.kind
 
-#createModel/Table needs better handling/naming of mixin/parent/model/etc
+#!createModel/Table needs better handling/naming of mixin/parent/model/etc
+
+#db hooks: save, api call (like a controller filter), ?
+#revive nested in Model.make maybe needs to be optional
+
 
 
 optimistic isomorphic functions/eventCallbacks, automatic cache reducers
-db hooks: save, api call, ?
+
+
+
+remove round.finish from join.complete, clean rest of join.complete
+make sure tournament/layered rounds finish themselves on the server, remove related jank
+
+remove ghin stuff, remove campaign stuff, tracking links, etc
 
 
 old players and tees in mongo needs their __types assigned
+
+
 
 
 
