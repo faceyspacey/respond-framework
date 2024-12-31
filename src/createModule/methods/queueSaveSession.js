@@ -11,7 +11,7 @@ export default isTest ? function() {} : function() {
   timeout = setTimeout(() => {
     timeout = null
     const snap = this.snapshot(this.topState)
-    setSessionState(snap, this.lastTriggerEvent)
+    setSessionState(snap, this.ctx.lastTriggerEvent)
   }, 1000)
 }
 

@@ -5,12 +5,12 @@ export const toObjectIds = (doc, key) => {
   if (doc instanceof ObjectId || doc instanceof Date || doc instanceof RegExp) {
     return doc
   }
-  else if (key && isForeignOrLocalKey(key) && isValidObjectId(doc)) {
+  else if (key && isForeignOrLocalKey(key) && ObjectId.isValid(doc)) {
     return new ObjectId(doc)
   }
   else if (Array.isArray(doc)) {
     return isArrayOfIds(doc[0])
-      ? doc.map(v => new ObjectId(v)) // require arrays of IDs to be assigned to, eg doc.friendIds, to ensure other 24 character strings aren't treated as ObjectIds
+      ? doc.map(v => new ObjectId(v))
       : doc.map(v => toObjectIds(v))
   }
   else if (typeof doc === 'object' && doc !== null) {
@@ -56,13 +56,12 @@ export const resolveId = field => {
 
 
 
-const isValidObjectId = str => ObjectId.isValid(str) && str.length === 24
 
 const isForeignOrLocalKey = key => endsWithIdReg.test(key)
 
 const isForeignKeyPlural = key => endsWithIdsReg.test(key) || '$in'
 
-const isArrayOfIds = firstElement => firstElement && isValidObjectId(firstElement)
+const isArrayOfIds = firstElement => typeof firstElement === 'string' && ObjectId.isValid(firstElement) // valid 24 char hex string -- must check if string, cuz ObjectId.isValid(123) is true; NOTE: your app can't use 24 char hex strings for any other purpose!
 
 
 const endsWithIdReg = /id$/i

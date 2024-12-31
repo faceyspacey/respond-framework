@@ -230,6 +230,11 @@ export class e {
     return this.event.respond.trigger(this)
   }
 
+  create(arg, meta) {
+    mergeArgMeta(arg, meta, this) // 2nd chance to supply meta/arg
+    return this.event(this.arg, this.meta)
+  }
+
   toJSON() {
     return { ...this, __e: true, event: this.event.type }
   }

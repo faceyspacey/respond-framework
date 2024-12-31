@@ -30,7 +30,7 @@ export default function createApiHandler({ db, log = isServer, context = {} }) {
 
 
 const revive = (modelsByBranchType, req) => {
-  req = isServer ? req : { ...req } // should not mutate client in dev
+  req = isServer ? req : { ...req } // would otherwise mutate client's req in dev
   req.body = reviveApiServer({ modelsByBranchType })(req.body)
   req.body.args = argsOut(req.body.args) // convert '__undefined__' to undefined
   return req

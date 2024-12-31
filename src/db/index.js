@@ -312,7 +312,7 @@ export default !isProd ? mock : {
       ...sel
     } = query
   
-    const selector = createAggregatePaginatedSelector(toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
+    const selector = this._createAggregatePaginatedSelector(toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
     const sort = { [sortKey]: sortValue, _id: sortValue, location }
     const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
   
@@ -352,7 +352,7 @@ export default !isProd ? mock : {
   },
 
   create(doc) {
-    doc = { ...fromObjectIds(doc) }               // mongo ObjectId objects converted to strings for ez client consumption
+    doc = { ...fromObjectIds(doc) }                     // mongo ObjectId objects converted to strings for ez client consumption
     doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
     delete doc._id                                      // bye bye _id
     return this.make(doc)
@@ -441,5 +441,6 @@ export default !isProd ? mock : {
     return proto[method].apply(this, args)
   },
 
+  _createAggregatePaginatedSelector: createAggregatePaginatedSelector,
   ...safeMethods
 }

@@ -2,7 +2,7 @@ import defaultCreateSeed from './helpers/createSeed.js'
 import createSettings from './helpers/createSettings.js'
 import nestSettings from './helpers/nestSettings.js'
 import nestAtBranch from './helpers/nestAtBranch.js'
-import { createCounterRef } from '../../helpers/objectIdDevelopment.js'
+import { createCounterRef } from '../../helpers/deterministicCounter.js'
 
 
 export default ({ state, respond }) => {
@@ -14,7 +14,7 @@ export default ({ state, respond }) => {
   Object.assign(state, createState(top, branches, depth, replayState))
   replayState.settings ??= nestSettings(state.settings, branches) // tapping reload also creates this, but on first opening, we need to create it so you can save tests with the appropriate settings object (containing defaults) without having to tap reload
   
-  const nextSeed = system.seed = { __idCount: createCounterRef(seed) }
+  const nextSeed = system.seed = { __counterRef: createCounterRef(seed) }
   depth.forEach(createDbWithSeed(nextSeed, seed)) // depth-first so parent modules' createSeed function can operate on existing seeds from child modules
 }
 

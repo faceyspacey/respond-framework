@@ -9,7 +9,7 @@ export default (index, height, event, setIndex, openSlot, toggleScroll, longPres
 
   const pan = PanResponder.create({
     onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder: () => longPressing,
+    onMoveShouldSetPanResponder: () => true,
     onPanResponderTerminationRequest: () => false,  // allow dragging out of bounds to the bottom
     onPanResponderGrant: () => toggleScroll(false),
     onPanResponderMove: (e, { dy }) => {

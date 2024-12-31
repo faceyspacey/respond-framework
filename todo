@@ -800,10 +800,13 @@ test('foo', () => {
   console.log('rootDir', expect.getState().rootDir)
   console.log('projectDir', process.cwd())
 })
+
 f = models => [
   Array.isArray(models) ? (models[0] ?? {}) : {},
   Array.isArray(models) ? (models[1] ?? {}) : models ?? {}
 ]
+
+<Pressable event={events.open.link} arg={{ url: c.trackingLink + '?userId=3' }}>
 
 
 #remove Object.getPrototypeOf(state).replays
@@ -826,15 +829,15 @@ f = models => [
 #revive nested in Model.make maybe needs to be optional
 
 
+automatic cache reducers
+optimistic isomorphic functions/eventCallbacks
+memo with props.obj, which automatically transfers reactive tracking to child
+module level urlCache clearing
+better masquerading
 
-optimistic isomorphic functions/eventCallbacks, automatic cache reducers
 
-
-
-remove round.finish from join.complete, clean rest of join.complete
-make sure tournament/layered rounds finish themselves on the server, remove related jank
-
-remove ghin stuff, remove campaign stuff, tracking links, etc
+custom event callback makes app think namespaces are events
+bug where after HMRs, a replay's models are not available
 
 
 old players and tees in mongo needs their __types assigned
@@ -846,3 +849,8 @@ old players and tees in mongo needs their __types assigned
 incorporate naked-css
 create website
 devtools
+
+
+
+
+

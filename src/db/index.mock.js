@@ -1,4 +1,4 @@
-import ObjectId from '../helpers/objectIdDevelopment.js'
+import { createObjectId } from '../helpers/deterministicCounter.js'
 import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import { pickAndCreate as pick } from './utils/pick.js'
@@ -36,7 +36,7 @@ export default {
   },
 
   async insertOne(doc, { project } = {}) {
-    doc.id ??= ObjectId() // if id present, client generated client side optimistically
+    doc.id ??= createObjectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this._create(doc)
@@ -224,7 +224,7 @@ export default {
       ...sel
     } = query
   
-    const selector = createAggregatePaginatedSelector(sel) // clear unused params, transform regex strings, date handling
+    const selector = this._createAggregatePaginatedSelector(sel) // clear unused params, transform regex strings, date handling
     const sort = { [sortKey]: sortValue, _id: sortValue, location }
     const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
   
@@ -242,7 +242,7 @@ export default {
 
   async insertMany(docs) {
     for (const doc of docs) {
-      doc.id ??= ObjectId()
+      doc.id ??= createObjectId()
       doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
       this.docs[doc.id] = this._create(doc)
@@ -294,7 +294,7 @@ export default {
   },
 
   create(doc) {
-    const id = doc?.id || ObjectId()
+    const id = doc?.id || createObjectId()
     return this.make({ ...doc, id })
   },
 
@@ -309,7 +309,7 @@ export default {
     docs.forEach((doc, i) => {
       doc = cloneDeep(doc)
       
-      doc.id ??= ObjectId()
+      doc.id ??= createObjectId()
       doc.__type = name
 
       doc.createdAt ??= new Date(now - (i * 1000)) // put first docs in seed at top of lists (when sorted by updatedAt: -1)
@@ -350,7 +350,7 @@ export default {
   },
   
   async _insertOne(doc, { project } = {}) {
-    doc.id ??= ObjectId() // if id present, client generated client side optimistically
+    doc.id ??= createObjectId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
   
     this.docs[doc.id] = this._create(doc)
@@ -372,7 +372,7 @@ export default {
   },
 
   _create(doc) {
-    const id = doc?.id || ObjectId()
+    const id = doc?.id || createObjectId()
     return this.make({ ...doc, id })
   },
 
@@ -381,5 +381,6 @@ export default {
     return proto[method].apply(this, args)
   },
 
+  _createAggregatePaginatedSelector: createAggregatePaginatedSelector,
   ...safeMethods,
 }

@@ -62,10 +62,9 @@ export const createModel = (k, mixin, methods, extra, Model) => {
 
   Object.defineProperty(Model, 'name', { value: k })
 
-  function Parent() {}
-  Object.defineProperties(Parent.prototype, g(mixin))
-
+  const Parent = createParent(mixin)
   Model.prototype = new Parent
+  
   Object.defineProperties(Model.prototype, descriptors)
 
   return Model
@@ -73,3 +72,9 @@ export const createModel = (k, mixin, methods, extra, Model) => {
 
 
 const g = obj => obj && Object.getOwnPropertyDescriptors(obj)
+
+const createParent = mixin => {
+  function Model() {}
+  Object.defineProperties(Model.prototype, g(mixin))
+  return Model
+}
