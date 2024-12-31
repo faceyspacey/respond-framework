@@ -80,7 +80,7 @@ export default {
 
   saveTest: {
     async submit({ db, respond, events: { tests } }) {
-      this.selectedTestName ??= this.evs[0].type.replace(/\./g, '/') + '.js'
+      this.selectedTestName ??= this.evs[0].event.type.replace(/\./g, '/') + '.js'
       
       const name = prompt('Name of your test?', this.selectedTestName)?.replace(/^\//, '')
       if (!name) return
@@ -163,11 +163,14 @@ export default {
     before: async (state, { index: i }) => {
       state.evs.splice(i, 1)
 
-      if (state.divergentIndex && i < state.divergentIndex) {
-        state.divergentIndex--
-      }
+      if (i < state.evs.length - 1) state.divergentIndex = i
+      else delete state.divergentIndex
 
-      const events = state.evs.slice(0, i)
+      if (i > state.evsIndex) return false
+
+      const end = i === state.evsIndex ? state.evsIndex : state.evsIndex + 1 // if deleted last event and its current index, go one index lower : go to current index
+      const events = state.evs.slice(0, end)
+
       await state.replayEvents(events)
 
       return false

@@ -25,7 +25,7 @@ const projectDir = () => path.resolve()
 const createModuleDir = branch =>
   branch
     ? branch.split('.').reduce((dir, mod) => dir + '/modules/' + mod, projectDir())
-    : projectDir
+    : projectDir()
 
 
 const createFilename = (moduleDir, name) => {
@@ -53,7 +53,7 @@ const createTestFile = (moduleDir, levels, settings, events) => {
 
   return `${imports}
 
-import topFoo from '${dotdotRoot}/index.module.js'
+import top from '${dotdotRoot}/index.module.js'
 
 const settings = ${JSON.stringify(settings, null, 2)}
 
@@ -97,7 +97,7 @@ const writeTestFile = (filename, content) => {
 
 
 const cleanAndNumberEvents = events => events.map((e, i) => {
-  const { type, arg = {}, meta: { trigger, input, cached, url, ...meta } = {} } = e
+  const { event: type, arg = {}, meta: { trigger, input, cached, url, ...meta } = {} } = e
 
   return {
     index: i,

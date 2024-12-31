@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createElement, useState } from 'react'
+import { createElement, useState, useEffect, useRef } from 'react'
 import { ScrollView, View, StyleSheet } from 'react-native'
 import { colors } from '../styles.js'
 import Event from '../widgets/Event.js'
@@ -26,10 +26,17 @@ export default (props, { events, evs, evsIndex, divergentIndex, playing }) => {
     toggleScroll,
     key: i + '_' + (e.dragId ?? ''),
   }))
+
+  const ref = useRef()
+
+  useEffect(() => {
+    if (evsIndex <= 9)                    ref?.current?.scrollTo({ y: 0, animated: false })
+    else if (evsIndex === evs.length - 1) ref?.current?.scrollTo({ y: 100000000, animated: false }) // very large number to force scroll to bottom
+  }, [evsIndex, evs.length])
   
   return (
     <View style={s.c}>
-      <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={scrollEnabled}>
+      <ScrollView ref={ref} showsVerticalScrollIndicator={false} scrollEnabled={scrollEnabled}>
         {rows}
       </ScrollView>
 
