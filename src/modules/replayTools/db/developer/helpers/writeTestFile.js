@@ -42,18 +42,11 @@ const createTestFile = (moduleDir, levels, settings, events) => {
 
   const dotdot = Array.from({ length: levels }).map(_ => '..').join('/')
 
-  const levelsToRoot = moduleDir.replace(projectDir(), '').split('/').length - 1
-  const totalLevels = levelsToRoot + levels
-
-  const dotdotRoot = Array.from({ length: totalLevels }).map(_ => '..').join('/')
-
   const imports = exists
     ? `import setupTest from '${dotdot}/setupTest.js'`
     : `import { setupTest } from 'respond-framework/testing'`
 
   return `${imports}
-
-import top from '${dotdotRoot}/index.module.js'
 
 const settings = ${JSON.stringify(settings, null, 2)}
 

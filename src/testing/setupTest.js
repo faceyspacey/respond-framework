@@ -6,10 +6,9 @@ import createReplayEventsToIndex from './helpers/createReplayEventsToIndex.js'
 import getBranchFromTestPath from './helpers/getBranchFromTestPath.js'
 
 
-export default ({ settings, rendererOptions, createTrigger = createTriggerDefault } = {}, config) => {
-  const mod = jest.requireActual(process.cwd() + '/index.module.js')
-  const top = mod.default ?? mod // can use individual exports or export default
-
+export default ({ top, settings, rendererOptions, createTrigger = createTriggerDefault } = {}, config) => {
+  top ??= getTopModule()
+  
   const branch = getBranchFromTestPath()
 
   const respond = createModule(top, { settings, branch, status: 'reload' })
@@ -27,4 +26,10 @@ export default ({ settings, rendererOptions, createTrigger = createTriggerDefaul
     snap,
     replayEventsToIndex
   }
+}
+
+
+const getTopModule = () => {
+  const mod = jest.requireActual(process.cwd() + '/index.module.js')
+  return mod.default ?? mod // can use individual exports or export default
 }
