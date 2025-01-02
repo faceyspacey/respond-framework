@@ -68,7 +68,6 @@ export default {
       state.divergentIndex = events.length // purple event rows will appear at end of event list if new events manually triggered by using app
     
       state.selectedTestId = id
-      state.selectedTestName = name
 
       const evs = index === undefined ? events : events.slice(0, index + 1)
 
@@ -79,14 +78,14 @@ export default {
   },
 
   saveTest: {
-    async submit({ db, respond, events: { tests } }) {
-      this.selectedTestName ??= this.evs[0].event.type.replace(/\./g, '/') + '.js'
-      
-      const name = prompt('Name of your test?', this.selectedTestName)?.replace(/^\//, '')
+    submit: async ({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) => {
+      const defaultName = selectedTestId ? t[selectedTestId].name : evs[0].event.type.replace(/\./g, '/') + '.js'
+      const name = prompt('Name of your test?', defaultName)?.replace(/^\//, '')
+
       if (!name) return
 
       const { settings, branch } = respond.replayState // settings is already nested correctly during `reload`, and settings form might have been edited but not reloaded, which is why we use the original replayState
-      const events = combineInputEvents(this.evs.filter(e => !e.meta?.skipped))
+      const events = combineInputEvents(evs.filter(e => !e.meta?.skipped))
 
       await db.developer.writeTestFile.server({ name, branch, settings, events })
       await tests.dispatch({ sort: 'recent' })
@@ -177,10 +176,9 @@ export default {
     }
   },
 
-  togglePersist: {
-    before: async state => {
-      state.persist = !state.persist
-      return false
+  toggleInsertMode: {
+    reduce: state => {
+      state.insertMode = !state.insertMode
     }
   },
 

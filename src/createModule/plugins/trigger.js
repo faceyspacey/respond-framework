@@ -68,6 +68,16 @@ const sendTrigger = (e, state, topState) => {
     return
   }
 
+  if (state.insertMode) {
+    events.splice(index, 0, e)
+
+    if (!state.divergentIndex || index < state.divergentIndex) {
+      state.divergentIndex = index
+    }
+    
+    return
+  }
+
   const lastEntryIndex = events.length - 1
   const shouldClipTail = index <= lastEntryIndex
 
@@ -108,6 +118,7 @@ const inputConverged = (e, state, events) => {
 
   const possibleConvergingInputEvent = e.meta.input && divergentIndex !== undefined
   const test = possibleConvergingInputEvent && tests[selectedTestId]
+
   if (!test) return 
 
   const eventsCombined = combineInputEvents([...events, e])

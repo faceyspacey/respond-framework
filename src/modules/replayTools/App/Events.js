@@ -6,7 +6,7 @@ import Event from '../widgets/Event.js'
 import Button from '../widgets/Button.js'
 
 
-export default (props, { events, evs, evsIndex, divergentIndex, playing }) => {
+export default (props, { events, evs, evsIndex, divergentIndex, playing, selectedTestId }) => {
   const [scrollEnabled, toggleScroll] = useState(true)
   const [potentialNewIndex, setIndex] = useState(null)
 
@@ -20,7 +20,7 @@ export default (props, { events, evs, evsIndex, divergentIndex, playing }) => {
     type: e.event.type,
     arg: e.arg,
     dispatched: i <= evsIndex,
-    divergent: i >= divergentIndex && i <= evsIndex,
+    divergent: selectedTestId && i >= divergentIndex && i <= evsIndex,
     openSlot: potentialNewIndex === i,
     skipped: e.meta?.skipped,
     toggleScroll,
@@ -30,8 +30,8 @@ export default (props, { events, evs, evsIndex, divergentIndex, playing }) => {
   const ref = useRef()
 
   useEffect(() => {
-    if (evsIndex <= 9)                    ref?.current?.scrollTo({ y: 0, animated: false })
-    else if (evsIndex === evs.length - 1) ref?.current?.scrollTo({ y: 100000000, animated: false }) // very large number to force scroll to bottom
+    if (evsIndex === 0)                   ref?.current?.scrollTo({ y: 0, animated: false })
+    else if (evsIndex === evs.length - 1) ref?.current?.scrollTo({ y: 100000000, animated: false }) // scrolls to bottom after each new event, so you can see it
   }, [evsIndex, evs.length])
   
   return (

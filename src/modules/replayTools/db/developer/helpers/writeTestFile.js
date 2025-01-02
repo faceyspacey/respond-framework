@@ -55,7 +55,7 @@ const events = ${JSON.stringify(events, null, 2)}
 let t
 
 beforeAll(() => {
-  t = setupTest({ settings, top })
+  t = setupTest({ settings })
 })
 
 ${events.map(createIndividualTest).join('\n\n')}`

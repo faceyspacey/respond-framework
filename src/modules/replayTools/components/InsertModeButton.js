@@ -3,9 +3,9 @@ import { StyleSheet, View } from 'react-native'
 import Pressable from '../widgets/Pressable.js'
 
 
-export default (props, { events, persist }) =>
-  <Pressable style={s.c} event={events.togglePersist}>
-    <View style={persist ? s.enabled : s.disabled} />
+export default (props, { events, insertMode }) =>
+  <Pressable style={s.c} event={events.toggleInsertMode}>
+    <View style={insertMode ? s.enabled : s.disabled} />
   </Pressable>
 
 
