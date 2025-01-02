@@ -11,13 +11,12 @@ export default (respond, renderer) => async (e, meta, conf = {}, revived) => {
 
   await act(async () => {
     await event.trigger(arg, meta)
-    await renderer.createOnce() // only render the first time in test, after reactivity will handle subsequent renders
-
-    respond.commit() // optimization: if we aren't snapping triggers to capture loading states, then we only need to commit updates to the component tree once after awaiting trigger and all possible nested events dispatched
-    
+    await renderer.render() // optimization: if we aren't snapping triggers to capture loading states, then we only need to commit updates to the component tree once after awaiting trigger and all possible nested events dispatched  
+  
     await jest.runAllTimersAsync()
-    unsub?.()
   })
+
+  unsub?.()
 }
 
 

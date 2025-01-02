@@ -3,10 +3,13 @@ import createNodeMockDefault from './createNodeMock.js'
 
 
 export default (respond, opts = {}) => ({
-  async createOnce() {
-    if (this._renderer) return // for performance and to match the rendering of a real app, we create renderer after first trigger event
+  async render() {
+    if (!this._renderer) this.create() // for performance and to match the rendering of a real Respond app, we create renderer after first trigger event
+    else act(() => respond.commit())  // after, reactivity will handle subsequent renders, but we assume control for precision batching here (similar to queueNotification.js in a real app)
+  },
 
-    await act(async () => {
+  create() {
+    act(() => {
       const app = respond.render()
       const createNodeMock = opts.createNodeMock ?? createNodeMockDefault
       this._renderer = create(app, { createNodeMock })
