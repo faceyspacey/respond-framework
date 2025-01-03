@@ -68,15 +68,7 @@ const sendTrigger = (e, state, topState) => {
     return
   }
 
-  if (state.insertMode) {
-    events.splice(index, 0, e)
-
-    if (!state.divergentIndex || index < state.divergentIndex) {
-      state.divergentIndex = index
-    }
-    
-    return
-  }
+  if (state.spliceMode) return handleSpliceMode(e, state, events, index, topState)
 
   const lastEntryIndex = events.length - 1
   const shouldClipTail = index <= lastEntryIndex
@@ -93,7 +85,22 @@ const sendTrigger = (e, state, topState) => {
 
 
 
+
+
 // helpers
+
+const handleSpliceMode = (e, state, events, index, topState) => {
+  if (!events[index]) return events.push(e) // already at tail
+  if (isEqual(events[index], e, topState)) return // dispatchedSameEvent
+    
+  events.splice(index, 0, e)
+
+  if (!state.divergentIndex || index < state.divergentIndex) {
+    state.divergentIndex = index
+  }
+}
+
+
 
 const clipTail = (e, state, events, index, topState) => {
   const next = events[index]

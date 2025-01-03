@@ -5,7 +5,7 @@ import LoadingSpinner from '../widgets/LoadingSpinner.js'
 import Settings from './Settings.js'
 import Tests from './Tests.js'
 import Events from './Events.js'
-import InsertModeButton from '../components/InsertModeButton.js'
+import SpliceModeButton from '../components/SpliceModeButton.js'
 import { colors } from '../styles.js'
 import useSlide from '../hooks/useSlide.js'
 
@@ -33,7 +33,7 @@ export default ({ open }, { events, tab, loading, config }) => {
   return (
     <Animated.View style={[s.c, style]}>
       <Tabs tabs={tabs} value={tab} />
-      <InsertModeButton />
+      <SpliceModeButton />
 
       <Component />
 

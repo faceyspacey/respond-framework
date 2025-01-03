@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as recursiveReadSync from 'recursive-readdir-sync'
-import { relativePathToBranch } from '../../../../../testing/helpers/getBranchFromTestPath.js'
+import createTestId from '../../../../../testing/helpers/createTestId.js'
 
 
 
@@ -67,25 +67,17 @@ export const findTest = filename => {
     
     const updatedAt = fs.statSync(filename).mtime.getTime()
 
-    const { id, name, branch } = createId(filename)
+    const { id, name, branch } = createTestId(filename)
 
     return { id, name, branch, filename, updatedAt, settings, events }
   }
   catch (e) {
+    console.error(e)
     throw new Error(filename + ' is in an invalid test file. You likely modified it manually and broke it. Test files must follow the specific format of other tests.')
   }
 }
 
 
-const createId = filename => {
-  const relative = filename.replace(projDir(), '')                        // eg: /Users/me/app/modules/child/__tests__/dir/test.js -> /modules/child/__tests__/dir/test.js
-  const id = relative.replace(/(modules|__tests__)\//g, '').slice(1)      // eg: /modules/child/__tests__/dir/test.js -> child/dir/test.js
-
-  const name = relative.slice(relative.indexOf('__tests__') + 10)         // eg: /__tests__/dir/some-test.js -> dir/some-test.js
-  const branch = relativePathToBranch(relative)                           // eg: /modules/child//modules/grandChild/__tests__/dir/test.js -> 'child.grandChild'
-
-  return { id, name, branch }
-}
 
 
 const createIsTestMatch = searched => {

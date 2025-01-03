@@ -78,7 +78,7 @@ export default {
   },
 
   saveTest: {
-    submit: async ({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) => {
+    async submit({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) {
       const defaultName = selectedTestId ? t[selectedTestId].name : evs[0].event.type.replace(/\./g, '/') + '.js'
       const name = prompt('Name of your test?', defaultName)?.replace(/^\//, '')
 
@@ -89,6 +89,8 @@ export default {
 
       await db.developer.writeTestFile.server({ name, branch, settings, events })
       await tests.dispatch({ sort: 'recent' })
+
+      this.selectedTestId = this.testsList[0]
     }
   },
 
@@ -162,7 +164,9 @@ export default {
     before: async (state, { index: i }) => {
       state.evs.splice(i, 1)
 
-      if (i < state.evs.length - 1) state.divergentIndex = i
+      if (i < state.evs.length - 1) {
+        state.divergentIndex = state.divergentIndex ? Math.min(state.divergentIndex, i) : i
+      }
       else delete state.divergentIndex
 
       if (i > state.evsIndex) return false
@@ -176,30 +180,31 @@ export default {
     }
   },
 
-  toggleInsertMode: {
+  toggleSpliceMode: {
     reduce: state => {
-      state.insertMode = !state.insertMode
+      state.spliceMode = !state.spliceMode
     }
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch: branch, respond, errors }) => {
+    before: async ({ settings, config, focusedBranch: branch, respond }) => {
       settings = gatherAllSettings(settings, branch, respond)
       const { url = '/' } = config
       
-      const resp = createModule(respond.top, { settings, branch, status: 'reload' })
-      const e = resp.eventFrom(url)
+      let resp = createModule(respond.top, { settings, branch, status: 'reload' })
+      let e = resp.eventFrom(url)
+      
+      if (!e) {
+        resp = createModule(respond.top, respond.replayState) // revert back to previous state
+        e = resp.eventFrom(window.location)
+        resp.state.replayTools.errors.url = `no event for url "${url}" in module`
+      }
 
-      if (e) {
-        resp.state.replayTools.playing = true // trigger timeouts not to work like replayEvents
-        await e.trigger()
-        resp.state.replayTools.playing = false
-        resp.render()
-        resp.queueSaveSession()
-      }
-      else {
-        errors.url = `no event for url "${url}" in module`
-      }
+      resp.state.replayTools.playing = true // trigger timeouts not to work like replayEvents
+      await e.trigger()
+      resp.state.replayTools.playing = false
+      resp.render()
+      resp.queueSaveSession()
 
       return false
     }
@@ -207,7 +212,6 @@ export default {
 
 
   removeError: {
-    sync: true,
     reduce: ({ errors }, { name }) => delete errors[name]
   },
 

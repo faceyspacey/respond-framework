@@ -1,6 +1,7 @@
 import { isProd } from '../helpers/constants.js'
 import mock from './model.mock.js'
 import { toObjectIds, toObjectIdsSelector } from './helpers/toFromObjectIds.js'
+import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
 
 export default !isProd ? mock : {
@@ -34,6 +35,10 @@ export default !isProd ? mock : {
     await this.db[this._name].mongo().updateOne(selector, { $set: toObjectIds(doc) }, { upsert: true })
 
     return this
+  },
+
+  clone() {
+    return cloneDeep(this)
   },
 
   async remove() {

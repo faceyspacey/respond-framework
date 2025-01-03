@@ -1,3 +1,6 @@
+import cloneDeep from '../proxy/helpers/cloneDeep.js'
+
+
 export default {
   async save(moreDoc) {
     this.updatedAt = new Date
@@ -34,6 +37,10 @@ export default {
     docs[this.id] = Object.assign(doc, this) 
 
     return this
+  },
+
+  clone() {
+    return cloneDeep(this)
   },
 
   async remove() {

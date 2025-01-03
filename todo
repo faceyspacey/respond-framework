@@ -835,6 +835,10 @@ memo with props.obj, which automatically transfers reactive tracking to child
 module level urlCache clearing
 better masquerading
 
+Input refactoring (kind, formatIn, etc)
+store translations on prototype or non-reactive ref for flash reducers
+remove flash events mimicking of built-in functions
+
 
 custom event callback makes app think namespaces are events
 bug where after HMRs, a replay's models are not available
@@ -843,7 +847,9 @@ bug where after HMRs, a replay's models are not available
 old players and tees in mongo needs their __types assigned
 
 
-
+fix form.courseId
+test settings.branch/module
+in saved settings, don't save out-of-band other module settings
 
 
 incorporate naked-css

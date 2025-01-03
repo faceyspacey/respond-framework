@@ -1,3 +1,6 @@
+import cloneDeep from '../proxy/helpers/cloneDeep.js'
+
+
 export default {
   async save(moreDoc) {
     this.updatedAt = new Date
@@ -26,6 +29,10 @@ export default {
   async remove() {
     const { id } = this
     return this.db[this._name].deleteOne({ id })
+  },
+
+  clone() {
+    return cloneDeep(this)
   },
 
   super(method, ...args) {
