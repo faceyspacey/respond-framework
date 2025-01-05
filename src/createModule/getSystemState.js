@@ -74,8 +74,9 @@ export default (opts = {}) => {
   switch (true) {
     // case 'permalink':
     case !!(permalink = permalinkReplayState()): {
-      const branch = permalink.branch ?? ''
-
+      const branch = permalink.focusedBranch ?? ''
+      delete permalink.focusedBranch
+      
       return {
         replayState: { settings: permalink, branch, status: 'reload' },
         baseState: cloneDeep(hydration),

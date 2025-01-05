@@ -3,8 +3,8 @@ import { parseSearch, stringifyQuery } from '../../../helpers/searchQuery.js'
 
 
 export default function settingsToHash({ ...query }, branch) {
-  if (branch) query.branch = branch
-  return '#!' + stringifyQuery(query) 
+  if (branch) query.focusedBranch = branch
+  return permalinkPrefix + stringifyQuery(query) 
 }
 
 
@@ -16,8 +16,7 @@ export const hashToSettings = () => {
 
   if (h && h[1] === '!') {
     const search = stripUserHash(h.slice(2)) // strip possible second hash by user, eg: #!userId=123#foo
-    const { module, ...settings } = parseSearch(search) // use hash so search can still be used unobstructed in userland (as hash can easily used for both purposes as handled in this file)
-    return settings
+    return parseSearch(search) // use hash so search can still be used unobstructed in userland (as hash can easily used for both purposes as handled in this file)
   }
 }
 
@@ -33,3 +32,7 @@ const stripUserHash = h => {
   const userHashIndex = h.indexOf('#')
   return userHashIndex > -1 ? h.slice(0, userHashIndex) : h // eg: stripPermalink('userId=123#foo') -> 'userId=123'
 }
+
+
+
+export const permalinkPrefix = '#!'

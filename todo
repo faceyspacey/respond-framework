@@ -860,6 +860,10 @@ f = models => [
 #remove flash events mimicking of built-in functions
 #module level urlCache clearing
 
+#branchDependency doesnt factor in just replays ancestor
+#ignoreDefaults
+
+
 
 old players and tees in mongo needs their __types assigned
 
@@ -875,6 +879,11 @@ apiUrl should be stored on db, which is passed to focusedModule -- we may need a
 
 error returns from db methods -- throw -> onError? what about user-defined errors?
 
+
+
+
+
+test tournament back9 settings and such
 
 
 incorporate naked-css

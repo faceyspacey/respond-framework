@@ -1,4 +1,4 @@
-import { prefix as permalinkPrefix } from '../../modules/replayTools/helpers/createPermalink.js'
+import { permalinkPrefix } from '../../modules/replayTools/helpers/createPermalink.js'
 
 
 export default respond => {

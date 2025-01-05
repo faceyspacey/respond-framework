@@ -188,8 +188,8 @@ export default {
   },
 
   reload: {
-    before: async ({ settings, config, focusedBranch: branch, respond }) => {
-      settings = nestFocusedSettings(settings, branch, respond)
+    before: async ({ configs, settings, config, focusedBranch: branch, respond }) => {
+      settings = nestFocusedSettings(configs, settings, branch, respond)
       const { url = '/' } = config
       
       let resp = createModule(respond.top, { settings, branch, status: 'reload' })
@@ -217,8 +217,8 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ settings, focusedBranch, respond, config }) => {
-      settings = nestFocusedSettings(settings, focusedBranch, respond)
+    before: async ({ configs, settings, focusedBranch, respond, config }) => {
+      settings = nestFocusedSettings(configs, settings, focusedBranch, respond)
       const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'

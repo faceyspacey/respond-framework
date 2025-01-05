@@ -4,18 +4,22 @@ import { isProd } from '../../../helpers/constants.js'
 export default (config = {}, settings = {}) =>
   Object.keys(config).reduce((acc, k) => {
     const setting = config[k]
-
+    const v = settings[k]
+    
     if (isProd) {
       acc[k] = setting.defaultValueProduction
     }
-    else if (setting.json) {
-      acc[k] = maybeJson(settings[k])
+    else if (v && setting.json) {
+      acc[k] = maybeJson(v)
     }
-    else if (setting.transform) {
-      acc[k] = setting.transform(settings[k], config, acc, settings)
+    else if (v && setting.transform) {
+      acc[k] = setting.transform(v, config, acc, settings)
+    }
+    else if (v) {
+      acc[k] = v
     }
     else {
-      acc[k] = settings[k] ?? setting.defaultValueDevelopment
+      acc[k] = setting.defaultValueDevelopment
     }
 
     return acc

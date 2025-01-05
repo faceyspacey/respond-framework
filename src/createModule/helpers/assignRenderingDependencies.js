@@ -3,11 +3,11 @@ export default ({ respond: r, branch, parent }) => {
 
   if (!ignoreParents) {
     if (dependsOnAllAncestors) {
-      r.dependedBranch = '' 
+      r.branchDep = '' 
       r.branchDiff = branch
     }
     else if (dependsOnParent) {
-      r.dependedBranch = parent.respond.branch
+      r.branchDep = parent.respond.branch
       r.branchDiff = r.moduleName
     }
   }
@@ -16,9 +16,9 @@ export default ({ respond: r, branch, parent }) => {
 
   for (const b of r.ancestors) {
     const respond = r.responds[b]
-    const dependedBranch = respond.dependedBranch ?? respond.branch
+    const branchDep = respond.branchDep ?? respond.branch
 
-    r.ancestorsListening[dependedBranch] = true
+    r.ancestorsListening[branchDep] = true
     
     if (r.responds[b].ignoreParents) break
   }

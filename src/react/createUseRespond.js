@@ -22,10 +22,10 @@ export default (id = createUniqueModuleId()) => {
     const branch = branchLocatorsById[id]
     const mod = branches[branch]
 
-    const { dependedBranch, branchDiff } = mod.respond
-    if (dependedBranch === undefined) return useSnapshot(mod)
+    const { branchDep, branchDiff } = mod.respond
+    if (branchDep === undefined) return useSnapshot(mod)
 
-    const depMod = branches[dependedBranch]
+    const depMod = branches[branchDep]
     const snap = useSnapshot(depMod)
 
     return sliceBranch(snap, branchDiff)
