@@ -3,7 +3,6 @@ import createSettings from './helpers/createSettings.js'
 import { nestAllSettings } from './helpers/nestSettings.js'
 import nestAtBranch from './helpers/nestAtBranch.js'
 import { createCounterRef } from '../../helpers/deterministicCounter.js'
-import inBand from '../../createModule/helpers/inBand.js'
 
 
 export default ({ state, respond }) => {
@@ -37,8 +36,6 @@ const createConfigsAndSettings = (top, branches, depth, replayState) => {
 
 
 const createAllSettingsBreadth = (mod, input, branches, depth, fb, configs, settings, replays = { config: {}, settings: {} }) => {
-  if (!inBand(fb, mod.branchAbsolute)) return
-
   if (mod.db) {
     replays = mod.db.replays ?? mod.replays
     replays.db = mod.db
