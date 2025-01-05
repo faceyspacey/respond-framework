@@ -120,11 +120,15 @@ export default {
   },
 
   changeIndex: {
-    before: async (state, { index, delta }) => {
+    counter: 0,
+    uniqueDragId() {
+      return ++this.counter + ''
+    },
+    before: async (state, { index, delta, event: self }) => {
       const lastIndex = state.evs.length - 1
       const nextIndex = Math.max(0, Math.min(lastIndex, index + delta))
 
-      const events = state.evs.map(e => ({ ...e, dragId: uniqueDragId() })) // trigger react to re-render all event rows correctly
+      const events = state.evs.map(e => ({ ...e, dragId: self.uniqueDragId() })) // trigger react to re-render all event rows correctly
       const event = events[index]
 
       events.splice(index, 1)             // delete event in original position
@@ -231,6 +235,3 @@ export default {
     },
   },
 }
-
-let id = 0
-const uniqueDragId = () => ++id + ''

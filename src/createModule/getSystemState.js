@@ -83,7 +83,7 @@ export default (opts = {}) => {
     }
 
     // case 'session':
-    case !!(session = sessionStorage.getItem('systemState')): {
+    case !!(session = sessionStorage.getItem('sessionSystemState')): {
       const system = JSON.parse(session)
 
       return {

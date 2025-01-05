@@ -1,27 +1,29 @@
-export default (cache = {}, fromEvent) => ({
-  cache,
-  
-  toJSON() {
-    return this.cache
-  },
-
+export default (respond, cache, fromEvent) => ({
   get(e) {
     const k = fromEvent(e).url
-    return cache[k] ? k : null
+    const branch = e.event.respond.branch
+    return cache[branch]?.[k] ? k : null
   },
 
   set(e) {
     const k = fromEvent(e).url
-    cache[k] = true
+    const branch = e.event.respond.branch
+    cache[branch] ??= {}
+    cache[branch][k] = true
   },
 
   delete(e) {
     const k = fromEvent(e).url
-    delete cache[k]
+    const branch = e.event.respond.branch
+    cache[branch] ??= {}
+    delete cache[branch][k]
   },
 
   clear() {
-    for (const k in cache) delete cache[k]
+    const { branch } = respond
+    cache[branch] ??= {}
+    const c = cache[branch] ?? {}
+    for (const k in c) delete c[k]
   },
 
   has(e) {

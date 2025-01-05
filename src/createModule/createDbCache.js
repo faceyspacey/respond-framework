@@ -1,42 +1,50 @@
-export default (cache = {}) => ({
-  cache,
+export default (respond, cache) => ({
   keygen: new Map,
-  toJSON() {
-    return this.cache
-  },
+
   key({ args, userId }) {
     return userId ? `${JSON.stringify(args)}:${userId}` : JSON.stringify(args)
   },
+
+  has(body) {
+    return this.get(body) !== undefined
+  },
+  
   get(body) {
     const { branch, table, method } = body
     const k = this.key(body)
 
     this.keygen.set(body, k)                          // key generated once per request on cache.get (optimization)  
 
-    return this.cache[branch]?.[table]?.[method]?.[k]
+    return cache[branch]?.[table]?.[method]?.[k]
   },
+
   set(body, v) {
     const { branch, table, method } = body
     const k = this.keygen.get(body) ?? this.key(body) // key reused if already generated per request
 
     this.keygen.delete(body)
 
-    this.cache[branch] ??= {}
-    this.cache[branch][table] ??= {}
-    this.cache[branch][table][method] ??= {}
-    this.cache[branch][table][method][k] = v
+    cache[branch] ??= {}
+    cache[branch][table] ??= {}
+    cache[branch][table][method] ??= {}
+    cache[branch][table][method][k] = v
   },
-  clear(respond, { table, method, args, userId }) {
+
+  delete({ table, method, args, userId }) {
+    const items = cache[branch]?.[table]?.[method] ?? {}
+    const key = this.key({ args, userId })
+
+    delete items[key]
+  },
+
+  clear({ table, method, args, userId }) {
     const { branch } = respond
     
     if (table && method && args && userId) {
-      const items = this.cache[branch]?.[table]?.[method] ?? {}
-      const key = this.key({ args, userId })
-
-      delete items[key]
+      this.delete({ table, method, args, userId })
     }
     else if (table && method && args) {
-      const items = this.cache[branch]?.[table]?.[method] ?? {}
+      const items = cache[branch]?.[table]?.[method] ?? {}
       const key = this.key({ args })
 
       Object.keys(items).forEach(k => {
@@ -44,15 +52,15 @@ export default (cache = {}) => ({
       })
     } 
     else if (table && method) {
-      if (this.cache[branch][table]) {
-        this.cache[branch][table][method] = {}
+      if (cache[branch][table]) {
+        cache[branch][table][method] = {}
       }
     }
     else if (table) {
-      this.cache[branch][table] = {}
+      cache[branch][table] = {}
     }
     else {
-      this.cache[branch] = {}
+      cache[branch] = {}
     }
   }
 })

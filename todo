@@ -858,7 +858,7 @@ f = models => [
 
 #store translations on prototype or non-reactive ref for flash reducers
 #remove flash events mimicking of built-in functions
-
+#module level urlCache clearing
 
 
 old players and tees in mongo needs their __types assigned
@@ -871,7 +871,6 @@ Input refactoring (kind, formatIn, etc)
 
 
 custom event callback makes app think namespaces are events
-module level urlCache clearing
 apiUrl should be stored on db, which is passed to focusedModule -- we may need a general non-db approach for things like config, translations etc
 
 error returns from db methods -- throw -> onError? what about user-defined errors?

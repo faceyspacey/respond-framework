@@ -61,6 +61,8 @@ export default (top, system, focusedModule, focusedBranch) => {
     this.eventFrom = eventFrom.bind(this)
     this.ancestors = createAncestors(this.branch)
     this.isTop = this.mod.branchAbsolute === focusedBranch
+    this.dbCache = createDbCache(this, this.cache.dbCache ??= {})
+    this.urlCache = createUrlCache(this, this.cache.urlCache ??= {}, fromEvent)
     
     assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn, refs: {} })
   }
@@ -117,19 +119,19 @@ export default (top, system, focusedModule, focusedBranch) => {
     reuseEvents:      prev?.focusedBranch === focusedBranch,
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
     mem: { ...prev?.mem, rendered: false },
-  
+    cache: system.cache ?? {},
+    
     devtools: new Proxy({}, { get: () => () => {} }), // tools
     history: createHistory(),
     cookies: createCookies(),
-    dbCache: createDbCache(system.dbCache),
-    urlCache: createUrlCache(system.urlCache, fromEvent),
     branchNames: createBranches(top, focusedBranch),   // important: create branch names, assign moduleKeys array to each module, etc,
 
     branches: { get undefined() { return this[''] } }, // important: modules by branch will be stored here when created in addModule.js
 
     get topState() {
       return this.branches['']                         // escape hatch: any module can access the top if it really needs
-    }
+    },
+    
   }
 
   return Respond
