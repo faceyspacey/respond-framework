@@ -3,10 +3,7 @@ import combineInputEvents from './helpers/combineInputEvents.js'
 import createPermalink from './helpers/createPermalink.js'
 import createModule from '../../createModule/index.js'
 import { navigation } from '../../createModule/kinds.js'
-
-import nestSettings from './helpers/nestSettings.js'
-import sliceBranch from '../../createModule/helpers/sliceBranch.js'
-import findClosestAncestorWith from '../../createModule/helpers/findClosestAncestorWith.js'
+import { nestFocusedSettings } from './helpers/nestSettings.js'
 import { defaultOrigin } from '../../helpers/constants.js'
 
 
@@ -188,7 +185,7 @@ export default {
 
   reload: {
     before: async ({ settings, config, focusedBranch: branch, respond }) => {
-      settings = gatherAllSettings(settings, branch, respond)
+      settings = nestFocusedSettings(settings, branch, respond)
       const { url = '/' } = config
       
       let resp = createModule(respond.top, { settings, branch, status: 'reload' })
@@ -217,7 +214,7 @@ export default {
 
   openPermalink: {
     before: async ({ settings, focusedBranch, respond, config }) => {
-      settings = gatherAllSettings(settings, focusedBranch, respond)
+      settings = nestFocusedSettings(settings, focusedBranch, respond)
       const hash = createPermalink(settings, focusedBranch)
 
       const baseUrl = config.url || '/'
@@ -237,23 +234,3 @@ export default {
 
 let id = 0
 const uniqueDragId = () => ++id + ''
-
-
-
-const gatherAllSettings = (settings, branch, respond) => {
-  const nestedSettings = nestSettings(settings)
-
-  const mod = sliceBranch(respond.top, branch)
-  const hasDb = mod.db || mod.replays?.standalone
-
-  if (hasDb) {
-    settings = sliceBranch(nestedSettings, branch) ?? {} // undefined could happen if all settings undefined
-  }
-  else {
-    branch = findClosestAncestorWith('db', branch, respond)?.branchAbsolute ?? ''
-    settings = sliceBranch(nestedSettings, branch) ?? {}
-    settings.branch = branch // branch needs to be assigned if branch can't be inferred by the module that the __tests__ folder is in -- due to inherting db from a parent module
-  }
-
-  return settings
-}

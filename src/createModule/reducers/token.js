@@ -1,1 +1,1 @@
-export default (state = '', e) => e.token ?? state
+export default (state = '', e) => typeof e.token === 'string' ? e.token : state

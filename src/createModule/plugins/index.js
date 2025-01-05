@@ -25,8 +25,9 @@ export { default as auth } from './auth.js'
 
 // additional common plugins
 
+export { default as appStartData } from './appStartData.js'
+export { default as parallel } from './parallel.js'
+export { requireCondition, requireUser, requireAdmin } from './require.js'
 export { default as leave } from './leave.js'
 // event.beforeLeave (built-in to leave)
 // event.afterLeave (built-in to leave)
-
-export { default as parallel } from './parallel.js'

@@ -61,8 +61,8 @@ export default (top, system, focusedModule, focusedBranch) => {
     this.eventFrom = eventFrom.bind(this)
     this.ancestors = createAncestors(this.branch)
     this.isTop = this.mod.branchAbsolute === focusedBranch
-
-    assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn, refs: this.refs })
+    
+    assignProto(props.state, { [_module]: true, [_top]: this.isTop, db: this.db, kinds, is, in: thisIn, refs: {} })
   }
 
   Respond.prototype = {
@@ -103,7 +103,6 @@ export default (top, system, focusedModule, focusedBranch) => {
     subscribers: [],
 
     ctx: {},
-    refs: {},
     responds: {},
     eventsByType: {},
     eventsByPattern: {},

@@ -1,3 +1,6 @@
+import { _parent } from './reserved.js'
+
+
 export default ({ proto, mod, parent, props }) => {
   const plugins = mod.plugins.map(createPluginObject)
   
@@ -6,7 +9,7 @@ export default ({ proto, mod, parent, props }) => {
     return
   }
 
-  const descriptor = { value: parent, enumerable: false, configurable: true }
+  const descriptor = { get() { return this[_parent] }, enumerable: false, configurable: true }
   
   const propPlugins = props.plugins?.map(createPluginObject).map(p => { 
     Object.defineProperty(p, 'state', descriptor)           // propPlugins/ancestors will be run in multiple child dispatch pipelines, but will need access to their own module's state -- also note: we create each one once, so the plugin instance object will be shared across possibly multiple modules

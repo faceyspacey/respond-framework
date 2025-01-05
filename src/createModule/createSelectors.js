@@ -1,29 +1,28 @@
 import { _parent } from './reserved.js'
-import token from './selectors/token.js'
-import curr from './selectors/curr.js'
+import token, { userId, adminUserId, adminUser } from './selectors/token.js'
+import currSelector from './selectors/curr.js'
 
 
-export default ({ respond, proto, state }, selectorDescriptors, propSelectorDescriptors) => {
+export default ({ respond, proto, state }, descriptors, propDescriptors) => {
   const { reducers } = proto
 
-  if (!reducers.curr) {
-    selectorDescriptors.curr ??= { get: curr }
-  }
+  descriptors = respond.isTop
+    ? { curr, ...descriptors }
+    : { curr, ...builtins, ...descriptors } // builtins inherit state from topState reducers
 
-  Object.keys(selectorDescriptors).forEach(k => {
-    const descriptor = selectorDescriptors[k]
+  Object.keys(descriptors).forEach(k => {
+    if (reducers[k]) return // reducer takes precedence if both exist
+
+    const descriptor = descriptors[k]
     const { get, value: v = get } = descriptor
     
     const kind = v.length === 0 ? 'get' : 'value'
 
     Object.defineProperty(proto, k, { [kind]: v, configurable: true })
-
-    if (reducers[k]) respond.overriden.set(reducers[k], true)   // selector takes precedence if both exist
-    if (state.hasOwnProperty(k)) delete state[k]     // delete possible initialState for possible reducer
   })
 
-  Object.keys(propSelectorDescriptors).forEach(k => {
-    const descriptor = propSelectorDescriptors[k]
+  Object.keys(propDescriptors).forEach(k => {
+    const descriptor = propDescriptors[k]
     const { get, value: v = get } = descriptor
 
     const kind = v.length === 0 ? 'get' : 'value'
@@ -35,12 +34,13 @@ export default ({ respond, proto, state }, selectorDescriptors, propSelectorDesc
     Object.defineProperty(proto, k, { [kind]: v2, configurable: true })
 
     if (reducers[k]) respond.overriden.set(reducers[k], true)   // disable potential child reducer mock (aka "defaultProp")
-    if (state.hasOwnProperty(k)) delete state[k]  // delete possible initialState
+    if (state.hasOwnProperty(k)) delete state[k]                // delete possible initialState
 
     respond.dependsOnAllAncestors = true
   })
-
-  if (respond.branch) { // only children have a truthy branch
-    Object.defineProperty(proto, 'token', { get: token, configurable: true })
-  }
 }
+
+
+
+const curr = { get: currSelector }
+const builtins = Object.getOwnPropertyDescriptors({ token, userId, adminUserId, adminUser })

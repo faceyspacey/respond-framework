@@ -828,35 +828,56 @@ f = models => [
 #db hooks: save, api call (like a controller filter), ?
 #revive nested in Model.make maybe needs to be optional
 
+#better masquerading
 
-automatic cache reducers
-optimistic isomorphic functions/eventCallbacks
-memo with props.obj, which automatically transfers reactive tracking to child
-module level urlCache clearing
-better masquerading
-
-Input refactoring (kind, formatIn, etc)
-store translations on prototype or non-reactive ref for flash reducers
-remove flash events mimicking of built-in functions
+#bug where after HMRs, a replay's models are not available
 
 
-custom event callback makes app think namespaces are events
-bug where after HMRs, a replay's models are not available
+
+#fix form.courseId
+#test settings.branch/module
+
+
+#post category editing
+
+
+#state.users not working for visiting drawers in admin panel -- need to store user when navigating to drawer.account
+
+#replayTools server not working when in nested module
+
+
+#transform should pass this instead of arg as second argument
+
+#should selectors take precedence over reducers?
+#what can users do with custom token/userId reducers in child modules?
+
+#how to strip out of band branches?
+
+
+#replayState.settings ??= gets assigned all settings, when it should really be in-band settings
+
+#store translations on prototype or non-reactive ref for flash reducers
+#remove flash events mimicking of built-in functions
+
 
 
 old players and tees in mongo needs their __types assigned
 
+automatic cache reducers
+optimistic isomorphic functions/eventCallbacks
+memo with props.obj, which automatically transfers reactive tracking to child
+add events to permalink
+Input refactoring (kind, formatIn, etc)
 
-fix form.courseId
-test settings.branch/module
-in saved settings, don't save out-of-band other module settings
+
+custom event callback makes app think namespaces are events
+module level urlCache clearing
+apiUrl should be stored on db, which is passed to focusedModule -- we may need a general non-db approach for things like config, translations etc
+
+error returns from db methods -- throw -> onError? what about user-defined errors?
+
 
 
 incorporate naked-css
 create website
 devtools
-
-
-
-
-

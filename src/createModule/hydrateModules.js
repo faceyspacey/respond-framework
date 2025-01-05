@@ -15,7 +15,7 @@ export default (state, system) => {
     }
 
     case 'session': {
-      const [curr, prev] = getSessionState(state.respond)
+      const [curr, prev] = getSessionState(state.respond) // we couldn't getSessionState at the beginning in getSystemState, as we must wait until all models/events are created for reviver to function correctly here
       hydrate(state, curr)
       mergePrevState(state, prev)
       break

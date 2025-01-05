@@ -1,4 +1,4 @@
-export default (branch, value, top = {}) => {
+export default function nestAtBranch(branch, value, top = {}) {
   let slice = top
   
   if (branch) {

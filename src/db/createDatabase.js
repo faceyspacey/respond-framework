@@ -1,7 +1,7 @@
 import tableDefault from '../db/index.js'
 import modelDefault from '../db/model.js'
 
-import callMethod from './helpers/callMethod.js'
+import * as makeRequest from './helpers/makeRequest.js'
 import { createModel } from './createModels.js'
 import createSharedModels from './helpers/createSharedModels.js'
 import { reviveServerModelInSpecificModule } from '../createModule/helpers/revive.js'
@@ -12,7 +12,7 @@ export default (options = {}) => {
   const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models: m = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const base = { make, callMethod, config, ...table, ...mixin }
+  const base = { make, ...makeRequest, config, ...table, ...mixin }
   const models = createSharedModels(m)
 
   const descriptors = {
@@ -83,22 +83,34 @@ const userGetters = {
   user: {
     enumerable: false,
     get() {
-      if (this._user) return this._user
-      if (!this.req) throw new Error('respond: `this.user` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
-      if (!this.identity) return null
-      return this.db.user.findOne(this.identity.id).then(user => this._user = user)
+      return this.findCurrentUser()
     }
   },
 
   userSafe: {
     enumerable: false,
     get() {
-      if (this._userSafe) return this._userSafe
-      if (!this.req) throw new Error('respond: `this.userSafe` can only be called in table methods when directly called by the client, or via other methods accesed within the same context via `this`')
-      if (!this.identity) return null
-      return this.db.user.findOneSafe(this.identity.id).then(user => this._userSafe = user)
+      return this.findCurrentUserSafe()
     }
-  }
+  },
+
+  findCurrentUser: {
+    value() {
+      if (this.__user) return this.__user
+      if (!this.req) throw new Error('respond: `this.user` and `this.findCurrentUser()` can only be called on the table instance directly called by the client`')
+      if (!this.identity) return null
+      return this.db.user.findOne(this.identity.id).then(user => this.__user = user)
+    }
+  },
+
+  findCurrentUserSafe: {
+    value() {
+      if (this.__userSafe) return this.__userSafe
+      if (!this.req) throw new Error('respond: `this.userSafe` and `this.findCurrentUserSafe()` can only be called on the table instance directly called by the client')
+      if (!this.identity) return null
+      return this.db.user.findOneSafe(this.identity.id).then(user => this.__userSafe = user)
+    }
+  },
 }
 
 

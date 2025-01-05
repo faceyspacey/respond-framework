@@ -12,7 +12,7 @@ export default (state, e) => {
       e.event.reduce.call(state, state, e)
     }
     else if (e.event === topState.events.init) {
-      reduceEntireTreeInit(e, topState)
+      reduceEntireTree(e, topState)
     }
     else {
       reduceBranch(e, topState, respond.branch.split('.'))
@@ -29,14 +29,14 @@ export default (state, e) => {
 
 
 
-const reduceEntireTreeInit = (e, mod, prevState = {}) => {
+const reduceEntireTree = (e, mod, prevState = {}) => {
   const proto = Object.getPrototypeOf(mod)
   proto.prevState = prevState
 
   let reduced
 
   function next() {
-    mod.moduleKeys.forEach(k => reduceEntireTreeInit(e, mod[k], prevState[k] = {}))
+    mod.moduleKeys.forEach(k => reduceEntireTree(e, mod[k], prevState[k] = {}))
   }
 
   function reduce() {

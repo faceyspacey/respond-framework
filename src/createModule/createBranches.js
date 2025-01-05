@@ -4,14 +4,14 @@ import { prepend, stripBranchWithUnknownFallback } from './helpers/sliceBranch.j
 import * as replayToolsModule from '../modules/replayTools/index.js'
 
 
-export default function createBranches(mod, focusedBranch, branchNames = [], b = '') {
+export default function createBranches(mod, focusedBranch, branchNames = [], b = '', isReplayTools) {
   mod[_module] = true
   mod.moduleKeys = []
   
   mod.branchAbsolute = b
   mod.branch = stripBranchWithUnknownFallback(focusedBranch, b) // ancestor branches of focused branch will be prefixed with '.unknown'
 
-  branchNames.push(b)
+  if (!isReplayTools) branchNames.push(b)
 
   Object.keys(mod).forEach(k => {
     const v = mod[k]
@@ -26,7 +26,7 @@ export default function createBranches(mod, focusedBranch, branchNames = [], b =
   if (b === focusedBranch && isDev) { // put replayTools as child of focused branch
     mod.replayTools = replayToolsModule
     mod.moduleKeys.push('replayTools')
-    createBranches(replayToolsModule, focusedBranch, branchNames, prepend(focusedBranch, 'replayTools'))
+    createBranches(replayToolsModule, focusedBranch, branchNames, prepend(focusedBranch, 'replayTools'), true)
   }
 
   return branchNames

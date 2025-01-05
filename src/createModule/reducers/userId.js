@@ -1,0 +1,1 @@
+export default (state = '', e) => typeof e.userId === 'string' ? e.userId : state

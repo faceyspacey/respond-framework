@@ -5,7 +5,7 @@ import { isTest } from '../../helpers/constants.js'
 export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
   this.playing = false // stop possible previous running replay
   const respond = createModule(window.state.respond.top, { settings, branch, status: 'replay' })
-  events = maybeRevive(events, respond)
+  events = respond.revive(events)
   await runEvents(events, delay, respond.state)
   return respond.state
 }
@@ -46,14 +46,4 @@ const timeout = (delay, meta, last, testDelay = 1500) => {
   if (isTest || !delay || meta?.skipped || last) return
   const ms = delay !== true ? delay : testDelay
   return new Promise(res => setTimeout(res, ms))
-}
-
-
-
-const maybeRevive = (events, respond) => {
-  const e = events[0]
-
-  return typeof e.event !== 'function' || respond.eventsByType[e.event.type] !== e.event
-    ? respond.revive(events)
-    : events
 }
