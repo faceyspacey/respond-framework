@@ -76,10 +76,10 @@ export default (opts = {}) => {
     case !!(permalink = permalinkReplayState()): {
       const branch = permalink.focusedBranch ?? ''
       delete permalink.focusedBranch
-      
+
       return {
         replayState: { settings: permalink, branch, status: 'reload' },
-        baseState: cloneDeep(hydration),
+        baseState: cloneDeep(hydration) ?? {},
       }
     }
 
@@ -91,6 +91,7 @@ export default (opts = {}) => {
         ...system,
         seed: JSON.parse(sessionStorage.getItem('seed')),
         replayState: { ...system.replayState, status: 'session' },
+        baseState: {},
       }
     }
 
@@ -98,7 +99,7 @@ export default (opts = {}) => {
     default: {
       return {
         replayState: { settings: undefined, branch: '', status: 'reload' },
-        baseState: cloneDeep(hydration),
+        baseState: cloneDeep(hydration) ?? {},
       }
     }
   } 

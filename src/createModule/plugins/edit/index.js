@@ -23,8 +23,8 @@ const plugins = [
   before,
   reduce,
   state => {
-    state.respond.ctx.sync = false
     state.respond.commit()
+    state.respond.ctx.sync = false
   },
   debounce,
   end

@@ -14,8 +14,8 @@ export default function render(props = {}, opts = {}) {
   const app = createApp(this, props, last)
 
   if (isTest) return app
-  else if (!isNative) renderWeb(this.mem, app)
-  else renderNative(this.mem, app, props)
+  else if (!isNative) renderWeb(this, this.mem, app)
+  else renderNative(this, this.mem, app, props)
 
   queueMicrotask(() => console.log('render', parseFloat((performance.now() - start).toFixed(3))))
 }
@@ -35,14 +35,20 @@ const createApp = (respond, props, last) => {
 }
 
 
-const renderWeb = (mem, app) => {
+const renderWeb = (respond, mem, app) => {
   const el = document.getElementById('root')
 
-  mem.app ??= createRoot(el) // assign to window so component HMR can occur as a natural by-product of HRM (without Fast Refresh webpack plugin) if desired
+  if (respond.state.options.unmountOnReplays) {
+    if (mem.app) mem.app.unmount()
+    mem.app = createRoot(el)
+  }
+  else mem.app ??= createRoot(el)
+
+
   mem.app.render(app)
 }
 
-const renderNative = (mem, app, props) => {
+const renderNative = (respond, mem, app, props) => {
   const { appName = mem.appName, appParams = mem.appParams } = props
 
   AppRegistry.registerComponent(appName, () => () => app)

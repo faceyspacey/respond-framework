@@ -6,7 +6,6 @@ import { _parent } from './reserved.js'
 
 export default (state, system) => {
   const { replayState, baseState } = system
-
   
   switch (replayState.status) {
     case 'hmr': {
@@ -34,22 +33,10 @@ export default (state, system) => {
 
 
 
-
 const hydrate = (state, baseState = {}) => {
-  if (baseState.replayTools) { // don't overwrite these, as they're re-generated each time by replayTools/build.js
-    delete baseState.replayTools.configs
-    delete baseState.replayTools.settings
-  }
-
-  hydrateRecursive(state, baseState)
-}
-
-
-
-const hydrateRecursive = (state, baseState = {}) => {
   state.moduleKeys.forEach(k => {                   // depth-first
     if (!baseState[k]) return
-    hydrateRecursive(state[k], baseState[k])
+    hydrate(state[k], baseState[k])
     delete baseState[k]                               // delete to prevent overwriting child modules..
   })
   

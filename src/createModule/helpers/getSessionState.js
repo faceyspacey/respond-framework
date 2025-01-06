@@ -19,7 +19,7 @@ export const getSessionState = respond => {
 export const setSessionState = (state, e) => {
   const { replayState, basenames, prevUrl, cache, system } = state.respond
 
-  sessionStorage.setItem('systemState', JSON.stringify({ replayState, basenames, prevUrl, cache }))
+  sessionStorage.setItem('sessionSystemState', JSON.stringify({ replayState, basenames, prevUrl, cache }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
   sessionStorage.setItem('sessionState', stringify(state))
 

@@ -880,6 +880,7 @@ apiUrl should be stored on db, which is passed to focusedModule -- we may need a
 error returns from db methods -- throw -> onError? what about user-defined errors?
 
 
+mutated events will be replayed with mutations -- need to preserve original event
 
 
 

@@ -41,7 +41,7 @@ export function nestFocusedSettings(configs, settings, focusedBranch, respond) {
   const nestedSettings = nestAllSettings(configs, settings)
 
   const mod = slice(respond.top, focusedBranch)
-  const hasDb = mod.db || mod.replays?.standalone
+  const hasDb = mod.db || mod.replays?.noDbDependency
 
   if (hasDb) return slice(nestedSettings, focusedBranch) ?? {} // undefined could happen if all settings undefined, due to "remove undefined keys" above
   

@@ -5,7 +5,7 @@ export default ({ proto, mod, parent, props }) => {
   const plugins = mod.plugins.map(createPluginObject)
   
   if (!props.plugins && !parent.ancestorPlugins) {
-    proto.plugins = plugins
+    proto.plugins = plugins.sort((a, b) => !!b.sync - !!a.sync)       // ensure sync plugins are called before async ones
     return
   }
 

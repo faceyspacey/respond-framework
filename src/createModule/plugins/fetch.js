@@ -1,7 +1,11 @@
+import { navigation } from '../kinds.js'
+
+
 export default ({ cache = true } = {}) => cache ? fetchWithNavigationCache : fetchWithConsistentFollowup
 
 export const markCached = (state, e) => {
-  if (state.respond.urlCache.has(e)) e.meta.cached = true
+  if (e.kind !== navigation) return
+  e.meta.cached = state.respond.urlCache.has(e)
 }
 
 
