@@ -112,7 +112,10 @@ export default (top, system, focusedModule, focusedBranch) => {
     modelsByBranchType: {},
 
     eventsCache: new Map,
-    versionListeners: new WeakMap,
+
+    versionNotifiers: new WeakMap,
+    proxyCache: new WeakMap,
+    snapCache: new WeakMap,
     refIds: isProd ? new WeakMap : new Map,
 
     hmr: replayState.hmr,
