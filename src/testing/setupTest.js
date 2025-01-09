@@ -18,7 +18,9 @@ export default ({ top, settings, rendererOptions, createTrigger = createTriggerD
   const replayEventsToIndex = createReplayEventsToIndex(trigger)
 
   return {
-    state: respond.state,
+    get state() {
+      return respond.state
+    },
     respond,
     renderer,
     dispatch: trigger,

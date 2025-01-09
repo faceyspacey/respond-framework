@@ -9,9 +9,9 @@ export default function createProxy(o, vls, refIds, notifyParent = function() {}
   if (found) return found
 
   const orig = isArray(o) ? [] : create(getProto(o))
-  const Vl = o[_module] ? (o[_top] ? VLTop : VLModule) : VersionListener
+  const VersionListener = o[_module] ? (o[_top] ? VLTop : VLModule) : VL
 
-  const vl = new Vl(orig, vls, snapCache)
+  const vl = new VersionListener(orig, vls, snapCache)
   const proxy = new Proxy(orig, createHandler(vl.notify, vls, refIds, cache, snapCache))
 
   cache.set(o, proxy)
@@ -32,7 +32,7 @@ export default function createProxy(o, vls, refIds, notifyParent = function() {}
 let highestVersion = 0
 
 
-class VersionListener {
+class VL {
   version = highestVersion
   parents = new Set
 
@@ -46,8 +46,8 @@ class VersionListener {
 
   remove(notifyParent) {
     this.parents.delete(notifyParent)
-    if (this.parents.size) return // proxy is assigned elsewhere and therefore has other parents
-    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from children if they also aren't assigned elsewhere
+    if (this.parents.size) return // proxy is assigned elsewhere and therefore has other parents, and therefore must continue to live on in state
+    Object.values(this.orig).forEach(v => this.vls.get(v)?.remove(this.notify)) // however, if no more parents, attempt to recursively remove parents from the children of removed proxy in case they also aren't assigned elsewhere -- note: recursion happens downward toward children via `remove` unlike `notify` which recurses upward toward ancestors; it will remove notifyParent from all posterity
   }
 
   notify(version = ++highestVersion, branch = this.branch) {
@@ -58,7 +58,7 @@ class VersionListener {
 }
 
 
-class VLModule extends VersionListener {
+class VLModule extends VL {
   constructor(orig, vls, cache) {
     super(orig, vls, cache)
     this.branch = orig.respond.branch
@@ -66,7 +66,7 @@ class VLModule extends VersionListener {
 }
 
 
-class VLTop extends VersionListener {
+class VLTop extends VL {
   constructor(orig, vls, cache) {
     super(orig, vls, cache)
     this.branch = orig.respond.branch

@@ -865,13 +865,15 @@ f = models => [
 
 
 
-old players and tees in mongo needs their __types assigned
+old players and tees in mongo needs their __types assigned; rename mainId to groupId
+
 
 automatic cache reducers
 optimistic isomorphic functions/eventCallbacks
 memo with props.obj, which automatically transfers reactive tracking to child
 add events to permalink
 Input refactoring (kind, formatIn, etc)
+clicking the same exact event twice should not trigger it twice
 
 
 custom event callback makes app think namespaces are events
