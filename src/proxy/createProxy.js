@@ -9,12 +9,12 @@ export default function createProxy(o, vns, cache, refIds, notify = function() {
   const found = findExistingProxy(o, vns, cache, refIds, notify)
   if (found) return found
 
-  const orig = isArray(o) ? [] : create(getProto(o))
+  const obj = isArray(o) ? [] : create(getProto(o))
 
   const VersionNotifier = o[_module] ? (o[_top] ? VNTop : VNModule) : VN // polymorphic version notifier -- based on whether module, top module, or other objects
-  const vn = new VersionNotifier(orig)
+  const vn = new VersionNotifier(obj)
 
-  const proxy = new Proxy(orig, createHandler(vns, cache, refIds, vn.notify))
+  const proxy = new Proxy(obj, createHandler(vns, cache, refIds, vn.notify))
 
   cache.set(o, proxy)
   vns.set(proxy, vn)
@@ -23,7 +23,7 @@ export default function createProxy(o, vns, cache, refIds, notify = function() {
 
   Object.keys(o).forEach(k => {
     const v = o[k]
-    orig[k] = canProxy(v) ? createProxy(v, vns, cache, refIds, vn.notify) : v
+    obj[k] = canProxy(v) ? createProxy(v, vns, cache, refIds, vn.notify) : v
   })
 
   return proxy

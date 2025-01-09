@@ -5,8 +5,8 @@ export class VersionNotifier {
   version = highestVersion
   parents = new Set
 
-  constructor(orig) {
-    this.orig = orig
+  constructor(obj) {
+    this.obj = obj
     this.notify = this.notify.bind(this) // needs unique ref with `this` context to be passed as callback to children
   }
 
@@ -21,36 +21,21 @@ export class VersionNotifier {
 
 
 export class VNModule extends VersionNotifier {
-  constructor(orig) {
-    super(orig)
-    this.branch = orig.respond.branch // only modules have branches -- therefore the changed branched will "stick" and be passed to the top during upward notify recursion
+  constructor(obj) {
+    super(obj)
+    this.branch = obj.respond.branch // only modules have branches -- therefore the changed branched will "stick" and be passed to the top during upward notify recursion
   }
 }
 
 
-class Parents {
-  items = []
 
-  delete(notify) {
-    const index = this.items.findIndex(n => n === notify)
-    this.items.splice(index, 1)
-  }
-
-  forEach(cb) {
-    this.items.forEach(cb)
-  }
-
-  add(notify) {
-    this.items.push(notify)
-  }
-}
 
 
 export class VNTop extends VersionNotifier {
-  constructor(orig) {
-    super(orig)
-    this.branch = orig.respond.branch
-    this.respond = orig.respond
+  constructor(obj) {
+    super(obj)
+    this.branch = obj.respond.branch
+    this.respond = obj.respond
   }
 
   notify(version = ++highestVersion, branch = this.branch) {

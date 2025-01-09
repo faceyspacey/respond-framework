@@ -4,8 +4,8 @@ export default (po, vns, cache, refIds, notify) => {
   if (vn) {                          // proxy assigned that exists elsewhere (po is proxy)
     vn.parents.add(notify)
 
-    if (!refIds.has(vn.orig)) {
-      refIds.set(vn.orig, generateId())
+    if (!refIds.has(vn.obj)) {
+      refIds.set(vn.obj, generateId())
     }
 
     return po
