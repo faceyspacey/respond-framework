@@ -8,12 +8,13 @@ import HoverButtons from './HoverButtons.js'
 import { colors } from '../styles.js'
 
 
-export default memo(({ id, name, event, run, deleteTest }) => {
+export default memo(({ id, name, event, run, open, deleteTest }) => {
   const [hover, set] = useState(false)
 
   const buttons = [
     { label: 'START', event, arg: { id, index: 0 } },
     { label: 'RUN', event: run, arg: { id } },
+    { label: 'OPEN', event: open, arg: { id } },
     { label: 'END', event, arg: { id } }
   ]
 

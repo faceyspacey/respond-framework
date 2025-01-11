@@ -35,7 +35,7 @@ export async function callMethod(method, args) {
   const res = await this[method](...args) // eg db.user.findOne(id)
   
   if (this.afterRequest) {
-    const ret = await this.afterRequest(res)
+    const ret = await this.afterRequest(this.req.body, res)
     if (ret) return ret
   }
 

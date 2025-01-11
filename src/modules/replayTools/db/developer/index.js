@@ -34,23 +34,18 @@ export default {
   },
 
   deleteTestFile(filename) {
-    if (filename.indexOf(path.resolve()) !== 0) {
-      const error = 'You are trying to delete a file outside of the project directory'
-      return { success: false, error }
-    }
-
-    fs.rmSync(filename)
+    fs.rmSync(path.resolve(filename))
     return { filename, success: true }
   },
 
   openFile(filename) {
-    openFile('__tests__/' + filename)
+    openFile(filename)
     return { success: true }
   },
 
-  runTestInTerminal(id) {
+  runTestInTerminal(filename) {
     const dir = path.resolve()
-    const command = `osascript -e 'tell app "Terminal" to do script "cd ${dir} && npm test ${id}"'`
+    const command = `osascript -e 'tell app "Terminal" to do script "cd ${dir} && npm test ${filename}"'`
 
     const isMac = process.platform === 'darwin'
 

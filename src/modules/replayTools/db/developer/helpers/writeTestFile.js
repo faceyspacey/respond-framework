@@ -52,11 +52,7 @@ const settings = ${JSON.stringify(settings, null, 2)}
 
 const events = ${JSON.stringify(events, null, 2)}
 
-let t
-
-beforeAll(() => {
-  t = setupTest({ settings })
-})
+const t = setupTest({ settings })
 
 ${events.map(createIndividualTest).join('\n\n')}`
 }

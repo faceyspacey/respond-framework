@@ -40,6 +40,7 @@ export default (props, state) => {
         {testsList.map(id => createElement(Test, {
           event: events.test,
           run: events.runTestInTerminal,
+          open: events.openTestFile,
           id,
           key: id,
           deleteTest: events.deleteTest,

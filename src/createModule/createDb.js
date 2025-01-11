@@ -2,6 +2,7 @@ import { isProd, isDev } from '../utils.js'
 import _fetch, { __undefined__, argsIn } from '../helpers/fetch.js'
 import { reviveApiClient } from './helpers/revive.js'
 import createApiHandler from './createApiHandler.js'
+import { inferArgName } from './helpers/inferArgName.js'
 
 
 export default (respond, Respond) => {
@@ -80,16 +81,16 @@ const createResponse = (respond, body, response) => {
   respond.topState.__dbFirstCall = true
   respond.devtools.sendNotification({ branch, table, method, args, response })
 
-  if (!response) {
-    return response // eg: e.arg.user will be undefined no matter what, so we don't need to do anything
+  const proto = respond.models[table]?.prototype
+
+  if (!proto) {
+    return response
+  }
+  else if (response?.__branchType) {
+    inferArgName(response, proto._name)       // eg: 'user' -> dispatched as arg = { user: response }
   }
   else if (Array.isArray(response)) {
-    const value = respond.models[table].prototype._namePlural // eg: 'users
-    Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.users
-  }
-  else if (response.__branchType) {
-    const value = respond.models[table].prototype._name // eg: 'user'
-    Object.defineProperty(response, '__argName', { value, enumerable: false }) // automagic: dispatched events with response as arg value will move from eg: arg to arg.user
+    inferArgName(response, proto._namePlural) // eg: 'users' -> dispatched as arg = { users: [...response] }
   }
 
   return response

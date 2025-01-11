@@ -885,6 +885,16 @@ error returns from db methods -- throw -> onError? what about user-defined error
 mutated events will be replayed with mutations -- need to preserve original event
 
 
+dont use beforeAll in tests
+
+
+
+remove res.flash.error stuff
+rename from xyzCreate to createXyz
+
+await emitUpdate in dev
+use event functions instead of step integers
+
 
 test tournament back9 settings and such
 

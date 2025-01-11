@@ -21,6 +21,11 @@ const validate = (state, e, res) => {
     return e.event.error.dispatch(res, { from: e }).then(_ => false)
   }
 
+  if (res?.dispatch) {
+    state.respond.devtools.sendRedirect({ type: 'validate', returned: res }, e)
+    return res.dispatch({ meta: { from: e } }).then(_ => false) // redirect
+  }
+
   state.respond.devtools.sendPluginNotification({ type: 'validate', returned: res }, e)
 
   return res

@@ -102,8 +102,16 @@ export default {
   },
 
   runTestInTerminal: {
-    submit: ({ db }, { id }) => {
-      return db.developer.runTestInTerminal.server(id)
+    submit: ({ db, tests }, { id }) => {
+      const { filename } = tests[id]
+      return db.developer.runTestInTerminal.server(filename)
+    }
+  },
+
+  openTestFile: {
+    submit: ({ db, tests }, { id }) => {
+      const { filename } = tests[id]
+      return db.developer.openFile.server(filename)
     }
   },
 

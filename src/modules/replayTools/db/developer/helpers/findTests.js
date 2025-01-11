@@ -60,12 +60,14 @@ export const findTest = filename => {
     const eventsStr = file.split('events = ')[1]
     if (!eventsStr) return null // filter out malformed tests
     
-    const [eventsStrFinal, rest] = eventsStr.split('let t')
+    const [eventsStrFinal, rest] = eventsStr.split('const t')
     if (!rest) return null      // filter out malformed tests
 
     const events = eval(eventsStrFinal).map(({ index: _, ...e }) => ({ ...e, event: { __event: true, type: e.type } })) // reviver will revive event object to function
     
     const updatedAt = fs.statSync(filename).mtime.getTime()
+
+    filename = filename.replace(projDir(), '').slice(1)
 
     const { id, name, branch } = createTestId(filename)
 

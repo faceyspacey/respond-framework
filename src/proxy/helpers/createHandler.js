@@ -17,6 +17,7 @@ export default (vns, cache, refIds, notify) => ({
 
     o[k] = canProxy(v) ? createProxy(v, vns, cache, refIds, notify) : v
     notify()
+    
     return true
   }
 })

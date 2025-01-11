@@ -4,6 +4,7 @@ import mergeArgMeta from './helpers/mergeArgMeta.js'
 import { init, navigation, submission, done, error, data } from './kinds.js'
 import { _branch } from './reserved.js'
 import { stripBranchWithUnknownFallback } from './helpers/sliceBranch.js'
+import { applyArgName } from './helpers/inferArgName.js'
 
 
 export default (deps, events, propEvents) => {
@@ -151,7 +152,7 @@ export class Event {
   }
 
   create(arg, meta) {
-    if (arg?.__argName) arg = { [arg.__argName]: arg }
+    arg = applyArgName(arg)
     return new e(arg, meta, this)
   }
 

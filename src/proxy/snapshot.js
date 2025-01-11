@@ -8,7 +8,7 @@ export default function(proxy = this.state, vns = this.versionNotifiers, cache =
 }
 
 
-function createSnapshot({ orig: o, version }, vns, cache) {
+function createSnapshot({ obj: o, version }, vns, cache) {
   const { version: v, snap: s } = cache.get(o) ?? {}
   if (v === version) return s
 
