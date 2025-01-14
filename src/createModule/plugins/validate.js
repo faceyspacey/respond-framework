@@ -16,7 +16,7 @@ const validate = (state, e, res) => {
     return false
   }
 
-  if (res?.error || res?.flash?.error) {
+  if (res?.error) {
     state.respond.devtools.sendPrevented({ type: 'validate', returned: res }, e)
     return e.event.error.dispatch(res, { from: e }).then(_ => false)
   }

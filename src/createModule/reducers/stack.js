@@ -1,26 +1,24 @@
 import { navigation } from '../kinds.js'
 
 
-export default function (stack = { entries: [], index: -1 }, e) {
-  if (e.kind !== navigation) return stack
+export default function (state = { entries: [], index: -1 }, e, { respond }) {
+  if (e.kind !== navigation) return state
 
-  const { entries, index } = stack
-  if (index === -1) return { entries: [e], index: 0 }
+  const { entries, index: i } = state
 
-  if (this.respond.isEqualNavigations(e, entries[index])) {
-    return stack
+  if      (respond.isEqualNavigations(e, entries[i])) {      // current event repeated
+
+  }
+  else if (respond.isEqualNavigations(e, entries[i - 1])) {  // back
+    state.index = Math.max(i - 1, 0)
+  }
+  else if (respond.isEqualNavigations(e, entries[i + 1])) {  // next
+    state.index = i + 1
+  }
+  else {
+    entries.splice(i + 1, entries.length, e)                  // push -- delete stale tail like browser history.push
+    state.index = entries.length - 1
   }
 
-  if (this.respond.isEqualNavigations(e, entries[index - 1])) {
-    return { ...stack, index: index - 1 }
-  }
-
-  if (this.respond.isEqualNavigations(e, entries[index + 1])) {
-    return { ...stack, index: index + 1 }
-  }
-
-  const push = index < entries.length - 1 // if not at end, clip tail as in standard stack.push operation
-  const next = push ? entries.slice(0, index + 1) : entries
-
-  return { entries: [...next, e], index: index + 1}
+  return state
 }

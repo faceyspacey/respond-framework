@@ -1,0 +1,1 @@
+export { default as stack } from './createModule/reducers/stack.js'

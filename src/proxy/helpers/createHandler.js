@@ -4,6 +4,7 @@ import createProxy from '../createProxy.js'
 
 export default (vns, cache, refIds, notify) => ({
   deleteProperty(o, k) {
+    if (!o.hasOwnProperty(k)) return true
     delete o[k]
     notify()
     return true

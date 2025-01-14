@@ -28,12 +28,11 @@ export default function addModule(Respond, mod, parent = {}, moduleName = '', st
   const [events,     reducers,     selectors    ] = extractModuleAspects(mod, state)
   const [propEvents, propReducers, propSelectors] = extractModuleAspects(props, state)
 
+  createBasename(deps)
   createEvents(deps,    events,    propEvents   )
   createReducers(deps,  reducers,  propReducers )
   createSelectors(deps, selectors, propSelectors)
-  
   createClientModels(deps)
-  createBasename(deps)
   createPlugins(deps)
 
   assignRenderingDependencies(deps)

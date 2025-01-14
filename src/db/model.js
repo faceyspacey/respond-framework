@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb'
 import { isProd } from '../helpers/constants.js'
 import mock from './model.mock.js'
 import { toObjectIds, toObjectIdsSelector } from './helpers/toFromObjectIds.js'
@@ -12,6 +13,8 @@ export default !isProd ? mock : {
 
     this.updatedAt = new Date
     this.createdAt ??= this.updatedAt
+
+    this.id ??= new ObjectId().toString()
 
     const { id, _id: _, ...doc } = this
     const selector = toObjectIdsSelector({ id: this.id })

@@ -251,5 +251,4 @@ export const extractedEvents = new Map
 
 const edit = {
   sync: true,
-  transform: ({}, form) => ({ form }),
 }

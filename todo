@@ -863,9 +863,11 @@ f = models => [
 #branchDependency doesnt factor in just replays ancestor
 #ignoreDefaults
 
+#dont use beforeAll in tests
 
+#remove e.form
 
-old players and tees in mongo needs their __types assigned; rename mainId to groupId
+old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId
 
 
 automatic cache reducers
@@ -878,25 +880,22 @@ clicking the same exact event twice should not trigger it twice
 
 custom event callback makes app think namespaces are events
 apiUrl should be stored on db, which is passed to focusedModule -- we may need a general non-db approach for things like config, translations etc
-
 error returns from db methods -- throw -> onError? what about user-defined errors?
-
-
 mutated events will be replayed with mutations -- need to preserve original event
+constructors called automatically when u call .make
+remove _updateOne etc, as we now have this.super()
+make event callbacks no longer user trySync
 
 
-dont use beforeAll in tests
+remove e.kind
 
 
 
-remove res.flash.error stuff
-rename from xyzCreate to createXyz
-
-await emitUpdate in dev
-use event functions instead of step integers
 
 
-test tournament back9 settings and such
+tolls
+
+
 
 
 incorporate naked-css

@@ -24,7 +24,7 @@ const appStartData = async (s, e, before, getData, after) => {
   if (ret === false) return
 
   const data = await getData(s, e)
-  Object.assign(e, data)
+  Object.assign(e, data, { data })
   s.respond.devtools.sendPluginNotification({ type: 'appStartData', returned: data }, e)
 
   ret = await after?.(s, e)
