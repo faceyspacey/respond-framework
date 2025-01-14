@@ -44,7 +44,8 @@ const createEvents = (respond, events, propEvents, namespace = new Namespace(res
       namespace[name] = createEvent(respond, config, name, namespace)
     }
 
-    if (config) cache.set(config, namespace[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
+    if (config && !cache.has(config)) cache.set(config, namespace[name]) // even if overriden by a prop, point original to fully created event -- facilitates grandparent props by way of original reference in eventsCache.get(config)
+    
     return namespace
   }, namespace)
 }
@@ -208,7 +209,7 @@ export class e {
   constructor(arg, meta, event) {
     mergeArgMeta(arg, meta, this)
 
-    const payload = event.transform?.call(event.module, event.module, this.arg, this) ?? { ...this.arg }
+    const payload = event.transform?.call(event.module, event.module, this.arg, this) || { ...this.arg }
 
     Object.assign(this, payload)
 

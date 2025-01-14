@@ -867,7 +867,7 @@ f = models => [
 
 #remove e.form
 
-old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId
+old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index
 
 
 automatic cache reducers
