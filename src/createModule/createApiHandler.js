@@ -11,6 +11,7 @@ export default function createApiHandler({ db, log = isServer, context = {} }) {
 
   return async (req, res) => {
     req = revive(modelsByBranchType, req)
+
     const { table, method, focusedBranch, branch } = req.body
 
     if (log) console.log(`request.request: db.${table}.${method}`, req.body)
@@ -30,9 +31,14 @@ export default function createApiHandler({ db, log = isServer, context = {} }) {
 
 
 const revive = (modelsByBranchType, req) => {
-  req = isServer ? req : { ...req } // would otherwise mutate client's req in dev
-  req.body = reviveApiServer({ modelsByBranchType })(req.body)
+  req = isServer ? req : JSON.parse((JSON.stringify(req))) // simulate passing from client to server in dev
+
+  const eventsByType = typeof window == 'undefined' ? {} : window.state?.respond.eventsByType // todo: when ssr is ready, grab eventsByType the correct way
+  
+  req.body = reviveApiServer({ modelsByBranchType, eventsByType })(req.body)
+
   req.body.args = argsOut(req.body.args) // convert '__undefined__' to undefined
+
   return req
 }
 

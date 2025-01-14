@@ -1,4 +1,4 @@
-import { canProxy } from '../../proxy/helpers/utils.js'
+import { canProxy, isObj } from '../../proxy/helpers/utils.js'
 import { e } from '../createEvents.js'
 
 
@@ -12,36 +12,15 @@ export default ({ modelsByBranchType, eventsByType } = {}) => {
   }
 
   function revive(v, k) {
-    if (v?.__event)    return eventsByType[v.type] ?? v
+    if (v?.__event)    return eventsByType[v.__event] ?? v
+    if (v?.__e)        return Object.assign(Object.create(e.prototype), Object.keys(v).reduce((acc, k) => ({ ...acc, [k]: revive(v[k], k) }), {}))
     if (!canProxy(v))  return dateKeyReg.test(k) && v ? new Date(v) : v
+
                        return isArray(v) ? v.map(revive) : createObject(v)
   }
 
   return revive
 }
-
-
-
-export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
-  if (v?.__event)                            return eventsByType[v.type] ?? v
-  if (!canProxy(v))                          return dateKeyReg.test(k) && v ? new Date(v) : v
-  if (v.__e && typeof v.event === 'string')  return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
-
-  const id = v.__refId
-
-  if (id) {
-    if (refs[id]) return refs[id]
-    const Model = v.__branchType && modelsByBranchType[v.__branchType]
-    const obj = Model ? new Model(v) : v.__arr ?? v
-    refIds.set(obj, id)
-    delete obj.__refId
-    return refs[id] = obj
-  }
-
-  const Model = v.__branchType && modelsByBranchType[v.__branchType]
-  return Model ? new Model(v) : v
-}
-
 
 
 
@@ -58,11 +37,11 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
   }
 
   function revive(v, k) {
-    if (v?.__event)                           return eventsByType[v.type] ?? v
-    if (!canProxy(v))                         return dateKeyReg.test(k) && v ? new Date(v) : v
-    if (v.__e && typeof v.event === 'string') return Object.assign(Object.create(e.prototype), { ...v, event: eventsByType[v.event] })
+    if (!isObj(v))           return dateKeyReg.test(k) ? new Date(v) : v
+    if (v.__event)           return eventsByType[v.__event] ?? v
+    if (v.__e)               return Object.assign(Object.create(e.prototype), Object.keys(v).reduce((acc, k) => ({ ...acc, [k]: revive(v[k], k) }), {}))
 
-    return isArray(v) ? v.map(revive) : createObject(v)
+                             return isArray(v) ? v.map(revive) : createObject(v)
   }
 
   return revive
@@ -70,7 +49,7 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
 
 
 
-export const reviveApiServer = ({ modelsByBranchType }) => {
+export const reviveApiServer = ({ modelsByBranchType, eventsByType }) => {
   function createObject(v) {
     const obj = {}
     keys(v).forEach(k => obj[k] = revive(v[k], k))
@@ -80,8 +59,11 @@ export const reviveApiServer = ({ modelsByBranchType }) => {
   }
 
   function revive(v, k) {
-    if (!canProxy(v)) return dateKeyReg.test(k) && v ? new Date(v) : v
-    return isArray(v) ? v.map(revive) : createObject(v)
+    if (!isObj(v))           return dateKeyReg.test(k) ? new Date(v) : v
+    if (v.__event)           return eventsByType[v.__event] ?? v
+    if (v.__e)               return Object.assign(Object.create(e.prototype), Object.keys(v).reduce((acc, k) => ({ ...acc, [k]: revive(v[k], k) }), {}))
+
+                             return isArray(v) ? v.map(revive) : createObject(v)
   }
 
   return revive
@@ -107,6 +89,30 @@ export const reviveServerModelInSpecificModule = db => {
 
   return revive
 }
+
+
+
+
+export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds }, refs = {}) => (k, v) => {
+  if (!isObj(v))   return dateKeyReg.test(k) && v ? new Date(v) : v
+  if (v.__event)   return eventsByType[v.__event] ?? v
+  if (v.__e)       return Object.assign(Object.create(e.prototype), v)
+
+  const id = v.__refId
+
+  if (id) {
+    if (refs[id]) return refs[id]
+    const Model = v.__branchType && modelsByBranchType[v.__branchType]
+    const obj = Model ? new Model(v) : v.__arr ?? v
+    refIds.set(obj, id)
+    delete obj.__refId
+    return refs[id] = obj
+  }
+
+  const Model = v.__branchType && modelsByBranchType[v.__branchType]
+  return Model ? new Model(v) : v
+}
+
 
 
 

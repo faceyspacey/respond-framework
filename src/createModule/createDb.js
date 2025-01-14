@@ -48,7 +48,7 @@ const fetch = async (apiUrl, body, getter, respond) => {
 
   const r = isProd || getter.useServer
     ? await _fetch(apiUrl, body, respond)
-    : await respond.apiHandler({ body }, { json: r => r }) // the magic: call server-side api handler directly on the client during development
+    : await respond.apiHandler({ body }, { json: r => JSON.parse(JSON.stringify(r)) }) // the magic: call server-side api handler directly on the client during development + simulate json stringification
 
   const response = r === __undefined__ ? undefined : r ? reviveApiClient(respond, body.branch)(r) : r
 

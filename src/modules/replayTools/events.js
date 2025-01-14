@@ -12,7 +12,6 @@ export default {
 
   editConfig: {
     sync: true,
-    transform: ({}, form) => ({ form }),
   },
 
   changeBranch: {

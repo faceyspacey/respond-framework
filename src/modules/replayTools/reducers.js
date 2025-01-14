@@ -45,17 +45,15 @@ export const loading = (_, e, state) => {
 export const settings = (state = {}, e, { events, focusedBranch, configs }) => {
   if (e.event !== events.edit) return state
 
-  Object.assign(state[focusedBranch], e.form)
+  Object.assign(state[focusedBranch], e.payload)
   cascadeSetting(state, e, focusedBranch, configs)
-
-  return state
 }
 
 
 
 export const config = (state = {}, e, { events }) => {
   if (e.event !== events.editConfig) return state
-  return { ...state, ...e.form }
+  Object.assign(state, e.payload)
 }
 
 

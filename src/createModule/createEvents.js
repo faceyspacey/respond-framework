@@ -1,7 +1,7 @@
 import isNamespace from '../utils/isNamespace.js'
 import { prepend } from './helpers/sliceBranch.js'
 import mergeArgMeta from './helpers/mergeArgMeta.js'
-import { init, navigation, submission, done, error, data } from './kinds.js'
+import kinds, { init, navigation, submission, done, error, data } from './kinds.js'
 import { _branch } from './reserved.js'
 import { stripBranchWithUnknownFallback } from './helpers/sliceBranch.js'
 import { applyArgName } from './helpers/inferArgName.js'
@@ -128,7 +128,7 @@ export class Event {
     this[_branch] = branch
     this.kind ??= this.pattern ? navigation : submission
     this.moduleName = props.respond.moduleName
-    this.__event = true
+    this.__event = this.type
   }
 
   get done() {
@@ -177,7 +177,7 @@ export class Event {
   }
 
   toJSON() {
-    return { __event: true, type: this.type }
+    return { __event: this.__event }
   }
 
   id(respondOrState) {
@@ -216,6 +216,8 @@ export class e {
     this.kind = event.kind
     this.payload = payload
 
+    this.__e = true
+
     if (this.event.pattern) {
       this.meta.url = event.respond.fromEvent(this).url
     }
@@ -235,10 +237,6 @@ export class e {
     mergeArgMeta(arg, meta, this) // 2nd chance to supply meta/arg
     return this.event(this.arg, this.meta)
   }
-
-  toJSON() {
-    return { ...this, __e: true, event: this.event.type }
-  }
 }
 
 
@@ -250,5 +248,6 @@ export class e {
 export const extractedEvents = new Map
 
 const edit = {
+  kind: kinds.edit,
   sync: true,
 }

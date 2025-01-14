@@ -20,6 +20,6 @@ export default (state, e, branch, configs) => {
       if (setting.accept === false) return denied.push(b)
       if (denied.find(p2 => p2.indexOf(b) === 0)) return
 
-      Object.assign(state[b], e.form)
+      Object.assign(state[b], e.payload)
     })
 }

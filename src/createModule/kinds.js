@@ -7,6 +7,8 @@ export const done = 'done'
 export const error = 'error'
 export const data = 'data'
 
+export const edit = 'edit'
+
 
 export default {
   init,
@@ -16,5 +18,7 @@ export default {
   
   done,
   error,
-  data
+  data,
+
+  edit
 }
