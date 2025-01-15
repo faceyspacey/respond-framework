@@ -3,11 +3,11 @@ import { isDev } from '../helpers/constants.js'
 
 
 export const createCounterRef = seed => {
-  const value = seed?.__counterRef.value ?? 0
-  return ref = { value }
+  ref.value = seed?.__counterRef.value ?? 0
+  return ref
 }
 
-let ref = { value: 0 }
+const ref = { value: 0 }
 
 
 
