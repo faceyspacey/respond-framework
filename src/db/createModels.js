@@ -1,6 +1,7 @@
 import mixin from './model.client.js'
 import findClosestAncestorWith from '../createModule/helpers/findClosestAncestorWith.js'
 import createSharedModels from './helpers/createSharedModels.js'
+import { generateId } from '../helpers/deterministicCounter.js'
 
 
 export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
@@ -40,7 +41,7 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
 
     Model.create = doc => {
       const model = Model.make(doc)
-      model.id = doc?.id ?? respond.generateId()
+      model.id = doc?.id ?? generateId()
       return model
     }
   }
