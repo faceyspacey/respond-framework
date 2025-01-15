@@ -7,6 +7,7 @@ import { toObjectIds, toObjectIdsSelector, fromObjectIds, toProject } from './he
 import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
 import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
 import safeMethods from './safeMethods.js'
+import { pickAndCreate as pick } from './utils/pick.js'
 
 
 export default !isProd ? mock : {  
@@ -39,13 +40,14 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async insertOne({ id, ...doc }) {
+  async insertOne({ id, ...doc }, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(doc)
+
+    return project ? pick(doc, project, this) : this._create(doc)
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
@@ -59,7 +61,9 @@ export default !isProd ? mock : {
       $currentDate: { updatedAt: true }
     }, { projection: toProject(project), returnDocument: 'after' })
 
-    return result.value && this._create(result.value)
+    return result.value
+      ? this._create(result.value)
+      : id ? this._insertOne({ id, ...doc }, { project }) : undefined    // honor id: client-created id or deleted doc
   },
 
   async upsert(selector, newDoc, { insertDoc, project } = {}) {
@@ -406,13 +410,14 @@ export default !isProd ? mock : {
     return models.map(m => this._create(m))
   },
 
-  async _insertOne({ id, ...doc }) {
+  async _insertOne({ id, ...doc }, { project } = {}) {
     doc._id = new ObjectId(id)
     doc.createdAt = doc.updatedAt = new Date(doc.createdAt || new Date)
 
     doc = toObjectIds(doc)
     await this.mongo().insertOne(doc)
-    return this._create(doc)
+
+    return project ? pick(doc, project, this) : this._create(doc)
   },
 
   async _updateOne(selector, newDoc, { project } = {}) {

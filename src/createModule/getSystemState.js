@@ -28,7 +28,7 @@ export default (opts = {}) => {
         replayState: { settings, branch, status },
         baseState: {
           ...cloneDeep(hydration),
-          replayTools: { ...rt, evsIndex: -1 },
+          replayTools: { ...rt, evsIndex: -1, evs: [] },
         },
       }
     }

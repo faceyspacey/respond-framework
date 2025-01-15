@@ -52,29 +52,23 @@ export default {
   },
 
   testFromWallaby: {
-    before: async ({ events }, { test, index, delay }) => events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
+    run: ({ events }, { test, index, delay }) => events.test({ tests: [test], id: test.id, index, delay }) // add tests to state.tests reducer + trigger replay
   },
 
   test: {
     kind: navigation,
-    submit: async (state, { id, index, delay }) => {
+    tap: (state, { id, index, delay }) => {
       const { events, name, ...test } = state.tests[id]
 
-      state.evs = events.slice()
       state.divergentIndex = events.length // purple event rows will appear at end of event list if new events manually triggered by using app
-    
       state.selectedTestId = id
 
-      const evs = index === undefined ? events : events.slice(0, index + 1)
-
-      await state.replayEvents(evs, delay, test)
-
-      return false
+      return state.replayEvents(events, index, delay, test)
     },
   },
 
   saveTest: {
-    async submit({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) {
+    async run({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) {
       const defaultName = selectedTestId ? t[selectedTestId].name : evs[0].event.type.replace(/\./g, '/') + '.js'
       const name = prompt('Name of your test?', defaultName)?.replace(/^\//, '')
 
@@ -108,22 +102,18 @@ export default {
   },
 
   openTestFile: {
-    submit: ({ db, tests }, { id }) => {
+    run: ({ db, tests }, { id }) => {
       const { filename } = tests[id]
       return db.developer.openFile.server(filename)
     }
   },
 
   stopReplay: {
-    before: state => state.playing = false
+    reduce: state => state.playing = false
   },
 
   replayEventsToIndex: {
-    before: async (state, { index, delay }) => {
-      const events = state.evs.slice(0, index + 1)
-      await state.replayEvents(events, delay)
-      return false
-    }
+    run: (state, { index, delay }) => state.replayEvents(state.evs, index, delay)
   },
 
   changeIndex: {
@@ -131,7 +121,7 @@ export default {
     uniqueDragId() {
       return ++this.counter + ''
     },
-    before: async (state, { index, delta, event: self }) => {
+    run: (state, { index, delta, event: self }) => {
       const lastIndex = state.evs.length - 1
       const nextIndex = Math.max(0, Math.min(lastIndex, index + delta))
 
@@ -141,35 +131,25 @@ export default {
       events.splice(index, 1)             // delete event in original position
       events.splice(nextIndex, 0, event)  // move event to new index
 
-      state.evs = events
       state.divergentIndex = Math.min(index, nextIndex)
-
-      const eventsToIndex = events.slice(0, state.evsIndex + 1)
-      
-      await state.replayEvents(eventsToIndex)
-
-      return false
+ 
+      return state.replayEvents(events, state.evsIndex)
     }
   },
 
   skipEvent: {
-    before: async (state, { index }) => {
+    run: (state, { index }) => {
       const e = state.evs[index]
       const skipped = !e.meta?.skipped
 
       e.meta = { ...e.meta, skipped }
 
-      const end = state.evsIndex + 1
-      const events = state.evs.slice(0, end)
-
-      await state.replayEvents(events)
-
-      return false
+      return state.replayEvents(state.evs, state.evsIndex)
     }
   },
 
   deleteEvent: {
-    before: async (state, { index: i }) => {
+    run: (state, { index: i }) => {
       state.evs.splice(i, 1)
 
       if (i < state.evs.length - 1) {
@@ -179,23 +159,16 @@ export default {
 
       if (i > state.evsIndex) return false
 
-      const end = i === state.evsIndex ? state.evsIndex : state.evsIndex + 1 // if deleted last event and its current index, go one index lower : go to current index
-      const events = state.evs.slice(0, end)
-
-      await state.replayEvents(events)
-
-      return false
+      return state.replayEvents(state.evs, state.evsIndex - 1)
     }
   },
 
   toggleSpliceMode: {
-    reduce: state => {
-      state.spliceMode = !state.spliceMode
-    }
+    reduce: state => state.spliceMode = !state.spliceMode
   },
 
   reload: {
-    before: async ({ configs, settings, config, focusedBranch: branch, respond }) => {
+    run: async ({ configs, settings, config, focusedBranch: branch, respond }) => {
       settings = nestFocusedSettings(configs, settings, branch, respond)
       const { url = '/' } = config
       
@@ -213,8 +186,6 @@ export default {
       resp.state.replayTools.playing = false
       resp.render()
       resp.queueSaveSession()
-
-      return false
     }
   },
 
@@ -224,7 +195,7 @@ export default {
   },
 
   openPermalink: {
-    before: async ({ configs, settings, focusedBranch, respond, config }) => {
+    run: ({ configs, settings, focusedBranch, respond, config }) => {
       settings = nestFocusedSettings(configs, settings, focusedBranch, respond)
       const hash = createPermalink(settings, focusedBranch)
 
@@ -237,8 +208,6 @@ export default {
       alert(`Your permalink is:\n\n${relativeUrl}\n\nYou can copy paste it from the console.You will be redirected now.`)
 
       Linking.openURL(url)
-
-      return false
     },
   },
 }

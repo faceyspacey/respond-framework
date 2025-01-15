@@ -1,6 +1,9 @@
 import error from './plugins/error.js'
 import loadTests from './plugins/loadTests.js'
+import run from './plugins/run.js'
+
 import defaultPlugins from '../../plugins.js'
+
 import { _parent } from '../../createModule/reserved.js'
 
 export { default as build } from './build.js'
@@ -15,7 +18,7 @@ export { id } from './respond.js'
 
 export * as reducers from './reducers.js'
 
-export const plugins = [error, loadTests, ...defaultPlugins]
+export const plugins = [error, loadTests, run, ...defaultPlugins]
 
 export const ignoreParents = true
 

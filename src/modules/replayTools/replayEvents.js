@@ -2,11 +2,11 @@ import createModule from '../../createModule/index.js'
 import { isTest } from '../../helpers/constants.js'
 
 
-export default async function(events, delay = 0, { settings, branch } = this.respond.replayState) {
+export default async function(events, index = events.length - 1, delay = 0, { settings, branch } = this.respond.replayState) {
   this.playing = false // stop possible previous running replay
   const respond = createModule(window.state.respond.top, { settings, branch, status: 'replay' })
-  events = respond.revive(events)
-  await runEvents(events, delay, respond.state)
+  respond.state.replayTools.evs = events = respond.revive(events)
+  await runEvents(events.slice(0, index + 1), delay, respond.state)
   return respond.state
 }
 
@@ -18,7 +18,7 @@ export const runEvents = async (events, delay, { respond, replayTools }, dontRen
   replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
   mem.isFastReplay = !delay                    // turn animations + timeouts off
 
-  for (let i = 0; i < events.length && replayTools.playing; i++) {
+  for (let i = 0; i < events.length && respond.state.replayTools.playing; i++) {
     const first = i === 0
     const last =  i === events.length - 1
 

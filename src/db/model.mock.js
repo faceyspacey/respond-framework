@@ -1,5 +1,5 @@
 import cloneDeep from '../proxy/helpers/cloneDeep.js'
-import { createObjectId } from '../utils.js'
+import { generateId } from '../utils.js'
 
 
 export default {
@@ -13,7 +13,7 @@ export default {
 
     const { docs } = this.db[this._name]
 
-    this.id ??= createObjectId()
+    this.id ??= generateId()
 
     const doc = docs[this.id] || {} // update || create
     docs[this.id] = Object.assign(doc, this) 

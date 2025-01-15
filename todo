@@ -886,11 +886,13 @@ constructors called automatically when u call .make
 remove _updateOne etc, as we now have this.super()
 make event callbacks no longer user trySync
 await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since tests can await all promises
+model inferrence should probably put model(s) in next event callback's e argument
 
 remove e.kind
 
 
-
+signup
+writeTestFile needs to parse event type
 
 
 tolls

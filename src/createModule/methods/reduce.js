@@ -11,6 +11,8 @@ export default async function reduce(...events) {
       break
 
     case 'session':
+      const event = this.eventFrom(window.location)
+      if (!event) throw new Error(`respond: no event matches ${window.location.href}`)
       await this.eventFrom(window.location).trigger() // only need to trigger one event since session status doesn't actually re-run any events; instead on first dispatch triggerPlugin bails out if the URL of last event matches prevUrl; however, if the user changed the URL, it will be triggered, and here we capture that case
       break
 

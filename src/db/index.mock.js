@@ -1,4 +1,4 @@
-import { createObjectId } from '../helpers/deterministicCounter.js'
+import { generateId } from '../helpers/deterministicCounter.js'
 import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import { pickAndCreate as pick } from './utils/pick.js'
@@ -35,12 +35,12 @@ export default {
     return docs.map(doc => pick(doc, project, this))
   },
 
-  async insertOne(doc, { project } = {}) {
-    doc.id ??= createObjectId() // if id present, client generated client side optimistically
+  async insertOne({ ...doc }, { project } = {}) {
+    doc.id ??= generateId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
     this.docs[doc.id] = this._create(doc)
-    return pick(this.docs[doc.id], project, this)
+    return project ? pick(this.docs[doc.id], project, this) : this.docs[doc.id]
   },
 
   async updateOne(selector, newDoc, { project } = {}) {
@@ -48,7 +48,7 @@ export default {
     const { createdAt: _, updatedAt: __, ...doc } = newDoc || selector    // updateOne accepts this signature: updateOne(doc)
 
     const model = await this._findOne(id || selector)
-    if (!model) return
+    if (!model) return id ? this._insertOne({ id, ...doc }, { project }) : undefined // honor id: client-created id or deleted doc
 
     Object.defineProperties(model, Object.getOwnPropertyDescriptors(doc))
     model.updatedAt = new Date
@@ -242,7 +242,7 @@ export default {
 
   async insertMany(docs) {
     for (const doc of docs) {
-      doc.id ??= createObjectId()
+      doc.id ??= generateId()
       doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
 
       this.docs[doc.id] = this._create(doc)
@@ -294,7 +294,7 @@ export default {
   },
 
   create(doc) {
-    const id = doc?.id || createObjectId()
+    const id = doc?.id || generateId()
     return this.make({ ...doc, id })
   },
 
@@ -309,7 +309,7 @@ export default {
     docs.forEach((doc, i) => {
       doc = cloneDeep(doc)
       
-      doc.id ??= createObjectId()
+      doc.id ??= generateId()
       doc.__type = name
 
       doc.createdAt ??= new Date(now - (i * 1000)) // put first docs in seed at top of lists (when sorted by updatedAt: -1)
@@ -350,11 +350,11 @@ export default {
   },
   
   async _insertOne(doc, { project } = {}) {
-    doc.id ??= createObjectId() // if id present, client generated client side optimistically
+    doc.id ??= generateId() // if id present, client generated client side optimistically
     doc.createdAt = doc.updatedAt = doc.createdAt ? new Date(doc.createdAt) : new Date
   
     this.docs[doc.id] = this._create(doc)
-    return pick(this.docs[doc.id], project, this)
+    return project ? pick(this.docs[doc.id], project, this) : this.docs[doc.id]
   },
   
   async _updateOne(selector, newDoc, { project } = {}) {
@@ -372,7 +372,7 @@ export default {
   },
 
   _create(doc) {
-    const id = doc?.id || createObjectId()
+    const id = doc?.id || generateId()
     return this.make({ ...doc, id })
   },
 
