@@ -12,15 +12,16 @@ let ref = { value: 0 }
 
 
 const genNumber =      () => ref.value++
-const genCode =        (length = 4) => ('' + ref.value++).padEnd(length, '0')
-const genNumericCode = (length = 4) => ('' + ref.value++).padEnd(length, '0') // only numeric in production
 const genId =          () => ('id' + ref.value++).padEnd(24, '0')             // mimic new ObjectId().toString() from mongo
+const genCode =        (length = 4) => ('' + ref.value++).padEnd(length, '0') // only containers letters in production
+const genNumericCode = (length = 4) => ('' + ref.value++).padEnd(length, '0')
 
 
 
 
 export const incrementCounter = genNumber
 
+export const generateId = isDev ? genId : () => new ObjectId().toString()
 
 export const generateNumericCode = isDev ? genNumericCode : (length = 4) => // max length 16
   Math.random()
@@ -35,6 +36,3 @@ export const generateCode = isDev ? genCode : (length = 4) => // max length 10
     .slice(2, length + 2)
     .toUpperCase()
     .padStart(length, '0')
-
-
-export const generateId = isDev ? genId : () => new ObjectId().toString()
