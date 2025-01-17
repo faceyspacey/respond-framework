@@ -13,6 +13,7 @@ export { default as reduce } from './reduce.js'
 export { default as changePath } from './changePath.js'
 export { default as custom } from './custom.js'
 export { default as optimistic } from './optimistic.js'
+export { default as debounce } from './edit/debounce.js'
 export { default as fetch } from './fetch.js'
 // event.cache (built-in to fetch)
 export { default as tap } from './tap.js'

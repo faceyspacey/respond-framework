@@ -128,6 +128,7 @@ export class Event {
 
     this[_branch] = branch
     this.kind ??= this.pattern ? navigation : submission
+    this.sync ??= !!this.debounce
     this.moduleName = props.respond.moduleName
     this.__event = this.type
   }

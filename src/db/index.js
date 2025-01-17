@@ -300,7 +300,12 @@ export default !isProd ? mock : {
     const count = counts[0]?.count ?? 0
     const models = docs.map(m => this._create(m))
 
-    return { query, count, [this._namePlural]: models }
+    return {
+      query,
+      count,
+      pages: Math.ceil(count / limit),
+      [this._namePlural]: models
+    }
   },
 
   async aggregatePaginated(query) {
@@ -327,7 +332,7 @@ export default !isProd ? mock : {
     return this.mongo().count(toObjectIdsSelector(selector))
   },
 
-  async totalPages(selector, limit = 10) {
+  async totalPages(selector, limit = this.config.listLimit ?? 10) {
     const count = await this.mongo().count(toObjectIdsSelector(selector))
     return Math.ceil(count / limit)
   },

@@ -1,15 +1,23 @@
 import mergeDeep from '../../utils/mergeDeep.js'
 
 
-export default (cache, docs, doc, opts) => {
-  if (!docs && !doc) return cache
+export default (cache, doc, docs, opts) => {
+  if (!doc && !docs) return cache
 
   const { deep, slug } = opts ?? {}
   const func = deep ? addToCacheDeep : slug ? addToCacheSlug : addToCache
 
-  const models = docs && doc
-    ? [...docs, doc]
-    : doc ? [doc] : docs
+  const models = []
+
+  if (doc) {
+    if (Array.isArray(doc)) models.push(...doc)    // allow passing array first
+    else models.push(doc)
+  }
+
+  if (docs) {
+    if (Array.isArray(docs)) models.push(...docs)
+    else models.push(docs)                         // allow passing single doc second
+  }
 
   return models.reduce(func, cache)
 }

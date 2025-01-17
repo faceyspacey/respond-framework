@@ -7,7 +7,7 @@ export default ([...plugins], s, e) => {
 
     const state = plugin.state ?? s
     
-    e = Object.assign(e, r)                 // merge returns of plugins for subsequent plugins
+    e = { ...e, ...r }                       // merge returns of plugins for subsequent plugins
     r = plugin.call(state, state, e, next)  // props.plugins are spliced into all descendant modules, so pass state of the original module ?? state of event's module
    
     return r instanceof Promise

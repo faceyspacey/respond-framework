@@ -867,6 +867,42 @@ f = models => [
 
 #remove e.form
 
+
+const queries = (queries = {}, e) => {
+  const { key, index, page, count, pageCount } = e
+  const pages = queries[key]?.pages
+
+  return {
+    ...queries,
+    [key]: {
+      count,
+      pageCount,
+      pages: {
+        ...pages,
+        [index]: page
+      }
+    }
+  }
+}
+
+
+clearedFilter(query, e.arg)
+
+const clearedFilter = (query, arg) => {
+  const v = Object.values(arg)[0]
+  if (!isObj(v)) return
+
+  const nested = Object.values(v)[0]
+  const cleared = nested === undefined || nested === '' // eg: e.query.userCountAgg.$gte === undefined 
+
+  if (!cleared) return
+
+  const k = Object.keys(arg)[0]
+  query[k] = undefined
+}
+
+
+
 old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index
 
 
@@ -887,12 +923,38 @@ remove _updateOne etc, as we now have this.super()
 make event callbacks no longer user trySync
 await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since tests can await all promises
 model inferrence should probably put model(s) in next event callback's e argument
+default reducer state if defined outside of the function can get mutated/corrupted before profixication
 
 remove e.kind
 
 
-signup
-writeTestFile needs to parse event type
+#writeTestFile needs to parse event type
+#screen -> table? selector
+#signup
+remove db/event.js
+somehow make loading not need to handle pivot
+
+
+#user + course events
+#model.listParams (maybe simply change dropdown on optimistic)
+#remove: if (model?.id && model.id === state.id) return
+
+
+
+list -> findMany
+update -> findOne
+findMany -> aggregatePaginated
+
+
+-1 sort
+model.create
+limit cant be set client-side
+
+instead of validate creating e.post, reduce explicitly
+
+
+query.key
+queryResponses
 
 
 tolls

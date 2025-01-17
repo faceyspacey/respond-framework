@@ -6,6 +6,7 @@ import createAggregateStages from './aggregates/createAggregateStages.mock.js'
 import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
 import safeMethods from './safeMethods.js'
 import cloneDeep from '../proxy/helpers/cloneDeep.js'
+import createPaginatedQueryKey from './helpers/createPaginatedQueryKey.js'
 
 
 export default {
@@ -208,7 +209,22 @@ export default {
     const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
     const models = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
-    return { query, count: docs.length, [this._namePlural]: models }
+    const count = docs.length
+    const total = Math.ceil(count / limit)
+
+    const hasNext = skip + 1 < total
+    const next = hasNext ? skip + 1 : null
+
+    return {
+      query,
+      count,
+      total,
+      next,
+      index: skip,
+      [this._namePlural]: models,
+      page: models.map(m => m.id),
+      key: createPaginatedQueryKey(query)
+    }
   },
 
   async aggregatePaginated(query) {
@@ -235,7 +251,7 @@ export default {
     return Object.values(this.docs).filter(applySelector(selector)).length
   },
 
-  async totalPages(selector, limit = 10) {
+  async totalPages(selector, limit = this.config.listLimit ?? 10) {
     const count = Object.values(this.docs).filter(applySelector(selector)).length
     return Math.ceil(count / limit)
   },
