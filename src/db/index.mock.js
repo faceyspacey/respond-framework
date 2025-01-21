@@ -3,10 +3,10 @@ import applySelector from './utils/applySelector.js'
 import sortDocs from './utils/sortDocs.js'
 import { pickAndCreate as pick } from './utils/pick.js'
 import createAggregateStages from './aggregates/createAggregateStages.mock.js'
-import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
+import createQuerySelector from './helpers/createQuerySelector.js'
 import safeMethods from './safeMethods.js'
 import cloneDeep from '../proxy/helpers/cloneDeep.js'
-import createPaginatedQueryKey from './helpers/createPaginatedQueryKey.js'
+import createQueryKey from './helpers/createQueryKey.js'
 
 
 export default {
@@ -197,19 +197,23 @@ export default {
     }
   },
 
-  async aggregate({
-    selector,
-    stages: specs = [], // stages in userland are respond-specific "specs" which abstracts the underlying implementation
-    project,
-    sort = { updatedAt: -1, _id: 1 },
-    limit = this.config.listLimit ?? 10,
-    skip = 0,
-    query // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
-  } = {}) {
-    const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
-    const models = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
 
-    const count = docs.length
+  async findManyPaginated(query, { project } = {}) {
+    const {
+      sortKey = 'updatedAt',
+      sortValue = -1,
+      limit = this.config.listLimit ?? 10,
+      skip = 0,
+      location,
+      ...sel
+    } = query
+  
+    const selector = this.createQuerySelector(sel) // advanced filtering suitable for an admin panel
+    const sort = { [sortKey]: sortValue, location }
+
+    const count = await this.count(selector)
+    const models = await this.findMany(selector, { project, sort, limit, skip })
+  
     const total = Math.ceil(count / limit)
 
     const hasNext = skip + 1 < total
@@ -223,16 +227,15 @@ export default {
       index: skip,
       [this._namePlural]: models,
       page: models.map(m => m.id),
-      key: createPaginatedQueryKey(query)
+      key: createQueryKey(query)
     }
   },
 
-  async aggregatePaginated(query) {
+  async aggregatePaginated(query, { project } = {}) {
     const {
-      project,
       sortKey = 'updatedAt',
       sortValue = -1,
-      limit,
+      limit = this.config.listLimit ?? 10,
       skip = 0,
       startDate,
       endDate,
@@ -240,11 +243,41 @@ export default {
       ...sel
     } = query
   
-    const selector = this._createAggregatePaginatedSelector(sel) // clear unused params, transform regex strings, date handling
-    const sort = { [sortKey]: sortValue, _id: sortValue, location }
+    const selector = this.createQuerySelector(sel) // clear unused params, transform regex strings, date handling
+    const sort = { [sortKey]: sortValue, location }
+
     const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
-  
-    return this.aggregate({ selector, sort, stages, project, limit, skip, query })
+    const { count, [this._namePlural]: models } = await this.aggregate({ selector, stages, project, sort, limit, skip })
+
+    const total = Math.ceil(count / limit)
+
+    const hasNext = skip + 1 < total
+    const next = hasNext ? skip + 1 : null
+
+    return {
+      query,
+      count,
+      total,
+      next,
+      index: skip,
+      [this._namePlural]: models,
+      page: models.map(m => m.id),
+      key: createQueryKey(query)
+    }
+  },
+
+  async aggregate({
+    selector,
+    stages: specs = [], // stages in userland are respond-specific "specs" which abstracts the underlying implementation
+    project,
+    sort = { updatedAt: -1, _id: 1 },
+    limit = this.config.listLimit ?? 10,
+    skip = 0,
+  } = {}) {
+    const docs = await createAggregateStages(specs, { db: this.db, collectionName: this._name, selector, sort }) // mock fully converts stage specs into docs themselves (non-paginated)
+    const models = await this._findMany(undefined, { project, sort, limit, skip, docs }) // apply pagination and sorting on passed in models
+
+    return { count: docs.length, [this._namePlural]: models }
   },
 
   async count(selector) {
@@ -312,6 +345,11 @@ export default {
   create(doc) {
     const revived = this.db.revive(doc)
     return new this.Model(revived)
+  },
+
+  make(doc) {
+    const revived = this.db.revive(doc)
+    return new this.Model(revived, false)
   },
 
   save(model) {
@@ -396,16 +434,11 @@ export default {
     return new this.Model(revived)
   },
 
-  make(doc) {
-    const revived = this.db.revive(doc)
-    return new this.Model(revived, false)
-  },
-
   super(method, ...args) {
     const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
     return proto[method].apply(this, args)
   },
 
-  _createAggregatePaginatedSelector: createAggregatePaginatedSelector,
+  createQuerySelector,
   ...safeMethods,
 }

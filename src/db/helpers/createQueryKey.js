@@ -1,4 +1,4 @@
-export default ({ skip, ...query } = {}) => JSON.stringify(sort(query))
+export default ({ skip, project, ...query } = {}) => JSON.stringify(sort(query))
 
 
 const sort = (obj = {}) => {

@@ -5,9 +5,10 @@ import mock from './index.mock.js'
 import createJoin from './aggregates/createJoin.js'
 import { toObjectIds, toObjectIdsSelector, fromObjectIds, toProject } from './helpers/toFromObjectIds.js'
 import createAggregateStages, { createStagesCount } from './aggregates/createAggregateStages.js'
-import createAggregatePaginatedSelector from './helpers/createAggregatePaginatedSelector.js'
+import createQuerySelector from './helpers/createQuerySelector.js'
 import safeMethods from './safeMethods.js'
 import { pickAndCreate as pick } from './utils/pick.js'
+import createQueryKey from './helpers/createQueryKey.js'
 
 
 export default !isProd ? mock : {  
@@ -281,6 +282,76 @@ export default !isProd ? mock : {
     }
   },
 
+  async findManyPaginated(query, { project } = {}) {
+      const {
+        sortKey = 'updatedAt',
+        sortValue = -1,
+        limit = this.config.listLimit ?? 10,
+        skip = 0,
+        location,
+        ...sel
+      } = query
+    
+      const selector = this.createQuerySelector(sel) // advanced filtering suitable for an admin panel
+      const sort = { [sortKey]: sortValue, location }
+  
+      const [count, models] = await Promise.all([
+        this.count(selector),
+        this.findMany(selector, { project, sort, limit, skip })
+      ])
+
+      const total = Math.ceil(count / limit)
+  
+      const hasNext = skip + 1 < total
+      const next = hasNext ? skip + 1 : null
+  
+      return {
+        query,
+        count,
+        total,
+        next,
+        index: skip,
+        [this._namePlural]: models,
+        page: models.map(m => m.id),
+        key: createQueryKey(query)
+      }
+    },
+
+  async aggregatePaginated(query, { project } = {}) {
+    const {
+      sortKey = 'updatedAt',
+      sortValue = -1,
+      limit = this.config.listLimit ?? 10,
+      skip = 0,
+      startDate,
+      endDate,
+      location,
+      ...sel
+    } = query
+  
+    const selector = this.createQuerySelector(toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
+    const sort = { [sortKey]: sortValue, _id: sortValue, location }
+
+    const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
+    const { count, [this._namePlural]: models } = await this.aggregate({ selector, stages, project, sort, limit, skip })
+
+    const total = Math.ceil(count / limit)
+
+    const hasNext = skip + 1 < total
+    const next = hasNext ? skip + 1 : null
+
+    return {
+      query,
+      count,
+      total,
+      next,
+      index: skip,
+      [this._namePlural]: models,
+      page: models.map(m => m.id),
+      key: createQueryKey(query)
+    }
+  },
+
   async aggregate({
     selector,
     stages: specs = [], // stages in userland are respond-specific "specs" which abstracts the underlying implementation
@@ -288,7 +359,6 @@ export default !isProd ? mock : {
     sort = { updatedAt: -1, _id: 1 },
     limit = this.config.listLimit ?? 10,
     skip = 0,
-    query, // optional query object passed from client via aggregatePaginated for matching results to the original query for caching/pagination in reducers
   } = {}) {
     const stages = createAggregateStages(specs, { collection: this, selector, project, sort, limit, skip })
 
@@ -300,32 +370,7 @@ export default !isProd ? mock : {
     const count = counts[0]?.count ?? 0
     const models = docs.map(m => this._create(m))
 
-    return {
-      query,
-      count,
-      pages: Math.ceil(count / limit),
-      [this._namePlural]: models
-    }
-  },
-
-  async aggregatePaginated(query) {
-    const {
-      project,
-      sortKey = 'updatedAt',
-      sortValue = -1,
-      limit,
-      skip = 0,
-      startDate,
-      endDate,
-      location,
-      ...sel
-    } = query
-  
-    const selector = this._createAggregatePaginatedSelector(toObjectIdsSelector(sel)) // clear unused params, transform regex strings, date handling
-    const sort = { [sortKey]: sortValue, _id: sortValue, location }
-    const stages = this.aggregateStages?.map(s => ({ ...s, startDate, endDate }))
-  
-    return this.aggregate({ selector, sort, stages, project, limit, skip, query })
+    return { count, [this._namePlural]: models }
   },
 
   async count(selector) {
@@ -367,6 +412,15 @@ export default !isProd ? mock : {
     const revived = this.db.revive({ ...rest, id })   
     
     return new this.Model(revived)
+  },
+
+  make(doc) {
+    const revived = this.db.revive(doc)
+    return new this.Model(revived, false)
+  },
+
+  save(model) {
+    return this.upsert(model)
   },
 
   mongo() {
@@ -455,6 +509,6 @@ export default !isProd ? mock : {
     return proto[method].apply(this, args)
   },
 
-  _createAggregatePaginatedSelector: createAggregatePaginatedSelector,
+  createQuerySelector,
   ...safeMethods
 }

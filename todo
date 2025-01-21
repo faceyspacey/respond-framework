@@ -925,6 +925,7 @@ await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since 
 model inferrence should probably put model(s) in next event callback's e argument
 default reducer state if defined outside of the function can get mutated/corrupted before profixication
 onEndReached requires using useCallback -- need to find another way
+use super on db
 
 remove e.kind
 
@@ -959,9 +960,9 @@ remove e.kind
 #model.create
 #rename docs to models
 
-prod db methods: save, make
+#prod db methods: save, make
 
-rename aggregatePaginated
+#rename aggregatePaginated
 
 
 

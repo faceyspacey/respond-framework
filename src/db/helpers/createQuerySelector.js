@@ -50,6 +50,9 @@ const convertDateAtString = (k, v, selector) => {
   }
 }
 
+
+
+
 const shouldConvertToRegex = (k, v) =>
   typeof v === 'string' &&
   !isRegexString(v) &&                // ingore values already provided as regex wrapped in front slashes
