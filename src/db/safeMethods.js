@@ -66,10 +66,12 @@ export default {
 
   async updateOneSafe(selector, newDoc, opts) {
     if (selector?.roles) {
+      selector = { ...selector }
       delete selector.roles
     }
   
     if (newDoc?.roles) {
+      newDoc = { ...newDoc }
       delete newDoc.roles
     }
 
@@ -79,6 +81,7 @@ export default {
 
   async insertOneSafe(doc, opts) {
     if (doc?.roles) {
+      doc = { ...doc }
       delete doc.roles
     }
 
@@ -88,19 +91,27 @@ export default {
 
   async upsertSafe(selector, doc, opts) {
     if (selector?.roles) {
+      selector = { ...selector }
       delete selector.roles
     }
   
     if (doc?.roles) {
+      doc = { ...doc }
       delete doc.roles
     }
 
     if (opts?.insertDoc?.roles) {
+      opts = { ...opts }
+      opts.insertDoc = { ...opts.insertDoc }
       delete opts.insertDoc.roles
     }
 
     const project = excludeProjectFields(opts?.project, this.privateFields)
     return this.upsert(selector, doc, { ...opts, project })
+  },
+
+  async saveSafe(model) {
+    return this.upsertSafe(model)
   },
 
   createSafe({ ...doc }) {

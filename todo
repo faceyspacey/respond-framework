@@ -956,9 +956,14 @@ remove e.kind
 #second look: validatePost, s.query.page = 'article'
 
 #writeTestFile needs to parse event type
+#model.create
+#rename docs to models
+
+prod db methods: save, make
 
 rename aggregatePaginated
-model.create
+
+
 
 
 dates in session not coming back as date objects

@@ -10,7 +10,7 @@ export default {
       Object.assign(this, moreDoc)
     }
 
-    const res = await this.db[this._name].upsert(this)
+    const res = await this.db[this._name].save(this)
     return res?.error ? res : { [this._name]: this } // preserve reference so reactivity sees it as the same object, and triggers less re-renders
   },
 
@@ -22,7 +22,7 @@ export default {
       Object.assign(this, moreDoc)
     }
 
-    const res = await this.db[this._name].upsertSafe(this)
+    const res = await this.db[this._name].saveSafe(this)
     return res?.error ? res : { [this._name]: this }
   },
 

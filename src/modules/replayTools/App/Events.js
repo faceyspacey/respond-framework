@@ -42,7 +42,11 @@ export default (props, { events, evs, evsIndex, divergentIndex, playing, selecte
 
       {playing
         ? <Button text='STOP REPLAY' event={events.stopReplay} style={{ backgroundColor: colors.red }} />
-        : <Button text='SAVE TEST' event={events.saveTest} style={{ backgroundColor: colors.greenBright }} />
+        
+        : <View style={s.buttons}>
+            <Button text='CLEAR' event={events.clearEvents} style={{ backgroundColor: colors.purple, flex: 1, marginRight: 0 }} />
+            <Button text='SAVE TEST' event={events.saveTest} style={{ backgroundColor: colors.greenBright, flex: 1 }} />
+          </View>
       }
     </View>
   )
@@ -53,5 +57,10 @@ export default (props, { events, evs, evsIndex, divergentIndex, playing, selecte
 const s = StyleSheet.create({
   c: {
     flex: 1,
+  },
+
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 })

@@ -361,10 +361,12 @@ export default !isProd ? mock : {
   },
 
   create(doc) {
-    doc = { ...fromObjectIds(doc) }                     // mongo ObjectId objects converted to strings for ez client consumption
-    doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
-    delete doc._id                                      // bye bye _id
-    return this.make(doc)
+    if (!doc) return new this.Model
+
+    const { _id, id = _id, ...rest } = fromObjectIds(doc)   // mongo ObjectId objects converted to strings for ez client consumption
+    const revived = this.db.revive({ ...rest, id })   
+    
+    return new this.Model(revived)
   },
 
   mongo() {
@@ -440,10 +442,12 @@ export default !isProd ? mock : {
   },
 
   _create(doc) {
-    doc = { ...fromObjectIds(doc) }         // mongo ObjectId objects converted to strings for ez client consumption
-    doc.id ??= doc._id || new ObjectId().toString()     // _id switched to id for standardized consumption (but can also be supplied in doc as `id`, eg optimistically client-side using bson library)
-    delete doc._id                                      // bye bye _id
-    return this.make(doc)
+    if (!doc) return new this.Model
+
+    const { _id, id = _id, ...rest } = fromObjectIds(doc)   // mongo ObjectId objects converted to strings for ez client consumption
+    const revived = this.db.revive({ ...rest, id })   
+    
+    return new this.Model(revived)
   },
 
   super(method, ...args) {

@@ -8,7 +8,7 @@ export default ({ modelsByBranchType, eventsByType } = {}) => {
     keys(v).forEach(k => obj[k] = revive(v[k], k))
     
     const Model = v.__branchType && modelsByBranchType[v.__branchType]
-    return Model ? new Model(obj) : obj
+    return Model ? new Model(obj, false) : obj
   }
 
   function revive(v, k) {
@@ -32,8 +32,10 @@ export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) =>
     const obj = {}
     keys(v).forEach(k => obj[k] = revive(v[k], k))
     
-    const Model = v.__type && modelsByBranchType[branch + '_' + v.__type]
-    return Model ? Model.make(obj) : obj
+    const branchType = branch + '_' + v.__type
+    const Model = v.__type && modelsByBranchType[branchType]
+
+    return Model ? new Model(obj, false, branchType) : obj
   }
 
   function revive(v, k) {
@@ -55,7 +57,7 @@ export const reviveApiServer = ({ modelsByBranchType, eventsByType }) => {
     keys(v).forEach(k => obj[k] = revive(v[k], k))
     
     const Model = v.__branchType && modelsByBranchType[v.__branchType]
-    return Model ? new Model(obj) : obj
+    return Model ? new Model(obj, false) : obj
   }
 
   function revive(v, k) {
@@ -78,7 +80,7 @@ export const reviveServerModelInSpecificModule = db => {
     keys(v).forEach(k => obj[k] = revive(v[k]))
     
     const Model = v.__type && db.models[v.__type]
-    return Model ? new Model(obj) : obj
+    return Model ? new Model(obj, false) : obj
   }
 
   function revive(v) {
@@ -103,14 +105,14 @@ export const createStateReviver = ({ modelsByBranchType, eventsByType, refIds },
   if (id) {
     if (refs[id]) return refs[id]
     const Model = v.__branchType && modelsByBranchType[v.__branchType]
-    const obj = Model ? new Model(v) : v.__arr ?? v
+    const obj = Model ? new Model(v, false) : v.__arr ?? v
     refIds.set(obj, id)
     delete obj.__refId
     return refs[id] = obj
   }
 
   const Model = v.__branchType && modelsByBranchType[v.__branchType]
-  return Model ? new Model(v) : v
+  return Model ? new Model(v, false) : v
 }
 
 

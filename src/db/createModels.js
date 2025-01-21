@@ -31,19 +31,12 @@ export default ({ respond, mod, proto, parent, branch: branchRelative }) => {
     const prevModel = prevModels[key]
 
     const Model = createModel(k, mixin, models[k], extra, prevModel)
-    respond.modelsByBranchType[key] = nextModels[k] = Model
 
-    Model.make = doc => {
-      const model = new Model(doc)
-      model.__branchType = key
-      return model
-    }
+    Model.create = doc => new Model(doc, true, key)
+    Model.make = doc => new Model(doc, false, key)
 
-    Model.create = doc => {
-      const model = Model.make(doc)
-      model.id = doc?.id ?? generateId()
-      return model
-    }
+    nextModels[k] = Model
+    respond.modelsByBranchType[key] = Model
   }
 
   return respond.models = proto.models = nextModels
@@ -55,9 +48,13 @@ export const createModel = (k, mixin, methods, extra, Model) => {
   const base = { _name: k, _namePlural: k + 's' }
   const descriptors = Object.assign(g(base), methods, g(extra))
 
-  Model ??= function Model(doc) {
-    this.__type = k
+  Model ??= function Model(doc, genId = true, branchType) {
     if (doc) Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
+    if (branchType) this.__branchType = branchType
+    if (genId) this.id ??= generateId()
+
+    this.__type = k
+
     this.construct?.()
   }
 

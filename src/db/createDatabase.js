@@ -5,14 +5,14 @@ import * as makeRequest from './helpers/makeRequest.js'
 import { createModel } from './createModels.js'
 import createSharedModels from './helpers/createSharedModels.js'
 import { reviveServerModelInSpecificModule } from '../createModule/helpers/revive.js'
-
+import userGetters from './helpers/userGetters.js'
 
 
 export default (options = {}) => {
   const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models: m = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const base = { make, ...makeRequest, config, ...table, ...mixin }
+  const base = { ...makeRequest, config, ...table, ...mixin }
   const models = createSharedModels(m)
 
   const descriptors = {
@@ -24,37 +24,12 @@ export default (options = {}) => {
 
   db.revive = reviveServerModelInSpecificModule(db)
 
-  for (const k in { ...tables, ...models }) { // there may be be virtual models, which need unused tables so we can do db.fooVirtual.make()
+  for (const k in { ...tables, ...models }) { // there may be be virtual models, which need unused tables so we can do db.fooVirtual.create()
     createTable(k, db, base, model, descriptors, tables, models, extra)
   }
 
   for (const k in modules) {
-    const { props, ...child } = modules[k]
-
-    db[k] = child
-    child.parent = db
-    db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
-
-    if (!props?.tables) continue
-
-    const models = createSharedModels(props.models)
-    
-    for (const k2 in { ...props.tables, ...models }) {
-      const propTable = props.tables[k2]
-      let other
-
-      if (propTable === tables[k2]) {  // original table same as in parent
-        child[k2] = db[k2]             // assign fully created table
-        child.models[k2] = child[k2].Model = db[k2].Model // assign fully created model
-      }
-      else if (other = Object.keys(tables).find(k3 => tables[k3] === propTable)) { // propTable is a name of another table
-        child[k2] = db[other]
-        child.models[k2] = child[k2].Model = db[other].Model
-      }
-      else {
-        createTable(k2, child, base, model, descriptors, props.tables, models, extra)
-      }
-    }
+    createChildModuleTables(k, modules[k], db, base, model, descriptors, tables, extra)
   }
 
   return db.original = db // when a module is focused during development, we may need to select original without props
@@ -78,46 +53,31 @@ const createTable = (k, db, base, model, descriptors, tables, models, extra) => 
 
 
 
+const createChildModuleTables = (k, mod, db, base, model, descriptors, tables, extra) => {
+  const { props, ...child } = mod
 
-const userGetters = {
-  user: {
-    enumerable: false,
-    get() {
-      return this.findCurrentUser()
-    }
-  },
+  db[k] = child
+  child.parent = db
+  db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
 
-  userSafe: {
-    enumerable: false,
-    get() {
-      return this.findCurrentUserSafe()
-    }
-  },
+  if (!props?.tables) return
 
-  findCurrentUser: {
-    value() {
-      if (this.__user) return this.__user
-      if (!this.req) throw new Error('respond: `this.user` and `this.findCurrentUser()` can only be called on the table instance directly called by the client`')
-      if (!this.identity) return null
-      return this.db.user.findOne(this.identity.id).then(user => this.__user = user)
-    }
-  },
+  const models = createSharedModels(props.models)
+  
+  for (const k2 in { ...props.tables, ...models }) {
+    const propTable = props.tables[k2]
+    let other
 
-  findCurrentUserSafe: {
-    value() {
-      if (this.__userSafe) return this.__userSafe
-      if (!this.req) throw new Error('respond: `this.userSafe` and `this.findCurrentUserSafe()` can only be called on the table instance directly called by the client')
-      if (!this.identity) return null
-      return this.db.user.findOneSafe(this.identity.id).then(user => this.__userSafe = user)
+    if (propTable === tables[k2]) {  // original table same as in parent
+      child[k2] = db[k2]             // assign fully created table
+      child.models[k2] = child[k2].Model = db[k2].Model // assign fully created model
     }
-  },
+    else if (other = Object.keys(tables).find(k3 => tables[k3] === propTable)) { // propTable is a name of another table
+      child[k2] = db[other]
+      child.models[k2] = child[k2].Model = db[other].Model
+    }
+    else {
+      createTable(k2, child, base, model, descriptors, props.tables, models, extra)
+    }
+  }
 }
-
-
-
-function make(doc) {
-  doc = this.db.revive(doc)
-  return new this.Model(doc)
-}
-
-// table.create must be defined by table or parent table, as they may have a custom way of dealing with creating IDs

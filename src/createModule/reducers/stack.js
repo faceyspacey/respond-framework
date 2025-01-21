@@ -3,7 +3,8 @@ import { navigation } from '../kinds.js'
 
 export default function (state = { entries: [], index: -1 }, e, { respond }) {
   if (e.kind !== navigation) return state
-
+  if (e.meta.parallel) return state
+  
   const { entries, index: i } = state
 
   if      (respond.isEqualNavigations(e, entries[i])) {      // current event repeated

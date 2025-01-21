@@ -163,6 +163,13 @@ export default {
     }
   },
 
+  clearEvents: {
+    run: state => {
+      delete state.divergentIndex
+      return state.replayEvents(state.evs.slice(0, 1))
+    }
+  },
+
   toggleSpliceMode: {
     reduce: state => state.spliceMode = !state.spliceMode
   },

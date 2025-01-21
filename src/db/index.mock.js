@@ -310,8 +310,12 @@ export default {
   },
 
   create(doc) {
-    const id = doc?.id || generateId()
-    return this.make({ ...doc, id })
+    const revived = this.db.revive(doc)
+    return new this.Model(revived)
+  },
+
+  save(model) {
+    return this.upsert(model)
   },
 
   insertSeed(docsObject = {}) {
@@ -388,8 +392,13 @@ export default {
   },
 
   _create(doc) {
-    const id = doc?.id || generateId()
-    return this.make({ ...doc, id })
+    const revived = this.db.revive(doc)
+    return new this.Model(revived)
+  },
+
+  make(doc) {
+    const revived = this.db.revive(doc)
+    return new this.Model(revived, false)
   },
 
   super(method, ...args) {
