@@ -86,7 +86,7 @@ const writeTestFile = (filename, content) => {
 
 
 const cleanAndNumberEvents = events => events.map((e, i) => {
-  const { event: type, arg = {}, meta: { trigger, input, cached, url, ...meta } = {} } = e
+  const { event: { __event: type }, arg = {}, meta: { trigger, input, cached, url, ...meta } = {} } = e
 
   return {
     index: i,

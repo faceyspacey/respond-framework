@@ -15,8 +15,8 @@ export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type,
 
   const dndProps = useDragAndDrop(index, height, changeIndex, setIndex, openSlot, toggleScroll, longPressing)
 
-  let a = arg && Object.keys(arg).length > 0 && JSON.stringify(arg)
-  a = a?.length === 2 ? undefined : a // remove possible undefined keys
+  const a = arg && Object.keys(arg).length > 0 &&
+    JSON.stringify(arg, (k, v) => v === undefined ? 'undefined' : v).replace(/"undefined"/g, 'undefined')
 
   const color = skipped ? colors.white : divergent ? colors.pink : dispatched ? colors.money : colors.white
 
@@ -53,7 +53,7 @@ export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type,
           </View> 
 
           <Text style={s.subtext} numberOfLines={1}>
-            {a}
+            {a || undefined}
           </Text>  
         </Pressable>
         
@@ -64,6 +64,8 @@ export default memo((({ event, changeIndex, skipEvent, deleteEvent, index, type,
     </Animated.View>
   )
 }))
+
+
 
 
 

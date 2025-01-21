@@ -57,8 +57,8 @@ export const createModel = (k, mixin, methods, extra, Model) => {
 
   Model ??= function Model(doc) {
     this.__type = k
-    if (!doc) return
-    Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
+    if (doc) Object.defineProperties(this, g(doc)) // unlike Object.assign, this will allow assignment of instance properties of the same name as prototype getters without error
+    this.construct?.()
   }
 
   Object.defineProperty(Model, 'name', { value: k })

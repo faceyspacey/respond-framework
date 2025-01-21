@@ -924,38 +924,45 @@ make event callbacks no longer user trySync
 await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since tests can await all promises
 model inferrence should probably put model(s) in next event callback's e argument
 default reducer state if defined outside of the function can get mutated/corrupted before profixication
+onEndReached requires using useCallback -- need to find another way
 
 remove e.kind
 
 
-#writeTestFile needs to parse event type
+
 #screen -> table? selector
 #signup
-remove db/event.js
-somehow make loading not need to handle pivot
+#remove db/event.js
+#somehow make loading not need to handle pivot
 
 
 #user + course events
 #model.listParams (maybe simply change dropdown on optimistic)
 #remove: if (model?.id && model.id === state.id) return
+#instead of validate creating e.post, reduce explicitly
+#limit cant be set client-side
+
+
+#list -> findMany
+#update -> findOne
+#findMany -> aggregatePaginated
 
 
 
-list -> findMany
-update -> findOne
-findMany -> aggregatePaginated
+#make form a helper method
+#form navbar with save button + checkmark on save
 
+#dedupe nextPage (query.skip = domain.pageIndex + 1)
+#second look: validatePost, s.query.page = 'article'
 
--1 sort
+#writeTestFile needs to parse event type
+
+rename aggregatePaginated
 model.create
-limit cant be set client-side
-
-instead of validate creating e.post, reduce explicitly
 
 
-query.key
-queryResponses
-
+dates in session not coming back as date objects
+remake aggregatePaginated so that findMany can do similar stuff, and so if there are no specs stages findMany is used
 
 tolls
 

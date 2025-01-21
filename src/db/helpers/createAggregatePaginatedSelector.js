@@ -2,34 +2,81 @@ import stringToRegex, { isRegexString } from '../utils/stringToRegex.js'
 import dateStringToDate from '../utils/dateStringToDate.js'
 
 
-export default function({ ...selector }) {
+export default function({ customQuery, ...selector }) {
   Object.keys(selector).forEach(k => {
     let v = selector[k]
-    const paramCleared = v === '' || v === undefined
 
-    if (paramCleared) {
-      delete selector[k]
+    if (paramCleared(k, v, selector)) {
       return
     }
-
-    if (typeof v === 'string' && !isRegexString(v) && !/id$/i.test(k) && !k.endsWith('Date')) { // dont convert id selectors to regexes
+    else if (isDateAtString(k)) {                       // dates can be passed as strings in comparison objects
+      ({ k, v } = convertDateAtString(k, v, selector))  // eg: { $gt: '5/1' } -> { $gt: new Date('5/2/2025') }
+    }
+    else if (shouldConvertToRegex(k, v)) {
       v = '/^' + v + '/i'
     }
 
-    selector[k] = isRegexString ? stringToRegex(v) : v
+    selector[k] = isRegexString(v) ? stringToRegex(v) : v
   })
 
-  // dates are passed as strings in objects, and possibly dont have years, eg: { $gt: '5/1' }
-  if (selector.createdAt) {
-    const key = Object.keys(selector.createdAt)[0] // eg: $gt
-    selector.createdAt = { [key]: dateStringToDate(selector.createdAt[key]) } // eg: { $gt: DateObject }
-  }
+  maybeFilterBySignupDateRange(selector)
 
-  if (selector.updatedAt) {
-    const key = Object.keys(selector.updatedAt)[0] // eg: $gt
-    selector.updatedAt =  { [key]: dateStringToDate(selector.updatedAt[key]) }
-  }
+  return customQuery ? evalCustomQuery(customQuery, selector) : selector
+}
 
+
+
+
+const paramCleared = (k, v, selector) => {
+  const cleared = v === '' || v === undefined
+  if (!cleared) return
+
+  delete selector[k]
+  return true
+}
+
+
+
+const isDateAtString = k => k.endsWith('AtString')       // eg: 'createdAtString'
+
+const convertDateAtString = (k, v, selector) => {
+  const comparison = Object.keys(v)[0]                   // eg: $gt
+
+  delete selector[k]
+
+  return {
+    k: k.replace('String', ''),
+    v: { [comparison]: dateStringToDate(v[comparison]) } // eg: { $gt: Date }
+  }
+}
+
+const shouldConvertToRegex = (k, v) =>
+  typeof v === 'string' &&
+  !isRegexString(v) &&                // ingore values already provided as regex wrapped in front slashes
+  !(/Id$/.test(k) || k === 'id') &&   // ignore id selectors
+  !k.endsWith('Date')                 // ignore special signupStartDate || signupEndDate selectors
+
+
+
+
+
+
+const evalCustomQuery = ({ ...selector }) => {
+  try {
+    delete selector.customQuery // be sure it's gone, so selector doesn't try to match the key `customQuery`
+    
+    const obj = eval(`(${customQuery})`) // save both the string form + queryable fields
+    Object.assign(selector, obj)
+  }
+  catch (error) {} // do nothing
+
+  return selector
+}
+
+
+
+
+const maybeFilterBySignupDateRange = selector => {
   if (selector.signupStartDate) {
     selector.$and = selector.$and || []
 
@@ -53,6 +100,4 @@ export default function({ ...selector }) {
 
     delete selector.signupEndDate
   }
-
-  return selector
 }
