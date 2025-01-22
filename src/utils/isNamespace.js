@@ -9,5 +9,6 @@ export default config => {
 
 
 const knownKeys = {
-  sync: true
+  sync: true,
+  kind: true,
 }

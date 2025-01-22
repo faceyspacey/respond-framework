@@ -52,6 +52,6 @@ const createPathname = (pattern, e) => {
     return argsToPathName(e.arg, opts)
   }
   catch (error) {
-    throw new Error(`event.pattern "${pattern}" for event "${e.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)
+    throw new Error(`event.pattern "${pattern}" for event "${e.event.type}" received incompatible e.arg: ${e.arg ? JSON.stringify(e.arg) : 'undefined'}`)
   }
 }

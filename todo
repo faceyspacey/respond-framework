@@ -926,6 +926,9 @@ model inferrence should probably put model(s) in next event callback's e argumen
 default reducer state if defined outside of the function can get mutated/corrupted before profixication
 onEndReached requires using useCallback -- need to find another way
 use super on db
+dates in session not coming back as date objects
+extactModuleAspects won't work with reducers since default args set reducer.length to 0
+
 
 remove e.kind
 
@@ -967,8 +970,8 @@ remove e.kind
 
 
 
-dates in session not coming back as date objects
-remake aggregatePaginated so that findMany can do similar stuff, and so if there are no specs stages findMany is used
+
+#remake aggregatePaginated so that findMany can do similar stuff, and so if there are no specs stages findMany is used
 
 tolls
 

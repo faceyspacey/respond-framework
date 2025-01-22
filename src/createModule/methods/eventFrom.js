@@ -1,5 +1,6 @@
 import { pathToRegexp } from 'path-to-regexp'
 import { cleanSearchHash, searchHashToQueryHash, urlToLocation } from '../../helpers/url.js'
+import isNumber from '../../utils/isNumber.js'
 
 
 export default function eventFrom(url, additionalArg) {
@@ -14,7 +15,7 @@ export default function eventFrom(url, additionalArg) {
 
   const patterns = Object.keys(eventsByPattern)
 
-  const { pattern, arg } = find(patterns, loc.pathname) ?? {}
+  const { pattern, arg } = find(patterns, loc.pathname, eventsByPattern) ?? {}
   return pattern && createEvent(eventsByPattern[pattern], loc, additionalArg, arg)
 }
 
@@ -38,15 +39,15 @@ const createEvent = (event, loc, additionalArg, arg) => {
 }
 
 
-const find = (patterns, pathname) => {
+const find = (patterns, pathname, eventsByPattern) => {
   for (const pattern of patterns) {
-    const match = isMatch(pathname, pattern)
+    const match = isMatch(pathname, pattern, eventsByPattern)
     if (match) return match
   }
 }
 
 
-const isMatch = (pathname, pattern) => {
+const isMatch = (pathname, pattern, eventsByPattern) => {
   const { re, keys } = L2[pattern] ?? compilePath(pattern)
   const match = re.exec(pathname)
 
@@ -55,7 +56,15 @@ const isMatch = (pathname, pattern) => {
   const [_path, ...values] = match
   const arg = {}
 
-  keys.forEach((key, i) => arg[key.name] = values[i])
+  const event = eventsByPattern[pattern]
+
+  keys.forEach((key, i) => {
+    const value = values[i]
+
+    arg[key.name] = event.convertPatternNumbers !== false
+      ? isNumber(value) ? parseFloat(value) : value
+      : value
+  })
   
   return { pattern, arg }
 }
