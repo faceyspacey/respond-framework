@@ -29,6 +29,7 @@ export default (respond, cache, fromEvent) => ({
   has(e) {
     const { event } = e
     if (!event.pattern) return false
+    if (e.meta.cached === false) return false // manual setting in a plugin
     if (event.cache !== undefined && typeof event.cache !== 'function') return !!event.cache
 
     const cached = !!(!event.fetch || e.meta.cached || this.get(e))

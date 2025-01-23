@@ -906,36 +906,17 @@ const clearedFilter = (query, arg) => {
 old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index
 
 
-automatic cache reducers
-optimistic isomorphic functions/eventCallbacks
-memo with props.obj, which automatically transfers reactive tracking to child
-add events to permalink
-Input refactoring (kind, formatIn, etc)
-clicking the same exact event twice should not trigger it twice
+#constructors called automatically when u call .make
+#?mutated events will be replayed with mutations -- need to preserve original event
 
+#await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since tests can await all promises
+#model inferrence should probably put model(s) in next event callback's e argument
 
-custom event callback makes app think namespaces are events
-apiUrl should be stored on db, which is passed to focusedModule -- we may need a general non-db approach for things like config, translations etc
-error returns from db methods -- throw -> onError? what about user-defined errors?
-mutated events will be replayed with mutations -- need to preserve original event
-constructors called automatically when u call .make
-remove _updateOne etc, as we now have this.super()
-make event callbacks no longer user trySync
-await this.promisesCompleted + awaitInReplaysOnly can possibly be removed since tests can await all promises
-model inferrence should probably put model(s) in next event callback's e argument
-default reducer state if defined outside of the function can get mutated/corrupted before profixication
-onEndReached requires using useCallback -- need to find another way
-use super on db
-dates in session not coming back as date objects
-extactModuleAspects won't work with reducers since default args set reducer.length to 0
-
-
-remove e.kind
 
 
 
 #screen -> table? selector
-#signup
+
 #remove db/event.js
 #somehow make loading not need to handle pivot
 
@@ -957,7 +938,7 @@ remove e.kind
 #form navbar with save button + checkmark on save
 
 #dedupe nextPage (query.skip = domain.pageIndex + 1)
-#second look: validatePost, s.query.page = 'article'
+#second look: validatePost
 
 #writeTestFile needs to parse event type
 #model.create
@@ -968,10 +949,38 @@ remove e.kind
 #rename aggregatePaginated
 
 
-
-
-
 #remake aggregatePaginated so that findMany can do similar stuff, and so if there are no specs stages findMany is used
+
+
+
+
+remove _updateOne etc, as we now have this.super()
+remove e.kind
+dates in session not coming back as date objects
+extactModuleAspects won't work with reducers since default args set reducer.length to 0
+
+error returns from db methods -- throw -> onError? what about user-defined errors?
+apiUrl should be stored on db, which is passed to focusedModule -- we may need a general non-db approach for things like config, translations etc
+monkeypatch date
+when you compare event.module in a component, they wont be equal
+open.link should try to return opener.state from createModule
+consider making redirect operate before, and create another called redirectAfter
+
+add events to permalink
+clicking the same exact event twice should not trigger it twice
+automatic cache reducers
+
+make event callbacks no longer user trySync -- need to make more reliable queueNotification deferred batching time
+default reducer state if defined outside of the function can get mutated/corrupted before profixication
+custom event callback makes app think namespaces are events
+onEndReached requires using useCallback -- need to find another way
+
+optimistic isomorphic functions/eventCallbacks
+memo with props.obj, which automatically transfers reactive tracking to child
+Input refactoring (kind, formatIn, etc)
+
+
+
 
 tolls
 

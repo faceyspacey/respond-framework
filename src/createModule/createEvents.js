@@ -2,7 +2,7 @@ import isNamespace from '../utils/isNamespace.js'
 import { prepend } from './helpers/sliceBranch.js'
 import mergeArgMeta from './helpers/mergeArgMeta.js'
 import kinds, { init, navigation, submission, done, error, data } from './kinds.js'
-import { _branch } from './reserved.js'
+import { _branch, _parent } from './reserved.js'
 import { stripBranchWithUnknownFallback } from './helpers/sliceBranch.js'
 import { applyArgName } from './helpers/inferArgName.js'
 
@@ -38,7 +38,7 @@ const createEvents = (respond, events, propEvents, namespace = new Namespace(res
       namespace[name] = createEvents(respond, config, propConfig, new Namespace(respond, prepend(namespace.name, name)))
     }
     else if (propConfig) {
-      namespace[name] = createEvent(respond, propConfig, name, namespace) // fresh event passed as prop
+      namespace[name] = createEvent(respond.state[_parent].respond, propConfig, name, namespace) // fresh event passed as prop
     }
     else if (config) {
       namespace[name] = createEvent(respond, config, name, namespace)
