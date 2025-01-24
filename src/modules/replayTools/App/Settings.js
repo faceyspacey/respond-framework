@@ -14,7 +14,7 @@ export default (props, { events, focusedBranch, configs }) => {
   const urlInput = createSettings({ url: respondConfig.url }, RespondSettingForm)
 
   const config = configs[focusedBranch]
-  const settings = createSettings(config, UserSettingForm, events.edit, 1)
+  const settings = createSettings(config, UserSettingForm, events.edit)
   
   return (
     <View style={s.c}>
@@ -38,13 +38,13 @@ export default (props, { events, focusedBranch, configs }) => {
 
 
 
-const createSettings = (config = {}, FormComponent, event, z = -1) => {
+const createSettings = (config = {}, FormComponent, event) => {
   const fields = Object.keys(config)
 
   return fields.map((name, i) => {
     const c = config[name]
 
-    const zIndex = -i * z // so Dropdown menus are above subsequent dropdowns
+    const zIndex = fields.length - i // so Dropdown menus are above subsequent dropdowns
 
     const Component = c.boolean ? Radio : c.options ? Dropdown : Input
     const props = { ...c, event, name, label: c.label ?? name, key: name, zIndex, Component }
@@ -79,7 +79,8 @@ const RespondSettingForm = ({ Component, name, options, ...props }, state) => {
     name,
     event: events.editConfig,
     value: config[name],
-    options: typeof options === 'function' ? options(config, state) : options || bools
+    options: typeof options === 'function' ? options(config, state) : options || bools,
+    zIndex: props.zIndex + 1000,
   })
 }
 

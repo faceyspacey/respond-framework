@@ -35,9 +35,10 @@ import { isProd } from '../helpers/constants.js'
 import assignProto from '../utils/assignProto.js'
 import createAncestors from './helpers/createAncestors.js'
 import { _branch, _module, _top } from './reserved.js'
+import sessionStorage from '../utils/sessionStorage.js'
 
 
-export default (top, system, focusedModule, focusedBranch) => {
+export default (top, system, focusedModule, focusedBranch, opts) => {
   const { replayState, prevUrl = null, basenames = {} } = system
   const prev = window.state?.respond
 
@@ -123,18 +124,24 @@ export default (top, system, focusedModule, focusedBranch) => {
     prevEventsByType: prev?.focusedBranch === focusedBranch ? prev.eventsByType : {},
     mem: { ...prev?.mem, rendered: false },
     cache: system.cache ?? {},
-    
+    sessionStorage: opts.sessionStorage ?? prev?.sessionStorage ?? sessionStorage,
+
     devtools: new Proxy({}, { get: () => () => {} }), // tools
     history: createHistory(),
     cookies: createCookies(),
     branchNames: createBranches(top, focusedBranch),   // important: create branch names, assign moduleKeys array to each module, etc,
-
+    e: replayState.lastEvent,
+    lastEvents: replayState.lastEvents,
+    
     branches: { get undefined() { return this[''] } }, // important: modules by branch will be stored here when created in addModule.js
 
     get topState() {
       return this.branches['']                         // escape hatch: any module can access the top if it really needs
     },
-    
+
+    get events() {
+      return this.state.events
+    }
   }
 
   return Respond

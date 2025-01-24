@@ -4,7 +4,7 @@ import createPermalink from './helpers/createPermalink.js'
 import createModule from '../../createModule/index.js'
 import { navigation } from '../../createModule/kinds.js'
 import { nestFocusedSettings } from './helpers/nestSettings.js'
-import { defaultOrigin } from '../../helpers/constants.js'
+import { defaultOrigin, isNative } from '../../helpers/constants.js'
 
 
 export default {
@@ -35,7 +35,7 @@ export default {
     namespace: false,
     kind: navigation,
     cache: false,
-    fetch: ({ db, testsParams }) => db.developer.findTests.server(testsParams),
+    fetch: async ({ db, testsParams }) => db.developer.findTests.server(testsParams),
   },
   
   sortTests: {
@@ -70,7 +70,7 @@ export default {
   saveTest: {
     async run({ db, respond, selectedTestId, evs, tests: t, events: { tests } }) {
       const defaultName = selectedTestId ? t[selectedTestId].name : evs[0].event.type.replace(/\./g, '/') + '.js'
-      const name = prompt('Name of your test?', defaultName)?.replace(/^\//, '')
+      const name = isNative ? defaultName : prompt('Name of your test?', defaultName)?.replace(/^\//, '')
 
       if (!name) return
 

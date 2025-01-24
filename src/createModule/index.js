@@ -12,7 +12,7 @@ export default (top, opts = {}, start = performance.now()) => {
 
   const mod = sliceBranch(top, focusedBranch)
 
-  const Respond = createRespond(top, system, mod, focusedBranch)
+  const Respond = createRespond(top, system, mod, focusedBranch, opts)
   const state = addModule(Respond, mod)
 
   hydrateModules(state, system)

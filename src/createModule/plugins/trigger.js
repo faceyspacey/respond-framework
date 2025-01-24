@@ -2,7 +2,7 @@ import combineInputEvents from '../../modules/replayTools/helpers/combineInputEv
 import { isEqualDeepPartial } from '../../utils/isEqual.js'
 import { mergePrevState } from '../hydrateModules.js'
 import { push } from '../../history/changePath.js'
-import { hasHistory, isTest } from '../../helpers/constants.js'
+import { hasHistory, isNative, isTest } from '../../helpers/constants.js'
 import bs from '../../history/browserState.js'
 import { _branch } from '../reserved.js'
 import { urlToLocation } from '../../helpers/url.js'
@@ -18,14 +18,15 @@ export default function (state, e) {
 
   replayState.status = 'reload'
   respond.mem.changedPath = false
-
+  state.respond.e = e
+  
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
     const { url } = urlToLocation(window.location)
     push(url) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
   }
 
   if (isSession) {
-    const refresh = respond.prevUrl === respond.fromEvent(e)?.url
+    const refresh = isNative || respond.prevUrl === respond.fromEvent(e)?.url
     if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 

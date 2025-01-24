@@ -1,44 +1,67 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { isNative } from '../helpers/constants.js'
+import AsyncStorage from '@react-native-async-storage/async-storage' // todo: replace with fast sync storage: https://github.com/mrousavy/react-native-mmkv
+import { isNative, isProd } from '../helpers/constants.js'
 
-const key = '__respond_session.'
+const prefix = '__respond_session.'
 
 const mock = {
   getItem(k) {
-    return this[key + k]
+    return this[k]
   },
   setItem(k, v) {
-    this[key + k] = v
+    this[k] = v
   },
   removeItem(k) {
-    delete this[key + k]
+    delete this[k]
   },
 }
 
 const web = {
   getItem(k) {
-    return sessionStorage.getItem(key + k)
+    return sessionStorage.getItem(prefix + k)
   },
   setItem(k, v) {
-    return sessionStorage.setItem(key + k, v)
+    return sessionStorage.setItem(prefix + k, v)
   },
   removeItem(k) {
-    return sessionStorage.removeItem(key + k)
+    return sessionStorage.removeItem(prefix + k)
   },
 }
 
 
 const native = {
   getItem(k) {
-    return AsyncStorage.getItem(key + k)
-  },
-  setItem(k, v) {
-    return AsyncStorage.setItem(key + k, v)
+    return this[k]
   },
   removeItem(k) {
-    return AsyncStorage.removeItem(key + k)
+    delete this[k]
   },
+  setItem(k, v) {
+    this[k] = v
+
+    // mimic browser sessionStorage behavior
+    if (v === null) v = 'null'
+    if (v === undefined) v = 'undefined'
+
+    AsyncStorage.setItem(prefix + k, v)
+  },
+
+  async populate() { // until sync storage is available as a dep on native, await sessionStorage.populate() must be called on app start
+    try {
+      const keys = await AsyncStorage.getAllKeys()
+      const appKeys = keys.filter(k => k.startsWith(prefix))
+  
+      const values = await AsyncStorage.multiGet(appKeys)
+  
+      values.forEach(([k, v]) => {
+        const key = k.slice(prefix.length)
+        this[key] = v
+      })
+    } catch(e) {
+      console.log('populate.error', e)
+    }
+  }
 }
+
 
 export default isNative
   ? native

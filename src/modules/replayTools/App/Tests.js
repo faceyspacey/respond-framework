@@ -21,7 +21,7 @@ export default (props, state) => {
   return (
     <View style={s.c}>
       <View style={s.row}>
-        <ModuleDropdown style={{ width: '65.8%', marginHorizontal: 0, marginTop: 0, zIndex: 0 }} />
+        <ModuleDropdown style={{ width: '65.8%', marginHorizontal: 0, marginTop: 0 }} />
 
         <Radio
           options={sortOptions}
@@ -78,7 +78,7 @@ const s = StyleSheet.create({
     marginHorizontal: 10,
     marginTop: 9,
     marginBottom: 8,
-    zIndex: 1,
+    zIndex: 1000,
   },
   radio: {
     height: 26,

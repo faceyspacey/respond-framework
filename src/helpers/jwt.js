@@ -17,7 +17,7 @@ export default isProd && isServer ? jwt : {
 }
 
 
-if (isProd) {
+if (isProd && isServer) {
   const verify = jwt.verify.bind(jwt)
 
   jwt.verify = function(token, secret) {

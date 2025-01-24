@@ -72,7 +72,7 @@ export const urlToLocation = urlOrLoc => {
 
 
 const browserLocationToRespondLocation = loc => {
-  let { pathname, search, hash } = loc
+  let { pathname = '', search = '', hash = '' } = loc
   const url = pathname + search + hash  // relative
 
   search = search.replace(/^\?/, '')    // no leading ?

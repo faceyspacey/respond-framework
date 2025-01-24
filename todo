@@ -950,6 +950,9 @@ old nested models (p, h) in mongo needs their __types assigned; rename mainId to
 
 
 #remake aggregatePaginated so that findMany can do similar stuff, and so if there are no specs stages findMany is used
+#prompt doesn't exist on native for Save Test
+
+# fix basic hmr lastEvent
 
 
 
@@ -974,11 +977,14 @@ make event callbacks no longer user trySync -- need to make more reliable queueN
 default reducer state if defined outside of the function can get mutated/corrupted before profixication
 custom event callback makes app think namespaces are events
 onEndReached requires using useCallback -- need to find another way
+zIndexing of dropdowns in Settings needs optimization
+Settings radios should become undefined when tapped again
+make Gear always show, evne if errors on launch, so you can change modules and restart etc
+make buildBefore go before depth addModules
 
 optimistic isomorphic functions/eventCallbacks
 memo with props.obj, which automatically transfers reactive tracking to child
 Input refactoring (kind, formatIn, etc)
-
 
 
 

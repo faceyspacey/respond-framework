@@ -1,4 +1,5 @@
 import { runEvents } from '../../modules/replayTools/replayEvents.js'
+import { isNative } from '../../utils.js'
 
 
 export default async function reduce(...events) {
@@ -11,9 +12,9 @@ export default async function reduce(...events) {
       break
 
     case 'session':
-      const event = this.eventFrom(window.location)
-      if (!event) throw new Error(`respond: no event matches ${window.location.href}`)
-      await this.eventFrom(window.location).trigger() // only need to trigger one event since session status doesn't actually re-run any events; instead on first dispatch triggerPlugin bails out if the URL of last event matches prevUrl; however, if the user changed the URL, it will be triggered, and here we capture that case
+      const e = isNative ? events[0] : this.eventFrom(window.location)
+      if (!e) throw new Error(`respond: no event matches ${isNative ? 'event passed to reduce' : window.location.href}`)
+      await e.trigger() // only need to trigger one event since session status doesn't actually re-run any events; instead on first dispatch triggerPlugin bails out if the URL of last event matches prevUrl; however, if the user changed the URL, it will be triggered, and here we capture that case
       break
 
     case 'replay':

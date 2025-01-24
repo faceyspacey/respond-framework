@@ -47,6 +47,7 @@ export const s = StyleSheet.create({
     marginHorizontal: 10,
     height: 35,
     marginBottom: 2,
+    zIndex: -1
   },
 
   input: {

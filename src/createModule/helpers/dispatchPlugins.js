@@ -1,3 +1,6 @@
+import { e as E } from '../createEvents.js'
+
+
 export default ([...plugins], s, e) => {
   return next()
 
@@ -7,11 +10,11 @@ export default ([...plugins], s, e) => {
 
     const state = plugin.state ?? s
     
-    e = { ...e, ...r }                       // merge returns of plugins for subsequent plugins
-    r = plugin.call(state, state, e, next)  // props.plugins are spliced into all descendant modules, so pass state of the original module ?? state of event's module
+    e = Object.assign(Object.create(E.prototype), e, r)   // merge returns of plugins for subsequent plugins
+    r = plugin.call(state, state, e, next)                // props.plugins are spliced into all descendant modules, so pass state of the original module ?? state of event's module
    
     return r instanceof Promise
       ? r.then(r => r !== false && next(r))
-      : r !== false && next(r)              // input edit plugins come first, and function correctly (no jumps), because async plugins come after
+      : r !== false && next(r)                            // input edit plugins come first, and function correctly (no jumps), because async plugins come after
   }
 }

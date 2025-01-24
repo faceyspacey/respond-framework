@@ -11,12 +11,12 @@ export default memo(forwardRef(({
   formatIn = v => v,
   format = v => v,
   formatOut = format,
-  zIndex,
   style,
   placeholder,
   placeholderStyle,
   disabled,
   returnKeyType = 'done',
+  zIndex = style?.zIndex ?? 1,
 }, ref) => {
   const value = typeof v === 'object' // replayed from saved test, where strings/json transformed to objects
     ? Object.keys(v).length === 0 ? '' : JSON.stringify(v, null, 2)

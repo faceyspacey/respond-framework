@@ -10,7 +10,6 @@ export default React.memo(({
   label,
   value,
   options,
-  zIndex,
   style,
   styleLabel,
   styleRadios,
@@ -20,6 +19,7 @@ export default React.memo(({
   styleRadioTextActive,
   styleLeft,
   styleRight,
+  zIndex = style?.zIndex ?? 1,
 }) =>
   <View style={[s.c, style]}>
     {label &&
@@ -36,7 +36,7 @@ export default React.memo(({
           name,
           key: o.value,
           active: o.value === value,
-          style: [styleRadio, , { zIndex }, last ? [right, styleRight] : [left, styleLeft]],
+          style: [styleRadio, { zIndex }, last ? [right, styleRight] : [left, styleLeft]],
           styleActive: styleRadioActive,
           styleText: styleRadioText,
           styleTextActive: styleRadioTextActive,
@@ -58,6 +58,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 9,
+    zIndex: 1,
   },
 	label: {
     fontSize: 15,

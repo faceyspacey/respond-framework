@@ -1,4 +1,4 @@
-import sessionStorage from '../utils/sessionStorage.js'
+import sessionStorageDefault from '../utils/sessionStorage.js'
 import { hashToSettings as permalinkReplayState } from '../modules/replayTools/helpers/createPermalink.js'  
 import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
@@ -6,7 +6,9 @@ import cloneDeep from '../proxy/helpers/cloneDeep.js'
 export default (opts = {}) => {
   const { status, settings, branch = '', hydration } = opts
   const { prevState, respond, replayTools } = window.state ?? {}
+
   const rt = replayTools && respond.snapshot(replayTools)
+  const sessionStorage = opts.sessionStorage ?? respond?.sessionStorage ?? sessionStorageDefault
 
   switch (status) {
     case 'reload': {
@@ -98,7 +100,7 @@ export default (opts = {}) => {
     // case 'visit':
     default: {
       return {
-        replayState: { settings: undefined, branch: '', status: 'reload' },
+        replayState: { settings, branch: '', status: 'reload' },
         baseState: cloneDeep(hydration) ?? {},
       }
     }

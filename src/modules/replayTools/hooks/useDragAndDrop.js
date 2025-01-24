@@ -1,6 +1,7 @@
 
 import { useRef, useState, useMemo }  from 'react'
 import { PanResponder, Animated } from 'react-native'
+import { isNative } from '../../../utils.js'
 
 
 export default (index, height, event, setIndex, openSlot, toggleScroll, longPressing) => {
@@ -9,7 +10,7 @@ export default (index, height, event, setIndex, openSlot, toggleScroll, longPres
 
   const pan = PanResponder.create({
     onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => isNative ? longPressing : true,
     onPanResponderTerminationRequest: () => false,  // allow dragging out of bounds to the bottom
     onPanResponderGrant: () => toggleScroll(false),
     onPanResponderMove: (e, { dy }) => {

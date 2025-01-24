@@ -1,23 +1,22 @@
 import { isProd } from '../../utils.js'
-import sessionStorage from '../../utils/sessionStorage.js'
 import { createStateReviver, createReplacer } from './revive.js'
 
 
 export const getSessionState = respond => {
-  const json = sessionStorage.getItem('sessionState')
+  const json = respond.sessionStorage.getItem('sessionState')
   if (!json) return []
 
   const reviver = createStateReviver(respond)
 
   const curr = JSON.parse(json, reviver)
-  const prev = JSON.parse(sessionStorage.getItem('prevState'), reviver)
+  const prev = JSON.parse(respond.sessionStorage.getItem('prevState'), reviver)
 
   return [curr, prev]
 }
 
 
 export const setSessionState = (state, e) => {
-  const { replayState, basenames, prevUrl, cache, system } = state.respond
+  const { sessionStorage, replayState, basenames, prevUrl, cache, system } = state.respond
 
   sessionStorage.setItem('sessionSystemState', JSON.stringify({ replayState, basenames, prevUrl, cache }))
   sessionStorage.setItem('prevState', JSON.stringify(state.prevState)) // prevState doesn't need replacer, as replacer only handles maintaining object references for duplicate objects in state, which prevState wipes away anyway
@@ -26,7 +25,9 @@ export const setSessionState = (state, e) => {
   if (isProd) return
   if (e.event.module.id === 'replayTools') return // no need to save latest seed state when triggering events in replayTools
 
-  sessionStorage.setItem('prevSeed', sessionStorage.getItem('seed')) // HMR needs prevSeed to properly replay last event
+  const prevSeed = sessionStorage.getItem('seed')
+  if (prevSeed) sessionStorage.setItem('prevSeed', prevSeed) // HMR needs prevSeed to properly replay last event
+  
   sessionStorage.setItem('seed', JSON.stringify(system.seed))
 }
 

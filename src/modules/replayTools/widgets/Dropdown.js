@@ -42,7 +42,7 @@ export default memo(({
       <Caret />
 
       {open &&
-        <ScrollView style={[s.menu, styleMenu]}>
+        <ScrollView style={[s.menu, styleMenu, { zIndex }]}>
           {options.map((o, i) => (
             <Option
               {...o}

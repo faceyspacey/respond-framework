@@ -22,7 +22,7 @@ const callDatabase = (respond, table, method) => {
   if (method === 'make')   return respond.models[table].make
   if (method === 'create') return respond.models[table].create
 
-  const url = respond.options.apiUrl
+  const url = respond.options.apiUrl ?? respond.topState.respond.options.apiUrl
   
   const getter = async (...args) => {
     const body = createBody(table, method, args, respond)
