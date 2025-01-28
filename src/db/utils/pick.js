@@ -45,5 +45,5 @@ const include = (doc, project) =>
 
 export const pickAndCreate = (doc, project, self) => {
   const picked = pick(doc, project)
-  return picked ? self._create(picked) : undefined
+  return picked ? self.super.create(picked) : undefined
 }

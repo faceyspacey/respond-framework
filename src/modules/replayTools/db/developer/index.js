@@ -9,6 +9,8 @@ import { argsOut as out } from '../../../../helpers/fetch.js'
 
 export default {
   call(req, context) {
+    this.body = req.body
+    
     this.req = req
     this.context = context
 

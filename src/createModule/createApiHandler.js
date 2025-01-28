@@ -18,7 +18,7 @@ export default function createApiHandler({ db, log = isServer, context = {} }) {
       
     const Table = resolveTable(branches, focusedBranch, branch, table) // eg: branches['admin.foo'].user
     if  (!Table)  return res.json({ error: 'table-absent', params: req.body })
-    const respo = await Object.create(Table).makeRequest(req, context)
+    const respo = await Table.clone().makeRequest(req, context)
 
     if (log) console.log(`respond.response: db.${table}.${method}`, ...(isDev ? [] : [req.body, '=>']), respo) // during prod, other requests might come thru between requests, so response needs to be paired with request (even tho we already logged request)
   

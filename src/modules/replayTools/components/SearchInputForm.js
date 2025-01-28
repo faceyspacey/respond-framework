@@ -61,6 +61,7 @@ export const s = StyleSheet.create({
     right: 122,
     width: 23,
     height: 23,
+    zIndex: 1,
   },
 
   radios: {

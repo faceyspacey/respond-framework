@@ -52,8 +52,17 @@ export default {
     return { id: this.id }
   },
 
-  super(method, ...args) {
+  get super() {
+    if (this._super) return this._super
+    
     const proto = Object.getPrototypeOf(Object.getPrototypeOf(this))
-    return proto[method].apply(this, args)
-  }
+
+    const proxy = new Proxy({}, {
+      get: (_, k) => proto[k].bind(this)
+    }) 
+
+    Object.defineProperty(this, '_super', { value: proxy, enumerable: false })
+
+    return this._super
+  },
 }

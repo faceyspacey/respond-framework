@@ -1,4 +1,4 @@
-import tableDefault from '../db/index.js'
+import parentDefault from '../db/index.js'
 import modelDefault from '../db/model.js'
 
 import * as makeRequest from './helpers/makeRequest.js'
@@ -6,13 +6,15 @@ import { createModel } from './createModels.js'
 import createSharedModels from './helpers/createSharedModels.js'
 import { reviveServerModelInSpecificModule } from '../createModule/helpers/revive.js'
 import userGetters from './helpers/userGetters.js'
+import { isProd } from '../helpers/constants.js'
+import createSettings from '../modules/replayTools/helpers/createSettings.js'
 
 
 export default (options = {}) => {
-  const { table = tableDefault, model = modelDefault, mixin, mixinModel = {}, tables = {}, models: m = {}, replays = {}, config = {}, ...modules } = options
+  const { table: parent = parentDefault, parents, model = modelDefault, mixin, mixinModel = {}, tables = {}, models: m = {}, replays = {}, config = {}, ...modules } = options
   const db = { replays, tableNames: [], moduleKeys: [], models: {} }
 
-  const base = { ...makeRequest, config, ...table, ...mixin }
+  const base = { ...makeRequest, config, ...mixin }
   const models = createSharedModels(m)
 
   const descriptors = {
@@ -20,16 +22,20 @@ export default (options = {}) => {
     replays: { enumerable: false, value: replays }, 
   }
 
+  if (isProd) {
+    replays.settings = createSettings(replays.config)
+  }
+
   const extra = Object.defineProperties(mixinModel, descriptors)
 
   db.revive = reviveServerModelInSpecificModule(db)
 
   for (const k in { ...tables, ...models }) { // there may be be virtual models, which need unused tables so we can do db.fooVirtual.create()
-    createTable(k, db, base, model, descriptors, tables, models, extra)
+    createTable(k, db, base, parent, model, descriptors, tables, parents, models, extra)
   }
 
   for (const k in modules) {
-    createChildModuleTables(k, modules[k], db, base, model, descriptors, tables, extra)
+    createChildModuleTables(k, modules[k], db, base, parent, model, descriptors, tables, parents, extra)
   }
 
   return db.original = db // when a module is focused during development, we may need to select original without props
@@ -38,12 +44,14 @@ export default (options = {}) => {
 
 
 
-const createTable = (k, db, base, model, descriptors, tables, models, extra) => {
+const createTable = (k, db, base, parentDefault, model, descriptors, tables, parents = {}, models, extra) => {
   const table = tables[k]
   const Model = db.models[k] = createModel(k, model, models[k], extra)
 
-  db[k] = { _name: k, _namePlural: k + 's', ...base, ...table, Model }
-  
+  const parent = parents[k] ?? parentDefault
+
+  db[k] = Object.assign(Object.create(parent), { _name: k, _namePlural: k + 's', ...base, ...table, parent, Model })
+
   Object.defineProperties(db[k], descriptors)
   Object.defineProperties(db[k], userGetters)
 
@@ -54,13 +62,13 @@ const createTable = (k, db, base, model, descriptors, tables, models, extra) => 
 
 
 const createChildModuleTables = (k, mod, db, base, model, descriptors, tables, extra) => {
-  const { props, ...child } = mod
+  const { props = {}, ...child } = mod
 
   db[k] = child
   child.parent = db
   db.moduleKeys.push(k) // branch linked to child -- NOTE: this is different than how the client operates, as there will be a call to createDatabase per module on the server, and parent-to-child linking will happen for each call, rather than the whole tree recursively at once
 
-  if (!props?.tables) return
+  if (!props.tables) return
 
   const models = createSharedModels(props.models)
   
@@ -77,7 +85,8 @@ const createChildModuleTables = (k, mod, db, base, model, descriptors, tables, e
       child.models[k2] = child[k2].Model = db[other].Model
     }
     else {
-      createTable(k2, child, base, model, descriptors, props.tables, models, extra)
+      const parent = props.table ?? parent
+      createTable(k2, child, base, parent, model, descriptors, props.tables, props.parents, models, extra)
     }
   }
 }

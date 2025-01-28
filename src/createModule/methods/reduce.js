@@ -12,7 +12,7 @@ export default async function reduce(...events) {
       break
 
     case 'session':
-      const e = isNative ? events[0] : this.eventFrom(window.location)
+      const e = isNative ? this.state.replayTools.at(-1) : this.eventFrom(window.location) ?? events[0]
       if (!e) throw new Error(`respond: no event matches ${isNative ? 'event passed to reduce' : window.location.href}`)
       await e.trigger() // only need to trigger one event since session status doesn't actually re-run any events; instead on first dispatch triggerPlugin bails out if the URL of last event matches prevUrl; however, if the user changed the URL, it will be triggered, and here we capture that case
       break

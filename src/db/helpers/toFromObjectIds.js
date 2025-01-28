@@ -5,7 +5,7 @@ export const toObjectIds = (doc, key) => {
   if (doc instanceof ObjectId || doc instanceof Date || doc instanceof RegExp) {
     return doc
   }
-  else if (key && isForeignOrLocalKey(key) && ObjectId.isValid(doc)) {
+  else if (key && isForeignOrLocalKey(key) && ObjectId.isValid(doc) && doc.length === 24) {
     return new ObjectId(doc)
   }
   else if (Array.isArray(doc)) {
@@ -30,11 +30,11 @@ export const toObjectIdsSelector = selector => {
   if (typeof selector === 'string') {
     selector = { _id: selector }
   }
-
-  selector = { ...selector }
+  else {
+    selector = { ...selector }
+  }
 
   if (selector.id) {
-    selector = { ...selector }
     selector._id = selector.id // replace top level id with _id
     delete selector.id
   }
@@ -57,15 +57,12 @@ export const resolveId = field => {
 
 
 
-const isForeignOrLocalKey = key => endsWithIdReg.test(key)
+const isForeignOrLocalKey = key => endsWithIdReg.test(key) || key === '_id'
 
-const isForeignKeyPlural = key => endsWithIdsReg.test(key) || '$in'
-
-const isArrayOfIds = firstElement => typeof firstElement === 'string' && ObjectId.isValid(firstElement) // valid 24 char hex string -- must check if string, cuz ObjectId.isValid(123) is true; NOTE: your app can't use 24 char hex strings for any other purpose!
+const isArrayOfIds = firstElement => typeof firstElement === 'string' && ObjectId.isValid(firstElement) && firstElement.length === 24 // valid 24 char hex string -- must check if string, cuz ObjectId.isValid(123) is true; NOTE: your app can't use 24 hex strings for any other purpose!
 
 
-const endsWithIdReg = /id$/i
-const endsWithIdsReg = /Ids$/
+const endsWithIdReg = /Id$/
 
 
 
@@ -99,4 +96,13 @@ export const toProject = project => {
   }
 
   return project
+}
+
+
+
+// only for use for index.id.js which assumes a 3rd party api with id keys, which you would like to keep while storing in Mongo with _id at the same time
+
+export const toIdSelector = (selector = {}) => {
+  const id = typeof selector === 'string' ? selector : selector.id
+  return id ? { id } : toObjectIds(selector)
 }

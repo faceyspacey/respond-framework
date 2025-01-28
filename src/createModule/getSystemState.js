@@ -4,8 +4,10 @@ import cloneDeep from '../proxy/helpers/cloneDeep.js'
 
 
 export default (opts = {}) => {
-  const { status, settings, branch = '', hydration } = opts
+  const { status, settings, branch = '' } = opts
   const { prevState, respond, replayTools } = window.state ?? {}
+
+  const hydration = opts.hydration && typeof opts.hydration === 'string' ? JSON.parse(opts.hydration) : opts.hydration || {}
 
   const rt = replayTools && respond.snapshot(replayTools)
   const sessionStorage = opts.sessionStorage ?? respond?.sessionStorage ?? sessionStorageDefault

@@ -903,8 +903,6 @@ const clearedFilter = (query, arg) => {
 
 
 
-old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index
-
 
 #constructors called automatically when u call .make
 #?mutated events will be replayed with mutations -- need to preserve original event
@@ -954,10 +952,16 @@ old nested models (p, h) in mongo needs their __types assigned; rename mainId to
 
 # fix basic hmr lastEvent
 
+#remove _updateOne etc, as we now have this.super()
 
 
 
-remove _updateOne etc, as we now have this.super()
+old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index, mainCode on all 
+
+
+
+
+
 remove e.kind
 dates in session not coming back as date objects
 extactModuleAspects won't work with reducers since default args set reducer.length to 0

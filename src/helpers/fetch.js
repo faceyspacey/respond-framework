@@ -6,12 +6,15 @@ export default async function fetch(apiUrl = defaultApiUrl, body, respond) {
   const { table, method } = body
   const url = `${apiUrl}/${table}/${method}`
 
+  const max = respond.options?.fetchTimeout ?? 12000
+  const start = new Date
+
   try {
     const res = await fetchWithTimeout(url, {
       headers,
       method: 'POST',
       body: JSON.stringify(body)
-    })
+    }, max)
 
     if (respond.state._serverDown) {
       respond.state._serverDown = false
@@ -21,9 +24,14 @@ export default async function fetch(apiUrl = defaultApiUrl, body, respond) {
     return res.json()
   }
   catch { // timeout exceeded
+    const elapsed = new Date - start
+    console.log('fetch.elapsed', elapsed < max, max, elapsed, max - elapsed)
+    if (elapsed < max) await timeout(max - elapsed) // instant throw happens when webserver is down
+    
     respond.state._serverDown = true
     respond.options.onServerDown?.(respond.state, body)
-    return fetch(apiUrl, body, respond) // retry every 12 seconds -- see fetchWithTimeout.js
+    
+    return fetch(apiUrl, body, respond) // retry every 12 seconds -- see fetchWithTimeout.js (throws after 12 seconds of hanging)
   }
 }
 
@@ -43,3 +51,6 @@ export const argsOut = args =>
 
 
 export const __undefined__ = '__undefined__'
+
+
+const timeout = ms => new Promise(res => setTimeout(res, ms))

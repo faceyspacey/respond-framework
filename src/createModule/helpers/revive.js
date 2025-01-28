@@ -27,7 +27,7 @@ export default ({ modelsByBranchType, eventsByType } = {}) => {
 
 
 
-export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch) => {
+export const reviveApiClient = ({ modelsByBranchType, eventsByType }, branch = '') => {
   function createObject(v) {
     const obj = {}
     keys(v).forEach(k => obj[k] = revive(v[k], k))

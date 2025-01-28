@@ -4,6 +4,8 @@ import secretMock from '../secret.mock.js'
 
 
 export function makeRequest(req, context = {}) {
+  this.body = req.body
+
   this.req = req
   this.context = context
 
@@ -28,14 +30,14 @@ export function makeRequest(req, context = {}) {
 
 export async function callMethod(method, args) {
   if (this.beforeRequest) {
-    const ret = await self.beforeRequest(this.req.body)
+    const ret = await self.beforeRequest(this.body)
     if (ret) return ret
   }
 
   const res = await this[method](...args) // eg db.user.findOne(id)
   
   if (this.afterRequest) {
-    const ret = await this.afterRequest(this.req.body, res)
+    const ret = await this.afterRequest(this.body, res)
     if (ret) return ret
   }
 

@@ -15,19 +15,16 @@ export default function (state, e) {
   const { respond, replayTools } = topState
 
   const isSession = replayState.status === 'session'
+  const { skipped } = e.meta
 
   replayState.status = 'reload'
   respond.mem.changedPath = false
-  state.respond.e = e
+  
+  if (!skipped) state.respond.e = e
   
   if (hasHistory && bs.maxIndex < 2 && !e.event.pattern && !respond.history.state.pop) {
     const { url } = urlToLocation(window.location)
     push(url) // optimization / browser history workaround: push the same url for first 2 non-navigation events, so history trap is enabled after first navigation event, where it usually wouldn't be (because it requires 2 pushes to become enabled)
-  }
-
-  if (isSession) {
-    const refresh = isNative || respond.prevUrl === respond.fromEvent(e)?.url
-    if (refresh) return false // refresh, so nothing needs to happen (but if the URL was changed, we still want to honor it)
   }
 
   if (e.event[_branch] === 'replayTools' && !replayTools.config.log) {
@@ -35,15 +32,19 @@ export default function (state, e) {
     return
   }
 
-  if (!e.meta.skipped) {
+  if (!skipped) {
     mergePrevState(topState, respond.snapshot(topState))
   }
 
   if (!replayTools || isTest) return
 
-  sendTrigger(e, replayTools, topState)
+  const refresh = isSession && (isNative || respond.prevUrl === respond.fromEvent(e)?.url) // don't append a duplicate event to replayTools UI on refresh, but still dispatch it so its fx can run -- also note that native doesn't have an address bar to 
 
-  if (e.meta.skipped) {
+  if (!refresh) {
+    sendTrigger(e, replayTools, topState)
+  }
+
+  if (skipped) {
     // respond.devtools.forceNotification({ ...e, __prefix: '-- ' })
     return false
   }

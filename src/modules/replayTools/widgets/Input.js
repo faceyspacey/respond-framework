@@ -25,7 +25,7 @@ export default memo(forwardRef(({
   const onChangeText = v => {
     if (disabled) return
 
-    const next = formatOut(v) || undefined
+    const next = formatOut(v) || ''
     if (next === value) return
 
     event.trigger({ [name]: next }, { name, input: true })
