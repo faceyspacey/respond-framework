@@ -4,9 +4,12 @@ import ErrorBoundary from './ErrorBoundary.js'
 import ReplayTools from '../modules/replayTools/App/index.js'
 import { isProd, isTest } from '../helpers/constants.js'
 
-export default ({ state, Error = state.components?.Error, App = state.components?.App, props }) => {
+export default ({ state, Error, App, ...props }) => {
   const hide = isTest || isProd && !state.respond.options.productionReplayTools
 
+  Error ??= state.components?.Error
+  App ??= state.components?.App
+  
   return (
     <RespondContext.Provider value={state}>
       {/* <ErrorBoundary state={state} Error={Error}> */}

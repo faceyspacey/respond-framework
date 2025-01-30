@@ -26,7 +26,6 @@ export default isDev ? mock :  {
   async findOne(selector, { project, sort = { updatedAt: -1 } } = {}) {
     selector = typeof selector === 'string' ? { id: selector } : selector
     const doc = await this.mongo().findOne(selector, { projection: project, sort })
-    if (doc) this._markSeen(doc.id) // mark seen utilities so admin panel floats courses/cities to top of ListView
     return doc && this.create(doc)
   },
 
@@ -91,7 +90,7 @@ export default isDev ? mock :  {
   },
 
   async incrementOne(selector, $inc) {
-    return this.mongo().updateOne(toIdSelector(selector), { $inc })
+    return this.mongo().updateOne(toIdSelector(selector), { $inc, $set: { updatedAt: new Date } })
   },
 
   async count(selector) {
@@ -141,7 +140,7 @@ export default isDev ? mock :  {
     } = query
     
     const selector = this.createQuerySelector(sel) // advanced filtering suitable for an admin panel
-    const sort = { [sortKey]: sortValue, location }
+    const sort = { [sortKey]: sortValue, _id: sortValue }
 
     const [count, models] = await Promise.all([
       this.count(selector),

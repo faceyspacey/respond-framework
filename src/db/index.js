@@ -396,7 +396,7 @@ export default isDev ? mock : {
 
   async incrementOne(selector, $inc) {
     selector = toObjectIdsSelector(selector)
-    return this.mongo().updateOne(selector, { $inc })
+    return this.mongo().updateOne(selector, { $inc, $set: { updatedAt: new Date } })
   },
 
   create(doc) {

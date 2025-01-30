@@ -327,7 +327,7 @@ export default {
   async incrementOne(selector, $inc) {
     const model = await this.super.findOne(selector)
 
-    const doc = {}
+    const doc = { updatedAt: new Date }
 
     Object.keys($inc).forEach(k => {
       const v = model[k] || 0 // todo: support nested fields

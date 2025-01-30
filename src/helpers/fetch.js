@@ -25,7 +25,6 @@ export default async function fetch(apiUrl = defaultApiUrl, body, respond) {
   }
   catch { // timeout exceeded
     const elapsed = new Date - start
-    console.log('fetch.elapsed', elapsed < max, max, elapsed, max - elapsed)
     if (elapsed < max) await timeout(max - elapsed) // instant throw happens when webserver is down
     
     respond.state._serverDown = true
