@@ -28,12 +28,13 @@ const web = {
 }
 
 
-const native = {
+export const native = {
   getItem(k) {
     return this[k]
   },
   removeItem(k) {
     delete this[k]
+    AsyncStorage.removeItem(prefix + k).catch(swallowed => swallowed)
   },
   setItem(k, v) {
     this[k] = v
@@ -42,7 +43,11 @@ const native = {
     if (v === null) v = 'null'
     if (v === undefined) v = 'undefined'
 
-    AsyncStorage.setItem(prefix + k, v)
+    AsyncStorage.setItem(prefix + k, v).catch(swallowed => swallowed)
+  },
+
+  async clear() {
+    return AsyncStorage.clear()
   },
 
   async populate() { // until sync storage is available as a dep on native, await sessionStorage.populate() must be called on app start

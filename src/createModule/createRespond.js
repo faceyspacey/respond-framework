@@ -31,7 +31,7 @@ import createUrlCache from './createUrlCache.js'
 import createBranches from './createBranches.js'
 
 import kinds from './kinds.js'
-import { isProd } from '../helpers/constants.js'
+import { isDev, isNative, isProd } from '../helpers/constants.js'
 import assignProto from '../utils/assignProto.js'
 import createAncestors from './helpers/createAncestors.js'
 import { _branch, _module, _top } from './reserved.js'
@@ -125,6 +125,7 @@ export default (top, system, focusedModule, focusedBranch, opts) => {
     mem: { ...prev?.mem, rendered: false },
     cache: system.cache ?? {},
     sessionStorage: opts.sessionStorage ?? prev?.sessionStorage ?? sessionStorage,
+    rememberSession: isDev || !isNative || options.rememberSession,
 
     devtools: new Proxy({}, { get: () => () => {} }), // tools
     history: createHistory(),

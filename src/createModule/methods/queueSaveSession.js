@@ -5,7 +5,8 @@ import { isTest } from '../../helpers/constants.js'
 export default isTest ? function() {} : function() {
   if (this.branches.replayTools?.playing) return
   if (this.topState !== window.state) return // ensure replayEvents saves new state instead of old state when recreating state for replays
-  
+  if (!this.rememberSession) return
+
   if (timeout) clearTimeout(timeout)
 
   timeout = setTimeout(() => {

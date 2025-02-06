@@ -1,13 +1,19 @@
 import { getSessionState } from './helpers/getSessionState.js'
 import reduce from './plugins/reduce.js'
-import createToken from '../modules/replayTools/helpers/createToken.js'
 import { _parent } from './reserved.js'
 
 
 export default (state, system) => {
   const { replayState, baseState } = system
-  
-  switch (replayState.status) {
+  const { status } = replayState
+
+  switch (status) {  
+    case 'replay':
+    case 'reload': {
+      hydrate(state, baseState) // baseState is standard server hydration if available + replayTools
+      reduce(state, state.events.init())
+    }
+
     case 'hmr': {
       hydrate(state, baseState) // baseState is HMR prevState + replayTools, as last event will be replayed on top of it
       break
@@ -18,13 +24,6 @@ export default (state, system) => {
       hydrate(state, curr)
       mergePrevState(state, prev)
       break
-    }
-      
-    case 'replay':
-    case 'reload': {
-      hydrate(state, baseState) // baseState is standard server hydration if available + replayTools
-      state.token = createToken(state.respond)
-      reduce(state, state.events.init())
     }
   }
 }

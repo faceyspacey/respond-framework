@@ -62,8 +62,10 @@ export default (opts = {}) => {
         this.event.respond.render() // dx: so you can just call e.trigger() in userland hmr routine without having to call render
       }
 
+      const seed = sessionStorage.getItem('prevSeed')
+
       return {
-        seed: JSON.parse(sessionStorage.getItem('prevSeed')),
+        seed: seed ? JSON.parse(seed) : undefined,
         replayState: { ...respond.replayState, lastEvent, status, hmr: true },
         baseState: {
           ...prevState,
@@ -90,10 +92,11 @@ export default (opts = {}) => {
     // case 'session':
     case !!(session = sessionStorage.getItem('sessionSystemState')): {
       const system = JSON.parse(session)
+      const seed = sessionStorage.getItem('seed')
 
       return {
         ...system,
-        seed: JSON.parse(sessionStorage.getItem('seed')),
+        seed: seed ? JSON.parse(seed) : undefined,
         replayState: { ...system.replayState, status: 'session' },
         baseState: {},
       }
