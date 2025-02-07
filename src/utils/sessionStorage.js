@@ -13,6 +13,9 @@ const mock = {
   removeItem(k) {
     delete this[k]
   },
+  clear() {
+    Object.keys(this).forEach(k => delete this[k])
+  }
 }
 
 const web = {
@@ -25,6 +28,9 @@ const web = {
   removeItem(k) {
     return sessionStorage.removeItem(prefix + k)
   },
+  clear() {
+    sessionStorage.clear()
+  }
 }
 
 
@@ -45,11 +51,10 @@ export const native = {
 
     AsyncStorage.setItem(prefix + k, v).catch(swallowed => swallowed)
   },
-
-  async clear() {
+  clear() {
+    Object.keys(native).forEach(k => delete native[k])
     return AsyncStorage.clear()
   },
-
   async populate() { // until sync storage is available as a dep on native, await sessionStorage.populate() must be called on app start
     try {
       const keys = await AsyncStorage.getAllKeys()

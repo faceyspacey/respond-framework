@@ -12,7 +12,7 @@ import assignProto from '../utils/assignProto.js'
 import { _parent } from './reserved.js'
 
 
-export default function addModule(Respond, mod, parent = {}, moduleName = '', state = Object.create({})) {
+export default function addModule(mod, Respond, moduleName = '', parent = {}, state = Object.create({})) {
   const { branch, moduleKeys = [], options = {}, components, reduce, ignoreParents } = mod
 
   const respond = new Respond({ branch, mod, state, moduleName, moduleKeys, options, ignoreParents })
@@ -36,7 +36,7 @@ export default function addModule(Respond, mod, parent = {}, moduleName = '', st
   createPlugins(deps)
 
   assignRenderingDependencies(deps)
-  moduleKeys.forEach(k => addModule(Respond, mod[k], state, k)) // recurse
+  moduleKeys.forEach(k => addModule(mod[k], Respond, k, state)) // recurse
 
   ;(mod.buildAfter ?? props.buildAfter)?.(deps)
 

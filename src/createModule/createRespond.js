@@ -38,8 +38,10 @@ import { _branch, _module, _top } from './reserved.js'
 import sessionStorage from '../utils/sessionStorage.js'
 
 
-export default (top, system, focusedModule, focusedBranch, opts) => {
+export default (top, system, focusedModule, opts) => {
   const { replayState, prevUrl = null, basenames = {} } = system
+  const focusedBranch = replayState.branch
+
   const prev = window.state?.respond
 
   const {

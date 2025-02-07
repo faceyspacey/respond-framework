@@ -8,12 +8,10 @@ import { isTest } from '../helpers/constants.js'
 
 export default (top, opts = {}, start = performance.now()) => {
   const system = getSystemState(opts)
-  const focusedBranch = system.replayState.branch
+  const mod = sliceBranch(top, system.replayState.branch)
 
-  const mod = sliceBranch(top, focusedBranch)
-
-  const Respond = createRespond(top, system, mod, focusedBranch, opts)
-  const state = addModule(Respond, mod)
+  const Respond = createRespond(top, system, mod, opts)
+  const state = addModule(mod, Respond)
 
   hydrateModules(state, system)
 

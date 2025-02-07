@@ -9,9 +9,7 @@ export default (state = '', e, { events, respond }) => {
   }
 
   const { cookies, replays } = respond
-  const token = isProd ? cookies.get('token') : createReplayToken(replays)
-
-  return token ?? ''
+  return isProd ? cookies.get('token') ?? '' : createReplayToken(replays)
 }
 
 
