@@ -1,6 +1,5 @@
 import replayTools from '../modules/replayTools/db.js'
 import createApiHandler from '../createModule/createApiHandler.js'
-import createWallabySocketsServer from '../integrations/wallaby/createWallabySocketsServer.js'
 import { isDev } from '../utils.js'
 
 
@@ -25,8 +24,7 @@ export default opts => {
 const createOptions = (opts = {}) => {
   if (!isDev) return opts
 
-  opts.context ??= {}
-  opts.context.io = isDev && opts.server && createWallabySocketsServer(opts.server)
+  opts.context ??= {} // eg opts.context.io can be assigned to socket.io in userland
 
   opts.db ??= {}
   opts.db.moduleKeys.push('replayTools')

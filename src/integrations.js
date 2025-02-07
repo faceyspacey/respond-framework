@@ -1,1 +1,1 @@
-export { default as setupWallabySocketListener } from './integrations/wallaby/setupWallabySocketListener.js'
+// export { default as setupWallabySocketListener } from './integrations/wallaby/setupWallabySocketListener.js'

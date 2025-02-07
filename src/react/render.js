@@ -43,7 +43,6 @@ const renderWeb = (app, mem, respond) => {
   }
   else mem.app ??= createRoot(el)
 
-
   mem.app.render(app)
 }
 

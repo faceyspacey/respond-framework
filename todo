@@ -282,7 +282,7 @@ expect.addSnapshotSerializer({
 
 
 dynamic modules
-make dispatch have hook for parent modules to listen in
+#make dispatch have hook for parent modules to listen in
 
 code splitting + simultaneus api fetching
 ssr, createControllers needs to be passed the db it uses, createDatabase needs new names for things such as model, parent etc
@@ -959,6 +959,8 @@ const clearedFilter = (query, arg) => {
 old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index, mainCode on all, run old aggs on collections; swap idTable id into _id hex (swap t/u.cId, t.id)
 
 
+tolls
+
 
 
 
@@ -992,11 +994,19 @@ Input refactoring (kind, formatIn, etc)
 
 
 
-tolls
 
 
-
-
-incorporate naked-css
-create website
+naked-css
+website
+components
 devtools
+
+ssr
+dynamic modules
+splitting (simultaneus fetching)
+
+pglite
+
+improve ip address handling
+.server.js/.client.js
+rust plugin
