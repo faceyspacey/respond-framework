@@ -1,1 +1,1 @@
-export { default as developer } from './developer/index.js'
+export { default as developer } from './developer/index.s.js'

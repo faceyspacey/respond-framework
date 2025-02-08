@@ -15,7 +15,7 @@ export default (top, opts = {}, start = performance.now()) => {
 
   hydrateModules(state, system)
 
-  if (!isTest) console.log('createModule', parseFloat((performance.now() - start).toFixed(3)))
+  if (!isTest) console.log('createModule!', parseFloat((performance.now() - start).toFixed(3)))
   window.state = state
   return state.respond
 }

@@ -1000,12 +1000,12 @@ naked-css
 website
 components
 devtools
-
 ssr
-dynamic modules
-splitting (simultaneus fetching)
 
 pglite
+
+dynamic modules
+splitting (simultaneus fetching)
 
 improve ip address handling
 .server.js/.client.js
