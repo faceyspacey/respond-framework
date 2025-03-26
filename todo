@@ -956,7 +956,7 @@ const clearedFilter = (query, arg) => {
 
 
 
-old nested models (p, h) in mongo needs their __types assigned; rename mainId to groupId; code index, mainCode on all, run old aggs on collections; swap idTable id into _id hex (swap t/u.cId, t.id)
+
 
 
 tolls
