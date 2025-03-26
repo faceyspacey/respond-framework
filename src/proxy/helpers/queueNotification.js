@@ -41,8 +41,6 @@ export function commit(start = performance.now()) {
 
   pending = 0
   updated.clear() // clear for next batch
-  
-  if (branches.length > 0) log(start) // replayTools removed and was only branch
 }
 
 
@@ -67,10 +65,8 @@ const scheduleReplayToolsSeparately = (listeningBranches, respond) => {
 
   delete listeningBranches.replayTools
 
-  queueMicrotask(() => queueMicrotask(() => { // needs 2 tasks to hop over main render log
-    const start = performance.now()
+  queueMicrotask(() => queueMicrotask(() => { // needs 2 tasks to hop over main render log (note: render duration logging is now removed, so we dont need 2 microtasks, but we will keep it for now)
     respond.responds.replayTools.listeners.forEach(listener => listener())
-    log(start, '.replayTools')
   }))
 }
 
@@ -80,5 +76,3 @@ let updated = new Set
 let pending = 0
 
 const dequeue = fn => Promise.resolve().then().then().then().then().then().then().then().then().then().then().then().then(fn)
-
-const log = (start, postFix = '') => queueMicrotask(() => !isTest && console.log('queueNotification.render' + postFix, performance.now() - start))

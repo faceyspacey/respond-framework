@@ -6,18 +6,11 @@ import RespondProvider from './Provider.js'
 
 
 export default function render(props = {}, opts = {}) {
-  const { startTime, last } = opts
-  if (startTime) console.log('replayEvents.run', parseFloat((performance.now() - startTime).toFixed(3)))
-
-  const start = performance.now()
-
-  const app = createApp(this, props, last)
+  const app = createApp(this, props, opts.last)
 
   if (isTest) return app
   else if (!isNative) renderWeb(app, this.mem, this)
   else renderNative(app, this.mem)
-
-  queueMicrotask(() => console.log('render', parseFloat((performance.now() - start).toFixed(3))))
 }
 
 

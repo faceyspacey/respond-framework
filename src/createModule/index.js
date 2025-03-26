@@ -6,7 +6,7 @@ import sliceBranch from './helpers/sliceBranch.js'
 import { isTest } from '../helpers/constants.js'
 
 
-export default (top, opts = {}, start = performance.now()) => {
+export default (top, opts = {}) => {
   const system = getSystemState(opts)
   const mod = sliceBranch(top, system.replayState.branch)
 
@@ -15,7 +15,6 @@ export default (top, opts = {}, start = performance.now()) => {
 
   hydrateModules(state, system)
 
-  if (!isTest) console.log('createModule!', parseFloat((performance.now() - start).toFixed(3)))
   window.state = state
   return state.respond
 }

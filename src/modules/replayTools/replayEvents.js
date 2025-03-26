@@ -12,7 +12,7 @@ export default async function(events, index = events.length - 1, delay = 0, { se
 
 
 
-export const runEvents = async (events, delay, { respond, replayTools }, dontRender, startTime = performance.now()) => {           // keep in mind we will now be in the context of a new state
+export const runEvents = async (events, delay, { respond, replayTools }, dontRender) => {           // keep in mind we will now be in the context of a new state
   const { mem, options } = respond
   
   replayTools.playing = true                         // so sendTrigger knows to only increment the index of events it's already aware of
@@ -26,7 +26,7 @@ export const runEvents = async (events, delay, { respond, replayTools }, dontRen
     await event.trigger(arg,  meta)
 
     if (last) mem.isFastReplay = false                  // allow last event to trigger animations
-    if (delay ? first : last && !dontRender) respond.render({}, { startTime, last })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
+    if (delay ? first : last && !dontRender) respond.render({}, { last })                     // with delay, only render first event as dispatches will automatically render subsequent events : otherwise only render after all events have instantly replayed
     
     await timeout(delay, meta, last, options.testDelay)
   }

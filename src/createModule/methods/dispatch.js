@@ -19,8 +19,8 @@ export default async function(e, meta, start = performance.now()) {
   }
 
   if (!e.meta.trigger) return
+  
   await this.promisesCompleted(e)
-  if (!isTest) console.log('trigger', parseFloat((performance.now() - start).toFixed(3)), e.event.type)
 }
 
 
