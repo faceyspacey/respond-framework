@@ -2,29 +2,34 @@ export default (state, e) => {
   const { respond } = state
   const { topState } = respond
 
+  let ret
+
   try {
-    e.event.reduceBefore?.call(state, state, e)
+    ret = e.event.reduceBefore?.call(state, state, e)
 
-    if (e.event.reduce === false) {
-      // skip reduction
-    }
-    else if (e.event.reduce) {
-      e.event.reduce.call(state, state, e)
-    }
-    else if (e.event === topState.events.init) {
-      reduceEntireTree(e, topState)
-    }
-    else {
-      reduceBranch(e, topState, respond.branch.split('.'))
+    if (ret !== false) {
+      if (e.event.reduce === false) {
+        // skip reduction
+      }
+      else if (e.event.reduce) {
+        ret = e.event.reduce.call(state, state, e)
+      }
+      else if (e.event === topState.events.init) {
+        reduceEntireTree(e, topState)
+      }
+      else {
+        reduceBranch(e, topState, respond.branch.split('.'))
+      }
     }
 
-    e.event.reduceAfter?.call(state, state, e)
+    ret ??= e.event.reduceAfter?.call(state, state, e)
   }
   catch (error) {
     respond.onError({ error, kind: 'reduce', e })
   }
 
-  return respond.notify(e)
+  respond.notify(e)
+  return ret
 }
 
 

@@ -114,6 +114,8 @@ export default isDev ? mock : {
       return this.super.findMany({ $text: { $search: query }, ...selector }, { project, skip, limit, sort: { updatedAt: 1 } })
     }
 
+    if (!query) return [] // mongo fails on empty query
+
     const models = await this.mongo().aggregate([
       {
         $search: {
