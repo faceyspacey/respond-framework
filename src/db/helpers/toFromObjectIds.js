@@ -62,7 +62,7 @@ const isForeignOrLocalKey = key => endsWithIdReg.test(key) || key === '_id' || k
 const isArrayOfIds = firstElement => typeof firstElement === 'string' && ObjectId.isValid(firstElement) && firstElement.length === 24 // valid 24 char hex string -- must check if string, cuz ObjectId.isValid(123) is true; NOTE: your app can't use 24 hex strings for any other purpose!
 
 
-const endsWithIdReg = /Id$/
+const endsWithIdReg = /(Id|\.id)$/
 
 
 
