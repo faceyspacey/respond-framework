@@ -57,7 +57,7 @@ export const resolveId = field => {
 
 
 
-const isForeignOrLocalKey = key => endsWithIdReg.test(key) || key === '_id' || key === 'id'
+export const isForeignOrLocalKey = key => endsWithIdReg.test(key) || key === '_id' || key === 'id'
 
 const isArrayOfIds = firstElement => typeof firstElement === 'string' && ObjectId.isValid(firstElement) && firstElement.length === 24 // valid 24 char hex string -- must check if string, cuz ObjectId.isValid(123) is true; NOTE: your app can't use 24 hex strings for any other purpose!
 

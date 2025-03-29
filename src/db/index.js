@@ -293,7 +293,7 @@ export default isDev ? mock : {
 
     const [count, models] = await Promise.all([
       this.count(selector),
-      location ? this.searchGeo(location, { selector, project, limit, skip }) : this.findMany(selector, { project, sort, limit, skip })
+      location ? this.super.searchGeo(location, { selector, project, limit, skip }) : this.super.findMany(selector, { project, sort, limit, skip })
     ])
 
     const total = Math.ceil(count / limit)

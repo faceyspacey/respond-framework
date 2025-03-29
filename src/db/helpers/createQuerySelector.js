@@ -1,5 +1,6 @@
 import stringToRegex, { isRegexString } from '../utils/stringToRegex.js'
 import dateStringToDate from '../utils/dateStringToDate.js'
+import { isForeignOrLocalKey } from './toFromObjectIds.js'
 
 
 export default function({ customQuery, ...selector }) {
@@ -55,9 +56,9 @@ const convertDateAtString = (k, v, selector) => {
 
 const shouldConvertToRegex = (k, v) =>
   typeof v === 'string' &&
-  !isRegexString(v) &&                // ingore values already provided as regex wrapped in front slashes
-  !(/Id$/.test(k) || k === 'id') &&   // ignore id selectors
-  !k.endsWith('Date')                 // ignore special signupStartDate || signupEndDate selectors
+  !isRegexString(v) &&      // ingore values already provided as regex wrapped in front slashes
+  !isForeignOrLocalKey(k)   // ignore id selectors
+  !k.endsWith('Date')       // ignore special signupStartDate || signupEndDate selectors
 
 
 
