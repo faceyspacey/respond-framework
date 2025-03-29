@@ -12,7 +12,9 @@ import end from '../end.js'
 export default function edit(state, e) {
   if (!e.event.sync) return
   state.respond.ctx.sync = true // prevent standard queued microtask listeners from being notified
-  return dispatchPlugins(plugins, state, e).then(_ => false)
+
+  const res = dispatchPlugins(plugins, state, e)
+  return res instanceof Promise ? res.then(_ => false) : false
 }
 
 edit.sync = true // mark event as sync, so createPlugins can shift em to front of dispatch pipeline before potentially async events
