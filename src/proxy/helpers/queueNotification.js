@@ -28,7 +28,7 @@ const enqueue = respond => {
 }
 
 
-export function commit(start = performance.now()) {
+export function commit() {
   const { responds } = this
 
   const listeningBranches = createListeningBranches(responds, this)

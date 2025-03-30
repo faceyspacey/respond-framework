@@ -4,7 +4,7 @@ import loadPluginsOnce from '../helpers/loadPlugins.js'
 import { isTest } from '../../helpers/constants.js'
 
 
-export default async function(e, meta, start = performance.now()) {
+export default async function(e, meta) {
   const state = e.event.module
   const prom = loadPluginsOnce(this)
 
