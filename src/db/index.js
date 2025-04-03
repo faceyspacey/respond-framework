@@ -445,8 +445,9 @@ export default isDev ? mock : {
     })
   },
 
-  clone() {
-    return Object.defineProperties(Object.create(this.parent), Object.getOwnPropertyDescriptors(this))
+  clone(doc) {
+    const model = Object.defineProperties(Object.create(this.parent), Object.getOwnPropertyDescriptors(this))
+    return doc ? Object.assign(model, doc) : model
   },
 
   createQuerySelector,
