@@ -30,7 +30,7 @@ export default function({ customQuery, ...selector }) {
 
 const paramCleared = (k, v, selector) => {
   const cleared = v === '' || v === undefined ||
-    (selector[k] && typeof selector[k] === 'object' && Object.values(selector[k]).length === 1 && v === undefined) // eg: selector.foo = { $gt: undefined }
+    (v && typeof v === 'object' && Object.values(v).length === 0) // eg: selector.foo = { $gt: undefined } --> JSON.stringified -> {}
 
   if (!cleared) return
 
