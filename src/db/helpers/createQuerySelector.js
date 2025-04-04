@@ -29,7 +29,9 @@ export default function({ customQuery, ...selector }) {
 
 
 const paramCleared = (k, v, selector) => {
-  const cleared = v === '' || v === undefined
+  const cleared = v === '' || v === undefined ||
+    (selector[k] && typeof selector[k] === 'object' && Object.values(selector[k]).length === 1 && v === undefined) // eg: selector.foo = { $gt: undefined }
+
   if (!cleared) return
 
   delete selector[k]
