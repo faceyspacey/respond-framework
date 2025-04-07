@@ -52,7 +52,11 @@ export const native = {
     AsyncStorage.setItem(prefix + k, v).catch(swallowed => swallowed)
   },
   clear() {
-    Object.keys(native).forEach(k => delete native[k])
+    Object.keys(native).forEach(k => {
+      if (typeof native[k] === 'function') return
+      delete native[k]
+    })
+
     return AsyncStorage.clear()
   },
   async populate() { // until sync storage is available as a dep on native, await sessionStorage.populate() must be called on app start
