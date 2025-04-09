@@ -15,7 +15,7 @@ export default async function(e, meta) {
     await dispatchPlugins([triggerPlugin, ...state.plugins], state, e)
   }
   catch (error) {
-    await state.respond.onError({ error, kind: 'dispatch', e })
+    await state?.respond.onError({ error, kind: 'dispatch', e })
   }
 
   if (!e.meta.trigger) return

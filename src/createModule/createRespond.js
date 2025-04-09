@@ -40,7 +40,7 @@ import sessionStorage from '../utils/sessionStorage.js'
 
 export default (top, system, focusedModule, opts) => {
   const { replayState, prevUrl = null, basenames = {} } = system
-  const focusedBranch = replayState.branch
+  const focusedBranch = replayState.branch ?? ''
 
   const prev = window.state?.respond
 
