@@ -11,7 +11,7 @@ export default () => ({
   },
 
   remove(k) {
-    return sessionStorage.remove(prefix + k)
+    return sessionStorage.removeItem(prefix + k)
   }
 })
 
