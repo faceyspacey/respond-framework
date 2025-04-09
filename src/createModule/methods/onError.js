@@ -6,7 +6,7 @@ export default function(err)  {
     console.error(error)
   }
 
-  const eventOnError = e.event?.onError
+  const eventOnError = e?.event?.onError
   if (eventOnError) return eventOnError({ ...err, state: e.event.state })
 
   const ownOnError = this.state.options.onError
